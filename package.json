@@ -1,0 +1,13 @@
+{
+  "name": "nostr-tools",
+  "version": "0.0.1",
+  "dependencies": {
+    "assert": "^2.0.0",
+    "bigi": "^1.4.2",
+    "bip-schnorr": "^0.6.2",
+    "buffer": "^6.0.3",
+    "ecurve": "^1.0.6",
+    "pws": "^5.0.2",
+    "sha.js": "^2.4.11"
+  }
+}
