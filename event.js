@@ -2,6 +2,8 @@ import shajs from 'sha.js'
 import BigInteger from 'bigi'
 import schnorr from 'bip-schnorr'
 
+import {makeRandom32} from './utils'
+
 export function serializeEvent(evt) {
   return JSON.stringify([
     0,
