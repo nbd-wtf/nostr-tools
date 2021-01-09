@@ -1,8 +1,6 @@
-import shajs from 'sha.js'
-import BigInteger from 'bigi'
-import schnorr from 'bip-schnorr'
+import * as secp256k1 from 'noble-secp256k1'
 
-import {makeRandom32} from './utils'
+import {sha256} from './utils'
 
 export function serializeEvent(evt) {
   return JSON.stringify([
@@ -15,27 +13,22 @@ export function serializeEvent(evt) {
   ])
 }
 
-export function getEventID(event) {
-  let hash = shajs('sha256').update(serializeEvent(event)).digest()
-  return hash.toString('hex')
+export function getEventHash(event) {
+  let eventHash = sha256(Buffer.from(serializeEvent(event)))
+  return Buffer.from(eventHash).toString('hex')
 }
 
-export function verifySignature(event) {
-  try {
-    schnorr.verify(
-      Buffer.from(event.pubkey, 'hex'),
-      Buffer.from(getEventID(event), 'hex'),
-      Buffer.from(event.sig, 'hex')
-    )
-    return true
-  } catch (err) {
-    return false
-  }
+export async function verifySignature(event) {
+  return await secp256k1.schnorr.verify(
+    event.signature,
+    getEventHash(event),
+    event.pubkey
+  )
 }
 
-export function signEvent(event, key) {
-  let eventHash = shajs('sha256').update(serializeEvent(event)).digest()
-  schnorr
-    .sign(new BigInteger(key, 16), eventHash, makeRandom32())
-    .toString('hex')
+export async function signEvent(event, key) {
+  let eventHash = getEventHash(event)
+  return Buffer.from(await secp256k1.schnorr.sign(key, eventHash)).toString(
+    'hex'
+  )
 }

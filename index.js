@@ -1,4 +1,16 @@
-export {relayConnect} from './relay'
-export {signEvent, verifySignature, serializeEvent, getEventID} from './event'
-export {pubkeyFromPrivate} from './schnorr'
-export {makeRandom32} from './utils'
+import {relayConnect} from './relay'
+import {relayPool} from './pool'
+import {signEvent, verifySignature, serializeEvent, getEventHash} from './event'
+import {makeRandom32, sha256, getPublicKey} from './utils'
+
+export {
+  relayConnect,
+  relayPool,
+  signEvent,
+  verifySignature,
+  serializeEvent,
+  getEventHash,
+  makeRandom32,
+  sha256,
+  getPublicKey
+}

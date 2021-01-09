@@ -1,5 +1,6 @@
-export function makeRandom32() {
-  var array = new Uint32Array(32)
-  window.crypto.getRandomValues(array)
-  return Buffer.from(array)
-}
+import * as secp256k1 from 'noble-secp256k1'
+
+export const makeRandom32 = () => secp256k1.utils.generateRandomPrivateKey()
+export const sha256 = m => secp256k1.utils.sha256(Uint8Array.from(m))
+export const getPublicKey = privateKey =>
+  secp256k1.schnorr.getPublicKey(privateKey)

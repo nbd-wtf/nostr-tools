@@ -1,44 +1,81 @@
 import PersistentWebSocket from 'pws'
+import {verifySignature} from './event'
 
-export function relayConnect(url, onEventCallback) {
-  if (url.length && url[url.length - 1] === '/') url = url.slice(0, -1)
+export function normalizeRelayURL(url) {
+  let [host, ...qs] = url.split('?')
+  if (host.slice(0, 4) === 'http') host = 'ws' + host.slice(4)
+  if (host.length && host[host.length - 1] === '/') host = host.slice(0, -1)
+  if (host.slice(-3) !== '/ws') host = host + '/ws'
+  return [host, ...qs].join('?')
+}
 
-  const ws = new PersistentWebSocket(url + '/ws?session=' + Math.random(), {
+export function relayConnect(url, onEvent, onNotice) {
+  url = normalizeRelayURL(url)
+  url = url +=
+    (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`
+
+  const ws = new PersistentWebSocket(url, {
     pingTimeout: 30 * 1000
   })
 
-  ws.onopen = () => console.log('connected to ', url)
+  var isOpen
+  let untilOpen = new Promise(resolve => {
+    isOpen = resolve
+  })
+
+  ws.onopen = () => {
+    console.log('connected to ', url)
+    isOpen()
+  }
   ws.onerror = err => console.log('error connecting', url, err)
 
-  ws.onmessage = e => {
+  ws.onmessage = async e => {
     let data = JSON.parse(e.data)
     if (data.length > 1) {
       if (data[0] === 'notice') {
         console.log('message from relay ' + url + ' :' + data[1])
+        onNotice(data[1])
       } else if (typeof data[0] === 'object') {
-        onEventCallback(data[0], data[1])
+        let context = data[0]
+        let event = data[1]
+
+        if (await verifySignature(event)) {
+          onEvent(context, event)
+        } else {
+          console.warn(
+            'got event with invalid signature from ' + url,
+            event,
+            context
+          )
+        }
       }
     }
   }
 
   return {
     url,
-    subKey(key) {
+    async subKey(key) {
+      await untilOpen
       ws.send('sub-key:' + key)
     },
-    unsubKey(key) {
+    async unsubKey(key) {
+      await untilOpen
       ws.send('unsub-key:' + key)
     },
-    homeFeed(params = {}) {
+    async reqFeed(params = {}) {
+      await untilOpen
       ws.send('req-feed:' + JSON.stringify(params))
     },
-    reqEvent(params) {
+    async reqEvent(params) {
+      await untilOpen
       ws.send('req-key:' + JSON.stringify(params))
     },
-    reqKey(params) {
+    async reqKey(params) {
+      await untilOpen
       ws.send('req-key:' + JSON.stringify(params))
     },
-    sendEvent(event) {
+    async publish(event) {
+      await untilOpen
       ws.send(JSON.stringify(event))
     },
     close() {
