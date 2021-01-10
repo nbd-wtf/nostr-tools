@@ -38,11 +38,11 @@ export function relayConnect(url, onEvent, onNotice) {
         console.log('message from relay ' + url + ': ' + data[1])
         onNotice(data[1])
       } else if (typeof data[0] === 'object') {
-        let context = data[0]
-        let event = data[1]
+        let event = data[0]
+        let context = data[1]
 
         if (await verifySignature(event)) {
-          onEvent(context, event)
+          onEvent(event, context)
         } else {
           console.warn(
             'got event with invalid signature from ' + url,

@@ -8,10 +8,10 @@ export function relayPool(globalPrivateKey) {
   const eventCallbacks = []
   const noticeCallbacks = []
 
-  function propagateEvent(context, event, relayURL) {
+  function propagateEvent(event, context, relayURL) {
     for (let i = 0; i < eventCallbacks.length; i++) {
       let {relay} = relays[relayURL]
-      eventCallbacks[i](context, event, relay)
+      eventCallbacks[i](event, context, relay)
     }
   }
   function propagateNotice(notice, relayURL) {
@@ -33,7 +33,7 @@ export function relayPool(globalPrivateKey) {
       if (policyFilter.write && policy.write) {
         await fn(relay)
       } else if (policyFilter.read && policy.read) {
-        await fn(relays)
+        await fn(relay)
       }
     }
   }

@@ -8,7 +8,7 @@ export function serializeEvent(evt) {
     evt.pubkey,
     evt.created_at,
     evt.kind,
-    evt.tags,
+    evt.tags || [],
     evt.content
   ])
 }
@@ -20,7 +20,7 @@ export async function getEventHash(event) {
 
 export async function verifySignature(event) {
   return await secp256k1.schnorr.verify(
-    event.signature,
+    event.sig,
     await getEventHash(event),
     event.pubkey
   )
@@ -28,5 +28,5 @@ export async function verifySignature(event) {
 
 export async function signEvent(event, key) {
   let eventHash = await getEventHash(event)
-  return await secp256k1.schnorr.sign(key, eventHash)
+  return await secp256k1.schnorr.sign(eventHash, key)
 }

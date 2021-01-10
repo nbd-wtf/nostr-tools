@@ -14,7 +14,7 @@ pool.setPrivateKey('<hex>') // optional
 pool.addRelay('ws://some.relay.com', {read: true, write: true})
 pool.addRelay('ws://other.relay.cool', {read: true, write: true})
 
-pool.onEvent((context, event, relay) => {
+pool.onEvent((event, context, relay) => {
   console.log(`got a relay with context ${context} from ${relay.url} which is already validated.`, event)
 })
 
