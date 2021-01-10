@@ -12,9 +12,6 @@
     "noble-secp256k1": "^1.1.1",
     "pws": "^5.0.2"
   },
-  "scripts": {
-    "prepublish": "rollup -c rollup.config.js"
-  },
   "keywords": [
     "decentralization",
     "twitter",
