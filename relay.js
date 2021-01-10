@@ -32,12 +32,26 @@ export function relayConnect(url, onEvent, onNotice) {
   ws.onclose = () => console.log('relay connection closed', url)
 
   ws.onmessage = async e => {
-    let data = JSON.parse(e.data)
+    var data
+    try {
+      data = JSON.parse(e.data)
+    } catch (err) {
+      data = e.data
+    }
+
     if (data.length > 1) {
+      if (data === 'PING') {
+        ws.send('PONG')
+        return
+      }
+
       if (data[0] === 'notice') {
         console.log('message from relay ' + url + ': ' + data[1])
         onNotice(data[1])
-      } else if (typeof data[0] === 'object') {
+        return
+      }
+
+      if (typeof data[0] === 'object') {
         let event = data[0]
         let context = data[1]
 
@@ -50,6 +64,7 @@ export function relayConnect(url, onEvent, onNotice) {
             context
           )
         }
+        return
       }
     }
   }
