@@ -80,26 +80,26 @@ export function relayPool(globalPrivateKey) {
       if (index !== -1) eventCallbacks.splice(index, 1)
     },
     onNotice(cb) {
-      noticeCallbacks(cb)
+      noticeCallbacks.push(cb)
     },
     offNotice(cb) {
       let index = noticeCallbacks.indexOf(cb)
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
     onAttempt(cb) {
-      attemptCallbacks(cb)
+      attemptCallbacks.push(cb)
     },
     offAttempt(cb) {
       let index = attemptCallbacks.indexOf(cb)
       if (index !== -1) attemptCallbacks.splice(index, 1)
     },
     async publish(event) {
-      if (!event.signature) {
+      if (!event.sig) {
         event.tags = event.tags || []
 
         if (globalPrivateKey) {
-          event.id = getEventHash(event)
-          event.signature = await signEvent(event, globalPrivateKey)
+          event.id = await getEventHash(event)
+          event.sig = await signEvent(event, globalPrivateKey)
         } else {
           throw new Error(
             "can't publish unsigned event. either sign this event beforehand or pass a private key while initializing this relay pool so it can be signed automatically."

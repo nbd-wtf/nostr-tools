@@ -11,12 +11,13 @@ export function normalizeRelayURL(url) {
 
 export function relayConnect(url, onEvent, onNotice) {
   url = normalizeRelayURL(url)
-  url = url +=
-    (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`
 
-  const ws = new PersistentWebSocket(url, {
-    pingTimeout: 30 * 1000
-  })
+  const ws = new PersistentWebSocket(
+    url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`,
+    {
+      pingTimeout: 180 * 1000
+    }
+  )
 
   var isOpen
   let untilOpen = new Promise(resolve => {
@@ -24,16 +25,17 @@ export function relayConnect(url, onEvent, onNotice) {
   })
 
   ws.onopen = () => {
-    console.log('connected to ', url)
+    console.log('connected to', url)
     isOpen()
   }
-  ws.onerror = err => console.log('error connecting', url, err)
+  ws.onerror = err => console.log('error connecting to relay', url, err)
+  ws.onclose = () => console.log('relay connection closed', url)
 
   ws.onmessage = async e => {
     let data = JSON.parse(e.data)
     if (data.length > 1) {
       if (data[0] === 'notice') {
-        console.log('message from relay ' + url + ' :' + data[1])
+        console.log('message from relay ' + url + ': ' + data[1])
         onNotice(data[1])
       } else if (typeof data[0] === 'object') {
         let context = data[0]

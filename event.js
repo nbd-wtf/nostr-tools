@@ -13,22 +13,20 @@ export function serializeEvent(evt) {
   ])
 }
 
-export function getEventHash(event) {
-  let eventHash = sha256(Buffer.from(serializeEvent(event)))
+export async function getEventHash(event) {
+  let eventHash = await sha256(Buffer.from(serializeEvent(event)))
   return Buffer.from(eventHash).toString('hex')
 }
 
 export async function verifySignature(event) {
   return await secp256k1.schnorr.verify(
     event.signature,
-    getEventHash(event),
+    await getEventHash(event),
     event.pubkey
   )
 }
 
 export async function signEvent(event, key) {
-  let eventHash = getEventHash(event)
-  return Buffer.from(await secp256k1.schnorr.sign(key, eventHash)).toString(
-    'hex'
-  )
+  let eventHash = await getEventHash(event)
+  return await secp256k1.schnorr.sign(key, eventHash)
 }
