@@ -85,7 +85,7 @@ export function relayConnect(url, onEvent, onNotice) {
     },
     async reqEvent(params) {
       await untilOpen
-      ws.send('req-key:' + JSON.stringify(params))
+      ws.send('req-event:' + JSON.stringify(params))
     },
     async reqKey(params) {
       await untilOpen
