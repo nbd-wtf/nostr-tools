@@ -1165,11 +1165,6 @@ picomatch@^2.2.2:
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.2.2.tgz#21f333e9b6b8eaff02468f5146ea406d345f4dad"
   integrity sha512-q0M/9eZHzmr0AulXyPwNfZjtwZ/RBZlbN3K3CErVrk50T2ASYI7Bye0EvekFY3IP1Nt2DHu0re+V2ZHIpMkuWg==
 
-pws@^5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/pws/-/pws-5.0.2.tgz#86b581ad5e811417d514f06868ae4d9c71bdaa48"
-  integrity sha512-V4ZwsJIAiG9YoNv1IO/JSoapG9NrwRhmKKdQ0C7q0tBIxBTptGeTBhdnE53o5qrcoEHDqw5Mc3T1XF0NlvHTlQ==
-
 randombytes@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.1.0.tgz#df6f84372f0270dc65cdf6291349ab7a473d4f2a"

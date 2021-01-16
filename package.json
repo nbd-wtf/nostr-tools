@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Tools for making a Nostr client.",
   "main": "index.js",
   "repository": {
@@ -9,8 +9,7 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
-    "noble-secp256k1": "^1.1.1",
-    "pws": "^5.0.2"
+    "noble-secp256k1": "^1.1.1"
   },
   "keywords": [
     "decentralization",

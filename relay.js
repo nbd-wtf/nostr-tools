@@ -1,4 +1,3 @@
-import PersistentWebSocket from 'pws'
 import {verifySignature} from './event'
 
 export function normalizeRelayURL(url) {
@@ -12,7 +11,7 @@ export function normalizeRelayURL(url) {
 export function relayConnect(url, onEvent, onNotice) {
   url = normalizeRelayURL(url)
 
-  const ws = new PersistentWebSocket(
+  const ws = new WebSocket(
     url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`,
     {
       pingTimeout: 180 * 1000
