@@ -11,59 +11,83 @@ export function normalizeRelayURL(url) {
 export function relayConnect(url, onEvent, onNotice) {
   url = normalizeRelayURL(url)
 
-  const ws = new WebSocket(
-    url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`,
-    {
-      pingTimeout: 180 * 1000
+  let ws, resolveOpen, untilOpen, rejectOpen
+
+  function connect() {
+
+    untilOpen = new Promise((resolve, reject) => {
+      resolveOpen = resolve
+      rejectOpen = reject
+    })
+  
+    ws = new WebSocket(
+      url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`
+    )
+
+    ws.onopen = () => {
+      console.log('connected to', url)
+      resolveOpen()
     }
-  )
-
-  var isOpen
-  let untilOpen = new Promise(resolve => {
-    isOpen = resolve
-  })
-
-  ws.onopen = () => {
-    console.log('connected to', url)
-    isOpen()
-  }
-  ws.onerror = err => console.log('error connecting to relay', url, err)
-  ws.onclose = () => console.log('relay connection closed', url)
-
-  ws.onmessage = async e => {
-    var data
-    try {
-      data = JSON.parse(e.data)
-    } catch (err) {
-      data = e.data
+    ws.onerror = err =>  {
+      console.log('error connecting to relay', url, err)
+      rejectOpen()
     }
-
-    if (data.length > 1) {
-      if (data === 'PING') {
-        ws.send('PONG')
-        return
+    ws.onclose = () => console.log('relay connection closed', url)
+    ws.onmessage = async e => {
+      var data
+      try {
+        data = JSON.parse(e.data)
+      } catch (err) {
+        data = e.data
       }
 
-      if (data[0] === 'notice') {
-        console.log('message from relay ' + url + ': ' + data[1])
-        onNotice(data[1])
-        return
-      }
-
-      if (typeof data[0] === 'object') {
-        let event = data[0]
-        let context = data[1]
-
-        if (await verifySignature(event)) {
-          onEvent(event, context)
-        } else {
-          console.warn(
-            'got event with invalid signature from ' + url,
-            event,
-            context
-          )
+      if (data.length > 1) {
+        if (data === 'PING') {
+          ws.send('PONG')
+          return
         }
-        return
+
+        if (data[0] === 'notice') {
+          console.log('message from relay ' + url + ': ' + data[1])
+          onNotice(data[1])
+          return
+        }
+
+        if (typeof data[0] === 'object') {
+          let event = data[0]
+          let context = data[1]
+
+          if (await verifySignature(event)) {
+            onEvent(event, context)
+          } else {
+            console.warn(
+              'got event with invalid signature from ' + url,
+              event,
+              context
+            )
+          }
+          return
+        }
+      }
+    }
+  }
+
+  setInterval(() => {
+    if (!ws || ws.readyState !== WebSocket.OPEN)
+      connect()
+  }, 180 * 1000)
+
+  connect()
+
+  async function trySend(msg) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(msg)
+    } else {
+      try {
+        await untilOpen
+        ws.send(msg)
+      } catch(e) {
+        console.log(`waiting to connect to ${url}`)
       }
     }
   }
@@ -71,28 +95,22 @@ export function relayConnect(url, onEvent, onNotice) {
   return {
     url,
     async subKey(key) {
-      await untilOpen
-      ws.send('sub-key:' + key)
+      trySend('sub-key:' + key)
     },
     async unsubKey(key) {
-      await untilOpen
-      ws.send('unsub-key:' + key)
+      trySend('unsub-key:' + key)
     },
     async reqFeed(params = {}) {
-      await untilOpen
-      ws.send('req-feed:' + JSON.stringify(params))
+      trySend('req-feed:' + JSON.stringify(params))
     },
     async reqEvent(params) {
-      await untilOpen
-      ws.send('req-event:' + JSON.stringify(params))
+      trySend('req-event:' + JSON.stringify(params))
     },
     async reqKey(params) {
-      await untilOpen
-      ws.send('req-key:' + JSON.stringify(params))
+      trySend('req-key:' + JSON.stringify(params))
     },
     async publish(event) {
-      await untilOpen
-      ws.send(JSON.stringify(event))
+      trySend(JSON.stringify(event))
     },
     close() {
       ws.close()
