@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fiatjaf/nostr.git"
+    "url": "https://github.com/fiatjaf/nostr-tools.git"
   },
   "dependencies": {
     "buffer": "^6.0.3",
