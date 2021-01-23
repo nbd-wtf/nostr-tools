@@ -114,6 +114,9 @@ export function relayConnect(url, onEvent, onNotice) {
     },
     close() {
       ws.close()
+    },
+    get status() {
+      return ws.readyState
     }
   }
 }
