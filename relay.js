@@ -12,14 +12,16 @@ export function relayConnect(url, onEvent, onNotice) {
   url = normalizeRelayURL(url)
 
   let ws, resolveOpen, untilOpen, rejectOpen
+  let attemptNumber = 1
 
-  function connect() {
-
+  function resetOpenState() {
     untilOpen = new Promise((resolve, reject) => {
       resolveOpen = resolve
       rejectOpen = reject
     })
-  
+  }
+
+  function connect() {
     ws = new WebSocket(
       url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`
     )
@@ -28,11 +30,23 @@ export function relayConnect(url, onEvent, onNotice) {
       console.log('connected to', url)
       resolveOpen()
     }
-    ws.onerror = err =>  {
+    ws.onerror = err => {
       console.log('error connecting to relay', url, err)
       rejectOpen()
     }
-    ws.onclose = () => console.log('relay connection closed', url)
+    ws.onclose = () => {
+      resetOpenState()
+      attemptNumber++
+      console.log(
+        `relay ${url} connection closed. reconnecting in ${attemptNumber} seconds.`
+      )
+      setTimeout(async () => {
+        try {
+          connect()
+        } catch (err) {}
+      }, attemptNumber * 1000)
+    }
+
     ws.onmessage = async e => {
       var data
       try {
@@ -72,12 +86,11 @@ export function relayConnect(url, onEvent, onNotice) {
     }
   }
 
-  setInterval(() => {
-    if (!ws || ws.readyState !== WebSocket.OPEN)
-      connect()
-  }, 180 * 1000)
+  resetOpenState()
 
-  connect()
+  try {
+    connect()
+  } catch (err) {}
 
   async function trySend(msg) {
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -86,7 +99,7 @@ export function relayConnect(url, onEvent, onNotice) {
       try {
         await untilOpen
         ws.send(msg)
-      } catch(e) {
+      } catch (e) {
         console.log(`waiting to connect to ${url}`)
       }
     }
