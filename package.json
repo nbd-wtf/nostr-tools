@@ -2,7 +2,9 @@
   "name": "nostr-tools",
   "version": "0.3.0",
   "description": "Tools for making a Nostr client.",
-  "main": "index.js",
+  "main": "dist/nostr-tools.cjs.js",
+  "module": "dist/nostr-tools.esm.js",
+  "browser": "dist/nostr-tools.umd.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/fiatjaf/nostr-tools.git"
@@ -27,9 +29,13 @@
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-node-resolve": "^11.0.1",
     "rollup": "^2.36.1",
     "rollup-plugin-ignore": "^1.0.9",
     "rollup-plugin-terser": "^7.0.2"
+  },
+  "scripts": {
+    "build": "rollup -c"
   }
 }
