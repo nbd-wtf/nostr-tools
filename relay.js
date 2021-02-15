@@ -1,6 +1,8 @@
 import 'websocket-polyfill'
+import R from 'ramda'
 
 import {verifySignature} from './event'
+import {sha256} from './utils'
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.split('?')
@@ -10,10 +12,10 @@ export function normalizeRelayURL(url) {
   return [host, ...qs].join('?')
 }
 
-export function relayConnect(url, onEvent, onNotice) {
+export function relayConnect(url, onNotice) {
   url = normalizeRelayURL(url)
 
-  let ws, resolveOpen, untilOpen, rejectOpen
+  var ws, resolveOpen, untilOpen, rejectOpen
   let attemptNumber = 1
 
   function resetOpenState() {
@@ -22,6 +24,8 @@ export function relayConnect(url, onEvent, onNotice) {
       rejectOpen = reject
     })
   }
+
+  var channels = {}
 
   function connect() {
     ws = new WebSocket(
@@ -63,23 +67,29 @@ export function relayConnect(url, onEvent, onNotice) {
           return
         }
 
-        if (data[0] === 'notice') {
+        if (data[0] === 'NOTICE') {
+          if (data.length < 2) return
+
           console.log('message from relay ' + url + ': ' + data[1])
           onNotice(data[1])
           return
         }
 
-        if (typeof data[0] === 'object') {
-          let event = data[0]
-          let context = data[1]
+        if (data[0] === 'EVENT') {
+          if (data.length < 3) return
+
+          let channel = data[1]
+          let event = data[2]
 
           if (await verifySignature(event)) {
-            onEvent(event, context)
+            if (channels[channel]) {
+              channels[channel](event)
+            }
           } else {
             console.warn(
               'got event with invalid signature from ' + url,
               event,
-              context
+              id
             )
           }
           return
@@ -94,7 +104,9 @@ export function relayConnect(url, onEvent, onNotice) {
     connect()
   } catch (err) {}
 
-  async function trySend(msg) {
+  async function trySend(params) {
+    let msg = JSON.stringify(params)
+
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(msg)
     } else {
@@ -107,23 +119,20 @@ export function relayConnect(url, onEvent, onNotice) {
     }
   }
 
+  const sub = async (channel, cb, params) => {
+    trySend(['REQ', channel, params])
+
+    channels[channel] = cb
+
+    return {
+      sub: R.partial(sub, [channel]),
+      unsub: () => trySend(['CLOSE', channel])
+    }
+  }
+
   return {
     url,
-    async subKey(key) {
-      trySend('sub-key:' + key)
-    },
-    async unsubKey(key) {
-      trySend('unsub-key:' + key)
-    },
-    async reqFeed(params = {}) {
-      trySend('req-feed:' + JSON.stringify(params))
-    },
-    async reqEvent(params) {
-      trySend('req-event:' + JSON.stringify(params))
-    },
-    async reqKey(params) {
-      trySend('req-key:' + JSON.stringify(params))
-    },
+    sub: R.partial(sub, [sha256(Math.random().toString())]),
     async publish(event) {
       trySend(JSON.stringify(event))
     },
