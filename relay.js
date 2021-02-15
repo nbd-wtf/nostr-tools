@@ -1,3 +1,5 @@
+import 'websocket-polyfill'
+
 import {verifySignature} from './event'
 
 export function normalizeRelayURL(url) {

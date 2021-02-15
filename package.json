@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
-    "noble-secp256k1": "^1.1.1"
+    "noble-secp256k1": "^1.1.1",
+    "websocket-polyfill": "^0.0.3"
   },
   "keywords": [
     "decentralization",
