@@ -1,7 +1,7 @@
-import R from 'ramda'
-
 import {getEventHash, signEvent} from './event'
 import {relayConnect, normalizeRelayURL} from './relay'
+
+const R = require('ramda')
 
 export function relayPool(globalPrivateKey) {
   const relays = {}

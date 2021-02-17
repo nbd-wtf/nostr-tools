@@ -1,8 +1,9 @@
 import 'websocket-polyfill'
-import R from 'ramda'
 
 import {verifySignature} from './event'
 import {sha256} from './utils'
+
+const R = require('ramda')
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.split('?')
