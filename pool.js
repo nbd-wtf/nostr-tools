@@ -23,7 +23,7 @@ export function relayPool(globalPrivateKey) {
   }
 
   const sub = async (cb, params) => {
-    const subControllers = R.map(relay => {
+    const subControllers = R.map(({relay}) => {
       return relay.sub(params, cb.bind(null, relay))
     }, R.filter(R.pipe(R.prop('policy'), R.prop('write'), R.equals(true)), relays))
 
@@ -38,6 +38,7 @@ export function relayPool(globalPrivateKey) {
   }
 
   return {
+    sub,
     relays,
     setPrivateKey(privateKey) {
       globalPrivateKey = privateKey
@@ -70,10 +71,6 @@ export function relayPool(globalPrivateKey) {
       if (!relay) return
       relay.close()
       delete relays[relayURL]
-    },
-    offEvent(cb) {
-      let index = eventCallbacks.indexOf(cb)
-      if (index !== -1) eventCallbacks.splice(index, 1)
     },
     onNotice(cb) {
       noticeCallbacks.push(cb)

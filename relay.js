@@ -29,9 +29,7 @@ export function relayConnect(url, onNotice) {
   var channels = {}
 
   function connect() {
-    ws = new WebSocket(
-      url + (url.indexOf('?') !== -1 ? '&' : '?') + `session=${Math.random()}`
-    )
+    ws = new WebSocket(url)
 
     ws.onopen = () => {
       console.log('connected to', url)
@@ -135,7 +133,7 @@ export function relayConnect(url, onNotice) {
     url,
     sub: R.partial(sub, [sha256(Math.random().toString())]),
     async publish(event) {
-      trySend(JSON.stringify(event))
+      trySend(JSON.stringify(['EVENT', event]))
     },
     close() {
       ws.close()
