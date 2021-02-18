@@ -1,8 +1,6 @@
 import {getEventHash, signEvent} from './event'
 import {relayConnect, normalizeRelayURL} from './relay'
 
-const R = require('ramda')
-
 export function relayPool(globalPrivateKey) {
   const relays = {}
   const globalSub = []
@@ -101,21 +99,23 @@ export function relayPool(globalPrivateKey) {
         }
       }
 
-      await R.map(async relay => {
-        try {
-          await relay.publish(event)
-          statusCallback(0, relay.url)
-          let {unsub} = relay.sub(
-            () => {
-              statusCallback(1, relay.url)
-            },
-            {id: event.id}
-          )
-          setTimeout(unsub, 5000)
-        } catch (err) {
-          statusCallback(-1, relay.url)
-        }
-      }, R.filter(R.pipe(R.prop('policy'), R.prop('write'), R.equals(true)), relays))
+      Object.values(relays)
+        .filter(({policy}) => policy.write)
+        .map(async ({relay}) => {
+          try {
+            await relay.publish(event)
+            statusCallback(0, relay.url)
+            let {unsub} = relay.sub(
+              () => {
+                statusCallback(1, relay.url)
+              },
+              {id: event.id}
+            )
+            setTimeout(unsub, 5000)
+          } catch (err) {
+            statusCallback(-1, relay.url)
+          }
+        })
 
       return event
     }
