@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Tools for making a Nostr client.",
   "main": "index.js",
   "repository": {
@@ -10,7 +10,6 @@
   "dependencies": {
     "buffer": "^6.0.3",
     "noble-secp256k1": "^1.1.1",
-    "ramda": "^0.27.1",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [

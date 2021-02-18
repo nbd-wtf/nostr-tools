@@ -3,13 +3,11 @@ import 'websocket-polyfill'
 import {verifySignature} from './event'
 import {sha256} from './utils'
 
-const R = require('ramda')
-
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.split('?')
   if (host.slice(0, 4) === 'http') host = 'ws' + host.slice(4)
+  if (host.slice(0, 2) !== 'ws') host = 'wss://' + host
   if (host.length && host[host.length - 1] === '/') host = host.slice(0, -1)
-  if (host.slice(-3) !== '/ws') host = host + '/ws'
   return [host, ...qs].join('?')
 }
 
@@ -118,20 +116,19 @@ export function relayConnect(url, onNotice) {
     }
   }
 
-  const sub = async (channel, cb, params) => {
-    trySend(['REQ', channel, params])
-
+  const sub = async (channel, {cb, filter}) => {
+    trySend(['REQ', channel, filter])
     channels[channel] = cb
 
     return {
-      sub: R.partial(sub, [channel]),
+      sub: ({cb = cb, filter = filter}) => sub(channel, {cb, filter}),
       unsub: () => trySend(['CLOSE', channel])
     }
   }
 
   return {
     url,
-    sub: R.partial(sub, [sha256(Math.random().toString())]),
+    sub: sub.bind(null, sha256(Math.random().toString())),
     async publish(event) {
       trySend(JSON.stringify(['EVENT', event]))
     },
