@@ -115,13 +115,13 @@ export function relayConnect(url, onNotice) {
     }
   }
 
-  const sub = async ({cb, filter}) => {
-    const channel = (await sha256(Math.random().toString())).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
+  const sub = async ({ch, cb, filter}) => {
+    const channel = ch || (await sha256(Math.random().toString())).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
     trySend(['REQ', channel, filter])
     channels[channel] = cb
 
     return {
-      sub: ({cb = cb, filter = filter}) => sub(channel, {cb, filter}),
+      sub: ({cb = cb, filter = filter}) => sub({ch: channel, cb, filter}),
       unsub: () => trySend(['CLOSE', channel])
     }
   }
