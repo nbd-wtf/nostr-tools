@@ -128,7 +128,7 @@ export function relayConnect(url, onNotice) {
 
   return {
     url,
-    sub: sub.bind(null, sha256(Math.random().toString())),
+    sub: sub.bind(null, await sha256(Math.random().toString())),
     async publish(event) {
       trySend(JSON.stringify(['EVENT', event]))
     },
