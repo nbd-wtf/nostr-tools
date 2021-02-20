@@ -85,8 +85,7 @@ export function relayConnect(url, onNotice) {
           } else {
             console.warn(
               'got event with invalid signature from ' + url,
-              event,
-              id
+              event
             )
           }
           return
@@ -116,21 +115,22 @@ export function relayConnect(url, onNotice) {
     }
   }
 
-  const sub = async (channel, {cb, filter}) => {
+  const sub = async ({ch, cb, filter}) => {
+    const channel = ch || (await sha256(Math.random().toString())).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
     trySend(['REQ', channel, filter])
     channels[channel] = cb
 
     return {
-      sub: ({cb = cb, filter = filter}) => sub(channel, {cb, filter}),
+      sub: ({cb = cb, filter = filter}) => sub({ch: channel, cb, filter}),
       unsub: () => trySend(['CLOSE', channel])
     }
   }
 
   return {
     url,
-    sub: sub.bind(null, await sha256(Math.random().toString())),
+    sub,
     async publish(event) {
-      trySend(JSON.stringify(['EVENT', event]))
+      trySend(['EVENT', event])
     },
     close() {
       ws.close()

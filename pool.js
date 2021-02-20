@@ -15,7 +15,7 @@ export function relayPool(globalPrivateKey) {
 
   const activeSubscriptions = {}
 
-  const sub = async (id, cb, filter) => {
+  const sub = async (id, {cb, filter}) => {
     const subControllers = Object.fromEntries(
       Object.values(relays)
         .filter(({policy}) => policy.read)
@@ -53,11 +53,11 @@ export function relayPool(globalPrivateKey) {
     setPrivateKey(privateKey) {
       globalPrivateKey = privateKey
     },
-    addRelay(url, policy = {read: true, write: true}) {
+    async addRelay(url, policy = {read: true, write: true}) {
       let relayURL = normalizeRelayURL(url)
       if (relayURL in relays) return
 
-      let relay = relayConnect(url, notice => {
+      let relay = await relayConnect(url, notice => {
         propagateNotice(notice, relayURL)
       })
       relays[relayURL] = {relay, policy}
@@ -105,12 +105,12 @@ export function relayPool(globalPrivateKey) {
           try {
             await relay.publish(event)
             statusCallback(0, relay.url)
-            let {unsub} = relay.sub(
-              () => {
+            let {unsub} = relay.sub({
+              cb: () => {
                 statusCallback(1, relay.url)
               },
-              {id: event.id}
-            )
+              filter: {id: event.id}
+            })
             setTimeout(unsub, 5000)
           } catch (err) {
             statusCallback(-1, relay.url)
