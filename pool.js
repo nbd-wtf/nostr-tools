@@ -15,13 +15,13 @@ export function relayPool(globalPrivateKey) {
 
   const activeSubscriptions = {}
 
-  const sub = async (id, {cb, filter}) => {
+  const sub = ({cb, filter}, id = Math.random().toString().slice(2)) => {
     const subControllers = Object.fromEntries(
       Object.values(relays)
         .filter(({policy}) => policy.read)
         .map(({relay}) => [
           relay.url,
-          relay.sub({filter, cb: event => cb(event, relay)})
+          relay.sub({filter, cb: event => cb(event, relay.url)})
         ])
     )
 
@@ -29,14 +29,16 @@ export function relayPool(globalPrivateKey) {
       sub: ({cb = cb, filter = filter}) =>
         Object.entries(subControllers).map(([relayURL, sub]) => [
           relayURL,
-          sub(id, {cb, filter})
+          sub({cb, filter}, id)
         ]),
       addRelay: relay => {
         subControllers[relay.url] = relay.sub({cb, filter})
       },
       removeRelay: relayURL => {
-        subControllers[relayURL].unsub()
-        if (Object.keys(subControllers).length === 0) unsub()
+        if (relayURL in subControllers) {
+          subControllers[relayURL].unsub()
+          if (Object.keys(subControllers).length === 0) unsub()
+        }
       },
       unsub: () => {
         Object.values(subControllers).forEach(sub => sub.unsub())
@@ -48,7 +50,7 @@ export function relayPool(globalPrivateKey) {
   }
 
   return {
-    sub: sub.bind(null, Math.random()),
+    sub,
     relays,
     setPrivateKey(privateKey) {
       globalPrivateKey = privateKey
@@ -85,7 +87,7 @@ export function relayPool(globalPrivateKey) {
       let index = noticeCallbacks.indexOf(cb)
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
-    async publish(event, statusCallback) {
+    async publish(event, statusCallback = (status, relayURL) => {}) {
       if (!event.sig) {
         event.tags = event.tags || []
 
@@ -103,15 +105,9 @@ export function relayPool(globalPrivateKey) {
         .filter(({policy}) => policy.write)
         .map(async ({relay}) => {
           try {
-            await relay.publish(event)
-            statusCallback(0, relay.url)
-            let {unsub} = relay.sub({
-              cb: () => {
-                statusCallback(1, relay.url)
-              },
-              filter: {id: event.id}
-            })
-            setTimeout(unsub, 5000)
+            await relay.publish(event, status =>
+              statusCallback(status, relay.url)
+            )
           } catch (err) {
             statusCallback(-1, relay.url)
           }

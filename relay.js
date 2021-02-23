@@ -1,7 +1,6 @@
 import 'websocket-polyfill'
 
 import {verifySignature} from './event'
-import {sha256} from './utils'
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.split('?')
@@ -59,11 +58,6 @@ export function relayConnect(url, onNotice) {
       }
 
       if (data.length > 1) {
-        if (data === 'PING') {
-          ws.send('PONG')
-          return
-        }
-
         if (data[0] === 'NOTICE') {
           if (data.length < 2) return
 
@@ -83,10 +77,7 @@ export function relayConnect(url, onNotice) {
               channels[channel](event)
             }
           } else {
-            console.warn(
-              'got event with invalid signature from ' + url,
-              event
-            )
+            console.warn('got event with invalid signature from ' + url, event)
           }
           return
         }
@@ -115,13 +106,19 @@ export function relayConnect(url, onNotice) {
     }
   }
 
-  const sub = async ({ch, cb, filter}) => {
-    const channel = ch || (await sha256(Math.random().toString())).reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
-    trySend(['REQ', channel, filter])
+  const sub = ({cb, filter}, channel = Math.random().toString().slice(2)) => {
+    var filters = []
+    if (Array.isArray(filter)) {
+      filters = filter
+    } else {
+      filters.push(filter)
+    }
+
+    trySend(['REQ', channel, ...filters])
     channels[channel] = cb
 
     return {
-      sub: ({cb = cb, filter = filter}) => sub({ch: channel, cb, filter}),
+      sub: ({cb = cb, filter = filter}) => sub({cb, filter}, channel),
       unsub: () => trySend(['CLOSE', channel])
     }
   }
@@ -129,8 +126,20 @@ export function relayConnect(url, onNotice) {
   return {
     url,
     sub,
-    async publish(event) {
-      trySend(['EVENT', event])
+    async publish(event, statusCallback = status => {}) {
+      try {
+        await trySend(['EVENT', event])
+        statusCallback(0)
+        let {unsub} = relay.sub({
+          cb: () => {
+            statusCallback(1)
+          },
+          filter: {id: event.id}
+        })
+        setTimeout(unsub, 5000)
+      } catch (err) {
+        statusCallback(-1)
+      }
     },
     close() {
       ws.close()
