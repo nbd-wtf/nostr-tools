@@ -13,13 +13,14 @@ export function normalizeRelayURL(url) {
 export function relayConnect(url, onNotice) {
   url = normalizeRelayURL(url)
 
-  var ws, resolveOpen, untilOpen, rejectOpen
+  var ws, resolveOpen, untilOpen
+  var openSubs = {}
   let attemptNumber = 1
+  let nextAttemptSeconds = 1
 
   function resetOpenState() {
-    untilOpen = new Promise((resolve, reject) => {
+    untilOpen = new Promise(resolve => {
       resolveOpen = resolve
-      rejectOpen = reject
     })
   }
 
@@ -31,22 +32,29 @@ export function relayConnect(url, onNotice) {
     ws.onopen = () => {
       console.log('connected to', url)
       resolveOpen()
+
+      // restablish old subscriptions
+      for (let channel in openSubs) {
+        let filters = openSubs[channel]
+        let cb = channels[channel]
+        sub({cb, filter: filters}, channel)
+      }
     }
-    ws.onerror = err => {
-      console.log('error connecting to relay', url, err)
-      rejectOpen()
+    ws.onerror = () => {
+      console.log('error connecting to relay', url)
     }
     ws.onclose = () => {
       resetOpenState()
       attemptNumber++
+      nextAttemptSeconds += attemptNumber
       console.log(
-        `relay ${url} connection closed. reconnecting in ${attemptNumber} seconds.`
+        `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
       )
       setTimeout(async () => {
         try {
           connect()
         } catch (err) {}
-      }, attemptNumber * 1000)
+      }, nextAttemptSeconds * 1000)
     }
 
     ws.onmessage = async e => {
@@ -94,16 +102,8 @@ export function relayConnect(url, onNotice) {
   async function trySend(params) {
     let msg = JSON.stringify(params)
 
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(msg)
-    } else {
-      try {
-        await untilOpen
-        ws.send(msg)
-      } catch (e) {
-        console.log(`waiting to connect to ${url}`)
-      }
-    }
+    await untilOpen
+    ws.send(msg)
   }
 
   const sub = ({cb, filter}, channel = Math.random().toString().slice(2)) => {
@@ -116,10 +116,15 @@ export function relayConnect(url, onNotice) {
 
     trySend(['REQ', channel, ...filters])
     channels[channel] = cb
+    openSubs[channel] = filters
 
     return {
       sub: ({cb = cb, filter = filter}) => sub({cb, filter}, channel),
-      unsub: () => trySend(['CLOSE', channel])
+      unsub: () => {
+        delete openSubs[channel]
+        delete channels[channel]
+        trySend(['CLOSE', channel])
+      }
     }
   }
 
