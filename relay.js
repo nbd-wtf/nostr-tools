@@ -118,8 +118,12 @@ export function relayConnect(url, onNotice) {
     channels[channel] = cb
     openSubs[channel] = filters
 
+    const activeCallback = cb
+    const activeFilters = filters
+
     return {
-      sub: ({cb = cb, filter = filter}) => sub({cb, filter}, channel),
+      sub: ({cb = activeCallback, filter = activeFilters}) =>
+        sub({cb, filter}, channel),
       unsub: () => {
         delete openSubs[channel]
         delete channels[channel]
