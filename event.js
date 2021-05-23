@@ -2,6 +2,16 @@ import * as secp256k1 from 'noble-secp256k1'
 
 import {sha256} from './utils'
 
+export function getBlankEvent(evt) {
+  return {
+    kind: -1,
+    pubkey: null,
+    content: '',
+    tags: [],
+    created_at: Math.round(Date.now() / 1000)
+  }
+}
+
 export function serializeEvent(evt) {
   return JSON.stringify([
     0,
