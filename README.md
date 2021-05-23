@@ -26,13 +26,23 @@ pool.sub({cb: onEvent, filter: {author: '<hex>'}})
 //  or bulk follow
 pool.sub({cb:(event, relay) => {...}, filter: {authors: ['<hex1>', '<hex2>', ..., '<hexn>']}})
 
+// reuse a subscription channel
+const mySubscription = pool.sub({cb: ..., filter: ....})
+mySubscription.sub({filter: ....})
+mySubscription.sub({cb: ...})
+mySubscription.unsub()
+
 // get specific event
-pool.sub({cb: (event, relay) => {...}, filter: {id: '<hex>'}})
-// or get a specific event plus all the events that reference it in the 'e' tag
-pool.sub({
-  cb: (event, relay) => {...},
-  filter: [{id: '<hex>'}, {'#e': '<hex>'}]
+const specificChannel = pool.sub({
+  cb: (event, relay) => {
+    console.log('got specific event from relay', event, relay)
+    specificChannel.unsub()
+  },
+  filter: {id: '<hex>'}
 })
+
+// or get a specific event plus all the events that reference it in the 'e' tag
+pool.sub({ cb: (event, relay) => { ... }, filter: [{id: '<hex>'}, {'#e': '<hex>'}] })
 
 // get all events
 pool.sub({cb: (event, relay) => {...}, filter: {}})
