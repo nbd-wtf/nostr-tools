@@ -2,13 +2,13 @@ import * as secp256k1 from 'noble-secp256k1'
 
 import {sha256} from './utils'
 
-export function getBlankEvent(evt) {
+export function getBlankEvent() {
   return {
-    kind: -1,
+    kind: 255,
     pubkey: null,
     content: '',
     tags: [],
-    created_at: Math.round(Date.now() / 1000)
+    created_at: 0
   }
 }
 
