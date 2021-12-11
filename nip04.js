@@ -1,11 +1,12 @@
 import {Buffer} from 'buffer'
+import randomBytes from 'randombytes'
 import * as secp256k1 from '@noble/secp256k1'
 
 export function encrypt(privkey, pubkey, text) {
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   const normalizedKey = getOnlyXFromFullSharedSecret(key)
 
-  let iv = crypto.randomFillSync(new Uint8Array(16))
+  let iv = Uint8Array.from(randomBytes(16))
   var cipher = crypto.createCipheriv(
     'aes-256-cbc',
     Buffer.from(normalizedKey, 'hex'),
