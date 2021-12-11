@@ -21,3 +21,5 @@ export {
   getPublicKey,
   getBlankEvent
 }
+export * from './nip04'
+export * from './nip05'

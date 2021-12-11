@@ -1,3 +1,4 @@
+import {Buffer} from 'buffer'
 import dnsPacket from 'dns-packet'
 
 const dohProviders = [

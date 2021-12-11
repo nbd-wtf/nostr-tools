@@ -1,3 +1,4 @@
+import {Buffer} from 'buffer'
 import * as secp256k1 from '@noble/secp256k1'
 
 import {sha256} from './utils'
