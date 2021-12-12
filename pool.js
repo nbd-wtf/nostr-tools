@@ -29,19 +29,23 @@ export function relayPool(globalPrivateKey) {
     const activeFilters = filter
 
     activeSubscriptions[id] = {
-      sub: ({cb = activeCallback, filter = activeFilters}) =>
+      sub: ({cb = activeCallback, filter = activeFilters}) => {
         Object.entries(subControllers).map(([relayURL, sub]) => [
           relayURL,
           sub.sub({cb, filter}, id)
-        ]),
+        ])
+        return activeSubscriptions[id]
+      },
       addRelay: relay => {
         subControllers[relay.url] = relay.sub({cb, filter})
+        return activeSubscriptions[id]
       },
       removeRelay: relayURL => {
         if (relayURL in subControllers) {
           subControllers[relayURL].unsub()
           if (Object.keys(subControllers).length === 0) unsub()
         }
+        return activeSubscriptions[id]
       },
       unsub: () => {
         Object.values(subControllers).forEach(sub => sub.unsub())
