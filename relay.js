@@ -84,8 +84,6 @@ export function relayConnect(url, onNotice) {
             if (channels[channel]) {
               channels[channel](event)
             }
-          } else {
-            console.warn('got event with invalid signature from ' + url, event)
           }
           return
         }
