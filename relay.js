@@ -46,7 +46,10 @@ export function relayConnect(url, onNotice) {
     ws.onclose = () => {
       resetOpenState()
       attemptNumber++
-      nextAttemptSeconds += attemptNumber
+      nextAttemptSeconds += attemptNumber ** 3
+      if (nextAttemptSeconds > 14400) {
+        nextAttemptSeconds = 14400 // 4 hours
+      }
       console.log(
         `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
       )
