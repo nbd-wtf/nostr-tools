@@ -13,7 +13,7 @@ export function normalizeRelayURL(url) {
 export function relayConnect(url, onNotice) {
   url = normalizeRelayURL(url)
 
-  var ws, resolveOpen, untilOpen
+  var ws, resolveOpen, untilOpen, wasClosed
   var openSubs = {}
   let attemptNumber = 1
   let nextAttemptSeconds = 1
@@ -34,10 +34,13 @@ export function relayConnect(url, onNotice) {
       resolveOpen()
 
       // restablish old subscriptions
-      for (let channel in openSubs) {
-        let filters = openSubs[channel]
-        let cb = channels[channel]
-        sub({cb, filter: filters}, channel)
+      if (wasClosed) {
+        wasClosed = false
+        for (let channel in openSubs) {
+          let filters = openSubs[channel]
+          let cb = channels[channel]
+          sub({cb, filter: filters}, channel)
+        }
       }
     }
     ws.onerror = () => {
@@ -58,6 +61,8 @@ export function relayConnect(url, onNotice) {
           connect()
         } catch (err) {}
       }, nextAttemptSeconds * 1000)
+
+      wasClosed = true
     }
 
     ws.onmessage = async e => {
