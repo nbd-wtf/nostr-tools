@@ -145,12 +145,15 @@ export function relayConnect(url, onNotice) {
       try {
         await trySend(['EVENT', event])
         statusCallback(0)
-        let {unsub} = relay.sub({
-          cb: () => {
-            statusCallback(1)
+        let {unsub} = relay.sub(
+          {
+            cb: () => {
+              statusCallback(1)
+            },
+            filter: {id: event.id}
           },
-          filter: {id: event.id}
-        })
+          `monitor-${event.id.slice(0, 5)}`
+        )
         setTimeout(unsub, 5000)
       } catch (err) {
         statusCallback(-1)

@@ -21,7 +21,7 @@ export function relayPool(globalPrivateKey) {
         .filter(({policy}) => policy.read)
         .map(({relay}) => [
           relay.url,
-          relay.sub({filter, cb: event => cb(event, relay.url)})
+          relay.sub({filter, cb: event => cb(event, relay.url)}, id)
         ])
     )
 
@@ -37,7 +37,7 @@ export function relayPool(globalPrivateKey) {
         return activeSubscriptions[id]
       },
       addRelay: relay => {
-        subControllers[relay.url] = relay.sub({cb, filter})
+        subControllers[relay.url] = relay.sub({cb, filter}, id)
         return activeSubscriptions[id]
       },
       removeRelay: relayURL => {
