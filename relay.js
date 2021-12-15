@@ -1,6 +1,7 @@
 import 'websocket-polyfill'
 
 import {verifySignature} from './event'
+import {matchFilters} from './filter'
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.split('?')
@@ -88,10 +89,12 @@ export function relayConnect(url, onNotice) {
           let channel = data[1]
           let event = data[2]
 
-          if (await verifySignature(event)) {
-            if (channels[channel]) {
-              channels[channel](event)
-            }
+          if (
+            (await verifySignature(event)) &&
+            channels[channel] &&
+            matchFilters(openSubs[channel], event)
+          ) {
+            channels[channel](event)
           }
           return
         }
