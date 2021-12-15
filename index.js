@@ -7,6 +7,7 @@ import {
   serializeEvent,
   getEventHash
 } from './event'
+import {matchFilter, matchFilters} from './filter'
 import {makeRandom32, sha256, getPublicKey} from './utils'
 
 export {
@@ -19,5 +20,7 @@ export {
   makeRandom32,
   sha256,
   getPublicKey,
-  getBlankEvent
+  getBlankEvent,
+  matchFilter,
+  matchFilters
 }
