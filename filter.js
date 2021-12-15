@@ -2,7 +2,8 @@ export function matchFilter(filter, event) {
   if (filter.id && event.id !== filter.id) return false
   if (filter.kind && event.kind !== filter.kind) return false
   if (filter.author && event.pubkey !== filter.author) return false
-  if (filter.authors && filter.author.indexOf(event.pubkey) === -1) return false
+  if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
+    return false
   if (
     filter['#e'] &&
     event.tags.find(([t, v]) => t === 'e' && v === filter['#e']) === null
