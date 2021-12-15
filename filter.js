@@ -6,12 +6,12 @@ export function matchFilter(filter, event) {
     return false
   if (
     filter['#e'] &&
-    event.tags.find(([t, v]) => t === 'e' && v === filter['#e']) === null
+    !event.tags.find(([t, v]) => t === 'e' && v === filter['#e'])
   )
     return false
   if (
     filter['#p'] &&
-    event.tags.find(([t, v]) => t === 'p' && v === filter['#p']) === null
+    !event.tags.find(([t, v]) => t === 'p' && v === filter['#p'])
   )
     return false
   if (filter.since && event.created_at <= filter.since) return false
