@@ -1,3 +1,4 @@
+import aes from 'browserify-cipher'
 import {Buffer} from 'buffer'
 import randomBytes from 'randombytes'
 import * as secp256k1 from '@noble/secp256k1'
@@ -7,7 +8,7 @@ export function encrypt(privkey, pubkey, text) {
   const normalizedKey = getOnlyXFromFullSharedSecret(key)
 
   let iv = Uint8Array.from(randomBytes(16))
-  var cipher = crypto.createCipheriv(
+  var cipher = aes.createCipheriv(
     'aes-256-cbc',
     Buffer.from(normalizedKey, 'hex'),
     iv
@@ -22,7 +23,7 @@ export function decrypt(privkey, pubkey, ciphertext, iv) {
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   const normalizedKey = getOnlyXFromFullSharedSecret(key)
 
-  var decipher = crypto.createDecipheriv(
+  var decipher = aes.createDecipheriv(
     'aes-256-cbc',
     Buffer.from(normalizedKey, 'hex'),
     Buffer.from(iv, 'base64')
