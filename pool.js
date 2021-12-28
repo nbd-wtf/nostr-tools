@@ -95,11 +95,12 @@ export function relayPool(globalPrivateKey) {
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
     async publish(event, statusCallback = (status, relayURL) => {}) {
+      event.id = await getEventHash(event)
+
       if (!event.sig) {
         event.tags = event.tags || []
 
         if (globalPrivateKey) {
-          event.id = await getEventHash(event)
           event.sig = await signEvent(event, globalPrivateKey)
         } else {
           throw new Error(
