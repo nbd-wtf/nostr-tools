@@ -67,4 +67,6 @@ pool.addRelay('<url>')
 // will automatically subscribe to the all the events called with .sub above
 ```
 
+All functions expect bytearrays as hex strings and output bytearrays as hex strings.
+
 For other utils please read the source (for now).

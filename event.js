@@ -1,7 +1,6 @@
 import {Buffer} from 'buffer'
-import * as secp256k1 from '@noble/secp256k1'
-
-import {sha256} from './utils'
+import createHash from 'create-hash'
+import {signSchnorr, verifySchnorr} from 'tiny-secp256k1'
 
 export function getBlankEvent() {
   return {
@@ -24,20 +23,24 @@ export function serializeEvent(evt) {
   ])
 }
 
-export async function getEventHash(event) {
-  let eventHash = await sha256(Buffer.from(serializeEvent(event)))
+export function getEventHash(event) {
+  let eventHash = createHash('sha256')
+    .update(Buffer.from(serializeEvent(event)))
+    .digest()
   return Buffer.from(eventHash).toString('hex')
 }
 
-export async function verifySignature(event) {
-  return await secp256k1.schnorr.verify(
-    event.sig,
-    await getEventHash(event),
-    event.pubkey
+export function verifySignature(event) {
+  if (event.id !== getEventHash(event)) return false
+  return verifySchnorr(
+    Buffer.from(event.id, 'hex'),
+    Buffer.from(event.pubkey, 'hex')
+    Buffer.from(event.sig, 'hex'),
   )
 }
 
-export async function signEvent(event, key) {
-  let eventHash = await getEventHash(event)
-  return await secp256k1.schnorr.sign(eventHash, key)
+export function signEvent(event, key) {
+  let eventHash = Buffer.from(getEventHash(event), 'hex')
+  let key = Buffer.from(key, 'hex')
+  return Buffer.from(signSchnorr(eventHash, key)).toString('hex')
 }
