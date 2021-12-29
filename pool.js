@@ -3,7 +3,6 @@ import {relayConnect, normalizeRelayURL} from './relay'
 
 export function relayPool(globalPrivateKey) {
   const relays = {}
-  const globalSub = []
   const noticeCallbacks = []
 
   function propagateNotice(notice, relayURL) {
@@ -28,29 +27,34 @@ export function relayPool(globalPrivateKey) {
     const activeCallback = cb
     const activeFilters = filter
 
-    activeSubscriptions[id] = {
-      sub: ({cb = activeCallback, filter = activeFilters}) => {
-        Object.entries(subControllers).map(([relayURL, sub]) => [
-          relayURL,
-          sub.sub({cb, filter}, id)
-        ])
-        return activeSubscriptions[id]
-      },
-      addRelay: relay => {
-        subControllers[relay.url] = relay.sub({cb, filter}, id)
-        return activeSubscriptions[id]
-      },
-      removeRelay: relayURL => {
-        if (relayURL in subControllers) {
-          subControllers[relayURL].unsub()
-          if (Object.keys(subControllers).length === 0) unsub()
-        }
-        return activeSubscriptions[id]
-      },
-      unsub: () => {
-        Object.values(subControllers).forEach(sub => sub.unsub())
-        delete activeSubscriptions[id]
+    const unsub = () => {
+      Object.values(subControllers).forEach(sub => sub.unsub())
+      delete activeSubscriptions[id]
+    }
+    const sub = ({cb = activeCallback, filter = activeFilters}) => {
+      Object.entries(subControllers).map(([relayURL, sub]) => [
+        relayURL,
+        sub.sub({cb, filter}, id)
+      ])
+      return activeSubscriptions[id]
+    }
+    const addRelay = relay => {
+      subControllers[relay.url] = relay.sub({cb, filter}, id)
+      return activeSubscriptions[id]
+    }
+    const removeRelay = relayURL => {
+      if (relayURL in subControllers) {
+        subControllers[relayURL].unsub()
+        if (Object.keys(subControllers).length === 0) unsub()
       }
+      return activeSubscriptions[id]
+    }
+
+    activeSubscriptions[id] = {
+      sub,
+      unsub,
+      addRelay,
+      removeRelay
     }
 
     return activeSubscriptions[id]

@@ -11,6 +11,7 @@ import {
 import {matchFilter, matchFilters} from './filter'
 
 export {
+  generatePrivateKey,
   relayConnect,
   relayPool,
   signEvent,

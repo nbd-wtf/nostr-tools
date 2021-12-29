@@ -1,3 +1,5 @@
+/* global WebSocket */
+
 import 'websocket-polyfill'
 
 import {verifySignature} from './event'
@@ -148,7 +150,7 @@ export function relayConnect(url, onNotice) {
       try {
         await trySend(['EVENT', event])
         statusCallback(0)
-        let {unsub} = relay.sub(
+        let {unsub} = sub(
           {
             cb: () => {
               statusCallback(1)

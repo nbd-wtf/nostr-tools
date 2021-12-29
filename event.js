@@ -34,13 +34,13 @@ export function verifySignature(event) {
   if (event.id !== getEventHash(event)) return false
   return verifySchnorr(
     Buffer.from(event.id, 'hex'),
-    Buffer.from(event.pubkey, 'hex')
-    Buffer.from(event.sig, 'hex'),
+    Buffer.from(event.pubkey, 'hex'),
+    Buffer.from(event.sig, 'hex')
   )
 }
 
 export function signEvent(event, key) {
   let eventHash = Buffer.from(getEventHash(event), 'hex')
-  let key = Buffer.from(key, 'hex')
-  return Buffer.from(signSchnorr(eventHash, key)).toString('hex')
+  let keyB = Buffer.from(key, 'hex')
+  return Buffer.from(signSchnorr(eventHash, keyB)).toString('hex')
 }
