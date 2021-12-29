@@ -13,7 +13,7 @@ export function generatePrivateKey() {
 }
 
 export function getPublicKey(privateKey) {
-  return Buffer.from(
-    pointFromScalar(Buffer.from(privateKey, 'hex'), true)
-  ).toString('hex')
+  return Buffer.from(pointFromScalar(Buffer.from(privateKey, 'hex'), true))
+    .toString('hex')
+    .slice(2)
 }
