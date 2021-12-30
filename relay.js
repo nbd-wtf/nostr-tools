@@ -13,7 +13,7 @@ export function normalizeRelayURL(url) {
   return [host, ...qs].join('?')
 }
 
-export function relayConnect(url, onNotice) {
+export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
   url = normalizeRelayURL(url)
 
   var ws, resolveOpen, untilOpen, wasClosed
@@ -46,8 +46,9 @@ export function relayConnect(url, onNotice) {
         }
       }
     }
-    ws.onerror = () => {
+    ws.onerror = (err) => {
       console.log('error connecting to relay', url)
+      onError(err)
     }
     ws.onclose = () => {
       resetOpenState()
@@ -146,22 +147,26 @@ export function relayConnect(url, onNotice) {
   return {
     url,
     sub,
-    async publish(event, statusCallback = status => {}) {
+    async publish(event, statusCallback) {
       try {
         await trySend(['EVENT', event])
-        statusCallback(0)
-        let {unsub} = sub(
-          {
-            cb: () => {
-              statusCallback(1)
+        if (statusCallback) {
+          statusCallback(0)
+          let {unsub} = sub(
+            {
+              cb: () => {
+                statusCallback(1)
+                unsub()
+                clearTimeout(willUnsub)
+              },
+              filter: {id: event.id}
             },
-            filter: {id: event.id}
-          },
-          `monitor-${event.id.slice(0, 5)}`
-        )
-        setTimeout(unsub, 5000)
+            `monitor-${event.id.slice(0, 5)}`
+          )
+          let willUnsub = setTimeout(unsub, 5000)
+        }
       } catch (err) {
-        statusCallback(-1)
+        if (statusCallback) statusCallback(-1)
       }
     },
     close() {
