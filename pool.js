@@ -84,9 +84,11 @@ export function relayPool() {
       })
       relays[relayURL] = {relay, policy}
 
-      Object.values(activeSubscriptions).forEach(subscription =>
-        subscription.addRelay(relay)
-      )
+      if (policy.read) {
+        Object.values(activeSubscriptions).forEach(subscription =>
+          subscription.addRelay(relay)
+        )
+      }
 
       return relay
     },
