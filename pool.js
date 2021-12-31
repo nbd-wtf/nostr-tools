@@ -1,7 +1,13 @@
 import {getEventHash, signEvent} from './event'
 import {relayConnect, normalizeRelayURL} from './relay'
 
-export function relayPool(globalPrivateKey) {
+export function relayPool() {
+  var globalPrivateKey
+  const poolPolicy = {
+    // setting this to a number will cause events to be published to a random
+    // set of relays only, instead of publishing to all relays all the time
+    randomChoice: null
+  }
   const relays = {}
   const noticeCallbacks = []
 
@@ -66,11 +72,14 @@ export function relayPool(globalPrivateKey) {
     setPrivateKey(privateKey) {
       globalPrivateKey = privateKey
     },
-    async addRelay(url, policy = {read: true, write: true}) {
+    setPolicy(key, value) {
+      poolPolicy[key] = value
+    },
+    addRelay(url, policy = {read: true, write: true}) {
       let relayURL = normalizeRelayURL(url)
       if (relayURL in relays) return
 
-      let relay = await relayConnect(url, notice => {
+      let relay = relayConnect(url, notice => {
         propagateNotice(notice, relayURL)
       })
       relays[relayURL] = {relay, policy}
@@ -99,13 +108,13 @@ export function relayPool(globalPrivateKey) {
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
     async publish(event, statusCallback = (status, relayURL) => {}) {
-      event.id = await getEventHash(event)
+      event.id = getEventHash(event)
 
       if (!event.sig) {
         event.tags = event.tags || []
 
         if (globalPrivateKey) {
-          event.sig = await signEvent(event, globalPrivateKey)
+          event.sig = signEvent(event, globalPrivateKey)
         } else {
           throw new Error(
             "can't publish unsigned event. either sign this event beforehand or pass a private key while initializing this relay pool so it can be signed automatically."
@@ -113,17 +122,39 @@ export function relayPool(globalPrivateKey) {
         }
       }
 
-      Object.values(relays)
+      let writeable = Object.values(relays)
         .filter(({policy}) => policy.write)
-        .map(async ({relay}) => {
-          try {
-            await relay.publish(event, status =>
-              statusCallback(status, relay.url)
-            )
-          } catch (err) {
-            statusCallback(-1, relay.url)
+        .sort(() => Math.random() - 0.5) // random
+
+      let maxTargets = poolPolicy.randomChoice
+        ? poolPolicy.randomChoice
+        : writeable.length
+
+      let successes = 0
+
+      for (let i = 0; i < writeable.length; i++) {
+        let {relay} = writeable[i]
+
+        try {
+          await new Promise(async (resolve, reject) => {
+            try {
+              await relay.publish(event, status => {
+                statusCallback(status, relay.url)
+                resolve()
+              })
+            } catch (err) {
+              statusCallback(-1, relay.url)
+            }
+          })
+
+          successes++
+          if (successes >= maxTargets) {
+            break
           }
-        })
+        } catch (err) {
+          /***/
+        }
+      }
 
       return event
     }
