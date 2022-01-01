@@ -48,7 +48,6 @@ export function validateEvent(event) {
 }
 
 export function verifySignature(event) {
-  if (!validateEvent(event)) return false
   return secp256k1.schnorr.verify(event.sig, event.id, event.pubkey)
 }
 

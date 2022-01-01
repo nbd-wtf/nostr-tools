@@ -4,6 +4,7 @@ import {relayPool} from './pool'
 import {
   getBlankEvent,
   signEvent,
+  validateEvent,
   verifySignature,
   serializeEvent,
   getEventHash
@@ -15,6 +16,7 @@ export {
   relayConnect,
   relayPool,
   signEvent,
+  validateEvent,
   verifySignature,
   serializeEvent,
   getEventHash,
