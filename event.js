@@ -32,7 +32,7 @@ export function getEventHash(event) {
 
 export function verifySignature(event) {
   if (event.id !== getEventHash(event)) return false
-  return secp256k1.schnorr.verify(event.id, event.pubkey, event.sig)
+  return secp256k1.schnorr.verify(event.sig, event.id, event.pubkey)
 }
 
 export async function signEvent(event, key) {
