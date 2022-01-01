@@ -6,7 +6,7 @@ import {verifySignature} from './event'
 import {matchFilters} from './filter'
 
 export function normalizeRelayURL(url) {
-  let [host, ...qs] = url.split('?')
+  let [host, ...qs] = url.trim().split('?')
   if (host.slice(0, 4) === 'http') host = 'ws' + host.slice(4)
   if (host.slice(0, 2) !== 'ws') host = 'wss://' + host
   if (host.length && host[host.length - 1] === '/') host = host.slice(0, -1)
@@ -46,7 +46,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         }
       }
     }
-    ws.onerror = (err) => {
+    ws.onerror = err => {
       console.log('error connecting to relay', url)
       onError(err)
     }
