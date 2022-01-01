@@ -1,19 +1,21 @@
 export function matchFilter(filter, event) {
-  if (filter.id && event.id !== filter.id) return false
-  if (typeof filter.kind === 'number' && event.kind !== filter.kind) return false
+  if (filter.ids && filter.ids.indexOf(event.id) !== -1) return false
+  if (filter.kinds && filter.kinds.indexOf(event.kind) !== -1) return false
   if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
     return false
-  if (
-    filter['#e'] &&
-    !event.tags.find(([t, v]) => t === 'e' && v === filter['#e'])
-  )
-    return false
-  if (
-    filter['#p'] &&
-    !event.tags.find(([t, v]) => t === 'p' && v === filter['#p'])
-  )
-    return false
-  if (filter.since && event.created_at <= filter.since) return false
+
+  for (let f in filter) {
+    if (f[0] === '#') {
+      if (
+        filter[f] &&
+        !event.tags.find(([t, v]) => t === f.slice(1) && v === filter[f])
+      )
+        return false
+    }
+  }
+
+  if (filter.since && event.created_at < filter.since) return false
+  if (filter.until && event.created_at >= filter.until) return false
 
   return true
 }
