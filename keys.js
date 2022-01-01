@@ -5,5 +5,5 @@ export function generatePrivateKey() {
 }
 
 export function getPublicKey(privateKey) {
-  return secp256k1.getPublicKey(privateKey)
+  return secp256k1.schnorr.getPublicKey(privateKey)
 }
