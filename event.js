@@ -18,7 +18,7 @@ export function serializeEvent(evt) {
     evt.pubkey,
     evt.created_at,
     evt.kind,
-    evt.tags || [],
+    evt.tags,
     evt.content
   ])
 }
@@ -30,8 +30,25 @@ export function getEventHash(event) {
   return Buffer.from(eventHash).toString('hex')
 }
 
-export function verifySignature(event) {
+export function validateEvent(event) {
   if (event.id !== getEventHash(event)) return false
+  if (typeof event.content !== 'string') return false
+  if (typeof event.created_at !== 'number') return false
+
+  if (!Array.isArray(event.tags)) return false
+  for (let i = 0; i < event.tags.length; i++) {
+    let tag = event.tags[i]
+    if (!Array.isArray(tag)) return false
+    for (let j = 0; j < tag.length; j++) {
+      if (typeof tag[j] === 'object') return false
+    }
+  }
+
+  return true
+}
+
+export function verifySignature(event) {
+  if (!validateEvent(event)) return false
   return secp256k1.schnorr.verify(event.sig, event.id, event.pubkey)
 }
 
