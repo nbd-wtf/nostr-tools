@@ -94,8 +94,10 @@ export function relayPool() {
     },
     removeRelay(url) {
       let relayURL = normalizeRelayURL(url)
-      let {relay} = relays[relayURL]
-      if (!relay) return
+      let data = relays[relayURL]
+      if (!data) return
+
+      let {relay} = data
       Object.values(activeSubscriptions).forEach(subscription =>
         subscription.removeRelay(relay)
       )
