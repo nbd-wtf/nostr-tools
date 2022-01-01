@@ -1,19 +1,9 @@
-import randomBytes from 'randombytes'
-import {isPrivate, pointFromScalar} from 'tiny-secp256k1'
+import * as secp256k1 from '@noble/secp256k1'
 
 export function generatePrivateKey() {
-  let i = 8
-  while (i--) {
-    let r32 = Buffer.from(randomBytes(32))
-    if (isPrivate(r32)) return r32.toString('hex')
-  }
-  throw new Error(
-    'Valid private key was not found in 8 iterations. PRNG is broken'
-  )
+  return Buffer.from(secp256k1.utils.randomPrivateKey()).toString('hex')
 }
 
 export function getPublicKey(privateKey) {
-  return Buffer.from(pointFromScalar(Buffer.from(privateKey, 'hex'), true))
-    .toString('hex')
-    .slice(2)
+  return secp256k1.getPublicKey(privateKey)
 }

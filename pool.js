@@ -118,7 +118,7 @@ export function relayPool() {
         event.tags = event.tags || []
 
         if (globalPrivateKey) {
-          event.sig = signEvent(event, globalPrivateKey)
+          event.sig = await signEvent(event, globalPrivateKey)
         } else {
           throw new Error(
             "can't publish unsigned event. either sign this event beforehand or pass a private key while initializing this relay pool so it can be signed automatically."

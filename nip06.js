@@ -4,14 +4,11 @@ import {
   mnemonicToSeedSync,
   validateMnemonic
 } from 'micro-bip39'
-import BIP32Factory from 'bip32'
-import * as ecc from 'tiny-secp256k1'
-
-const bip32 = BIP32Factory(ecc)
+import {HDKey} from 'micro-bip32'
 
 export function privateKeyFromSeed(seed) {
-  let root = bip32.fromSeed(Buffer.from(seed, 'hex'))
-  return root.derivePath(`m/44'/1237'/0'/0'`).privateKey.toString('hex')
+  let root = HDKey.fromMasterSeed(Buffer.from(seed, 'hex'))
+  return root.derive(`m/44'/1237'/0'/0'`).privateKey.toString('hex')
 }
 
 export function seedFromWords(mnemonic) {
