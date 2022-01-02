@@ -1,6 +1,6 @@
 export function matchFilter(filter, event) {
-  if (filter.ids && filter.ids.indexOf(event.id) !== -1) return false
-  if (filter.kinds && filter.kinds.indexOf(event.kind) !== -1) return false
+  if (filter.ids && filter.ids.indexOf(event.id) === -1) return false
+  if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
   if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
     return false
 
