@@ -8,7 +8,9 @@ export function matchFilter(filter, event) {
     if (f[0] === '#') {
       if (
         filter[f] &&
-        !event.tags.find(([t, v]) => t === f.slice(1) && v === filter[f])
+        !event.tags.find(
+          ([t, v]) => t === f.slice(1) && filter[f].indexOf(v) !== -1
+        )
       )
         return false
     }
