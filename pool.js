@@ -6,7 +6,11 @@ export function relayPool() {
   const poolPolicy = {
     // setting this to a number will cause events to be published to a random
     // set of relays only, instead of publishing to all relays all the time
-    randomChoice: null
+    randomChoice: null,
+
+    // setting this to true will cause .publish() calls to wait until the event has
+    // been published -- or at least attempted to be published -- to all relays
+    wait: false
   }
   const relays = {}
   const noticeCallbacks = []
@@ -111,7 +115,7 @@ export function relayPool() {
       let index = noticeCallbacks.indexOf(cb)
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
-    async publish(event, statusCallback = (status, relayURL) => {}) {
+    async publish(event, statusCallback) {
       event.id = getEventHash(event)
 
       if (!event.sig) {
@@ -136,28 +140,37 @@ export function relayPool() {
 
       let successes = 0
 
-      for (let i = 0; i < writeable.length; i++) {
-        let {relay} = writeable[i]
+      if (poolPolicy.wait) {
+        for (let i = 0; i < writeable.length; i++) {
+          let {relay} = writeable[i]
 
-        try {
-          await new Promise(async (resolve, reject) => {
-            try {
-              await relay.publish(event, status => {
-                statusCallback(status, relay.url)
-                resolve()
-              })
-            } catch (err) {
-              statusCallback(-1, relay.url)
+          try {
+            await new Promise(async (resolve, reject) => {
+              try {
+                await relay.publish(event, status => {
+                  if (statusCallback) statusCallback(status, relay.url)
+                  resolve()
+                })
+              } catch (err) {
+                if (statusCallback) statusCallback(-1, relay.url)
+              }
+            })
+
+            successes++
+            if (successes >= maxTargets) {
+              break
             }
-          })
-
-          successes++
-          if (successes >= maxTargets) {
-            break
+          } catch (err) {
+            /***/
           }
-        } catch (err) {
-          /***/
         }
+      } else {
+        writeable.forEach(async ({relay}) => {
+          let callback = statusCallback
+            ? status => statusCallback(status, relay.url)
+            : null
+          relay.publish(event, callback)
+        })
       }
 
       return event
