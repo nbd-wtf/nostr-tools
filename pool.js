@@ -1,8 +1,10 @@
-import {getEventHash, signEvent} from './event'
+import {getEventHash, verifySignature, signEvent} from './event'
 import {relayConnect, normalizeRelayURL} from './relay'
 
 export function relayPool() {
   var globalPrivateKey
+  var globalSigningFunction
+
   const poolPolicy = {
     // setting this to a number will cause events to be published to a random
     // set of relays only, instead of publishing to all relays all the time
@@ -76,6 +78,9 @@ export function relayPool() {
     setPrivateKey(privateKey) {
       globalPrivateKey = privateKey
     },
+    registerSigningFunction(fn) {
+      globalSigningFunction = fn
+    },
     setPolicy(key, value) {
       poolPolicy[key] = value
     },
@@ -123,9 +128,21 @@ export function relayPool() {
 
         if (globalPrivateKey) {
           event.sig = await signEvent(event, globalPrivateKey)
+        } else if (globalSigningFunction) {
+          event.sig = await globalSigningFunction(event)
+          if (!event.sig) {
+            // abort here
+            return
+          } else {
+            // check
+            if (!(await verifySignature(event)))
+              throw new Error(
+                'signature provided by custom signing function is invalid.'
+              )
+          }
         } else {
           throw new Error(
-            "can't publish unsigned event. either sign this event beforehand or pass a private key while initializing this relay pool so it can be signed automatically."
+            "can't publish unsigned event. either sign this event beforehand, provide a signing function or pass a private key while initializing this relay pool so it can be signed automatically."
           )
         }
       }
