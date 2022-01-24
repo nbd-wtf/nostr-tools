@@ -16,19 +16,20 @@ export function encrypt(privkey, pubkey, text) {
   let encryptedMessage = cipher.update(text, 'utf8', 'base64')
   encryptedMessage += cipher.final('base64')
 
-  return [encryptedMessage, Buffer.from(iv.buffer).toString('base64')]
+  return `${encryptedMessage}?iv=${Buffer.from(iv.buffer).toString('base64')}`
 }
 
-export function decrypt(privkey, pubkey, ciphertext, iv) {
-  const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
-  const normalizedKey = getOnlyXFromFullSharedSecret(key)
+export function decrypt(privkey, pubkey, ciphertext) {
+  let [cip, iv] = ciphertext.split('?iv=')
+  let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
+  let normalizedKey = getOnlyXFromFullSharedSecret(key)
 
   var decipher = aes.createDecipheriv(
     'aes-256-cbc',
     Buffer.from(normalizedKey, 'hex'),
     Buffer.from(iv, 'base64')
   )
-  let decryptedMessage = decipher.update(ciphertext, 'base64')
+  let decryptedMessage = decipher.update(cip, 'base64')
   decryptedMessage += decipher.final('utf8')
 
   return decryptedMessage
