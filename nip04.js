@@ -5,7 +5,7 @@ import * as secp256k1 from '@noble/secp256k1'
 
 export function encrypt(privkey, pubkey, text) {
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
-  const normalizedKey = getOnlyXFromFullSharedSecret(key)
+  const normalizedKey = getNormalizedX(key)
 
   let iv = Uint8Array.from(randomBytes(16))
   var cipher = aes.createCipheriv(
@@ -22,7 +22,7 @@ export function encrypt(privkey, pubkey, text) {
 export function decrypt(privkey, pubkey, ciphertext) {
   let [cip, iv] = ciphertext.split('?iv=')
   let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
-  let normalizedKey = getOnlyXFromFullSharedSecret(key)
+  let normalizedKey = getNormalizedX(key)
 
   var decipher = aes.createDecipheriv(
     'aes-256-cbc',
@@ -35,6 +35,8 @@ export function decrypt(privkey, pubkey, ciphertext) {
   return decryptedMessage
 }
 
-function getOnlyXFromFullSharedSecret(fullSharedSecretCoordinates) {
-  return Buffer.from(fullSharedSecretCoordinates).toString('hex').substr(2, 64)
+function getNormalizedX(key) {
+  return typeof key === 'string'
+    ? key.substr(2)
+    : Buffer.from(key.slice(1)).toString('hex')
 }
