@@ -37,6 +37,6 @@ export function decrypt(privkey, pubkey, ciphertext) {
 
 function getNormalizedX(key) {
   return typeof key === 'string'
-    ? key.substr(2)
+    ? key.substr(2, 64)
     : Buffer.from(key.slice(1)).toString('hex')
 }
