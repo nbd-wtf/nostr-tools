@@ -36,5 +36,5 @@ export function decrypt(privkey, pubkey, ciphertext) {
 }
 
 function getOnlyXFromFullSharedSecret(fullSharedSecretCoordinates) {
-  return fullSharedSecretCoordinates.substr(2, 64)
+  return Buffer.from(fullSharedSecretCoordinates).toString('hex').substr(2, 64)
 }
