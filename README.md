@@ -15,7 +15,7 @@ pool.addRelay('ws://some.relay.com', {read: true, write: true})
 pool.addRelay('ws://other.relay.cool', {read: true, write: true})
 
 // example callback function for a subscription
-function onEvent(event, relay) => {
+function onEvent(event, relay) {
   console.log(`got an event from ${relay.url} which is already validated.`, event)
 }
 
