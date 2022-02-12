@@ -15,11 +15,7 @@ export async function searchDomain(domain, query = '') {
 export async function queryName(fullname) {
   try {
     let [name, domain] = fullname.split('@')
-
-    if (!domain) {
-      domain = name
-      name = '_'
-    }
+    if (!domain) return null
 
     let res = await (
       await fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
