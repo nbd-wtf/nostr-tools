@@ -160,7 +160,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
                 unsub()
                 clearTimeout(willUnsub)
               },
-              filter: {id: event.id}
+              filter: {ids: [event.id]}
             },
             `monitor-${event.id.slice(0, 5)}`
           )
