@@ -119,12 +119,20 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     ws.send(msg)
   }
 
-  const sub = ({cb, filter}, channel = Math.random().toString().slice(2)) => {
+  const sub = (
+    {cb, filter, beforeSend},
+    channel = Math.random().toString().slice(2)
+  ) => {
     var filters = []
     if (Array.isArray(filter)) {
       filters = filter
     } else {
       filters.push(filter)
+    }
+
+    if (beforeSend) {
+      const beforeSendResult = beforeSend({filter, relay: url, channel})
+      filters = beforeSendResult.filter
     }
 
     trySend(['REQ', channel, ...filters])
@@ -133,10 +141,14 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
     const activeCallback = cb
     const activeFilters = filters
+    const activeBeforeSend = beforeSend
 
     return {
-      sub: ({cb = activeCallback, filter = activeFilters}) =>
-        sub({cb, filter}, channel),
+      sub: ({
+        cb = activeCallback,
+        filter = activeFilters,
+        beforeSend = activeBeforeSend
+      }) => sub({cb, filter, beforeSend}, channel),
       unsub: () => {
         delete openSubs[channel]
         delete channels[channel]
