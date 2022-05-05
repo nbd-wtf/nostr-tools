@@ -26,3 +26,17 @@ export async function queryName(fullname) {
     return null
   }
 }
+
+export async function queryNames(domain) {
+  try {
+    if (!domain) return null
+
+    let res = await (
+      await fetch(`https://${domain}/.well-known/nostr.json`)
+    ).json()
+
+    return res.names
+  } catch (_) {
+    return null
+  }
+}
