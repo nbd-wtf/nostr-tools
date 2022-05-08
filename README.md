@@ -70,3 +70,20 @@ pool.addRelay('<url>')
 All functions expect bytearrays as hex strings and output bytearrays as hex strings.
 
 For other utils please read the source (for now).
+
+### Using from the browser (if you don't want to use a bundler)
+
+You can import nostr-tools as an ES module. Just add a script tag like this:
+
+```html
+<script type="module">
+  import {generatePrivateKey} from 'https://unpkg.com/nostr-tools/nostr.js'
+  console.log(generatePrivateKey())
+</script>
+```
+
+And import whatever function you would import from `"nostr-tools"` in a bundler.
+
+## License
+
+Public domain.

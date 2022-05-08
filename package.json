@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -30,7 +30,15 @@
     "client"
   ],
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "esbuild": "^0.14.38",
+    "esbuild-plugin-alias": "^0.2.1",
     "eslint": "^8.5.0",
-    "eslint-plugin-babel": "^5.3.1"
+    "eslint-plugin-babel": "^5.3.1",
+    "events": "^3.3.0",
+    "readable-stream": "^3.6.0"
+  },
+  "scripts": {
+    "prepublish": "node build.js"
   }
 }
