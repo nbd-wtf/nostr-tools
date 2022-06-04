@@ -26,10 +26,9 @@ export function relayPool() {
 
   const activeSubscriptions = {}
 
-  const sub = (
-    {cb, filter, beforeSend},
-    id = Math.random().toString().slice(2)
-  ) => {
+  const sub = ({cb, filter, beforeSend}, id) => {
+    if (!id) id = Math.random().toString().slice(2)
+
     const subControllers = Object.fromEntries(
       Object.values(relays)
         .filter(({policy}) => policy.read)
