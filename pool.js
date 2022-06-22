@@ -34,7 +34,7 @@ export function relayPool() {
         .filter(({policy}) => policy.read)
         .map(({relay}) => [
           relay.url,
-          relay.sub({filter, cb: event => cb(event, relay.url), beforeSend}, id)
+          relay.sub({ cb: event => cb(event, relay.url), filter, beforeSend}, id)
         ])
     )
 
@@ -53,12 +53,12 @@ export function relayPool() {
     }) => {
       Object.entries(subControllers).map(([relayURL, sub]) => [
         relayURL,
-        sub.sub({cb, filter, beforeSend}, id)
+        sub.sub({cb: event => cb(event, relayURL), filter, beforeSend}, id)
       ])
       return activeSubscriptions[id]
     }
     const addRelay = relay => {
-      subControllers[relay.url] = relay.sub({cb, filter}, id)
+      subControllers[relay.url] = relay.sub({cb: event => cb(event, relay.url), filter}, id)
       return activeSubscriptions[id]
     }
     const removeRelay = relayURL => {
