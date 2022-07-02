@@ -44,6 +44,10 @@
   "scripts": {
     "prepublishOnly": "node build.js"
   },
+  "files": [
+    "./index.js",
+    "dist/"
+  ],
   "main": "./index.js",
-  "module": "./nostr.js"
+  "module": "./dist/nostr.js"
 }

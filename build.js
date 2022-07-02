@@ -6,7 +6,7 @@ const nodeGlobals = require('@esbuild-plugins/node-globals-polyfill').default
 
 const buildOptions = {
   entryPoints: ['index.js'],
-  outfile: 'nostr.js',
+  outfile: 'dist/nostr.js',
   bundle: true,
   format: 'esm',
   plugins: [
