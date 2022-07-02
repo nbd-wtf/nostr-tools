@@ -41,7 +41,6 @@
   "scripts": {
     "prepublish": "node build.js"
   },
-  "type": "module",
   "main": "./index.js",
   "module": "./nostr.js"
 }
