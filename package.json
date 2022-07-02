@@ -6,6 +6,9 @@
     "type": "git",
     "url": "https://github.com/fiatjaf/nostr-tools.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@noble/hashes": "^0.5.7",
     "@noble/secp256k1": "^1.5.2",
