@@ -1,6 +1,6 @@
 {
-  "name": "nostr-tools",
-  "version": "0.23.4",
+  "name": "@dolu/nostr-tools",
+  "version": "0.0.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -40,5 +40,8 @@
   },
   "scripts": {
     "prepublish": "node build.js"
-  }
+  },
+  "type": "module",
+  "main": "./index.js",
+  "module": "./nostr.js"
 }
