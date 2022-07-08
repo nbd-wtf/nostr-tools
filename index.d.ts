@@ -8,7 +8,7 @@ declare type PrivKey = Hex | bigint | number;
 // event.js
 declare type Event = {
     kind: number,
-    pubkey: string | undefined,
+    pubkey?: string,
     content: string,
     tags: string[],
     created_at: number,
@@ -60,27 +60,30 @@ declare type SubscriptionCallback = (event: Event, relay: string) => void;
 declare type SubscriptionOptions = {
     cb: SubscriptionCallback,
     filter: Filter,
+    // TODO: thread through how `beforeSend` actually works before trying to type it
+    // beforeSend(event: Event): 
 };
 
 declare type Subscription = {
     unsub(): void,
 };
 
-declare type EventCallback = (status: number, url: string) => Promise<Event>;
-declare type PublishFn = (event: Event, cb: EventCallback) => Promise<Event>;
+declare type PublishCallback = (status: number) => void;
 
 // relay.js
 declare type Relay = {
     url: string,
     sub: SubscriptionCallback,
-    publish: PublishFn,
+    publish: (event: Event, cb: PublishCallback) => Promise<Event>,
 };
+
+declare type PoolPublishCallback = (status: number, relay: string) => void;
 
 declare type RelayPool = {
     setPrivateKey(key: string): void,
     addRelay(url: string, opts?: RelayPolicy): Relay,
     sub(opts: SubscriptionOptions, id?: string): Subscription,
-    publish: PublishFn,
+    publish(event: Event, cb: PoolPublishCallback): Promise<Event>,
     close: () => void,
     status: number,
 };

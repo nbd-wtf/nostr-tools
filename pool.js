@@ -1,5 +1,5 @@
-import {getEventHash, verifySignature, signEvent} from './event'
-import {relayConnect, normalizeRelayURL} from './relay'
+import {getEventHash, verifySignature, signEvent} from './event.js'
+import {relayConnect, normalizeRelayURL} from './relay.js'
 
 export function relayPool() {
   var globalPrivateKey

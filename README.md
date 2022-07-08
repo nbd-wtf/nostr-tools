@@ -84,6 +84,10 @@ You can import nostr-tools as an ES module. Just add a script tag like this:
 
 And import whatever function you would import from `"nostr-tools"` in a bundler.
 
+## TypeScript
+
+This module has hand-authored TypeScript declarations. `npm run check-ts` will run a lint-check script to ensure the typings can be loaded and call at least a few standard library functions. It's not at all comprehensive and likely to contain bugs. Issues welcome; tag @rcoder as needed.
+
 ## License
 
 Public domain.
