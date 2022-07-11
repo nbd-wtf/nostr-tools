@@ -1,4 +1,4 @@
-import {wordlist} from 'micro-bip39/wordlists/english'
+import {wordlist} from 'micro-bip39/wordlists/english.js'
 import {
   generateMnemonic,
   mnemonicToSeedSync,

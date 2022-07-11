@@ -1,4 +1,4 @@
-import { type Buffer } from './node_modules/buffer/index';
+import { type Buffer } from 'buffer';
 
 // these should be available from the native @noble/secp256k1 type
 // declarations, but they somehow aren't declareed so instead: copypasta
