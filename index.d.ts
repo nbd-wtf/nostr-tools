@@ -1,13 +1,22 @@
 import { type Buffer } from 'buffer';
 
 // these should be available from the native @noble/secp256k1 type
-// declarations, but they somehow aren't declareed so instead: copypasta
+// declarations, but they somehow aren't so instead: copypasta
 declare type Hex = Uint8Array | string;
 declare type PrivKey = Hex | bigint | number;
 
+declare enum EventKind {
+    Metadata = 0,
+    Text = 1,
+    RelayRec = 2,
+    Contacts = 3,
+    DM = 4,
+    Deleted = 5,
+}
+
 // event.js
 declare type Event = {
-    kind: number,
+    kind: EventKind,
     pubkey?: string,
     content: string,
     tags: string[],
@@ -24,7 +33,7 @@ declare function signEvent(event: Event, key: PrivKey): Promise<[Uint8Array, num
 // filter.js
 declare type Filter = {
     ids: string[],
-    kinds: string[],
+    kinds: EventKind[],
     authors: string[],
     since: number,
     until: number,
