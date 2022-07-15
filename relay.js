@@ -2,8 +2,8 @@
 
 import 'websocket-polyfill'
 
-import {verifySignature, validateEvent} from './event'
-import {matchFilters} from './filter'
+import {verifySignature, validateEvent} from './event.js'
+import {matchFilters} from './filter.js'
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.trim().split('?')
