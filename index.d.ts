@@ -69,6 +69,7 @@ declare type SubscriptionCallback = (event: Event, relay: string) => void;
 declare type SubscriptionOptions = {
     cb: SubscriptionCallback,
     filter: Filter,
+    skipVerification: boolean
     // TODO: thread through how `beforeSend` actually works before trying to type it
     // beforeSend(event: Event): 
 };

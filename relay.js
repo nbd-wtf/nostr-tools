@@ -18,6 +18,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
   var ws, resolveOpen, untilOpen, wasClosed
   var openSubs = {}
+  var isSetToSkipVerification = {}
   let attemptNumber = 1
   let nextAttemptSeconds = 1
 
@@ -94,7 +95,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
           if (
             validateEvent(event) &&
-            verifySignature(event) &&
+            (isSetToSkipVerification[channel] || verifySignature(event)) &&
             channels[channel] &&
             matchFilters(openSubs[channel], event)
           ) {
@@ -120,7 +121,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
   }
 
   const sub = (
-    {cb, filter, beforeSend},
+    {cb, filter, beforeSend, skipVerification},
     channel = Math.random().toString().slice(2)
   ) => {
     var filters = []
@@ -138,6 +139,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     trySend(['REQ', channel, ...filters])
     channels[channel] = cb
     openSubs[channel] = filters
+    isSetToSkipVerification[channel] = skipVerification
 
     const activeCallback = cb
     const activeFilters = filters
@@ -148,10 +150,11 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         cb = activeCallback,
         filter = activeFilters,
         beforeSend = activeBeforeSend
-      }) => sub({cb, filter, beforeSend}, channel),
+      }) => sub({cb, filter, beforeSend, skipVerification}, channel),
       unsub: () => {
         delete openSubs[channel]
         delete channels[channel]
+        delete isSetToSkipVerification[channel]
         trySend(['CLOSE', channel])
       }
     }
