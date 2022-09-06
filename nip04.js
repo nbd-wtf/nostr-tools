@@ -29,7 +29,7 @@ export function decrypt(privkey, pubkey, ciphertext) {
     Buffer.from(normalizedKey, 'hex'),
     Buffer.from(iv, 'base64')
   )
-  let decryptedMessage = decipher.update(cip, 'base64')
+  let decryptedMessage = decipher.update(cip, 'base64', 'utf8')
   decryptedMessage += decipher.final('utf8')
 
   return decryptedMessage
