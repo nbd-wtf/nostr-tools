@@ -28,7 +28,8 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     })
   }
 
-  var channels = {}
+  var eventListeners = {}
+  var eoseListeners = {}
 
   function connect() {
     ws = new WebSocket(url)
@@ -42,8 +43,9 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         wasClosed = false
         for (let channel in openSubs) {
           let filters = openSubs[channel]
-          let cb = channels[channel]
-          sub({cb, filter: filters}, channel)
+          let eventCb = eventListeners[channel]
+          let eoseCb = eoseListeners[channel]
+          sub({eventCb, filter: filters}, channel, eoseCb)
         }
       }
     }
@@ -78,30 +80,40 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         data = e.data
       }
 
-      if (data.length > 1) {
-        if (data[0] === 'NOTICE') {
-          if (data.length < 2) return
-
-          console.log('message from relay ' + url + ': ' + data[1])
-          onNotice(data[1])
-          return
-        }
-
-        if (data[0] === 'EVENT') {
-          if (data.length < 3) return
-
-          let channel = data[1]
-          let event = data[2]
-
-          if (
-            validateEvent(event) &&
-            (isSetToSkipVerification[channel] || verifySignature(event)) &&
-            channels[channel] &&
-            matchFilters(openSubs[channel], event)
-          ) {
-            channels[channel](event)
-          }
-          return
+      if (data.length >= 1) {
+        switch (data[0]) {
+          case 'NOTICE':
+            if (data.length != 2) {
+              // ignore empty or malformed notice
+              return
+            }
+            console.log(`message from relay ${url}: ${data[1]}`)
+            onNotice(data[1])
+            return
+          case 'EOSE':
+            if (data.length != 2) {
+              // ignore malformed EOSE
+              return
+            }
+            console.log(`Channel ${data[1]}: End-of-stored-events`)
+            if (eoseListeners[data[1]]) {
+              eoseListeners[data[1]]()
+            }
+            return
+          case 'EVENT':
+            if (data.length != 3) {
+              // ignore malformed EVENT
+              return
+            }
+            let channel = data[1]
+            let event = data[2]
+            if (validateEvent(event) &&
+                (isSetToSkipVerification[channel] || verifySignature(event)) &&
+                eventListeners[channel] &&
+                matchFilters(openSubs[channel], event)) {
+              eventListeners[channel](event)
+            }
+            return
         }
       }
     }
@@ -122,7 +134,8 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
   const sub = (
     {cb, filter, beforeSend, skipVerification},
-    channel = Math.random().toString().slice(2)
+    channel = Math.random().toString().slice(2),
+    eoseCb
   ) => {
     var filters = []
     if (Array.isArray(filter)) {
@@ -137,7 +150,8 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     }
 
     trySend(['REQ', channel, ...filters])
-    channels[channel] = cb
+    eventListeners[channel] = cb
+    eoseListeners[channel] = eoseCb
     openSubs[channel] = filters
     isSetToSkipVerification[channel] = skipVerification
 
@@ -153,7 +167,8 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
       }) => sub({cb, filter, beforeSend, skipVerification}, channel),
       unsub: () => {
         delete openSubs[channel]
-        delete channels[channel]
+        delete eventListeners[channel]
+        delete eoseListeners[channel]
         delete isSetToSkipVerification[channel]
         trySend(['CLOSE', channel])
       }
