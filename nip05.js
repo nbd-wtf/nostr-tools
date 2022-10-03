@@ -1,9 +1,12 @@
-import fetch from 'cross-fetch'
+import crossFetch from 'cross-fetch'
 
+const f = (typeof XMLHttpRequest == 'function')
+  ? crossFetch
+  : fetch
 export async function searchDomain(domain, query = '') {
   try {
     let res = await (
-      await fetch(`https://${domain}/.well-known/nostr.json?name=${query}`)
+      await f(`https://${domain}/.well-known/nostr.json?name=${query}`)
     ).json()
 
     return res.names
@@ -18,11 +21,12 @@ export async function queryName(fullname) {
     if (!domain) return null
 
     let res = await (
-      await fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+      await f(`https://${domain}/.well-known/nostr.json?name=${name}`)
     ).json()
 
     return res.names && res.names[name]
-  } catch (_) {
+  } catch (e) {
+    console.error(`${e}`)
     return null
   }
 }
