@@ -1,5 +1,5 @@
 import aes from 'browserify-cipher'
-import {Buffer} from 'buffer'
+import {Buffer} from 'buffer/'
 import {randomBytes} from '@noble/hashes/utils'
 import * as secp256k1 from '@noble/secp256k1'
 
