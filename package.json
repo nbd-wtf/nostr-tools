@@ -10,12 +10,12 @@
   "dependencies": {
     "@noble/hashes": "^0.5.7",
     "@noble/secp256k1": "^1.5.2",
+    "@scure/bip32": "^1.1.1",
+    "@scure/bip39": "^1.1.0",
     "browserify-cipher": ">=1",
     "buffer": ">=5",
     "create-hash": "^1.2.0",
     "cross-fetch": "^3.1.4",
-    "micro-bip32": "^0.1.0",
-    "micro-bip39": "^0.1.3",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [

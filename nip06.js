@@ -1,10 +1,10 @@
-import {wordlist} from 'micro-bip39/wordlists/english.js'
+import {wordlist} from '@scure/bip39/wordlists/english.js'
 import {
   generateMnemonic,
   mnemonicToSeedSync,
   validateMnemonic
-} from 'micro-bip39'
-import {HDKey} from 'micro-bip32'
+} from '@scure/bip39'
+import {HDKey} from '@scure/bip32'
 
 export function privateKeyFromSeed(seed) {
   let root = HDKey.fromMasterSeed(Buffer.from(seed, 'hex'))
