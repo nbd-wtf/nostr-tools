@@ -35,7 +35,7 @@ export function relayPool() {
         .map(({relay}) => [
           relay.url,
           relay.sub({cb: event => cb(event, relay.url), filter, beforeSend}, id,
-          cbEose)
+          () => cbEose(relay.url))
         ])
     )
 
@@ -54,7 +54,8 @@ export function relayPool() {
     }) => {
       Object.entries(subControllers).map(([relayURL, sub]) => [
         relayURL,
-        sub.sub({cb: event => cb(event, relayURL), filter, beforeSend}, id)
+        sub.sub({cb: event => cb(event, relayURL), filter, beforeSend}, id,
+          () => cbEose(relayURL))
       ])
       return activeSubscriptions[id]
     }

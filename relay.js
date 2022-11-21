@@ -164,7 +164,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         cb = activeCallback,
         filter = activeFilters,
         beforeSend = activeBeforeSend
-      }) => sub({cb, filter, beforeSend, skipVerification}, channel),
+      }) => sub({cb, filter, beforeSend, skipVerification}, channel, eoseCb),
       unsub: () => {
         delete openSubs[channel]
         delete eventListeners[channel]
