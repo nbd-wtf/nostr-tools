@@ -32,13 +32,13 @@ declare function signEvent(event: Event, key: PrivKey): Promise<[Uint8Array, num
 
 // filter.js
 declare type Filter = {
-    ids: string[],
-    kinds: EventKind[],
-    authors: string[],
-    since: number,
-    until: number,
-    "#e": string[],
-    "#p": string[],
+    ids?: string[],
+    kinds?: EventKind[],
+    authors?: string[],
+    since?: number,
+    until?: number,
+    "#e"?: string[],
+    "#p"?: string[],
 };
 
 declare function matchFilter(filter: Filter, event: Event): boolean;
