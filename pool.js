@@ -14,6 +14,9 @@ export function relayPool() {
     // been published -- or at least attempted to be published -- to all relays
     wait: false
   }
+  
+  //map with all the relays where the url is the id
+  //Map<string,Relay>
   const relays = {}
   const noticeCallbacks = []
 
@@ -26,12 +29,17 @@ export function relayPool() {
 
   const activeSubscriptions = {}
 
+  //creates Subscription object {"<relayUrl>":"relayCallback"}
   const sub = ({cb, filter, beforeSend}, id, cbEose) => {
+    
+    //check if it has an id, if not assign one
     if (!id) id = Math.random().toString().slice(2)
-
     const subControllers = Object.fromEntries(
+      //Convert the map<string,Relay> to a Relay[]
       Object.values(relays)
+         //takes only relays that can be read
         .filter(({policy}) => policy.read)
+         //iterate all the rellies and create the array [url:string,sub:SubscriptionCallback] 
         .map(({relay}) => [
           relay.url,
           relay.sub({cb: event => cb(event, relay.url), filter, beforeSend}, id,
@@ -39,14 +47,18 @@ export function relayPool() {
         ])
     )
 
-    const activeCallback = cb
-    const activeFilters = filter
-    const activeBeforeSend = beforeSend
+    const activeCallback = cb //assign callback for the suscription
+    const activeFilters = filter //assigng filter for the suscrition
+    const activeBeforeSend = beforeSend //assign before send fucntion
 
+    //Unsub deletes itself 
     const unsub = () => {
+      //iterate the map of relays and call their unsub function 
       Object.values(subControllers).forEach(sub => sub.unsub())
-      delete activeSubscriptions[id]
+      delete activeSubscriptions[id] 
     }
+    
+  
     const sub = ({
       cb = activeCallback,
       filter = activeFilters,
