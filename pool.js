@@ -16,7 +16,7 @@ export function relayPool() {
   }
   
   //map with all the relays where the url is the id
-  //Map<string,Relay>
+  //Map<string,{relay:Relay,policy:RelayPolicy>
   const relays = {}
   const noticeCallbacks = []
 
