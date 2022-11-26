@@ -93,7 +93,7 @@ declare type RelayPool = {
     setPrivateKey(key: string): void,
     addRelay(url: string, opts?: RelayPolicy): Relay,
     removeRelay(url:string):void,
-    getRelayList():Relay[],
+    getRelayList():{url:string,policy:RelayPolicy}[],
     relayChangePolicy():Relay,
     sub(opts: SubscriptionOptions, id?: string): Subscription,
     publish(event: Event, cb: PoolPublishCallback): Promise<Event>,
