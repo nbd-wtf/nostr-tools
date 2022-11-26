@@ -125,6 +125,20 @@ export function relayPool() {
       relay.close()
       delete relays[relayURL]
     },
+    //getRelayList return an array with all the relays stored
+    getRelayList() {
+      return Object.values(relays)
+    },
+
+    relayChangePolicy(url, policy = {read: true, write: true}) {
+      let relayURL = normalizeRelayURL(url)
+      let data = relays[relayURL]
+      if (!data) return
+
+      relays[relayURL].policy = policy
+
+      return relays[relayURL]
+    },
     onNotice(cb) {
       noticeCallbacks.push(cb)
     },

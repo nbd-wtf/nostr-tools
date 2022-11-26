@@ -83,7 +83,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
       if (data.length >= 1) {
         switch (data[0]) {
           case 'NOTICE':
-            if (data.length != 2) {
+            if (data.length !== 2) {
               // ignore empty or malformed notice
               return
             }
@@ -91,7 +91,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
             onNotice(data[1])
             return
           case 'EOSE':
-            if (data.length != 2) {
+            if (data.length !== 2) {
               // ignore malformed EOSE
               return
             }
@@ -101,7 +101,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
             }
             return
           case 'EVENT':
-            if (data.length != 3) {
+            if (data.length !== 3) {
               // ignore malformed EVENT
               return
             }
@@ -114,6 +114,13 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
               eventListeners[channel](event)
             }
             return
+
+            case 'OK':
+              if (data.length !== 4) {
+                // ignore malformed EVENT
+                return
+              }
+              return
         }
       }
     }

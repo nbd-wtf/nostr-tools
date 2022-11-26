@@ -92,6 +92,9 @@ declare type PoolPublishCallback = (status: number, relay: string) => void;
 declare type RelayPool = {
     setPrivateKey(key: string): void,
     addRelay(url: string, opts?: RelayPolicy): Relay,
+    removeRelay(url:string):void,
+    getRelayList():Relay[],
+    relayChangePolicy():Relay,
     sub(opts: SubscriptionOptions, id?: string): Subscription,
     publish(event: Event, cb: PoolPublishCallback): Promise<Event>,
     close: () => void,
