@@ -118,9 +118,11 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
           case 'OK':
             if (data.length !== 4) {
               // ignore malformed EVENT
+              return
+            }
+            if (pendingConfirmations[event.id]) {
               pendingConfirmations[event.id]()
               delete pendingConfirmations[event.id]
-              return
             }
         }
       }
