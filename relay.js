@@ -30,6 +30,7 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
   var eventListeners = {}
   var eoseListeners = {}
+  var pendingConfirmations = {}
 
   function connect() {
     ws = new WebSocket(url)
@@ -114,6 +115,13 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
               eventListeners[channel](event)
             }
             return
+          case 'OK':
+            if (data.length !== 4) {
+              // ignore malformed EVENT
+              pendingConfirmations[event.id]()
+              delete pendingConfirmations[event.id]
+              return
+            }
         }
       }
     }
@@ -124,6 +132,19 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
   try {
     connect()
   } catch (err) {}
+
+  async function trySendWithConfirmation(params) {
+        trySend(params)
+        switch (params[0]) {
+          case 'EVENT':
+            const event = params[1]
+            return new Promise(resolve => {
+              pendingConfirmations[event.id] = resolve
+            })
+          default:
+            break
+        }
+  }
 
   async function trySend(params) {
     let msg = JSON.stringify(params)
@@ -178,6 +199,9 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
   return {
     url,
     sub,
+    async publishWithConfirmation(event) {
+      return trySendWithConfirmation(['EVENT', event])
+    },
     async publish(event, statusCallback) {
       try {
         await trySend(['EVENT', event])
