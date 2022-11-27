@@ -14,7 +14,6 @@ export function relayPool() {
     // been published -- or at least attempted to be published -- to all relays
     wait: false
   }
-  
   //map with all the relays where the url is the id
   //Map<string,{relay:Relay,policy:RelayPolicy>
   const relays = {}
@@ -31,7 +30,6 @@ export function relayPool() {
 
   //sub creates a Subscription object {sub:Function, unsub:Function, addRelay:Function,removeRelay :Function }
   const sub = ({cb, filter, beforeSend}, id, cbEose) => {
-    
     //check if it has an id, if not assign one
     if (!id) id = Math.random().toString().slice(2)
     const subControllers = Object.fromEntries(
@@ -39,7 +37,7 @@ export function relayPool() {
       Object.values(relays)
          //takes only relays that can be read
         .filter(({policy}) => policy.read)
-         //iterate all the rellies and create the array [url:string,sub:SubscriptionCallback] 
+         //iterate all the rellies and create the array [url:string,sub:SubscriptionCallback]
         .map(({relay}) => [
           relay.url,
           relay.sub({cb: event => cb(event, relay.url), filter, beforeSend}, id,
@@ -51,14 +49,13 @@ export function relayPool() {
     const activeFilters = filter //assigng filter for the suscrition
     const activeBeforeSend = beforeSend //assign before send fucntion
 
-    //Unsub deletes itself 
+    //Unsub deletes itself
     const unsub = () => {
-      //iterate the map of subControllers and call the unsub function of it relays 
+      //iterate the map of subControllers and call the unsub function of it relays
       Object.values(subControllers).forEach(sub => sub.unsub())
-      delete activeSubscriptions[id] 
+      delete activeSubscriptions[id]
     }
-    
-  
+
     const sub = ({
       cb = activeCallback,
       filter = activeFilters,
@@ -165,12 +162,10 @@ export function relayPool() {
       let index = noticeCallbacks.indexOf(cb)
       if (index !== -1) noticeCallbacks.splice(index, 1)
     },
-    
-    //publish send a event to the relays 
+    //publish send a event to the relays
     async publish(event, statusCallback) {
       event.id = getEventHash(event)
-      
-      //if the event is not signed then sign it 
+      //if the event is not signed then sign it
       if (!event.sig) {
         event.tags = event.tags || []
 
