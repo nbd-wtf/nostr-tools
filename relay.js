@@ -114,13 +114,6 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
               eventListeners[channel](event)
             }
             return
-
-            case 'OK':
-              if (data.length !== 4) {
-                // ignore malformed EVENT
-                return
-              }
-              return
         }
       }
     }
