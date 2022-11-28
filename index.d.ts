@@ -16,6 +16,8 @@ declare enum EventKind {
 
 // event.js
 declare type Event = {
+    signature?:Buffer,
+    id?:string
     kind: EventKind,
     pubkey?: string,
     content: string,
