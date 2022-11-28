@@ -16,7 +16,7 @@ declare enum EventKind {
 
 // event.js
 declare type Event = {
-    signature?:Buffer,
+    signature?:string,
     id?:string
     kind: EventKind,
     pubkey?: string,
@@ -30,7 +30,7 @@ declare function serializeEvent(event: Event): string;
 declare function getEventHash(event: Event): string;
 declare function validateEvent(event: Event): boolean;
 declare function validateSignature(event: Event): boolean;
-declare function signEvent(event: Event, key: PrivKey): Promise<[Uint8Array, number]>;
+declare function signEvent(event: Event, key: PrivKey): Promise<string>;
 
 // filter.js
 declare type Filter = {
