@@ -104,7 +104,8 @@ declare type RelayPool = {
 declare function relayPool(): RelayPool;
 
 // nip04.js
-
+declare function  decrypt(privkey: string, pubkey: string, ciphertext: string): string;
+declare function  encrypt(privkey: string, pubkey: string, text: string): string;
 // nip05.js
 
 // nip06.js
