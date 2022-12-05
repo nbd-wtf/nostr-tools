@@ -19,7 +19,7 @@ declare type Event = {
     kind: EventKind,
     pubkey?: string,
     content: string,
-    tags: string[],
+    tags: string[][],
     created_at: number,
 };
 
