@@ -14,9 +14,9 @@ export function normalizeRelayURL(url) {
 }
 
 export function relayInit(url) {
-  url = normalizeRelayURL(url)
+  let relay = normalizeRelayURL(url) // set relay url
 
-  var ws, resolveOpen, untilOpen, wasClosed
+  var ws, resolveOpen, untilOpen, wasClosed, closed
   var openSubs = {}
   var listeners = {
     event: { '_': [] },
@@ -36,11 +36,10 @@ export function relayInit(url) {
   }
 
   function connectRelay() {
-    ws = new WebSocket(url)
+    ws = new WebSocket(relay)
 
     ws.onopen = () => {
-      console.log('connected to', url)
-      listeners.connection._.forEach(cb => cb(url))
+      listeners.connection._.forEach(cb => cb({ type: 'connection', relay }))
       resolveOpen()
 
       // restablish old subscriptions
@@ -51,12 +50,12 @@ export function relayInit(url) {
         }
       }
     }
-    ws.onerror = err => {
-      console.log('error connecting to relay', url)
-      listeners.error._.forEach(cb => cb(err))
+    ws.onerror = error => {
+      listeners.error._.forEach(cb => cb({ type: 'error', relay, error }))
     }
     ws.onclose = async () => {
-      listeners.disconnection._.forEach(cb => cb(url))
+      listeners.disconnection._.forEach(cb => cb({ type: 'disconnection', relay }))
+      if (closed) return
       resetOpenState()
       attemptNumber++
       nextAttemptSeconds += attemptNumber ** 3
@@ -64,9 +63,13 @@ export function relayInit(url) {
         nextAttemptSeconds = 14400 // 4 hours
       }
       console.log(
-        `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
+        `relay ${relay} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
       )
-      setTimeout(await connect(), nextAttemptSeconds * 1000)
+      setTimeout(async () => {
+        try {
+          connectRelay()
+        } catch (err) { }
+      }, nextAttemptSeconds * 1000)
 
       wasClosed = true
     }
@@ -81,35 +84,32 @@ export function relayInit(url) {
 
       if (data.length >= 1) {
         switch (data[0]) {
-          case 'NOTICE':
-            if (data.length !== 2) {
-              // ignore empty or malformed notice
-              return
-            }
-            if (listeners.notice._.length) listeners.notice._.forEach(cb => cb(data[1]))
-            return
-          case 'EOSE':
-            if (data.length !== 2) {
-              // ignore malformed EOSE
-              return
-            }
-            if (listeners.eose[data[1]]?.length) listeners.eose[data[1]].forEach(cb => cb())
-            if (listeners.eose._.length) listeners.eose._.forEach(cb => cb())
-            return
           case 'EVENT':
-            if (data.length !== 3) {
-              // ignore malformed EVENT
-              return
-            }
+            if (data.length !== 3) return // ignore empty or malformed EVENT
+
             let id = data[1]
             let event = data[2]
             if (validateEvent(event) && openSubs[id] &&
               (openSubs[id].skipVerification || verifySignature(event)) &&
               matchFilters(openSubs[id].filter, event)
             ) {
-              if (listeners.event[id]?.length) listeners.event[id].forEach(cb => cb(event))
-              if (listeners.event._.length) listeners.event._.forEach(cb => cb(event))
+              if (listeners.event[id]?.length) listeners.event[id].forEach(cb => cb({ type: 'event', relay, id, event }))
+              if (listeners.event._.length) listeners.event._.forEach(cb => cb({ type: 'event', relay, id, event }))
             }
+            return
+          case 'EOSE': {
+            if (data.length !== 2) return // ignore empty or malformed EOSE
+
+            let id = data[1]
+            if (listeners.eose[id]?.length) listeners.eose[data[1]].forEach(cb => cb({ type: 'eose', relay, id }))
+            if (listeners.eose._.length) listeners.eose._.forEach(cb => cb({ type: 'eose', relay, id }))
+            return
+          }
+          case 'NOTICE':
+            if (data.length !== 2) return // ignore empty or malformed NOTICE
+
+            let notice = data[1]
+            if (listeners.notice._.length) listeners.notice._.forEach(cb => cb({ type: 'notice', relay, notice }))
             return
         }
       }
@@ -119,6 +119,7 @@ export function relayInit(url) {
   resetOpenState()
 
   async function connect() {
+    if (ws?.readyState && ws.readyState === 1) return // ws already open
     try {
       connectRelay()
     } catch (err) { }
@@ -141,25 +142,23 @@ export function relayInit(url) {
     filter = filters
 
     if (beforeSend) {
-      const beforeSendResult = beforeSend({ filter, relay: url, id })
+      const beforeSendResult = beforeSend({ filter, relay, id })
       filter = beforeSendResult.filter
     }
 
-    trySend(['REQ', id, ...filter])
     openSubs[id] = {
       filter,
       beforeSend,
       skipVerification,
     }
-
-    const activeFilters = filter
-    const activeBeforeSend = beforeSend
+    trySend(['REQ', id, ...filter])
 
     return {
       sub: ({
-        filter = activeFilters,
-        beforeSend = activeBeforeSend
-      }) => sub({ filter, beforeSend, skipVerification }, id),
+        filter = openSubs[id].filter,
+        beforeSend = openSubs[id].beforeSend,
+        skipVerification = openSubs[id].skipVerification }
+      ) => sub({ filter, beforeSend, skipVerification }, id),
       unsub: () => {
         delete openSubs[id]
         delete listeners.event[id]
@@ -189,18 +188,14 @@ export function relayInit(url) {
       try {
         await trySend(['EVENT', event])
         if (statusCallback) {
+          let id = `monitor-${event.id.slice(0, 5)}`
           statusCallback(0)
-          let { unsub } = sub(
-            {
-              cb: () => {
-                statusCallback(1)
-                unsub()
-                clearTimeout(willUnsub)
-              },
-              filter: { ids: [event.id] }
-            },
-            `monitor-${event.id.slice(0, 5)}`
-          )
+          let { unsub } = sub({ filter: { ids: [event.id] } }, id)
+          on('event', () => {
+            statusCallback(1)
+            unsub()
+            clearTimeout(willUnsub)
+          }, id)
           let willUnsub = setTimeout(unsub, 5000)
         }
       } catch (err) {
@@ -209,6 +204,7 @@ export function relayInit(url) {
     },
     connect,
     close() {
+      closed = true // prevent ws from trying to reconnect
       ws.close()
     },
     get status() {
