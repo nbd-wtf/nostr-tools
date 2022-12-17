@@ -1,5 +1,5 @@
-import {getEventHash, verifySignature, signEvent} from './event.js'
-import {relayConnect, normalizeRelayURL} from './relay.js'
+import { getEventHash, verifySignature, signEvent } from './event.js'
+import { relayInit, normalizeRelayURL } from './relay.js'
 
 export function relayPool() {
   var globalPrivateKey
@@ -14,88 +14,107 @@ export function relayPool() {
     // been published -- or at least attempted to be published -- to all relays
     wait: false
   }
-  
-  //map with all the relays where the url is the id
-  //Map<string,{relay:Relay,policy:RelayPolicy>
+
+  // map with all the relays where the url is the id
+  // Map<string,{relay:Relay,policy:RelayPolicy>
   const relays = {}
-  const noticeCallbacks = []
-
-  function propagateNotice(notice, relayURL) {
-    for (let i = 0; i < noticeCallbacks.length; i++) {
-      let {relay} = relays[relayURL]
-      noticeCallbacks[i](notice, relay)
-    }
-  }
-
+  const openSubs = {}
   const activeSubscriptions = {}
+  const poolListeners = { notice: [], connection: [], disconnection: [], error: [] }
 
-  //sub creates a Subscription object {sub:Function, unsub:Function, addRelay:Function,removeRelay :Function }
-  const sub = ({cb, filter, beforeSend}, id, cbEose) => {
-    
-    //check if it has an id, if not assign one
+  // sub creates a Subscription object {sub:Function, unsub:Function, addRelay:Function,removeRelay :Function }
+  const sub = ({ filter, beforeSend, skipVerification }, id) => {
+
+    // check if it has an id, if not assign one
     if (!id) id = Math.random().toString().slice(2)
+    // save sub settings
+    openSubs[id] = {
+      filter,
+      beforeSend,
+      skipVerification,
+    }
+
+    const subListeners = { event: [], eose: [] }
     const subControllers = Object.fromEntries(
-      //Convert the map<string,Relay> to a Relay[]
+      // Convert the map<string,Relay> to a Relay[]
       Object.values(relays)
-         //takes only relays that can be read
-        .filter(({policy}) => policy.read)
-         //iterate all the rellies and create the array [url:string,sub:SubscriptionCallback] 
-        .map(({relay}) => [
+        // takes only relays that can be read
+        .filter(({ policy }) => policy.read)
+        // iterate all the relays and create the array [url:string,sub:SubscriptionCallback, listeners] 
+        .map(({ relay }) => [
           relay.url,
-          relay.sub({cb: event => cb(event, relay.url), filter, beforeSend}, id,
-          () => cbEose(relay.url))
+          relay.sub(openSubs[id], id),
         ])
     )
 
-    const activeCallback = cb //assign callback for the suscription
-    const activeFilters = filter //assigng filter for the suscrition
-    const activeBeforeSend = beforeSend //assign before send fucntion
-
-    //Unsub deletes itself 
+    // Unsub deletes itself 
     const unsub = () => {
-      //iterate the map of subControllers and call the unsub function of it relays 
+      // iterate the map of subControllers and call the unsub function of it relays 
       Object.values(subControllers).forEach(sub => sub.unsub())
-      delete activeSubscriptions[id] 
+      delete openSubs[id]
+      delete activeSubscriptions[id]
     }
-    
-  
+
+
     const sub = ({
-      cb = activeCallback,
-      filter = activeFilters,
-      beforeSend = activeBeforeSend
-    }) => {
-      //Iterates the subControllers and add them the atributes of our Subscription (callback, filter,etc.)
-      Object.entries(subControllers).map(([relayURL, sub]) => [
-        relayURL,
-        sub.sub({cb: event => cb(event, relayURL), filter, beforeSend}, id,
-          () => cbEose(relayURL))
-      ])
-      //returns the current suscripcion
+      filter = openSubs[id].filter,
+      beforeSend = openSubs[id].beforeSend,
+      skipVerification = openSubs[id].skipVerification }
+    ) => {
+      // update sub settings
+      openSubs[id] = {
+        filter,
+        beforeSend,
+        skipVerification,
+      }
+      // update relay subs
+      Object.entries(subControllers).forEach(([relayURL, sub]) => {
+        sub.sub(openSubs[id], id)
+      })
+
+      // returns the current suscripcion
       return activeSubscriptions[id]
     }
-    //addRelay adds a relay to the subControllers map so the current subscription can use it
+    // addRelay adds a relay to the subControllers map so the current subscription can use it
     const addRelay = relay => {
-      subControllers[relay.url] = relay.sub(
-        {cb: event => cb(event, relay.url), filter, beforeSend},
-        id, () => cbEose(relay.url)
-      )
+      for (let type of Object.keys(subListeners)) {
+        if (subListeners[type].length) subListeners[type].forEach(cb => relay.on(type, cb, id))
+      }
+      subControllers[relay.url] = relay.sub(openSubs[id], id)
       return activeSubscriptions[id]
     }
-    //removeRelay deletes a relay from the subControllers map, it also handles the unsubscription from the relay
+    // removeRelay deletes a relay from the subControllers map, it also handles the unsubscription from the relay
     const removeRelay = relayURL => {
       if (relayURL in subControllers) {
         subControllers[relayURL].unsub()
+        delete subControllers[relayURL]
         if (Object.keys(subControllers).length === 0) unsub()
       }
       return activeSubscriptions[id]
     }
+    // on creates listener for sub ('EVENT', 'EOSE', etc)
+    const on = (type, cb) => {
+      subListeners[type].push(cb)
+      Object.values(relays).filter(({ policy }) => policy.read).forEach(({ relay }) => relay.on(type, cb, id))
+      return activeSubscriptions[id]
+    }
+    // off destroys listener for sub ('EVENT', 'EOSE', etc)
+    const off = (type, cb) => {
+      if (!subListeners[type].length) return
+      let index = subListeners[type].indexOf(cb)
+      if (index !== -1) subListeners[type].splice(index, 1)
+      Object.values(relays).forEach(({ relay }) => relay.off(type, cb, id))
+      return activeSubscriptions[id]
+    }
 
-    //add the object created to activeSubscriptions map
+    // add the object created to activeSubscriptions map
     activeSubscriptions[id] = {
       sub,
       unsub,
       addRelay,
-      removeRelay
+      removeRelay,
+      on,
+      off
     }
 
     return activeSubscriptions[id]
@@ -113,64 +132,72 @@ export function relayPool() {
     setPolicy(key, value) {
       poolPolicy[key] = value
     },
-    //addRelay adds a relay to the pool and to all its subscriptions
-    addRelay(url, policy = {read: true, write: true}) {
+    // addRelay adds a relay to the pool and to all its subscriptions
+    addRelay(url, policy = { read: true, write: true }) {
       let relayURL = normalizeRelayURL(url)
       if (relayURL in relays) return
 
-      let relay = relayConnect(url, notice => {
-        propagateNotice(notice, relayURL)
-      })
-      relays[relayURL] = {relay, policy}
+      let relay = relayInit(url)
+
+      for (let type of Object.keys(poolListeners)) {
+        let cbs = poolListeners[type] || []
+        if (cbs.length) poolListeners[type].forEach(cb => relay.on(type, cb))
+      }
 
       if (policy.read) {
-        Object.values(activeSubscriptions).forEach(subscription =>
-          subscription.addRelay(relay)
-        )
+        Object.values(activeSubscriptions).forEach(sub => sub.addRelay(relay))
       }
+      relay.connect()
+      relays[relayURL] = { relay, policy }
 
       return relay
     },
-    //remove relay deletes the relay from the pool and from all its subscriptions
+    // remove relay deletes the relay from the pool and from all its subscriptions
     removeRelay(url) {
       let relayURL = normalizeRelayURL(url)
       let data = relays[relayURL]
       if (!data) return
 
-      let {relay} = data
-      Object.values(activeSubscriptions).forEach(subscription =>
-        subscription.removeRelay(relay)
-      )
+      let { relay } = data
+      Object.values(activeSubscriptions).forEach(sub => sub.removeRelay(relayURL))
       relay.close()
       delete relays[relayURL]
     },
-    //getRelayList return an array with all the relays stored
+    // getRelayList return an array with all the relays stored
     getRelayList() {
       return Object.values(relays)
     },
 
-    relayChangePolicy(url, policy = {read: true, write: true}) {
+    relayChangePolicy(url, policy = { read: true, write: true }) {
       let relayURL = normalizeRelayURL(url)
       let data = relays[relayURL]
       if (!data) return
 
-      relays[relayURL].policy = policy
+      let { relay } = data
+      if (relays[relayURL].policy.read === true && policy.read === false)
+        Object.values(activeSubscriptions).forEach(sub => sub.removeRelay(relayURL))
+      else if (relays[relayURL].policy.read === false && policy.read === true)
+        Object.values(activeSubscriptions).forEach(sub => sub.addRelay(relay));
 
+      relays[relayURL].policy = policy
       return relays[relayURL]
     },
-    onNotice(cb) {
-      noticeCallbacks.push(cb)
+    on(type, cb) {
+      poolListeners[type] = poolListeners[type] || []
+      poolListeners[type].push(cb)
+      Object.values(relays).forEach(({ relay }) => relay.on(type, cb))
     },
-    offNotice(cb) {
-      let index = noticeCallbacks.indexOf(cb)
-      if (index !== -1) noticeCallbacks.splice(index, 1)
+    off(type, cb) {
+      let index = poolListeners[type].indexOf(cb)
+      if (index !== -1) poolListeners[type].splice(index, 1)
+      Object.values(relays).forEach(({ relay }) => relay.off(type, cb))
     },
-    
-    //publish send a event to the relays 
+
+    // publish send a event to the relays 
     async publish(event, statusCallback) {
       event.id = getEventHash(event)
-      
-      //if the event is not signed then sign it 
+
+      // if the event is not signed then sign it 
       if (!event.sig) {
         event.tags = event.tags || []
 
@@ -195,9 +222,9 @@ export function relayPool() {
         }
       }
 
-      //get the writable relays
+      // get the writable relays
       let writeable = Object.values(relays)
-        .filter(({policy}) => policy.write)
+        .filter(({ policy }) => policy.write)
         .sort(() => Math.random() - 0.5) // random
 
       let maxTargets = poolPolicy.randomChoice
@@ -206,10 +233,10 @@ export function relayPool() {
 
       let successes = 0
 
-      //if the pool policy set to want until event send
+      // if the pool policy set to wait until event send
       if (poolPolicy.wait) {
         for (let i = 0; i < writeable.length; i++) {
-          let {relay} = writeable[i]
+          let { relay } = writeable[i]
 
           try {
             await new Promise(async (resolve, reject) => {
@@ -231,9 +258,9 @@ export function relayPool() {
             /***/
           }
         }
-        //if the pool policy dont  want to wait  until event send
+        // if the pool policy dont  want to wait  until event send
       } else {
-        writeable.forEach(async ({relay}) => {
+        writeable.forEach(async ({ relay }) => {
           let callback = statusCallback
             ? status => statusCallback(status, relay.url)
             : null

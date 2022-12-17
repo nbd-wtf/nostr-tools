@@ -2,8 +2,8 @@
 
 import 'websocket-polyfill'
 
-import {verifySignature, validateEvent} from './event.js'
-import {matchFilters} from './filter.js'
+import { verifySignature, validateEvent } from './event.js'
+import { matchFilters } from './filter.js'
 
 export function normalizeRelayURL(url) {
   let [host, ...qs] = url.trim().split('?')
@@ -13,12 +13,19 @@ export function normalizeRelayURL(url) {
   return [host, ...qs].join('?')
 }
 
-export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
-  url = normalizeRelayURL(url)
+export function relayInit(url) {
+  let relay = normalizeRelayURL(url) // set relay url
 
-  var ws, resolveOpen, untilOpen, wasClosed
+  var ws, resolveOpen, untilOpen, wasClosed, closed
   var openSubs = {}
-  var isSetToSkipVerification = {}
+  var listeners = {
+    event: { '_': [] },
+    eose: { '_': [] },
+    connection: { '_': [] },
+    disconnection: { '_': [] },
+    error: { '_': [] },
+    notice: { '_': [] },
+  }
   let attemptNumber = 1
   let nextAttemptSeconds = 1
 
@@ -28,32 +35,27 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     })
   }
 
-  var eventListeners = {}
-  var eoseListeners = {}
-
-  function connect() {
-    ws = new WebSocket(url)
+  function connectRelay() {
+    ws = new WebSocket(relay)
 
     ws.onopen = () => {
-      console.log('connected to', url)
+      listeners.connection._.forEach(cb => cb({ type: 'connection', relay }))
       resolveOpen()
 
       // restablish old subscriptions
       if (wasClosed) {
         wasClosed = false
-        for (let channel in openSubs) {
-          let filters = openSubs[channel]
-          let eventCb = eventListeners[channel]
-          let eoseCb = eoseListeners[channel]
-          sub({eventCb, filter: filters}, channel, eoseCb)
+        for (let id in openSubs) {
+          sub(openSubs[id], id)
         }
       }
     }
-    ws.onerror = err => {
-      console.log('error connecting to relay', url)
-      onError(err)
+    ws.onerror = error => {
+      listeners.error._.forEach(cb => cb({ type: 'error', relay, error }))
     }
-    ws.onclose = () => {
+    ws.onclose = async () => {
+      listeners.disconnection._.forEach(cb => cb({ type: 'disconnection', relay }))
+      if (closed) return
       resetOpenState()
       attemptNumber++
       nextAttemptSeconds += attemptNumber ** 3
@@ -61,12 +63,12 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
         nextAttemptSeconds = 14400 // 4 hours
       }
       console.log(
-        `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
+        `relay ${relay} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
       )
       setTimeout(async () => {
         try {
-          connect()
-        } catch (err) {}
+          connectRelay()
+        } catch (err) { }
       }, nextAttemptSeconds * 1000)
 
       wasClosed = true
@@ -82,37 +84,32 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
       if (data.length >= 1) {
         switch (data[0]) {
-          case 'NOTICE':
-            if (data.length !== 2) {
-              // ignore empty or malformed notice
-              return
-            }
-            console.log(`message from relay ${url}: ${data[1]}`)
-            onNotice(data[1])
-            return
-          case 'EOSE':
-            if (data.length !== 2) {
-              // ignore malformed EOSE
-              return
-            }
-            console.log(`Channel ${data[1]}: End-of-stored-events`)
-            if (eoseListeners[data[1]]) {
-              eoseListeners[data[1]]()
-            }
-            return
           case 'EVENT':
-            if (data.length !== 3) {
-              // ignore malformed EVENT
-              return
-            }
-            let channel = data[1]
+            if (data.length !== 3) return // ignore empty or malformed EVENT
+
+            let id = data[1]
             let event = data[2]
-            if (validateEvent(event) &&
-                (isSetToSkipVerification[channel] || verifySignature(event)) &&
-                eventListeners[channel] &&
-                matchFilters(openSubs[channel], event)) {
-              eventListeners[channel](event)
+            if (validateEvent(event) && openSubs[id] &&
+              (openSubs[id].skipVerification || verifySignature(event)) &&
+              matchFilters(openSubs[id].filter, event)
+            ) {
+              if (listeners.event[id]?.length) listeners.event[id].forEach(cb => cb({ type: 'event', relay, id, event }))
+              if (listeners.event._.length) listeners.event._.forEach(cb => cb({ type: 'event', relay, id, event }))
             }
+            return
+          case 'EOSE': {
+            if (data.length !== 2) return // ignore empty or malformed EOSE
+
+            let id = data[1]
+            if (listeners.eose[id]?.length) listeners.eose[data[1]].forEach(cb => cb({ type: 'eose', relay, id }))
+            if (listeners.eose._.length) listeners.eose._.forEach(cb => cb({ type: 'eose', relay, id }))
+            return
+          }
+          case 'NOTICE':
+            if (data.length !== 2) return // ignore empty or malformed NOTICE
+
+            let notice = data[1]
+            if (listeners.notice._.length) listeners.notice._.forEach(cb => cb({ type: 'notice', relay, notice }))
             return
         }
       }
@@ -121,9 +118,12 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
 
   resetOpenState()
 
-  try {
-    connect()
-  } catch (err) {}
+  async function connect() {
+    if (ws?.readyState && ws.readyState === 1) return // ws already open
+    try {
+      connectRelay()
+    } catch (err) { }
+  }
 
   async function trySend(params) {
     let msg = JSON.stringify(params)
@@ -132,75 +132,79 @@ export function relayConnect(url, onNotice = () => {}, onError = () => {}) {
     ws.send(msg)
   }
 
-  const sub = (
-    {cb, filter, beforeSend, skipVerification},
-    channel = Math.random().toString().slice(2),
-    eoseCb
-  ) => {
+  const sub = ({ filter, beforeSend, skipVerification }, id = Math.random().toString().slice(2)) => {
     var filters = []
     if (Array.isArray(filter)) {
       filters = filter
     } else {
       filters.push(filter)
     }
+    filter = filters
 
     if (beforeSend) {
-      const beforeSendResult = beforeSend({filter, relay: url, channel})
-      filters = beforeSendResult.filter
+      const beforeSendResult = beforeSend({ filter, relay, id })
+      filter = beforeSendResult.filter
     }
 
-    trySend(['REQ', channel, ...filters])
-    eventListeners[channel] = cb
-    eoseListeners[channel] = eoseCb
-    openSubs[channel] = filters
-    isSetToSkipVerification[channel] = skipVerification
-
-    const activeCallback = cb
-    const activeFilters = filters
-    const activeBeforeSend = beforeSend
+    openSubs[id] = {
+      filter,
+      beforeSend,
+      skipVerification,
+    }
+    trySend(['REQ', id, ...filter])
 
     return {
       sub: ({
-        cb = activeCallback,
-        filter = activeFilters,
-        beforeSend = activeBeforeSend
-      }) => sub({cb, filter, beforeSend, skipVerification}, channel, eoseCb),
+        filter = openSubs[id].filter,
+        beforeSend = openSubs[id].beforeSend,
+        skipVerification = openSubs[id].skipVerification }
+      ) => sub({ filter, beforeSend, skipVerification }, id),
       unsub: () => {
-        delete openSubs[channel]
-        delete eventListeners[channel]
-        delete eoseListeners[channel]
-        delete isSetToSkipVerification[channel]
-        trySend(['CLOSE', channel])
+        delete openSubs[id]
+        delete listeners.event[id]
+        delete listeners.eose[id]
+        trySend(['CLOSE', id])
       }
     }
+  }
+
+  function on(type, cb, id = '_') {
+    listeners[type][id] = listeners[type][id] || []
+    listeners[type][id].push(cb)
+  }
+
+  function off(type, cb, id = '_') {
+    if (!listeners[type][id].length) return
+    let index = listeners[type][id].indexOf(cb)
+    if (index !== -1) listeners[type][id].splice(index, 1)
   }
 
   return {
     url,
     sub,
+    on,
+    off,
     async publish(event, statusCallback) {
       try {
         await trySend(['EVENT', event])
         if (statusCallback) {
+          let id = `monitor-${event.id.slice(0, 5)}`
           statusCallback(0)
-          let {unsub} = sub(
-            {
-              cb: () => {
-                statusCallback(1)
-                unsub()
-                clearTimeout(willUnsub)
-              },
-              filter: {ids: [event.id]}
-            },
-            `monitor-${event.id.slice(0, 5)}`
-          )
+          let { unsub } = sub({ filter: { ids: [event.id] } }, id)
+          on('event', () => {
+            statusCallback(1)
+            unsub()
+            clearTimeout(willUnsub)
+          }, id)
           let willUnsub = setTimeout(unsub, 5000)
         }
       } catch (err) {
         if (statusCallback) statusCallback(-1)
       }
     },
+    connect,
     close() {
+      closed = true // prevent ws from trying to reconnect
       ws.close()
     },
     get status() {
