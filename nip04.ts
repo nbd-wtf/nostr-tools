@@ -1,9 +1,10 @@
-import aes from 'browserify-cipher'
 import {Buffer} from 'buffer'
 import {randomBytes} from '@noble/hashes/utils'
 import * as secp256k1 from '@noble/secp256k1'
+// @ts-ignore
+import aes from 'browserify-cipher'
 
-export function encrypt(privkey, pubkey, text) {
+export function encrypt(privkey: string, pubkey: string, text: string): string {
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   const normalizedKey = getNormalizedX(key)
 
@@ -19,7 +20,11 @@ export function encrypt(privkey, pubkey, text) {
   return `${encryptedMessage}?iv=${Buffer.from(iv.buffer).toString('base64')}`
 }
 
-export function decrypt(privkey, pubkey, ciphertext) {
+export function decrypt(
+  privkey: string,
+  pubkey: string,
+  ciphertext: string
+): string {
   let [cip, iv] = ciphertext.split('?iv=')
   let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   let normalizedKey = getNormalizedX(key)
@@ -35,8 +40,6 @@ export function decrypt(privkey, pubkey, ciphertext) {
   return decryptedMessage
 }
 
-function getNormalizedX(key) {
-  return typeof key === 'string'
-    ? key.substr(2, 64)
-    : Buffer.from(key.slice(1, 33)).toString('hex')
+function getNormalizedX(key: Uint8Array): string {
+  return Buffer.from(key.slice(1, 33)).toString('hex')
 }

@@ -1,18 +1,29 @@
 import {Buffer} from 'buffer'
+// @ts-ignore
 import createHash from 'create-hash'
 import * as secp256k1 from '@noble/secp256k1'
 
-export function getBlankEvent() {
+export type Event = {
+  id?: string
+  sig?: string
+  kind: number
+  tags: string[][]
+  pubkey: string
+  content: string
+  created_at: number
+}
+
+export function getBlankEvent(): Event {
   return {
     kind: 255,
-    pubkey: null,
+    pubkey: '',
     content: '',
     tags: [],
     created_at: 0
   }
 }
 
-export function serializeEvent(evt) {
+export function serializeEvent(evt: Event): string {
   return JSON.stringify([
     0,
     evt.pubkey,
@@ -23,14 +34,14 @@ export function serializeEvent(evt) {
   ])
 }
 
-export function getEventHash(event) {
+export function getEventHash(event: Event): string {
   let eventHash = createHash('sha256')
     .update(Buffer.from(serializeEvent(event)))
     .digest()
   return Buffer.from(eventHash).toString('hex')
 }
 
-export function validateEvent(event) {
+export function validateEvent(event: Event): boolean {
   if (event.id !== getEventHash(event)) return false
   if (typeof event.content !== 'string') return false
   if (typeof event.created_at !== 'number') return false
@@ -47,11 +58,13 @@ export function validateEvent(event) {
   return true
 }
 
-export function verifySignature(event) {
+export function verifySignature(
+  event: Event & {id: string; sig: string}
+): Promise<boolean> {
   return secp256k1.schnorr.verify(event.sig, event.id, event.pubkey)
 }
 
-export async function signEvent(event, key) {
+export async function signEvent(event: Event, key: string): Promise<string> {
   return Buffer.from(
     await secp256k1.schnorr.sign(getEventHash(event), key)
   ).toString('hex')

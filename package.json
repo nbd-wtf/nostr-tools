@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "0.24.1",
+  "version": "0.25.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -15,32 +15,28 @@
     "browserify-cipher": ">=1",
     "buffer": ">=5",
     "create-hash": "^1.2.0",
-    "cross-fetch": "^3.1.4",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [
     "decentralization",
-    "twitter",
-    "p2p",
-    "mastodon",
-    "ssb",
     "social",
-    "unstoppable",
-    "censorship",
     "censorship-resistance",
-    "client"
+    "client",
+    "nostr"
   ],
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@types/node": "^18.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.46.1",
+    "@typescript-eslint/parser": "^5.46.1",
     "esbuild": "^0.14.38",
     "esbuild-plugin-alias": "^0.2.1",
-    "eslint": "^8.5.0",
+    "eslint": "^8.30.0",
     "eslint-plugin-babel": "^5.3.1",
     "esm-loader-typescript": "^1.0.1",
     "events": "^3.3.0",
     "tsd": "^0.22.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.9.4"
   },
   "scripts": {
     "prepublish": "node build.cjs",

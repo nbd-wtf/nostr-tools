@@ -1,6 +1,5 @@
-import { generatePrivateKey, getPublicKey } from './keys.js'
-import { relayInit } from './relay.js'
-import { relayPool } from './pool.js'
+import {generatePrivateKey, getPublicKey} from './keys'
+import {relayInit} from './relay'
 import {
   getBlankEvent,
   signEvent,
@@ -8,13 +7,12 @@ import {
   verifySignature,
   serializeEvent,
   getEventHash
-} from './event.js'
-import { matchFilter, matchFilters } from './filter.js'
+} from './event'
+import {matchFilter, matchFilters} from './filter'
 
 export {
   generatePrivateKey,
   relayInit,
-  relayPool,
   signEvent,
   validateEvent,
   verifySignature,
@@ -25,4 +23,3 @@ export {
   matchFilter,
   matchFilters
 }
-

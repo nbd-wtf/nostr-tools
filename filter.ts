@@ -1,4 +1,15 @@
-export function matchFilter(filter, event) {
+import {Event} from './event'
+
+export type Filter = {
+  ids?: string[]
+  kinds?: number[]
+  authors?: string[]
+  since?: number
+  until?: number
+  [key: `#${string}`]: string[]
+}
+
+export function matchFilter(filter: Filter, event: Event & {id: string}) {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) return false
   if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
   if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
@@ -6,10 +17,12 @@ export function matchFilter(filter, event) {
 
   for (let f in filter) {
     if (f[0] === '#') {
+      let tagName = f.slice(1)
+      let values = filter[`#${tagName}`]
       if (
-        filter[f] &&
+        values &&
         !event.tags.find(
-          ([t, v]) => t === f.slice(1) && filter[f].indexOf(v) !== -1
+          ([t, v]) => t === f.slice(1) && values.indexOf(v) !== -1
         )
       )
         return false
@@ -22,7 +35,7 @@ export function matchFilter(filter, event) {
   return true
 }
 
-export function matchFilters(filters, event) {
+export function matchFilters(filters: Filter[], event: Event & {id: string}) {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true
   }
