@@ -1,7 +1,7 @@
 import {Buffer} from 'buffer'
 // @ts-ignore
-import createHash from 'create-hash'
 import * as secp256k1 from '@noble/secp256k1'
+import {sha256} from '@noble/hashes/sha256'
 
 export type Event = {
   id?: string
@@ -35,9 +35,7 @@ export function serializeEvent(evt: Event): string {
 }
 
 export function getEventHash(event: Event): string {
-  let eventHash = createHash('sha256')
-    .update(Buffer.from(serializeEvent(event)))
-    .digest()
+  let eventHash = sha256(Buffer.from(serializeEvent(event)))
   return Buffer.from(eventHash).toString('hex')
 }
 

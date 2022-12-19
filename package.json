@@ -14,8 +14,7 @@
     "@scure/bip32": "^1.1.1",
     "@scure/bip39": "^1.1.0",
     "browserify-cipher": ">=1",
-    "buffer": ">=5",
-    "create-hash": "^1.2.0",
+    "buffer": "^6.0.3",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [
