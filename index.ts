@@ -1,25 +1,8 @@
-import {generatePrivateKey, getPublicKey} from './keys'
-import {relayInit} from './relay'
-import {
-  getBlankEvent,
-  signEvent,
-  validateEvent,
-  verifySignature,
-  serializeEvent,
-  getEventHash
-} from './event'
-import {matchFilter, matchFilters} from './filter'
+export * from './keys'
+export * from './relay'
+export * from './event'
+export * from './filter'
 
-export {
-  generatePrivateKey,
-  relayInit,
-  signEvent,
-  validateEvent,
-  verifySignature,
-  serializeEvent,
-  getEventHash,
-  getPublicKey,
-  getBlankEvent,
-  matchFilter,
-  matchFilters
-}
+export * as nip04 from './nip04'
+export * as nip05 from './nip05'
+export * as nip06 from './nip06'

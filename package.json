@@ -10,7 +10,7 @@
   "module": "esm/index.js",
   "dependencies": {
     "@noble/hashes": "^0.5.7",
-    "@noble/secp256k1": "^1.5.2",
+    "@noble/secp256k1": "^1.7.0",
     "@scure/bip32": "^1.1.1",
     "@scure/bip39": "^1.1.0",
     "browserify-cipher": ">=1",
