@@ -9,7 +9,10 @@ export type Filter = {
   [key: `#${string}`]: string[]
 }
 
-export function matchFilter(filter: Filter, event: Event & {id: string}) {
+export function matchFilter(
+  filter: Filter,
+  event: Event & {id: string}
+): boolean {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) return false
   if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
   if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
@@ -35,7 +38,10 @@ export function matchFilter(filter: Filter, event: Event & {id: string}) {
   return true
 }
 
-export function matchFilters(filters: Filter[], event: Event & {id: string}) {
+export function matchFilters(
+  filters: Filter[],
+  event: Event & {id: string}
+): boolean {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true
   }
