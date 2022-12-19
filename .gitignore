@@ -2,5 +2,7 @@ node_modules
 dist
 yarn.lock
 package-lock.json
-nostr.js
 .envrc
+standalone
+cjs
+esm
