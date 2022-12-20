@@ -9,7 +9,7 @@ const {
 } = require('./cjs')
 
 describe('relay interaction', () => {
-  let relay = relayInit('wss://nostr-pub.wellorder.net/')
+  let relay = relayInit('wss://nostr-pub.semisol.dev/')
 
   beforeAll(() => {
     relay.connect()
