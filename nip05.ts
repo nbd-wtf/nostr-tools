@@ -4,7 +4,10 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function searchDomain(domain: string, query = '') {
+export async function searchDomain(
+  domain: string,
+  query = ''
+): Promise<{[name: string]: string}> {
   try {
     let res = await (
       await _fetch(`https://${domain}/.well-known/nostr.json?name=${query}`)
@@ -12,22 +15,17 @@ export async function searchDomain(domain: string, query = '') {
 
     return res.names
   } catch (_) {
-    return []
+    return {}
   }
 }
 
-export async function queryName(fullname: string) {
-  try {
-    let [name, domain] = fullname.split('@')
-    if (!domain) return null
+export async function queryName(fullname: string): Promise<string> {
+  let [name, domain] = fullname.split('@')
+  if (!domain) throw new Error('invalid identifier, must contain an @')
 
-    let res = await (
-      await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
-    ).json()
+  let res = await (
+    await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+  ).json()
 
-    return res.names && res.names[name]
-  } catch (e) {
-    console.error(`${e}`)
-    return null
-  }
+  return res.names && res.names[name]
 }
