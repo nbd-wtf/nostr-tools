@@ -6,3 +6,4 @@ package-lock.json
 standalone
 cjs
 esm
+test.html

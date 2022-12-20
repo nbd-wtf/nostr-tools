@@ -5,20 +5,12 @@ import 'websocket-polyfill'
 import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
 
-export function normalizeRelayURL(url: string): string {
-  let [host, ...qs] = url.trim().split('?')
-  if (host.slice(0, 4) === 'http') host = 'ws' + host.slice(4)
-  if (host.slice(0, 2) !== 'ws') host = 'wss://' + host
-  if (host.length && host[host.length - 1] === '/') host = host.slice(0, -1)
-  return [host, ...qs].join('?')
-}
-
 export type Relay = {
   url: string
   status: number
   connect: () => void
   close: () => void
-  sub: (opts: SubscriptionOptions) => Sub
+  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
   publish: (event: Event) => Pub
   on: (type: 'connect' | 'disconnect' | 'notice', cb: any) => void
   off: (type: 'connect' | 'disconnect' | 'notice', cb: any) => void
@@ -28,27 +20,25 @@ export type Pub = {
   off: (type: 'ok' | 'seen' | 'failed', cb: any) => void
 }
 export type Sub = {
-  sub: (opts: SubscriptionOptions) => Sub
+  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
   unsub: () => void
   on: (type: 'event' | 'eose', cb: any) => void
   off: (type: 'event' | 'eose', cb: any) => void
 }
 
 type SubscriptionOptions = {
-  filters: Filter[]
   skipVerification?: boolean
   id?: string
 }
 
 export function relayInit(url: string): Relay {
-  let relay = normalizeRelayURL(url) // set relay url
-
   var ws: WebSocket
   var resolveOpen: () => void
+  var resolveClose: () => void
   var untilOpen: Promise<void>
   var wasClosed: boolean
   var closed: boolean
-  var openSubs: {[id: string]: SubscriptionOptions} = {}
+  var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
     disconnect: Array<() => void>
@@ -65,16 +55,17 @@ export function relayInit(url: string): Relay {
       event: Array<(event: Event) => void>
       eose: Array<() => void>
     }
-  }
+  } = {}
   var pubListeners: {
     [eventid: string]: {
       ok: Array<() => void>
       seen: Array<() => void>
       failed: Array<(reason: string) => void>
     }
-  }
+  } = {}
   let attemptNumber = 1
   let nextAttemptSeconds = 1
+  let isConnected = false
 
   function resetOpenState() {
     untilOpen = new Promise(resolve => {
@@ -83,26 +74,37 @@ export function relayInit(url: string): Relay {
   }
 
   function connectRelay() {
-    ws = new WebSocket(relay)
+    ws = new WebSocket(url)
 
     ws.onopen = () => {
       listeners.connect.forEach(cb => cb())
       resolveOpen()
+      isConnected = true
 
       // restablish old subscriptions
       if (wasClosed) {
         wasClosed = false
         for (let id in openSubs) {
-          sub(openSubs[id])
+          let {filters} = openSubs[id]
+          sub(filters, openSubs[id])
         }
       }
     }
     ws.onerror = () => {
+      isConnected = false
       listeners.error.forEach(cb => cb())
     }
     ws.onclose = async () => {
+      isConnected = false
       listeners.disconnect.forEach(cb => cb())
-      if (closed) return
+
+      if (closed) {
+        // we've closed this because we wanted, so end everything
+        resolveClose()
+        return
+      }
+
+      // otherwise keep trying to reconnect
       resetOpenState()
       attemptNumber++
       nextAttemptSeconds += attemptNumber ** 3
@@ -110,7 +112,7 @@ export function relayInit(url: string): Relay {
         nextAttemptSeconds = 14400 // 4 hours
       }
       console.log(
-        `relay ${relay} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
+        `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
       )
       setTimeout(async () => {
         try {
@@ -187,11 +189,13 @@ export function relayInit(url: string): Relay {
     ws.send(msg)
   }
 
-  const sub = ({
-    filters,
-    skipVerification = false,
-    id = Math.random().toString().slice(2)
-  }: SubscriptionOptions): Sub => {
+  const sub = (
+    filters: Filter[],
+    {
+      skipVerification = false,
+      id = Math.random().toString().slice(2)
+    }: SubscriptionOptions = {}
+  ): Sub => {
     let subid = id
 
     openSubs[subid] = {
@@ -202,10 +206,11 @@ export function relayInit(url: string): Relay {
     trySend(['REQ', subid, ...filters])
 
     return {
-      sub: ({
-        filters = openSubs[subid].filters,
-        skipVerification = openSubs[subid].skipVerification
-      }) => sub({filters, skipVerification, id: subid}),
+      sub: (newFilters, newOpts = {}) =>
+        sub(newFilters || filters, {
+          skipVerification: newOpts.skipVerification || skipVerification,
+          id: subid
+        }),
       unsub: () => {
         delete openSubs[subid]
         delete subListeners[subid]
@@ -230,6 +235,9 @@ export function relayInit(url: string): Relay {
     sub,
     on: (type: 'connect' | 'disconnect' | 'notice', cb: any): void => {
       listeners[type].push(cb)
+      if (type === 'connect' && isConnected) {
+        cb()
+      }
     },
     off: (type: 'connect' | 'disconnect' | 'notice', cb: any): void => {
       let index = listeners[type].indexOf(cb)
@@ -253,8 +261,7 @@ export function relayInit(url: string): Relay {
         .catch(() => {})
 
       const startMonitoring = () => {
-        let monitor = sub({
-          filters: [{ids: [id]}],
+        let monitor = sub([{ids: [id]}], {
           id: `monitor-${id.slice(0, 5)}`
         })
         let willUnsub = setTimeout(() => {
@@ -290,9 +297,12 @@ export function relayInit(url: string): Relay {
       }
     },
     connect,
-    close() {
+    close(): Promise<void> {
       closed = true // prevent ws from trying to reconnect
       ws.close()
+      return new Promise(resolve => {
+        resolveClose = resolve
+      })
     },
     get status() {
       return ws.readyState

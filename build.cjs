@@ -11,10 +11,6 @@ let common = {
       stream: require.resolve('readable-stream')
     })
   ],
-  define: {
-    window: 'self',
-    global: 'self'
-  },
   sourcemap: 'external'
 }
 
@@ -31,6 +27,11 @@ esbuild
     ...common,
     outdir: 'standalone/',
     format: 'iife',
-    globalName: 'NostrTools'
+    globalName: 'NostrTools',
+    define: {
+      window: 'self',
+      global: 'self',
+      process: '{"env": {}}'
+    }
   })
   .then(() => console.log('standalone build success.'))
