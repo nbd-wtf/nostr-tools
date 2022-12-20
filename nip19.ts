@@ -1,12 +1,12 @@
 import * as secp256k1 from '@noble/secp256k1'
 import {bech32} from 'bech32'
 
-type ProfilePointer = {
+export type ProfilePointer = {
   pubkey: string // hex
   relays?: string[]
 }
 
-type EventPointer = {
+export type EventPointer = {
   id: string // hex
   relays?: string[]
 }
