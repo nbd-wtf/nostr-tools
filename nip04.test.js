@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-const {nip04, getPublicKey, generatePrivateKey} = require('./cjs')
+const {nip04, getPublicKey, generatePrivateKey} = require('./lib/nostr.cjs')
 
 test('encrypt and decrypt message', () => {
   let sk1 = generatePrivateKey()

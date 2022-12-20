@@ -153,7 +153,7 @@ Please consult the tests or [the source code](https://github.com/fiatjaf/nostr-t
 ### Using from the browser (if you don't want to use a bundler)
 
 ```html
-<script src="https://unpkg.com/nostr-tools/standalone/index.js"></script>
+<script src="https://unpkg.com/nostr-tools/nostr.bundle.js"></script>
 <script>
   window.NostrTools.generatePrivateKey('...') // and so on
 </script>

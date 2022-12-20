@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-const {generatePrivateKey, getPublicKey} = require('./cjs')
+const {generatePrivateKey, getPublicKey} = require('./lib/nostr.cjs')
 
 test('test private key generation', () => {
   expect(generatePrivateKey()).toMatch(/[a-f0-9]{64}/)

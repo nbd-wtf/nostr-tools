@@ -6,7 +6,7 @@ const {
   getPublicKey,
   getEventHash,
   signEvent
-} = require('./cjs')
+} = require('./lib/nostr.cjs')
 
 describe('relay interaction', () => {
   let relay = relayInit('wss://nostr-pub.semisol.dev/')

@@ -3,7 +3,5 @@ dist
 yarn.lock
 package-lock.json
 .envrc
-standalone
-cjs
-esm
+lib
 test.html

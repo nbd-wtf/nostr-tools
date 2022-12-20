@@ -1,13 +1,13 @@
 {
   "name": "nostr-tools",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-alpha2",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
     "url": "https://github.com/fiatjaf/nostr-tools.git"
   },
-  "main": "cjs/index.js",
-  "module": "esm/index.js",
+  "main": "lib/nostr.cjs.js",
+  "module": "lib/nostr.esm.js",
   "dependencies": {
     "@noble/hashes": "^0.5.7",
     "@noble/secp256k1": "^1.7.0",
@@ -40,8 +40,8 @@
     "typescript": "^4.9.4"
   },
   "scripts": {
-    "build": "node build.cjs",
-    "pretest": "node build.cjs",
+    "build": "node build.js",
+    "pretest": "node build.js",
     "test": "jest"
   }
 }

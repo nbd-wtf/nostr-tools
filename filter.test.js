@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-const {matchFilters} = require('./cjs')
+const {matchFilters} = require('./lib/nostr.cjs')
 
 test('test if filters match', () => {
   ;[

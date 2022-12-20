@@ -15,17 +15,27 @@ let common = {
 }
 
 esbuild
-  .build({...common, outdir: 'esm/', format: 'esm', packages: 'external'})
+  .build({
+    ...common,
+    outfile: 'lib/nostr.esm.js',
+    format: 'esm',
+    packages: 'external'
+  })
   .then(() => console.log('esm build success.'))
 
 esbuild
-  .build({...common, outdir: 'cjs/', format: 'cjs', packages: 'external'})
+  .build({
+    ...common,
+    outfile: 'lib/nostr.cjs.js',
+    format: 'cjs',
+    packages: 'external'
+  })
   .then(() => console.log('cjs build success.'))
 
 esbuild
   .build({
     ...common,
-    outdir: 'standalone/',
+    outfile: 'lib/nostr.bundle.js',
     format: 'iife',
     globalName: 'NostrTools',
     define: {

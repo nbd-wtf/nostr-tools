@@ -1,6 +1,8 @@
 name: test every commit
 on:
-  - push
+  push:
+    branches:
+      - master
 
 jobs:
   test:
@@ -11,5 +13,5 @@ jobs:
         with:
           node-version: 18
       - run: yarn --ignore-engines
-      - run: node build.cjs
+      - run: node build.js
       - run: yarn test

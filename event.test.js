@@ -6,7 +6,7 @@ const {
   signEvent,
   getEventHash,
   getPublicKey
-} = require('./cjs')
+} = require('./lib/nostr.cjs')
 
 const event = {
   id: 'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027',
