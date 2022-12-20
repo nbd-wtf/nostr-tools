@@ -112,6 +112,50 @@ pub.on('failed', reason => {
 await relay.close()
 ```
 
+### Querying profile data from a NIP-05 address
+
+```js
+import {nip05} from 'nostr-tools'
+
+let profile = await nip05.queryProfile('jb55.com')
+console.log(profile.pubkey)
+// prints: 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245
+console.log(profile.relays)
+// prints: [wss://relay.damus.io]
+
+// on nodejs, install node-fetch@2 and call this first:
+nip05.useFetchImplementation(require('node-fetch'))
+```
+
+### Encoding and decoding NIP-19 codes
+
+```js
+import {nip19, generatePrivateKey, getPublicKey} from 'nostr-tools'
+
+let sk = generatePrivateKey()
+let nsec = nip19.nsecEncode(sk)
+let {type, data} = nip19.decode(nsec)
+assert(type === 'nsec')
+assert(data === sk)
+
+let pk = getPublicKey(generatePrivateKey())
+let npub = nip19.npubEncode(pk)
+let {type, data} = nip19.decode(npub)
+assert(type === 'npub')
+assert(data === pk)
+
+let pk = getPublicKey(generatePrivateKey())
+let relays = [
+  'wss://relay.nostr.example.mydomain.example.com',
+  'wss://nostr.banana.com'
+]
+let nprofile = nip19.nprofileEncode({pubkey: pk, relays})
+let {type, data} = nip19.decode(nprofile)
+assert(type === 'nprofile')
+assert(data.pubkey === pk)
+assert(data.relays.length === 2)
+```
+
 ### Encrypting and decrypting direct messages
 
 ```js
