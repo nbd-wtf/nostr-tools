@@ -16,13 +16,13 @@ let pk = getPublicKey(sk) # `pk` is a hex string
 ### Creating, signing and verifying events
 
 ```js
-const {
+import {
   validateEvent,
   verifySignature,
   signEvent,
   getEventHash,
   getPublicKey
-} = require('./cjs')
+} from 'nostr-tools'
 
 let event = {
   kind: 1,
@@ -42,7 +42,7 @@ let veryOk = await verifySignature(event)
 ### Validating events received from relays
 
 ```js
-const {matchFilters} = require('./cjs')
+import { matchFilters } from 'nostr-tools'
 
 let event = {kind: 1, pubkey: 'abcdef...', ...otherProperties}
 let ok = matchFilters(
@@ -59,7 +59,7 @@ let ok = matchFilters(
 ### Encrypting and decrypting direct messages
 
 ```js
-const {nip04, getPublicKey, generatePrivateKey} = require('./cjs')
+import { nip04, getPublicKey, generatePrivateKey } from 'nostr-tools'
 
 // sender
 let sk1 = generatePrivateKey()
