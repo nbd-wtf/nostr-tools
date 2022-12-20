@@ -14,6 +14,8 @@ jobs:
           node-version: 18
       - run: yarn --ignore-engines
       - run: node build.js
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - run: yarn test
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          greater-version-only: true
