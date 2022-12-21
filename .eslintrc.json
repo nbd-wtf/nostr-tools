@@ -24,6 +24,7 @@
     "document": false,
     "navigator": false,
     "window": false,
+    "crypto": false,
     "location": false,
     "URL": false,
     "URLSearchParams": false,

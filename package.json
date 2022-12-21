@@ -13,9 +13,9 @@
     "@noble/secp256k1": "^1.7.0",
     "@scure/bip32": "^1.1.1",
     "@scure/bip39": "^1.1.0",
+    "base64-arraybuffer": "^1.0.2",
     "bech32": "^2.0.0",
-    "browserify-cipher": ">=1",
-    "buffer": "^6.0.3",
+    "readable-stream": "^4.2.0",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [

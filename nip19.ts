@@ -1,6 +1,8 @@
 import * as secp256k1 from '@noble/secp256k1'
 import {bech32} from 'bech32'
 
+import {utf8Decoder, utf8Encoder} from './utils'
+
 export type ProfilePointer = {
   pubkey: string // hex
   relays?: string[]
@@ -10,9 +12,6 @@ export type EventPointer = {
   id: string // hex
   relays?: string[]
 }
-
-let utf8Decoder = new TextDecoder('utf-8')
-let utf8Encoder = new TextEncoder()
 
 export function decode(nip19: string): {
   type: string

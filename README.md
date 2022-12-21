@@ -171,7 +171,7 @@ let pk2 = getPublicKey(sk2)
 
 // on the sender side
 let message = 'hello'
-let ciphertext = nip04.encrypt(sk1, pk2, 'hello')
+let ciphertext = await nip04.encrypt(sk1, pk2, 'hello')
 
 let event = {
   kind: 4,
@@ -187,7 +187,7 @@ sendEvent(event)
 sub.on('event', (event) => {
   let sender = event.tags.find(([k, v]) => k === 'p' && && v && v !== '')[1]
   pk1 === sender
-  let plaintext = nip04.decrypt(sk2, pk1, event.content)
+  let plaintext = await nip04.decrypt(sk2, pk1, event.content)
 })
 ```
 
