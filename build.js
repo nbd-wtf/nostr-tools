@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 
 const esbuild = require('esbuild')
-const alias = require('esbuild-plugin-alias')
 
 let common = {
   entryPoints: ['index.ts'],
   bundle: true,
-  plugins: [
-    alias({
-      stream: require.resolve('readable-stream')
-    })
-  ],
   sourcemap: 'external'
 }
 

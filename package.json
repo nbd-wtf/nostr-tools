@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "1.0.0-beta",
+  "version": "1.0.0-beta2",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -15,7 +15,6 @@
     "@scure/bip39": "^1.1.0",
     "base64-arraybuffer": "^1.0.2",
     "bech32": "^2.0.0",
-    "readable-stream": "^4.2.0",
     "websocket-polyfill": "^0.0.3"
   },
   "keywords": [
