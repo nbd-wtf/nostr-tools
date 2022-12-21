@@ -305,7 +305,7 @@ export function relayInit(url: string): Relay {
       })
     },
     get status() {
-      return ws?.readyState ?? 0
+      return ws?.readyState ?? 3
     }
   }
 }
