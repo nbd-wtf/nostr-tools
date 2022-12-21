@@ -1,5 +1,6 @@
 /* eslint-env jest */
 
+globalThis.crypto = require('crypto')
 const {nip04, getPublicKey, generatePrivateKey} = require('./lib/nostr.cjs')
 
 test('encrypt and decrypt message', async () => {
