@@ -31,7 +31,7 @@ let event = {
   content: 'hello'
 }
 
-event.id = getEventHash(event.id)
+event.id = getEventHash(event)
 event.pubkey = getPublicKey(privateKey)
 event.sig = await signEvent(event, privateKey)
 
