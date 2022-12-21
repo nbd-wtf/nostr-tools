@@ -33,11 +33,8 @@ type SubscriptionOptions = {
 
 export function relayInit(url: string): Relay {
   var ws: WebSocket
-  var resolveOpen: () => void
   var resolveClose: () => void
   var untilOpen: Promise<void>
-  var wasClosed: boolean
-  var closed: boolean
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
@@ -63,64 +60,19 @@ export function relayInit(url: string): Relay {
       failed: Array<(reason: string) => void>
     }
   } = {}
-  let attemptNumber = 1
-  let nextAttemptSeconds = 1
-  let isConnected = false
-
-  function resetOpenState() {
-    untilOpen = new Promise(resolve => {
-      resolveOpen = resolve
-    })
-  }
 
   function connectRelay() {
     ws = new WebSocket(url)
 
     ws.onopen = () => {
       listeners.connect.forEach(cb => cb())
-      resolveOpen()
-      isConnected = true
-
-      // restablish old subscriptions
-      if (wasClosed) {
-        wasClosed = false
-        for (let id in openSubs) {
-          let {filters} = openSubs[id]
-          sub(filters, openSubs[id])
-        }
-      }
     }
     ws.onerror = () => {
-      isConnected = false
       listeners.error.forEach(cb => cb())
     }
     ws.onclose = async () => {
-      isConnected = false
       listeners.disconnect.forEach(cb => cb())
-
-      if (closed) {
-        // we've closed this because we wanted, so end everything
-        resolveClose()
-        return
-      }
-
-      // otherwise keep trying to reconnect
-      resetOpenState()
-      attemptNumber++
-      nextAttemptSeconds += attemptNumber ** 3
-      if (nextAttemptSeconds > 14400) {
-        nextAttemptSeconds = 14400 // 4 hours
-      }
-      console.log(
-        `relay ${url} connection closed. reconnecting in ${nextAttemptSeconds} seconds.`
-      )
-      setTimeout(async () => {
-        try {
-          connectRelay()
-        } catch (err) {}
-      }, nextAttemptSeconds * 1000)
-
-      wasClosed = true
+      resolveClose()
     }
 
     ws.onmessage = async e => {
@@ -173,13 +125,9 @@ export function relayInit(url: string): Relay {
     }
   }
 
-  resetOpenState()
-
   async function connect(): Promise<void> {
     if (ws?.readyState && ws.readyState === 1) return // ws already open
-    try {
-      connectRelay()
-    } catch (err) {}
+    connectRelay()
   }
 
   async function trySend(params: [string, ...any]) {
@@ -233,13 +181,19 @@ export function relayInit(url: string): Relay {
   return {
     url,
     sub,
-    on: (type: 'connect' | 'disconnect' | 'notice', cb: any): void => {
+    on: (
+      type: 'connect' | 'disconnect' | 'error' | 'notice',
+      cb: any
+    ): void => {
       listeners[type].push(cb)
-      if (type === 'connect' && isConnected) {
+      if (type === 'connect' && ws?.readyState === 1) {
         cb()
       }
     },
-    off: (type: 'connect' | 'disconnect' | 'notice', cb: any): void => {
+    off: (
+      type: 'connect' | 'disconnect' | 'error' | 'notice',
+      cb: any
+    ): void => {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
@@ -298,7 +252,6 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): Promise<void> {
-      closed = true // prevent ws from trying to reconnect
       ws.close()
       return new Promise(resolve => {
         resolveClose = resolve
