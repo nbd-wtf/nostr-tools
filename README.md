@@ -2,6 +2,8 @@
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
+Very lean on dependencies.
+
 ## Usage
 
 ### Generating a private key and a public key
@@ -112,6 +114,12 @@ pub.on('failed', reason => {
 await relay.close()
 ```
 
+To use this on Node.js you first must install `websocket-polyfill` and import it:
+
+```js
+import 'websocket-polyfill'
+```
+
 ### Querying profile data from a NIP-05 address
 
 ```js
@@ -122,8 +130,11 @@ console.log(profile.pubkey)
 // prints: 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245
 console.log(profile.relays)
 // prints: [wss://relay.damus.io]
+```
 
-// on nodejs, install node-fetch@2 and call this first:
+To use this on Node.js you first must install `node-fetch@2` and call something like this:
+
+```js
 nip05.useFetchImplementation(require('node-fetch'))
 ```
 
