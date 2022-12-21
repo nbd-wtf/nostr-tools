@@ -7,10 +7,10 @@ Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 ### Generating a private key and a public key
 
 ```js
-import { generatePrivateKey, getPublicKey } from 'nostr-tools'
+import {generatePrivateKey, getPublicKey} from 'nostr-tools'
 
-let sk = generatePrivateKey() # `sk` is a hex string
-let pk = getPublicKey(sk) # `pk` is a hex string
+let sk = generatePrivateKey() // `sk` is a hex string
+let pk = getPublicKey(sk) // `pk` is a hex string
 ```
 
 ### Creating, signing and verifying events
@@ -184,7 +184,6 @@ let event = {
 sendEvent(event)
 
 // on the receiver side
-
 sub.on('event', (event) => {
   let sender = event.tags.find(([k, v]) => k === 'p' && && v && v !== '')[1]
   pk1 === sender
