@@ -1,7 +1,7 @@
-import {Buffer} from 'buffer'
-// @ts-ignore
 import * as secp256k1 from '@noble/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
+
+import {utf8Encoder} from './utils'
 
 export type Event = {
   id?: string
@@ -35,8 +35,8 @@ export function serializeEvent(evt: Event): string {
 }
 
 export function getEventHash(event: Event): string {
-  let eventHash = sha256(Buffer.from(serializeEvent(event)))
-  return Buffer.from(eventHash).toString('hex')
+  let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
+  return secp256k1.utils.bytesToHex(eventHash)
 }
 
 export function validateEvent(event: Event): boolean {
@@ -63,7 +63,7 @@ export function verifySignature(
 }
 
 export async function signEvent(event: Event, key: string): Promise<string> {
-  return Buffer.from(
+  return secp256k1.utils.bytesToHex(
     await secp256k1.schnorr.sign(event.id || getEventHash(event), key)
-  ).toString('hex')
+  )
 }
