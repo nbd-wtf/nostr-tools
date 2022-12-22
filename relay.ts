@@ -59,73 +59,77 @@ export function relayInit(url: string): Relay {
     }
   } = {}
 
-  function connectRelay() {
-    ws = new WebSocket(url)
+  async function connectRelay(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      ws = new WebSocket(url)
 
-    ws.onopen = () => {
-      listeners.connect.forEach(cb => cb())
-    }
-    ws.onerror = () => {
-      listeners.error.forEach(cb => cb())
-    }
-    ws.onclose = async () => {
-      listeners.disconnect.forEach(cb => cb())
-      resolveClose()
-    }
-
-    ws.onmessage = async e => {
-      var data
-      try {
-        data = JSON.parse(e.data)
-      } catch (err) {
-        data = e.data
+      ws.onopen = () => {
+        listeners.connect.forEach(cb => cb())
+        resolve()
+      }
+      ws.onerror = () => {
+        listeners.error.forEach(cb => cb())
+        reject()
+      }
+      ws.onclose = async () => {
+        listeners.disconnect.forEach(cb => cb())
+        resolveClose()
       }
 
-      if (data.length >= 1) {
-        switch (data[0]) {
-          case 'EVENT':
-            if (data.length !== 3) return // ignore empty or malformed EVENT
+      ws.onmessage = async e => {
+        var data
+        try {
+          data = JSON.parse(e.data)
+        } catch (err) {
+          data = e.data
+        }
 
-            let id = data[1]
-            let event = data[2]
-            if (
-              validateEvent(event) &&
-              openSubs[id] &&
-              (openSubs[id].skipVerification || verifySignature(event)) &&
-              matchFilters(openSubs[id].filters, event)
-            ) {
-              openSubs[id]
-              subListeners[id]?.event.forEach(cb => cb(event))
+        if (data.length >= 1) {
+          switch (data[0]) {
+            case 'EVENT':
+              if (data.length !== 3) return // ignore empty or malformed EVENT
+
+              let id = data[1]
+              let event = data[2]
+              if (
+                validateEvent(event) &&
+                openSubs[id] &&
+                (openSubs[id].skipVerification || verifySignature(event)) &&
+                matchFilters(openSubs[id].filters, event)
+              ) {
+                openSubs[id]
+                subListeners[id]?.event.forEach(cb => cb(event))
+              }
+              return
+            case 'EOSE': {
+              if (data.length !== 2) return // ignore empty or malformed EOSE
+              let id = data[1]
+              subListeners[id]?.eose.forEach(cb => cb())
+              return
             }
-            return
-          case 'EOSE': {
-            if (data.length !== 2) return // ignore empty or malformed EOSE
-            let id = data[1]
-            subListeners[id]?.eose.forEach(cb => cb())
-            return
+            case 'OK': {
+              if (data.length < 3) return // ignore empty or malformed OK
+              let id: string = data[1]
+              let ok: boolean = data[2]
+              let reason: string = data[3] || ''
+              if (ok) pubListeners[id]?.ok.forEach(cb => cb())
+              else pubListeners[id]?.failed.forEach(cb => cb(reason))
+              return
+            }
+            case 'NOTICE':
+              if (data.length !== 2) return // ignore empty or malformed NOTICE
+              let notice = data[1]
+              listeners.notice.forEach(cb => cb(notice))
+              return
           }
-          case 'OK': {
-            if (data.length < 3) return // ignore empty or malformed OK
-            let id: string = data[1]
-            let ok: boolean = data[2]
-            let reason: string = data[3] || ''
-            if (ok) pubListeners[id]?.ok.forEach(cb => cb())
-            else pubListeners[id]?.failed.forEach(cb => cb(reason))
-            return
-          }
-          case 'NOTICE':
-            if (data.length !== 2) return // ignore empty or malformed NOTICE
-            let notice = data[1]
-            listeners.notice.forEach(cb => cb(notice))
-            return
         }
       }
-    }
+    })
   }
 
   async function connect(): Promise<void> {
     if (ws?.readyState && ws.readyState === 1) return // ws already open
-    connectRelay()
+    await connectRelay()
   }
 
   async function trySend(params: [string, ...any]) {

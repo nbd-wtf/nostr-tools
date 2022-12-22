@@ -53,7 +53,7 @@ import {
 } from 'nostr-tools'
 
 const relay = relayInit('wss://relay.example.com')
-relay.connect()
+await relay.connect()
 
 relay.on('connect', () => {
   console.log(`connected to ${relay.url}`)
