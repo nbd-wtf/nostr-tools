@@ -1,6 +1,10 @@
 import {ProfilePointer} from './nip19'
 
-var _fetch = fetch
+var _fetch: any
+
+try {
+  _fetch = fetch
+} catch {}
 
 export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
