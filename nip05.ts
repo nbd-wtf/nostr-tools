@@ -36,6 +36,8 @@ export async function queryProfile(
     name = '_'
   }
 
+  if (!name.match(/^[a-z0-9-_]+$/)) return null
+
   let res = await (
     await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
   ).json()
