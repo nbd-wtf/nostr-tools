@@ -6,6 +6,7 @@ export type Filter = {
   authors?: string[]
   since?: number
   until?: number
+  limit?: number
   [key: `#${string}`]: string[]
 }
 

@@ -81,6 +81,6 @@ export function verifySignature(
 
 export async function signEvent(event: Event, key: string): Promise<string> {
   return secp256k1.utils.bytesToHex(
-    await secp256k1.schnorr.sign(event.id || getEventHash(event), key)
+    await secp256k1.schnorr.sign(getEventHash(event), key)
   )
 }

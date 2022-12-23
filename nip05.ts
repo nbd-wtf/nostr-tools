@@ -1,6 +1,10 @@
 import {ProfilePointer} from './nip19'
 
-var _fetch = fetch
+var _fetch: any
+
+try {
+  _fetch = fetch
+} catch {}
 
 export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
@@ -31,6 +35,8 @@ export async function queryProfile(
     domain = name
     name = '_'
   }
+
+  if (!name.match(/^[a-z0-9-_]+$/)) return null
 
   let res = await (
     await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
