@@ -3,10 +3,27 @@ import {sha256} from '@noble/hashes/sha256'
 
 import {utf8Encoder} from './utils'
 
+
+/* eslint-disable no-unused-vars */
+export enum Kind {
+  Metadata = 0,
+  Text = 1,
+  RecommendRelay = 2,
+  Contacts = 3,
+  EncryptedDirectMessage = 4,
+  EventDeletion = 5,
+  Reaction = 7,
+  ChannelCreation = 40,
+  ChannelMetadata = 41,
+  ChannelMessage = 42,
+  ChannelHideMessage = 43,
+  ChannelMuteUser = 44,
+}
+
 export type Event = {
   id?: string
   sig?: string
-  kind: number
+  kind: Kind
   tags: string[][]
   pubkey: string
   content: string
