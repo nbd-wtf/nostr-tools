@@ -98,13 +98,13 @@ export function relayInit(url: string): Relay {
                 matchFilters(openSubs[id].filters, event)
               ) {
                 openSubs[id]
-                subListeners[id]?.event.forEach(cb => cb(event))
+                ;(subListeners[id]?.event || []).forEach(cb => cb(event))
               }
               return
             case 'EOSE': {
               if (data.length !== 2) return // ignore empty or malformed EOSE
               let id = data[1]
-              subListeners[id]?.eose.forEach(cb => cb())
+              ;(subListeners[id]?.eose || []).forEach(cb => cb())
               return
             }
             case 'OK': {
@@ -174,8 +174,9 @@ export function relayInit(url: string): Relay {
         subListeners[subid][type].push(cb)
       },
       off: (type: 'event' | 'eose', cb: any): void => {
-        let idx = subListeners[subid][type].indexOf(cb)
-        if (idx >= 0) subListeners[subid][type].splice(idx, 1)
+        let listeners = subListeners[subid]
+        let idx = listeners[type].indexOf(cb)
+        if (idx >= 0) listeners[type].splice(idx, 1)
       }
     }
   }
@@ -221,14 +222,14 @@ export function relayInit(url: string): Relay {
           id: `monitor-${id.slice(0, 5)}`
         })
         let willUnsub = setTimeout(() => {
-          pubListeners[id].failed.forEach(cb =>
+          ;(pubListeners[id]?.failed || []).forEach(cb =>
             cb('event not seen after 5 seconds')
           )
           monitor.unsub()
         }, 5000)
         monitor.on('event', () => {
           clearTimeout(willUnsub)
-          pubListeners[id].seen.forEach(cb => cb())
+          ;(pubListeners[id]?.seen || []).forEach(cb => cb())
         })
       }
 
@@ -247,8 +248,10 @@ export function relayInit(url: string): Relay {
           }
         },
         off: (type: 'ok' | 'seen' | 'failed', cb: any) => {
-          let idx = pubListeners[id][type].indexOf(cb)
-          if (idx >= 0) pubListeners[id][type].splice(idx, 1)
+          let listeners = pubListeners[id]
+          if (!listeners) return
+          let idx = listeners[type].indexOf(cb)
+          if (idx >= 0) listeners[type].splice(idx, 1)
         }
       }
     },
