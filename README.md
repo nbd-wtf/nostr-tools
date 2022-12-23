@@ -35,10 +35,10 @@ let event = {
 
 event.id = getEventHash(event)
 event.pubkey = getPublicKey(privateKey)
-event.sig = await signEvent(event, privateKey)
+event.sig = signEvent(event, privateKey)
 
 let ok = validateEvent(event)
-let veryOk = await verifySignature(event)
+let veryOk = verifySignature(event)
 ```
 
 ### Interacting with a relay
@@ -98,7 +98,7 @@ let event = {
   content: 'hello world'
 }
 event.id = getEventHash(event)
-event.sig = await signEvent(event, sk)
+event.sig = signEvent(event, sk)
 
 let pub = relay.publish(event)
 pub.on('ok', () => {

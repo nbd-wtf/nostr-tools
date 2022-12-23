@@ -75,12 +75,12 @@ export function validateEvent(event: Event): boolean {
 
 export function verifySignature(
   event: Event & {id: string; sig: string}
-): Promise<boolean> {
-  return secp256k1.schnorr.verify(event.sig, event.id, event.pubkey)
+): boolean {
+  return secp256k1.schnorr.verifySync(event.sig, event.id, event.pubkey)
 }
 
-export async function signEvent(event: Event, key: string): Promise<string> {
+export function signEvent(event: Event, key: string): string {
   return secp256k1.utils.bytesToHex(
-    await secp256k1.schnorr.sign(getEventHash(event), key)
+    secp256k1.schnorr.signSync(getEventHash(event), key)
   )
 }
