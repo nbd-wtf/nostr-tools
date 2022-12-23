@@ -7,15 +7,11 @@ import {
 } from '@scure/bip39'
 import {HDKey} from '@scure/bip32'
 
-export function privateKeyFromSeed(seed: string): string {
-  let root = HDKey.fromMasterSeed(secp256k1.utils.hexToBytes(seed))
+export function privateKeyFromSeedWords(mnemonic: string): string {
+  let root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic))
   let privateKey = root.derive(`m/44'/1237'/0'/0/0`).privateKey
   if (!privateKey) throw new Error('could not derive private key')
   return secp256k1.utils.bytesToHex(privateKey)
-}
-
-export function seedFromWords(mnemonic: string): string {
-  return secp256k1.utils.bytesToHex(mnemonicToSeedSync(mnemonic))
 }
 
 export function generateSeedWords(): string {
