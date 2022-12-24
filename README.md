@@ -2,7 +2,7 @@
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
-Very lean on dependencies.
+Very lean on dependencies. Node.js version 19+ is supported.
 
 ## Usage
 
