@@ -6,8 +6,8 @@ import {Filter, matchFilters} from './filter'
 export type Relay = {
   url: string
   status: number
-  connect: () => void
-  close: () => void
+  connect: () => Promise<void>
+  close: () => Promise<void>
   sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
   publish: (event: Event) => Pub
   on: (type: 'connect' | 'disconnect' | 'notice', cb: any) => void
@@ -257,10 +257,11 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): Promise<void> {
-      ws.close()
-      return new Promise(resolve => {
+      const result = new Promise<void>(resolve => {
         resolveClose = resolve
       })
+      ws.close()
+      return result
     },
     get status() {
       return ws?.readyState ?? 3
