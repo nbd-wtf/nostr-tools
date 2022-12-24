@@ -73,7 +73,7 @@ export function relayInit(url: string): Relay {
       }
       ws.onclose = async () => {
         listeners.disconnect.forEach(cb => cb())
-        resolveClose()
+        resolveClose && resolveClose()
       }
 
       ws.onmessage = async e => {
@@ -257,11 +257,10 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): Promise<void> {
-      const result = new Promise<void>(resolve => {
+      ws.close()
+      return new Promise<void>(resolve => {
         resolveClose = resolve
       })
-      ws.close()
-      return result
     },
     get status() {
       return ws?.readyState ?? 3
