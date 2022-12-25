@@ -10,7 +10,7 @@ export type Relay = {
   status: number
   connect: () => Promise<void>
   close: () => Promise<void>
-  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
+  sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
   publish: (event: Event) => Pub
   on: (type: RelayEvent, cb: any) => void
   off: (type: RelayEvent, cb: any) => void
