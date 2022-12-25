@@ -8,7 +8,7 @@ export type Relay = {
   status: number
   connect: () => Promise<void>
   close: () => Promise<void>
-  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
+  sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
   publish: (event: Event) => Pub
   on: (type: 'connect' | 'disconnect' | 'notice', cb: any) => void
   off: (type: 'connect' | 'disconnect' | 'notice', cb: any) => void
