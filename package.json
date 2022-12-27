@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -11,10 +11,9 @@
   "dependencies": {
     "@noble/hashes": "^0.5.7",
     "@noble/secp256k1": "^1.7.0",
+    "@scure/base": "^1.1.1",
     "@scure/bip32": "^1.1.1",
-    "@scure/bip39": "^1.1.0",
-    "base64-arraybuffer": "^1.0.2",
-    "bech32": "^2.0.0"
+    "@scure/bip39": "^1.1.0"
   },
   "keywords": [
     "decentralization",

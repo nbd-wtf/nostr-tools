@@ -1,6 +1,6 @@
 import {randomBytes} from '@noble/hashes/utils'
 import * as secp256k1 from '@noble/secp256k1'
-import {encode as b64encode, decode as b64decode} from 'base64-arraybuffer'
+import {base64} from '@scure/base'
 
 import {utf8Decoder, utf8Encoder} from './utils'
 
@@ -26,8 +26,8 @@ export async function encrypt(
     cryptoKey,
     plaintext
   )
-  let ctb64 = b64encode(ciphertext)
-  let ivb64 = b64encode(iv.buffer)
+  let ctb64 = base64.encode(new Uint8Array(ciphertext))
+  let ivb64 = base64.encode(new Uint8Array(iv.buffer))
 
   return `${ctb64}?iv=${ivb64}`
 }
@@ -48,8 +48,8 @@ export async function decrypt(
     false,
     ['decrypt']
   )
-  let ciphertext = b64decode(ctb64)
-  let iv = b64decode(ivb64)
+  let ciphertext = base64.decode(ctb64)
+  let iv = base64.decode(ivb64)
 
   let plaintext = await crypto.subtle.decrypt(
     {name: 'AES-CBC', iv},

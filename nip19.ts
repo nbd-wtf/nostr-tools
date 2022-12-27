@@ -1,5 +1,5 @@
 import * as secp256k1 from '@noble/secp256k1'
-import {bech32} from 'bech32'
+import {bech32} from '@scure/base'
 
 import {utf8Decoder, utf8Encoder} from './utils'
 

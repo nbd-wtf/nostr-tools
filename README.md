@@ -2,7 +2,7 @@
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
-Very lean on dependencies.
+Only depends on _@scure_ and _@noble_ packages.
 
 ## Usage
 
