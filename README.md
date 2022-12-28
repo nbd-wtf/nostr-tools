@@ -102,13 +102,13 @@ event.sig = signEvent(event, sk)
 
 let pub = relay.publish(event)
 pub.on('ok', () => {
-  console.log(`{relay.url} has accepted our event`)
+  console.log(`${relay.url} has accepted our event`)
 })
 pub.on('seen', () => {
-  console.log(`we saw the event on {relay.url}`)
+  console.log(`we saw the event on ${relay.url}`)
 })
 pub.on('failed', reason => {
-  console.log(`failed to publish to {relay.url}: ${reason}`)
+  console.log(`failed to publish to ${relay.url}: ${reason}`)
 })
 
 await relay.close()
