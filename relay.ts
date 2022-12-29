@@ -12,7 +12,7 @@ export type Relay = {
   close: () => Promise<void>
   sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
   publish: (event: Event) => Pub
-  on: (type: RelayEvent, cb: any) => void
+  on: (type: RelayEvent, cb: (event: Event)=>void) => void
   off: (type: RelayEvent, cb: any) => void
 }
 export type Pub = {
@@ -34,6 +34,7 @@ type SubscriptionOptions = {
 export function relayInit(url: string): Relay {
   var ws: WebSocket
   var resolveClose: () => void
+  let connected = false
   var untilOpen: Promise<void>
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
@@ -66,6 +67,10 @@ export function relayInit(url: string): Relay {
       ws = new WebSocket(url)
 
       ws.onopen = () => {
+        connected = true
+        for (let subid in openSubs) {
+            trySend(['REQ', subid, ...openSubs[subid].filters])
+        }
         listeners.connect.forEach(cb => cb())
         resolve()
       }
@@ -155,7 +160,9 @@ export function relayInit(url: string): Relay {
       filters,
       skipVerification
     }
-    trySend(['REQ', subid, ...filters])
+    if (connected) {
+        trySend(['REQ', subid, ...filters])
+    }
 
     return {
       sub: (newFilters, newOpts = {}) =>

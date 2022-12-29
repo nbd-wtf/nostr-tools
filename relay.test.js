@@ -9,13 +9,14 @@ const {
   signEvent
 } = require('./lib/nostr.cjs')
 
-let relay = relayInit('wss://nostr-dev.wellorder.net/')
+let relay
 
-beforeAll(() => {
+beforeEach(() => {
+  relay = relayInit('wss://nostr-dev.wellorder.net/')
   relay.connect()
 })
 
-afterAll(async () => {
+afterEach(async () => {
   await relay.close()
 })
 
@@ -65,6 +66,10 @@ test('querying', () => {
 })
 
 test('listening (twice) and publishing', async () => {
+  let oldRelay = relay
+  oldRelay.on('connect', () => { oldRelay.close() })
+  relay = relayInit('wss://nostr-dev.wellorder.net/')
+  await relay.connect()
   let sk = generatePrivateKey()
   let pk = getPublicKey(sk)
   var resolve1
