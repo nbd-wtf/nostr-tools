@@ -13,6 +13,7 @@ export enum Kind {
   EncryptedDirectMessage = 4,
   EventDeletion = 5,
   Reaction = 7,
+  StatelessRevocation = 13,
   ChannelCreation = 40,
   ChannelMetadata = 41,
   ChannelMessage = 42,

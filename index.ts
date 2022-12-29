@@ -12,6 +12,7 @@ export * as nip10 from './nip10'
 export * as nip19 from './nip19'
 export * as nip26 from './nip26'
 export * as nip39 from './nip39'
+export * as nip41 from './nip41'
 export * as nip57 from './nip57'
 
 export * as fj from './fakejson'

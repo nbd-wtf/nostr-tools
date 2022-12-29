@@ -22,6 +22,7 @@
 
   "globals": {
     "document": false,
+    "BigInt": false,
     "navigator": false,
     "window": false,
     "crypto": false,
