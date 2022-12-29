@@ -4,7 +4,6 @@ const {
   validateEvent,
   verifySignature,
   signEvent,
-  getEventHash,
   getPublicKey
 } = require('./lib/nostr.cjs')
 
@@ -35,15 +34,15 @@ test('validate event', () => {
 })
 
 test('check signature', async () => {
-  expect(await verifySignature(event)).toBeTruthy()
+  expect(verifySignature(event)).toBeTruthy()
 })
 
 test('sign event', async () => {
-  let sig = await signEvent(unsigned, privateKey)
-  let hash = getEventHash(unsigned)
   let pubkey = getPublicKey(privateKey)
+  let authored = {...unsigned, pubkey}
 
-  let signed = {...unsigned, id: hash, sig, pubkey}
+  let sig = signEvent(authored, privateKey)
+  let signed = {...authored, sig}
 
-  expect(await verifySignature(signed)).toBeTruthy()
+  expect(verifySignature(signed)).toBeTruthy()
 })
