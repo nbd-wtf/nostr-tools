@@ -103,7 +103,7 @@ test('listening (twice) and publishing', async () => {
     content: 'nostr-tools test suite'
   }
   event.id = getEventHash(event)
-  event.sig = await signEvent(event, sk)
+  event.sig = signEvent(event, sk)
 
   relay.publish(event)
   return expect(
