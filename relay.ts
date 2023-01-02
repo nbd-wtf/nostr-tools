@@ -173,7 +173,9 @@ export function relayInit(url: string): Relay {
       unsub: () => {
         delete openSubs[subid]
         delete subListeners[subid]
-        trySend(['CLOSE', subid])
+        if (connected) {
+          trySend(['CLOSE', subid])
+        }
       },
       on: (type: 'event' | 'eose', cb: any): void => {
         subListeners[subid] = subListeners[subid] || {
