@@ -248,11 +248,13 @@ Please consult the tests or [the source code](https://github.com/fiatjaf/nostr-t
 </script>
 ```
 
+## Projects using nostr-tools
+
+- [nostr-relaypool-ts](https://github.com/adamritter/nostr-relaypool-ts) - A nostr RelayPool implementation in TypeScript
+- [nostr-army-knife](https://github.com/fiatjaf/nostr-army-knife) - a webpage with interactive nostr helper tools
+
+
 ## License
 
 Public domain.
-
-## Projects using nostr-tools
-- [nostr-relaypool-ts](https://github.com/adamritter/nostr-relaypool-ts) - A nostr RelayPool implementation in TypeScript
-- [nostr-army-knife](https://github.com/fiatjaf/nostr-army-knife) - a webpage with interactive nostr helper tools
 
