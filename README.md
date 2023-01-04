@@ -30,11 +30,11 @@ let event = {
   kind: 1,
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
-  content: 'hello'
+  content: 'hello',
+  pubkey: getPublicKey(privateKey)
 }
 
 event.id = getEventHash(event)
-event.pubkey = getPublicKey(privateKey)
 event.sig = signEvent(event, privateKey)
 
 let ok = validateEvent(event)
