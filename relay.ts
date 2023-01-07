@@ -31,8 +31,8 @@ type SubscriptionOptions = {
   id?: string
 }
 
-export function relayInit(url: string): Relay {
-  var ws: WebSocket
+export function relayInit(url: string, WebSocketIn): Relay {
+  var ws: WebSocketIn
   var resolveClose: () => void
   var untilOpen: Promise<void>
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
@@ -61,9 +61,9 @@ export function relayInit(url: string): Relay {
     }
   } = {}
 
-  async function connectRelay(): Promise<void> {
+  async function connectRelay(WebSocketIn): Promise<void> {
     return new Promise((resolve, reject) => {
-      ws = new WebSocket(url)
+      ws = new WebSocketIn(url)
 
       ws.onopen = () => {
         listeners.connect.forEach(cb => cb())
@@ -131,7 +131,7 @@ export function relayInit(url: string): Relay {
 
   async function connect(): Promise<void> {
     if (ws?.readyState && ws.readyState === 1) return // ws already open
-    await connectRelay()
+    await connectRelay(WebSocketIn)
   }
 
   async function trySend(params: [string, ...any]) {
