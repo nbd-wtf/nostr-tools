@@ -182,7 +182,7 @@ let pk2 = getPublicKey(sk2)
 
 // on the sender side
 let message = 'hello'
-let ciphertext = await nip04.encrypt(sk1, pk2, 'hello')
+let ciphertext = await nip04.encrypt(sk1, pk2, message)
 
 let event = {
   kind: 4,
