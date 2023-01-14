@@ -6,7 +6,7 @@ import {HARDENED_OFFSET, HDKey} from '@scure/bip32'
 import {getPublicKey} from './keys'
 import {Event, getEventHash, Kind, signEvent, verifySignature} from './event'
 
-const MaxKeys = 11
+const MaxKeys = 256
 
 function getRootFromMnemonic(mnemonic: string): HDKey {
   return HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic)).derive(
