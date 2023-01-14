@@ -196,7 +196,7 @@ sendEvent(event)
 
 // on the receiver side
 sub.on('event', (event) => {
-  let sender = event.tags.find(([k, v]) => k === 'p' && && v && v !== '')[1]
+  let sender = event.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
   pk1 === sender
   let plaintext = await nip04.decrypt(sk2, pk1, event.content)
 })
