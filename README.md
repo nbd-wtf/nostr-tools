@@ -4,6 +4,10 @@ Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
 Only depends on _@scure_ and _@noble_ packages.
 
+## Requirements
+
+- [Node.js](https://nodejs.org) v18 or newer
+
 ## Usage
 
 ### Generating a private key and a public key
