@@ -65,13 +65,12 @@ export function validateEvent(event: Event): boolean {
   if (!event.pubkey.match(/^[a-f0-9]{64}$/)) return false
 
   if (!Array.isArray(event.tags)) return false
-  for (let i = 0; i < event.tags.length; i++) {
-    let tag = event.tags[i]
-    if (!Array.isArray(tag)) return false
-    for (let j = 0; j < tag.length; j++) {
-      if (typeof tag[j] === 'object') return false
-    }
-  }
+  event.tags.forEach(eventTag => {
+    if (!Array.isArray(eventTag)) return false
+    eventTag.forEach(tag => {
+      if (typeof tag === 'object') return false
+    })
+  })
 
   return true
 }
