@@ -1,8 +1,7 @@
 name: test every commit
 on:
-  push:
-    branches:
-      - master
+  - push
+  - pull_request
 
 jobs:
   test:
