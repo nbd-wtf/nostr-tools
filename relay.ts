@@ -31,10 +31,11 @@ type SubscriptionOptions = {
   id?: string
 }
 
-export function relayInit(url: string): Relay {
+export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolean): Relay {
   var ws: WebSocket
   var resolveClose: () => void
-  var untilOpen: Promise<void>
+  var setOpen: (value: (PromiseLike<void> | void)) => void
+  var untilOpen = new Promise<void>((resolve) => { setOpen = resolve })
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
@@ -60,6 +61,7 @@ export function relayInit(url: string): Relay {
       failed: Array<(reason: string) => void>
     }
   } = {}
+  let idRegex = /"id":"([a-fA-F0-9]+)"/;
 
   async function connectRelay(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -67,6 +69,7 @@ export function relayInit(url: string): Relay {
 
       ws.onopen = () => {
         listeners.connect.forEach(cb => cb())
+        setOpen()
         resolve()
       }
       ws.onerror = () => {
@@ -78,13 +81,29 @@ export function relayInit(url: string): Relay {
         resolveClose && resolveClose()
       }
 
-      ws.onmessage = async e => {
-        var data
-        try {
-          data = JSON.parse(e.data)
-        } catch (err) {
-          data = e.data
+      let incomingMessageQueue: any[] = []
+      let handleNextInterval: any
+
+      const handleNext = () => {
+        if (incomingMessageQueue.length === 0) {
+          clearInterval(handleNextInterval)
+          handleNextInterval = null
+          return
         }
+
+        var data = incomingMessageQueue.shift()
+        if (data && !!alreadyHaveEvent) {
+          const match = idRegex.exec(data)
+          if (match) {
+            const id = match[1];
+            if (alreadyHaveEvent(id)) {
+              return
+            }
+          }
+        }
+        try {
+          data = JSON.parse(data)
+        } catch (err) {}
 
         if (data.length >= 1) {
           switch (data[0]) {
@@ -126,6 +145,13 @@ export function relayInit(url: string): Relay {
           }
         }
       }
+
+      ws.onmessage = e => {
+        incomingMessageQueue.push(e.data)
+        if (!handleNextInterval) {
+          handleNextInterval = setInterval(handleNext, 0)
+        }
+      }
     })
   }
 
@@ -138,7 +164,11 @@ export function relayInit(url: string): Relay {
     let msg = JSON.stringify(params)
 
     await untilOpen
-    ws.send(msg)
+    try {
+      ws.send(msg)
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   const sub = (
