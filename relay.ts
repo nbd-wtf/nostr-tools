@@ -2,6 +2,7 @@
 
 import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
+import {getHex64} from './fakejson'
 
 type RelayEvent = 'connect' | 'disconnect' | 'error' | 'notice'
 
@@ -31,11 +32,16 @@ type SubscriptionOptions = {
   id?: string
 }
 
-export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolean): Relay {
+export function relayInit(
+  url: string,
+  alreadyHaveEvent: (id: string) => boolean = () => false
+): Relay {
   var ws: WebSocket
   var resolveClose: () => void
-  var setOpen: (value: (PromiseLike<void> | void)) => void
-  var untilOpen = new Promise<void>((resolve) => { setOpen = resolve })
+  var setOpen: (value: PromiseLike<void> | void) => void
+  var untilOpen = new Promise<void>(resolve => {
+    setOpen = resolve
+  })
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
@@ -61,7 +67,6 @@ export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolea
       failed: Array<(reason: string) => void>
     }
   } = {}
-  let idRegex = /"id":"([a-fA-F0-9]+)"/;
 
   async function connectRelay(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -81,35 +86,36 @@ export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolea
         resolveClose && resolveClose()
       }
 
-      let incomingMessageQueue: any[] = []
+      let incomingMessageQueue: string[] = []
       let handleNextInterval: any
 
-      const handleNext = () => {
+      ws.onmessage = e => {
+        incomingMessageQueue.push(e.data)
+        if (!handleNextInterval) {
+          handleNextInterval = setInterval(handleNext, 0)
+        }
+      }
+
+      function handleNext() {
         if (incomingMessageQueue.length === 0) {
           clearInterval(handleNextInterval)
           handleNextInterval = null
           return
         }
 
-        var data = incomingMessageQueue.shift()
-        if (data && !!alreadyHaveEvent) {
-          const match = idRegex.exec(data)
-          if (match) {
-            const id = match[1];
-            if (alreadyHaveEvent(id)) {
-              return
-            }
-          }
+        var json = incomingMessageQueue.shift()
+        if (!json || alreadyHaveEvent(getHex64(json, 'id'))) {
+          return
         }
-        try {
-          data = JSON.parse(data)
-        } catch (err) {}
 
-        if (data.length >= 1) {
+        try {
+          let data = JSON.parse(json)
+
+          // we won't do any checks against the data since all failures (i.e. invalid messages from relays)
+          // will naturally be caught by the encompassing try..catch block
+
           switch (data[0]) {
             case 'EVENT':
-              if (data.length !== 3) return // ignore empty or malformed EVENT
-
               let id = data[1]
               let event = data[2]
               if (
@@ -123,13 +129,11 @@ export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolea
               }
               return
             case 'EOSE': {
-              if (data.length !== 2) return // ignore empty or malformed EOSE
               let id = data[1]
               ;(subListeners[id]?.eose || []).forEach(cb => cb())
               return
             }
             case 'OK': {
-              if (data.length < 3) return // ignore empty or malformed OK
               let id: string = data[1]
               let ok: boolean = data[2]
               let reason: string = data[3] || ''
@@ -138,18 +142,12 @@ export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolea
               return
             }
             case 'NOTICE':
-              if (data.length !== 2) return // ignore empty or malformed NOTICE
               let notice = data[1]
               listeners.notice.forEach(cb => cb(notice))
               return
           }
-        }
-      }
-
-      ws.onmessage = e => {
-        incomingMessageQueue.push(e.data)
-        if (!handleNextInterval) {
-          handleNextInterval = setInterval(handleNext, 0)
+        } catch (err) {
+          return
         }
       }
     })
@@ -216,19 +214,13 @@ export function relayInit(url: string, alreadyHaveEvent?: (id: string) => boolea
   return {
     url,
     sub,
-    on: (
-      type: RelayEvent,
-      cb: any
-    ): void => {
+    on: (type: RelayEvent, cb: any): void => {
       listeners[type].push(cb)
       if (type === 'connect' && ws?.readyState === 1) {
         cb()
       }
     },
-    off: (
-      type: RelayEvent,
-      cb: any
-    ): void => {
+    off: (type: RelayEvent, cb: any): void => {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },

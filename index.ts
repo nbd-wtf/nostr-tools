@@ -3,6 +3,8 @@ export * from './relay'
 export * from './event'
 export * from './filter'
 
+export * as fj from './fakejson'
+
 export * as nip04 from './nip04'
 export * as nip05 from './nip05'
 export * as nip06 from './nip06'
