@@ -46,7 +46,7 @@ export function relayInit(
   var listeners: {
     connect: Array<() => void>
     disconnect: Array<() => void>
-    error: Array<() => void>
+    error: Array<(e: globalThis.Event) => void>
     notice: Array<(msg: string) => void>
   } = {
     connect: [],
@@ -77,9 +77,9 @@ export function relayInit(
         setOpen()
         resolve()
       }
-      ws.onerror = () => {
-        listeners.error.forEach(cb => cb())
-        reject()
+      ws.onerror = (e: globalThis.Event) => {
+        listeners.error.forEach(cb => cb(e))
+        reject(e)
       }
       ws.onclose = async () => {
         listeners.disconnect.forEach(cb => cb())
