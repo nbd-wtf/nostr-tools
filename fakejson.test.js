@@ -33,3 +33,17 @@ test('match kind', () => {
     )
   ).toBeTruthy()
 })
+
+test('match subscription id', () => {
+  expect(fj.getSubscriptionId('["EVENT","",{}]')).toEqual('')
+  expect(fj.getSubscriptionId('["EVENT","_",{}]')).toEqual('_')
+  expect(fj.getSubscriptionId('["EVENT","subname",{}]')).toEqual('subname')
+  expect(fj.getSubscriptionId('["EVENT", "kasjbdjkav", {}]')).toEqual(
+    'kasjbdjkav'
+  )
+  expect(
+    fj.getSubscriptionId(
+      '  [ \n\n "EVENT"  , \n\n "y4d5ow45gfwoiudfÇA VSADLKAN KLDASB[12312535]SFMZSNJKLH" , {}]'
+    )
+  ).toEqual('y4d5ow45gfwoiudfÇA VSADLKAN KLDASB[12312535]SFMZSNJKLH')
+})

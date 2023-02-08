@@ -13,6 +13,21 @@ export function getInt(json: string, field: string): number {
   return parseInt(sliced.slice(0, end), 10)
 }
 
+export function getSubscriptionId(json: string): string | null {
+  let idx = json.slice(0, 22).indexOf(`"EVENT"`)
+  if (idx === -1) return null
+
+  let pstart = json.slice(idx + 7 + 1).indexOf(`"`)
+  if (pstart === -1) return null
+  let start = idx + 7 + 1 + pstart
+
+  let pend = json.slice(start + 1, 80).indexOf(`"`)
+  if (pend === -1) return null
+  let end = start + 1 + pend
+
+  return json.slice(start + 1, end)
+}
+
 export function matchEventId(json: string, id: string): boolean {
   return id === getHex64(json, 'id')
 }
