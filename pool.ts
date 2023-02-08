@@ -37,6 +37,68 @@ export class SimplePool {
     })
   }
 
+  get(
+    relays: string[],
+    filter: Filter,
+    opts?: SubscriptionOptions
+  ): Promise<Event | null> {
+    return new Promise(resolve => {
+      let subs = this.sub(relays, [filter], opts)
+      let timeout = setTimeout(() => {
+        subs.forEach(sub => sub.unsub(), 1500)
+        resolve(null)
+      })
+      subs.forEach(sub => {
+        sub.on('event', (event: Event) => {
+          resolve(event)
+          clearTimeout(timeout)
+          subs.forEach(sub => {
+            sub.unsub()
+          })
+        })
+      })
+    })
+  }
+
+  list(
+    relays: string[],
+    filters: Filter[],
+    opts?: SubscriptionOptions
+  ): Promise<Event[]> {
+    return new Promise(resolve => {
+      let _knownIds: Set<string> = new Set()
+      let modifiedOpts = opts || {}
+      modifiedOpts.alreadyHaveEvent = id => _knownIds.has(id)
+
+      let events: Event[] = []
+
+      let subs = this.sub(relays, filters, modifiedOpts)
+      let timeout = setTimeout(() => {
+        subs.forEach(sub => sub.unsub(), 1500)
+        resolve(events)
+      })
+
+      let pendingEoses = relays.length
+
+      subs.forEach(sub => {
+        sub.on('event', (event: Event) => {
+          events.push(event)
+        })
+
+        sub.on('eose', () => {
+          pendingEoses--
+          if (pendingEoses === 0) {
+            resolve(events)
+            clearTimeout(timeout)
+            subs.forEach(sub => {
+              sub.unsub()
+            })
+          }
+        })
+      })
+    })
+  }
+
   publish(relays: string[], event: Event): Pub[] {
     return relays.map(relay => {
       let r = this._conn[relay]

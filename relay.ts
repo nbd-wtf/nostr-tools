@@ -12,6 +12,8 @@ export type Relay = {
   connect: () => Promise<void>
   close: () => Promise<void>
   sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
+  list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
+  get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
   publish: (event: Event) => Pub
   on: (type: RelayEvent, cb: any) => void
   off: (type: RelayEvent, cb: any) => void
@@ -231,6 +233,36 @@ export function relayInit(url: string): Relay {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
+    list: (filters: Filter[], opts?: SubscriptionOptions): Promise<Event[]> =>
+      new Promise(resolve => {
+        let s = sub(filters, opts)
+        let events: Event[] = []
+        let timeout = setTimeout(() => {
+          s.unsub()
+          resolve(events)
+        }, 1500)
+        s.on('eose', () => {
+          s.unsub()
+          clearTimeout(timeout)
+          resolve(events)
+        })
+        s.on('event', (event: Event) => {
+          events.push(event)
+        })
+      }),
+    get: (filter: Filter, opts?: SubscriptionOptions): Promise<Event | null> =>
+      new Promise(resolve => {
+        let s = sub([filter], opts)
+        let timeout = setTimeout(() => {
+          s.unsub()
+          resolve(null)
+        }, 1500)
+        s.on('event', (event: Event) => {
+          s.unsub()
+          clearTimeout(timeout)
+          resolve(event)
+        })
+      }),
     publish(event: Event): Pub {
       if (!event.id) throw new Error(`event ${event} has no id`)
       let id = event.id

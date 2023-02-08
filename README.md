@@ -111,6 +111,11 @@ pub.on('failed', reason => {
   console.log(`failed to publish to ${relay.url}: ${reason}`)
 })
 
+let events = await relay.list([{kinds: [0, 1]}])
+let event = await relay.get({
+  ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']
+})
+
 await relay.close()
 ```
 
@@ -147,12 +152,17 @@ subs.forEach(sub =>
   })
 )
 
-let pubs = pool.publish(newEvent)
+let pubs = pool.publish(relays, newEvent)
 pubs.forEach(pub =>
   pub.on('ok', () => {
     // ...
   })
 )
+
+let events = await pool.list(relays, [{kinds: [0, 1]}])
+let event = await pool.get(relays, {
+  ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']
+})
 ```
 
 ### Querying profile data from a NIP-05 address
