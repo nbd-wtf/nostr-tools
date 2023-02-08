@@ -12,9 +12,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: yarn --ignore-engines
-      - run: node build.js
-      - run: yarn test
+      - uses: extractions/setup-just@v1
+      - run: just install-and-build
+      - run: just test
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
