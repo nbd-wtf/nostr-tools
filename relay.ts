@@ -2,7 +2,7 @@
 
 import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
-import {getHex64} from './fakejson'
+import {getHex64, getSubscriptionId} from './fakejson'
 
 type RelayEvent = 'connect' | 'disconnect' | 'error' | 'notice'
 
@@ -29,13 +29,11 @@ export type Sub = {
 
 export type SubscriptionOptions = {
   skipVerification?: boolean
+  alreadyHaveEvent?: null | ((id: string) => boolean)
   id?: string
 }
 
-export function relayInit(
-  url: string,
-  alreadyHaveEvent: (id: string) => boolean = () => false
-): Relay {
+export function relayInit(url: string): Relay {
   var ws: WebSocket
   var resolveClose: () => void
   var setOpen: (value: PromiseLike<void> | void) => void
@@ -104,8 +102,14 @@ export function relayInit(
         }
 
         var json = incomingMessageQueue.shift()
-        if (!json || alreadyHaveEvent(getHex64(json, 'id'))) {
-          return
+        if (!json) return
+
+        let subid = getSubscriptionId(json)
+        if (subid) {
+          let {alreadyHaveEvent} = openSubs[subid]
+          if (alreadyHaveEvent && alreadyHaveEvent(getHex64(json, 'id'))) {
+            return
+          }
         }
 
         try {
@@ -173,6 +177,7 @@ export function relayInit(
     filters: Filter[],
     {
       skipVerification = false,
+      alreadyHaveEvent = null,
       id = Math.random().toString().slice(2)
     }: SubscriptionOptions = {}
   ): Sub => {
@@ -181,7 +186,8 @@ export function relayInit(
     openSubs[subid] = {
       id: subid,
       filters,
-      skipVerification
+      skipVerification,
+      alreadyHaveEvent
     }
     trySend(['REQ', subid, ...filters])
 
@@ -189,6 +195,7 @@ export function relayInit(
       sub: (newFilters, newOpts = {}) =>
         sub(newFilters || filters, {
           skipVerification: newOpts.skipVerification || skipVerification,
+          alreadyHaveEvent: newOpts.alreadyHaveEvent || alreadyHaveEvent,
           id: subid
         }),
       unsub: () => {
