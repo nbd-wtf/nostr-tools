@@ -2,6 +2,7 @@ export * from './keys'
 export * from './relay'
 export * from './event'
 export * from './filter'
+export * from './pool'
 
 export * as nip04 from './nip04'
 export * as nip05 from './nip05'

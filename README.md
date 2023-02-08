@@ -120,6 +120,22 @@ To use this on Node.js you first must install `websocket-polyfill` and import it
 import 'websocket-polyfill'
 ```
 
+### Interacting with multiple relays
+
+```js
+import {pool} from 'nostr-tools'
+
+const p = pool()
+
+["wss://relay.example.com", "wss://relay.example2.com"].forEach(async url => {
+  let relay = pool.ensureRelay(url)
+  await relay.connect()
+
+  relay.sub(...) // same as above
+  relay.publish(...) // etc
+})
+```
+
 ### Querying profile data from a NIP-05 address
 
 ```js
@@ -195,7 +211,7 @@ let event = {
 sendEvent(event)
 
 // on the receiver side
-sub.on('event', (event) => {
+sub.on('event', event => {
   let sender = event.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
   pk1 === sender
   let plaintext = await nip04.decrypt(sk2, pk1, event.content)
