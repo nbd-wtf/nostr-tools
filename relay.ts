@@ -27,7 +27,7 @@ export type Sub = {
   off: (type: 'event' | 'eose', cb: any) => void
 }
 
-type SubscriptionOptions = {
+export type SubscriptionOptions = {
   skipVerification?: boolean
   id?: string
 }
