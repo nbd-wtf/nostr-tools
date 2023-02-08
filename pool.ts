@@ -4,14 +4,10 @@ import {Filter} from './filter'
 import {Event} from './event'
 import {SubscriptionOptions, Sub, Pub} from './relay'
 
-export function pool(defaultRelays: string[] = []) {
-  return new SimplePool(defaultRelays)
-}
-
-class SimplePool {
+export class SimplePool {
   private _conn: {[url: string]: Relay}
 
-  constructor(defaultRelays: string[]) {
+  constructor(defaultRelays: string[] = []) {
     this._conn = {}
     defaultRelays.forEach(this.ensureRelay)
   }

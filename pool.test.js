@@ -2,14 +2,14 @@
 
 require('websocket-polyfill')
 const {
-  pool,
+  SimplePool,
   generatePrivateKey,
   getPublicKey,
   getEventHash,
   signEvent
 } = require('./lib/nostr.cjs')
 
-let p = pool()
+let pool = new SimplePool()
 
 let relays = [
   'wss://nostr-dev.wellorder.net/',
@@ -23,7 +23,7 @@ beforeAll(async () => {
   Promise.all(
     relays.map(relay => {
       try {
-        let r = p.ensureRelay(relay)
+        let r = pool.ensureRelay(relay)
         return r.connect()
       } catch (err) {
         /***/
@@ -35,7 +35,7 @@ beforeAll(async () => {
 afterAll(async () => {
   relays.forEach(relay => {
     try {
-      let r = p.ensureRelay(relay)
+      let r = pool.ensureRelay(relay)
       r.close()
     } catch (err) {
       /***/
@@ -47,7 +47,7 @@ test('removing duplicates when querying', async () => {
   let priv = generatePrivateKey()
   let pub = getPublicKey(priv)
 
-  let subs = p.sub(relays, [
+  let subs = pool.sub(relays, [
     {
       authors: [pub]
     }
@@ -74,7 +74,7 @@ test('removing duplicates when querying', async () => {
   event.id = getEventHash(event)
   event.sig = signEvent(event, priv)
 
-  p.publish(relays, event)
+  pool.publish(relays, event)
 
   await new Promise(resolve => setTimeout(resolve, 1500))
 
@@ -85,8 +85,8 @@ test('removing duplicates correctly when double querying', async () => {
   let priv = generatePrivateKey()
   let pub = getPublicKey(priv)
 
-  let subs1 = p.sub(relays, [ { authors: [pub] } ])
-  let subs2 = p.sub(relays, [ { authors: [pub] } ])
+  let subs1 = pool.sub(relays, [{authors: [pub]}])
+  let subs2 = pool.sub(relays, [{authors: [pub]}])
 
   let received = []
 
@@ -111,7 +111,7 @@ test('removing duplicates correctly when double querying', async () => {
   event.id = getEventHash(event)
   event.sig = signEvent(event, priv)
 
-  p.publish(relays, event)
+  pool.publish(relays, event)
 
   await new Promise(resolve => setTimeout(resolve, 1500))
 

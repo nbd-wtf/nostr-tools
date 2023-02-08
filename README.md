@@ -125,15 +125,34 @@ import 'websocket-polyfill'
 ```js
 import {pool} from 'nostr-tools'
 
-const p = pool()
+const pool = new SimplePool()
 
-["wss://relay.example.com", "wss://relay.example2.com"].forEach(async url => {
+let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
+
+relays.forEach(async url => {
   let relay = pool.ensureRelay(url)
   await relay.connect()
-
-  relay.sub(...) // same as above
-  relay.publish(...) // etc
 })
+
+let relay = pool.ensureRelay('wss://relay.example3.com')
+
+let subs = pool.sub([...relays, relay], {
+  authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']
+})
+
+subs.forEach(sub =>
+  sub.on('event', event => {
+    // this will only be called once the first time the event is received
+    // ...
+  })
+)
+
+let pubs = pool.publish(newEvent)
+pubs.forEach(pub =>
+  pub.on('ok', () => {
+    // ...
+  })
+)
 ```
 
 ### Querying profile data from a NIP-05 address
