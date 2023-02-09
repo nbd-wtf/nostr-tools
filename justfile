@@ -11,3 +11,6 @@ test: build
 
 testOnly file: build
     jest {{file}}
+
+publish: build
+    npm publish
