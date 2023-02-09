@@ -20,7 +20,12 @@ let relays = [
 ]
 
 afterAll(async () => {
-  await pool.close([...relays, 'wss://nostr-relay.untethr.me'])
+  await pool.close([
+    ...relays,
+    'wss://nostr-relay.untethr.me',
+    'wss://offchain.pub',
+    'wss://eden.nostr.land'
+  ])
 })
 
 test('removing duplicates when querying', async () => {
@@ -120,4 +125,9 @@ test('list()', async () => {
       .reduce((acc, n) => (acc.indexOf(n) !== -1 ? acc : [...acc, n]), [])
       .length
   )
+
+  let relaysForAllEvents = events
+    .map(event => pool.seenOn(event.id))
+    .reduce((acc, n) => acc.concat(n), [])
+  expect(relaysForAllEvents.length).toBeGreaterThanOrEqual(events.length)
 })

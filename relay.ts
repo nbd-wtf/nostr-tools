@@ -30,9 +30,9 @@ export type Sub = {
 }
 
 export type SubscriptionOptions = {
-  skipVerification?: boolean
-  alreadyHaveEvent?: null | ((id: string) => boolean)
   id?: string
+  skipVerification?: boolean
+  alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
 }
 
 export function relayInit(url: string): Relay {
@@ -112,7 +112,7 @@ export function relayInit(url: string): Relay {
           if (
             so &&
             so.alreadyHaveEvent &&
-            so.alreadyHaveEvent(getHex64(json, 'id'))
+            so.alreadyHaveEvent(getHex64(json, 'id'), url)
           ) {
             return
           }

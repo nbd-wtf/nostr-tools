@@ -158,6 +158,11 @@ let events = await pool.list(relays, [{kinds: [0, 1]}])
 let event = await pool.get(relays, {
   ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']
 })
+
+let relaysForEvent = pool.seenOn(
+  '44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'
+)
+// relaysForEvent will be an array of URLs from relays a given event was seen on
 ```
 
 ### Querying profile data from a NIP-05 address
