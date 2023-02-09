@@ -107,6 +107,7 @@ export class SimplePool {
     return new Promise(resolve => {
       let sub = this.sub(relays, [filter], opts)
       let timeout = setTimeout(() => {
+        clearTimeout(timeout)
         sub.unsub()
         resolve(null)
       }, 1500)
