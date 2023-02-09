@@ -6,10 +6,10 @@ import {SubscriptionOptions, Sub, Pub} from './relay'
 
 export class SimplePool {
   private _conn: {[url: string]: Relay}
+  private _seenOn: {[id: string]: Set<string>} = {} // a map of all events we've seen in each relay
 
-  constructor(defaultRelays: string[] = []) {
+  constructor() {
     this._conn = {}
-    defaultRelays.forEach(this.ensureRelay)
   }
 
   async close(relays: string[]): Promise<void> {
@@ -37,7 +37,12 @@ export class SimplePool {
   sub(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Sub {
     let _knownIds: Set<string> = new Set()
     let modifiedOpts = opts || {}
-    modifiedOpts.alreadyHaveEvent = id => _knownIds.has(id)
+    modifiedOpts.alreadyHaveEvent = (id, url) => {
+      let set = this._seenOn[id] || new Set()
+      set.add(url)
+      this._seenOn[id] = set
+      return _knownIds.has(id)
+    }
 
     let subs: Sub[] = []
     let eventListeners: Set<(event: Event) => void> = new Set()
@@ -47,9 +52,7 @@ export class SimplePool {
     let eoseSent = false
     let eoseTimeout = setTimeout(() => {
       eoseSent = true
-      for (let cb of eoseListeners.values()) {
-        cb()
-      }
+      for (let cb of eoseListeners.values()) cb()
     }, 2400)
 
     relays.forEach(async relay => {
@@ -58,9 +61,7 @@ export class SimplePool {
       let s = r.sub(filters, modifiedOpts)
       s.on('event', (event: Event) => {
         _knownIds.add(event.id as string)
-        for (let cb of eventListeners.values()) {
-          cb(event)
-        }
+        for (let cb of eventListeners.values()) cb(event)
       })
       s.on('eose', () => {
         if (eoseSent) return
@@ -68,9 +69,7 @@ export class SimplePool {
         eosesMissing--
         if (eosesMissing === 0) {
           clearTimeout(eoseTimeout)
-          for (let cb of eoseListeners.values()) {
-            cb()
-          }
+          for (let cb of eoseListeners.values()) cb()
         }
       })
       subs.push(s)
@@ -85,9 +84,14 @@ export class SimplePool {
         subs.forEach(sub => sub.unsub())
       },
       on(type, cb) {
-        if (type === 'event') {
-          eventListeners.add(cb)
-        } else if (type === 'eose') eoseListeners.add(cb)
+        switch (type) {
+          case 'event':
+            eventListeners.add(cb)
+            break
+          case 'eose':
+            eoseListeners.add(cb)
+            break
+        }
       },
       off(type, cb) {
         if (type === 'event') {
@@ -146,6 +150,10 @@ export class SimplePool {
       let s = r.publish(event)
       return s
     })
+  }
+
+  seenOn(id: string): string[] {
+    return Array.from(this._seenOn[id]?.values?.() || [])
   }
 }
 
