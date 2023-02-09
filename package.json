@@ -9,11 +9,12 @@
   "main": "lib/nostr.cjs.js",
   "module": "lib/nostr.esm.js",
   "dependencies": {
-    "@noble/hashes": "^0.5.7",
-    "@noble/secp256k1": "^1.7.0",
+    "@noble/hashes": "^0.5.9",
+    "@noble/secp256k1": "^1.7.1",
     "@scure/base": "^1.1.1",
-    "@scure/bip32": "^1.1.1",
-    "@scure/bip39": "^1.1.0"
+    "@scure/bip32": "^1.1.5",
+    "@scure/bip39": "^1.1.1",
+    "prettier": "^2.8.4"
   },
   "keywords": [
     "decentralization",
@@ -23,20 +24,20 @@
     "nostr"
   ],
   "devDependencies": {
-    "@types/node": "^18.0.3",
-    "@typescript-eslint/eslint-plugin": "^5.46.1",
-    "@typescript-eslint/parser": "^5.46.1",
+    "@types/node": "^18.13.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
     "esbuild": "0.16.9",
     "esbuild-plugin-alias": "^0.2.1",
-    "eslint": "^8.30.0",
+    "eslint": "^8.33.0",
     "eslint-plugin-babel": "^5.3.1",
-    "esm-loader-typescript": "^1.0.1",
+    "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
-    "jest": "^29.3.1",
-    "node-fetch": "2",
-    "ts-jest": "^29.0.3",
+    "jest": "^29.4.2",
+    "node-fetch": "^2.6.9",
+    "ts-jest": "^29.0.5",
     "tsd": "^0.22.0",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "websocket-polyfill": "^0.0.3"
   }
 }
