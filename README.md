@@ -134,12 +134,7 @@ const pool = new SimplePool()
 
 let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
 
-relays.forEach(async url => {
-  let relay = pool.ensureRelay(url)
-  await relay.connect()
-})
-
-let relay = pool.ensureRelay('wss://relay.example3.com')
+let relay = await pool.ensureRelay('wss://relay.example3.com')
 
 let subs = pool.sub([...relays, relay], {
   authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']

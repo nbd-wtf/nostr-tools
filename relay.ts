@@ -108,8 +108,12 @@ export function relayInit(url: string): Relay {
 
         let subid = getSubscriptionId(json)
         if (subid) {
-          let {alreadyHaveEvent} = openSubs[subid]
-          if (alreadyHaveEvent && alreadyHaveEvent(getHex64(json, 'id'))) {
+          let so = openSubs[subid]
+          if (
+            so &&
+            so.alreadyHaveEvent &&
+            so.alreadyHaveEvent(getHex64(json, 'id'))
+          ) {
             return
           }
         }
@@ -320,6 +324,7 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): Promise<void> {
+      if (ws.readyState > 1) return Promise.resolve()
       ws.close()
       return new Promise<void>(resolve => {
         resolveClose = resolve

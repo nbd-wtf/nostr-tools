@@ -32,7 +32,7 @@ test('connectivity', () => {
   ).resolves.toBe(true)
 })
 
-test('querying', () => {
+test('querying', async () => {
   var resolve1
   var resolve2
 
@@ -52,16 +52,42 @@ test('querying', () => {
     resolve2(true)
   })
 
-  return expect(
-    Promise.all([
-      new Promise(resolve => {
-        resolve1 = resolve
-      }),
-      new Promise(resolve => {
-        resolve2 = resolve
-      })
-    ])
-  ).resolves.toEqual([true, true])
+  let [t1, t2] = await Promise.all([
+    new Promise(resolve => {
+      resolve1 = resolve
+    }),
+    new Promise(resolve => {
+      resolve2 = resolve
+    })
+  ])
+
+  expect(t1).toEqual(true)
+  expect(t2).toEqual(true)
+})
+
+test('get()', async () => {
+  let event = await relay.get({
+    ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027']
+  })
+
+  expect(event).toHaveProperty(
+    'id',
+    'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'
+  )
+})
+
+test('list()', async () => {
+  let events = await relay.list([
+    {
+      authors: [
+        '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
+      ],
+      kinds: [1],
+      limit: 2
+    }
+  ])
+
+  expect(events.length).toEqual(2)
 })
 
 test('listening (twice) and publishing', async () => {
