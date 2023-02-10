@@ -293,6 +293,11 @@ Please consult the tests or [the source code](https://github.com/fiatjaf/nostr-t
 </script>
 ```
 
+## Plumbing
+
+1. Install [`just`](https://just.systems/)
+2. `just -l`
+
 ## License
 
 Public domain.
