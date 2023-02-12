@@ -8,6 +8,7 @@ const Bech32MaxSize = 5000
 export type ProfilePointer = {
   pubkey: string // hex
   relays?: string[]
+  aliases?: string[]
 }
 
 export type EventPointer = {
