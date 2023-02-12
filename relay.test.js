@@ -19,17 +19,18 @@ afterAll(async () => {
   await relay.close()
 })
 
-test('connectivity', () => {
-  return expect(
-    new Promise(resolve => {
-      relay.on('connect', () => {
-        resolve(true)
-      })
-      relay.on('error', () => {
-        resolve(false)
-      })
+test('connectivity', async () => {
+  const promise = new Promise(resolve => {
+    relay.on('connect', () => {
+      resolve(true)
     })
-  ).resolves.toBe(true)
+    relay.on('error', () => {
+      resolve(false)
+    })
+  })
+
+  const result = await Promise.resolve(promise)
+  expect(result).toBe(true)
 })
 
 test('querying', async () => {
@@ -127,14 +128,14 @@ test('listening (twice) and publishing', async () => {
   event.sig = signEvent(event, sk)
 
   relay.publish(event)
-  return expect(
-    Promise.all([
-      new Promise(resolve => {
-        resolve1 = resolve
-      }),
-      new Promise(resolve => {
-        resolve2 = resolve
-      })
-    ])
-  ).resolves.toEqual([true, true])
+  const result = await Promise.all([
+    new Promise(resolve => {
+      resolve1 = resolve
+    }),
+    new Promise(resolve => {
+      resolve2 = resolve
+    })
+  ])
+
+  expect(result).toEqual([true, true])
 })
