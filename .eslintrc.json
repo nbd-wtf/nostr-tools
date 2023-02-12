@@ -29,7 +29,8 @@
     "fetch": false,
     "EventSource": false,
     "localStorage": false,
-    "sessionStorage": false
+    "sessionStorage": false,
+    "globalThis": true
   },
 
   "rules": {
