@@ -46,9 +46,11 @@ export async function queryProfile(
 
   let pubkey = res.names[name] as string
   let relays = (res.relays?.[pubkey] || []) as string[] // nip35
+  let aliases = Object.keys(res.names).filter(k => res.names[k] === pubkey)
 
   return {
     pubkey,
-    relays
+    relays,
+    aliases
   }
 }
