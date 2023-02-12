@@ -1,3 +1,9 @@
+// playwright acts as a safari executable on windows and mac
+const playwright = require('playwright')
+
+// set playwright as run-target for webkit tests
+process.env.WEBKIT_HEADLESS_BIN = playwright.webkit.executablePath()
+
 module.exports = function (config) {
   config.set({
     plugins: [
