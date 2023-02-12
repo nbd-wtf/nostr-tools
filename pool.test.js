@@ -1,6 +1,5 @@
 /* eslint-env jest */
 
-require('websocket-polyfill')
 const {
   SimplePool,
   generatePrivateKey,

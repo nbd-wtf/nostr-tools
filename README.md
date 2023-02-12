@@ -119,12 +119,6 @@ let event = await relay.get({
 await relay.close()
 ```
 
-To use this on Node.js you first must install `websocket-polyfill` and import it:
-
-```js
-import 'websocket-polyfill'
-```
-
 ### Interacting with multiple relays
 
 ```js
