@@ -7,7 +7,11 @@ build:
     node build.js
 
 test: build
-    jest
+    jest --testPathIgnorePatterns "<rootDir>/browser-tests/"
+
+browser-test: build
+    npx karma start
+    
 
 testOnly file: build
     jest {{file}}
