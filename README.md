@@ -128,7 +128,7 @@ import 'websocket-polyfill'
 ### Interacting with multiple relays
 
 ```js
-import {pool} from 'nostr-tools'
+import {SimplePool} from 'nostr-tools'
 
 const pool = new SimplePool()
 
