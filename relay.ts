@@ -38,10 +38,6 @@ export type SubscriptionOptions = {
 export function relayInit(url: string): Relay {
   var ws: WebSocket
   var resolveClose: () => void
-  var setOpen: (value: PromiseLike<void> | void) => void
-  var untilOpen = new Promise<void>(resolve => {
-    setOpen = resolve
-  })
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
@@ -74,7 +70,6 @@ export function relayInit(url: string): Relay {
 
       ws.onopen = () => {
         listeners.connect.forEach(cb => cb())
-        setOpen()
         resolve()
       }
       ws.onerror = () => {
@@ -171,7 +166,6 @@ export function relayInit(url: string): Relay {
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
 
-    await untilOpen
     try {
       ws.send(msg)
     } catch (err) {
