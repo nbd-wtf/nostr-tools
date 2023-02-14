@@ -16,7 +16,13 @@ export enum Kind {
   ChannelMetadata = 41,
   ChannelMessage = 42,
   ChannelHideMessage = 43,
-  ChannelMuteUser = 44
+  ChannelMuteUser = 44,
+  Report = 1984,
+  ZapRequest = 9734,
+  Zap = 9735,
+  RelayList = 10002,
+  ClientAuth = 22242,
+  Article = 30023
 }
 
 export type Event = {
