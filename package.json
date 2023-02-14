@@ -43,7 +43,7 @@
     "playwright": "1.30.0",
     "karma-jasmine": "^5.1.0",
     "karma-jasmine-matchers": "^5.0.0",
-    "node-fetch": "^2.6.9",
+    "cross-fetch": "3.1.5",
     "node-stdlib-browser": "1.2.0",
     "ts-jest": "^29.0.5",
     "tsd": "^0.22.0",

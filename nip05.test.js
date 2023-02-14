@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-const fetch = require('node-fetch')
+const fetch = require('cross-fetch')
 const {nip05} = require('./lib/nostr.cjs')
 
 test('fetch nip05 profiles', async () => {
