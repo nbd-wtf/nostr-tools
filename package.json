@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -9,7 +9,7 @@
   "main": "lib/nostr.cjs.js",
   "module": "lib/nostr.esm.js",
   "dependencies": {
-    "@noble/hashes": "^0.5.9",
+    "@noble/hashes": "1.0.0",
     "@noble/secp256k1": "^1.7.1",
     "@scure/base": "^1.1.1",
     "@scure/bip32": "^1.1.5",
