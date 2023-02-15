@@ -19,8 +19,8 @@ export type Relay = {
   off: (type: RelayEvent, cb: any) => void
 }
 export type Pub = {
-  on: (type: 'ok' | 'seen' | 'failed', cb: any) => void
-  off: (type: 'ok' | 'seen' | 'failed', cb: any) => void
+  on: (type: 'ok' | 'failed', cb: any) => void
+  off: (type: 'ok' | 'failed', cb: any) => void
 }
 export type Sub = {
   sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
@@ -265,50 +265,17 @@ export function relayInit(url: string): Relay {
       if (!event.id) throw new Error(`event ${event} has no id`)
       let id = event.id
 
-      var sent = false
-      var mustMonitor = false
-
       trySend(['EVENT', event])
-        .then(() => {
-          sent = true
-          if (mustMonitor) {
-            startMonitoring()
-            mustMonitor = false
-          }
-        })
-        .catch(() => {})
-
-      const startMonitoring = () => {
-        let monitor = sub([{ids: [id]}], {
-          id: `monitor-${id.slice(0, 5)}`
-        })
-        let willUnsub = setTimeout(() => {
-          ;(pubListeners[id]?.failed || []).forEach(cb =>
-            cb('event not seen after 5 seconds')
-          )
-          monitor.unsub()
-        }, 5000)
-        monitor.on('event', () => {
-          clearTimeout(willUnsub)
-          ;(pubListeners[id]?.seen || []).forEach(cb => cb())
-        })
-      }
 
       return {
-        on: (type: 'ok' | 'seen' | 'failed', cb: any) => {
+        on: (type: 'ok' | 'failed', cb: any) => {
           pubListeners[id] = pubListeners[id] || {
             ok: [],
-            seen: [],
             failed: []
           }
           pubListeners[id][type].push(cb)
-
-          if (type === 'seen') {
-            if (sent) startMonitoring()
-            else mustMonitor = true
-          }
         },
-        off: (type: 'ok' | 'seen' | 'failed', cb: any) => {
+        off: (type: 'ok' | 'failed', cb: any) => {
           let listeners = pubListeners[id]
           if (!listeners) return
           let idx = listeners[type].indexOf(cb)
