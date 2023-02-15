@@ -285,6 +285,10 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): Promise<void> {
+      listeners = {connect: [], disconnect: [], error: [], notice: []}
+      subListeners = {}
+      pubListeners = {}
+
       if (ws.readyState > 1) return Promise.resolve()
       ws.close()
       return new Promise<void>(resolve => {
