@@ -135,15 +135,22 @@ export function relayInit(url: string): Relay {
               return
             case 'EOSE': {
               let id = data[1]
-              ;(subListeners[id]?.eose || []).forEach(cb => cb())
+              if (id in subListeners) {
+                subListeners[id].eose.forEach(cb => cb())
+                subListeners[id].eose = [] // 'eose' only happens once per sub, so stop listeners here
+              }
               return
             }
             case 'OK': {
               let id: string = data[1]
               let ok: boolean = data[2]
               let reason: string = data[3] || ''
-              if (ok) pubListeners[id]?.ok.forEach(cb => cb())
-              else pubListeners[id]?.failed.forEach(cb => cb(reason))
+              if (id in pubListeners) {
+                if (ok) pubListeners[id].ok.forEach(cb => cb())
+                else pubListeners[id].failed.forEach(cb => cb(reason))
+                pubListeners[id].ok = [] // 'ok' only happens once per pub, so stop listeners here
+                pubListeners[id].failed = []
+              }
               return
             }
             case 'NOTICE':
