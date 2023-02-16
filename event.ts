@@ -25,20 +25,22 @@ export enum Kind {
   Article = 30023
 }
 
-export type Event = {
-  id?: string
-  sig?: string
+export type EventTemplate = {
   kind: Kind
   tags: string[][]
-  pubkey: string
   content: string
   created_at: number
 }
 
-export function getBlankEvent(): Event {
+export type Event = EventTemplate & {
+  pubkey: string
+  id: string
+  sig: string
+}
+
+export function getBlankEvent(): EventTemplate {
   return {
     kind: 255,
-    pubkey: '',
     content: '',
     tags: [],
     created_at: 0
