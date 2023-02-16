@@ -1,6 +1,10 @@
 import {randomBytes} from '@noble/hashes/utils'
 import * as secp256k1 from '@noble/secp256k1'
 import {base64} from '@scure/base'
+import nodeCrypto from 'crypto'
+
+let crypto = nodeCrypto?.webcrypto ?? globalThis.crypto
+
 
 import {utf8Decoder, utf8Encoder} from './utils'
 
