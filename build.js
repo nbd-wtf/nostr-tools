@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 const esbuild = require('esbuild')
-const polyfillProviderPlugin = require('node-stdlib-browser/helpers/esbuild/plugin')
-const stdLibBrowser = require('node-stdlib-browser')
 const fs = require('fs')
 
 let common = {
@@ -11,49 +9,48 @@ let common = {
   sourcemap: 'external'
 }
 
-let browserCommon = {
-  platform: 'browser',
-  inject: [require.resolve('node-stdlib-browser/helpers/esbuild/shim')],
-  plugins: [polyfillProviderPlugin(stdLibBrowser)]
-}
-
 esbuild
-  .build({
+  .buildSync({
     ...common,
-    outfile: 'lib/nostr.esm.js',
     format: 'esm',
-    packages: 'external'
+    outfile: 'lib/nostr.esm.js',
+    packages: 'external',
+    platform: 'node',
   })
-  .then(() => console.log('esm build success.'))
+
 
 esbuild
-  .build({
+  .buildSync({
     ...common,
-    outfile: 'lib/nostr.cjs.js',
     format: 'cjs',
-    packages: 'external'
+    outfile: 'lib/nostr.cjs.js',
+    packages: 'external',
+    platform: 'node',
   })
-  .then(() => console.log('cjs build success.'))
+  // .then(() => console.log('cjs build success.'))
 
 esbuild
-  .build({
+  .buildSync({
     ...common,
-    outfile: 'lib/nostr.bundle.js',
     format: 'iife',
     globalName: 'NostrTools',
-    ...browserCommon
+    outfile: 'lib/nostr.bundle.js',
+    platform: 'browser'
   })
-  .then(() => console.log('standalone build success.'))
+  // .then(() => console.log('standalone build success.'))
 
 const files = fs.readdirSync(__dirname)
 const testFiles = files.filter(file => file.includes('.test.js'))
 
 esbuild
-  .build({
+  .buildSync({
     ...common,
+    define: {
+      'window': 'globalThis',
+      'global': 'globalThis',
+    },
     entryPoints: ['./karma-setup.js', ...testFiles],
     outdir: 'browser-tests',
-    globalName: 'NostrTools',
-    ...browserCommon
+    platform: 'browser'
   })
-  .then(() => console.log('browser tests build success.'))
+  // .then(() => console.log('browser tests build success.'))
