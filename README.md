@@ -53,14 +53,14 @@ import {
 } from 'nostr-tools'
 
 const relay = relayInit('wss://relay.example.com')
-await relay.connect()
-
 relay.on('connect', () => {
   console.log(`connected to ${relay.url}`)
 })
 relay.on('error', () => {
   console.log(`failed to connect to ${relay.url}`)
 })
+
+await relay.connect()
 
 // let's query for an event that exists
 let sub = relay.sub([
