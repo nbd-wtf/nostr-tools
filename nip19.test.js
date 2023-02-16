@@ -34,3 +34,25 @@ test('encode and decode nprofile', () => {
   expect(data.relays).toContain(relays[0])
   expect(data.relays).toContain(relays[1])
 })
+
+test('encode and decode naddr', () => {
+  let pk = getPublicKey(generatePrivateKey())
+  let relays = [
+    'wss://relay.nostr.example.mydomain.example.com',
+    'wss://nostr.banana.com'
+  ]
+  let naddr = nip19.naddrEncode({
+    pubkey: pk,
+    relays,
+    kind: 30023,
+    identifier: 'banana'
+  })
+  expect(naddr).toMatch(/naddr1\w+/)
+  let {type, data} = nip19.decode(naddr)
+  expect(type).toEqual('naddr')
+  expect(data.pubkey).toEqual(pk)
+  expect(data.relays).toContain(relays[0])
+  expect(data.relays).toContain(relays[1])
+  expect(data.kind).toEqual(30023)
+  expect(data.identifier).toEqual('banana')
+})

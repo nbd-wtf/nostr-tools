@@ -15,46 +15,75 @@ export type EventPointer = {
   relays?: string[]
 }
 
+export type AddressPointer = {
+  identifier: string
+  pubkey: string
+  kind: number
+  relays?: string[]
+}
+
 export function decode(nip19: string): {
   type: string
-  data: ProfilePointer | EventPointer | string
+  data: ProfilePointer | EventPointer | AddressPointer | string
 } {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
-  if (prefix === 'nprofile') {
-    let tlv = parseTLV(data)
-    if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nprofile')
-    if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
+  switch (prefix) {
+    case 'nprofile': {
+      let tlv = parseTLV(data)
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nprofile')
+      if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
 
-    return {
-      type: 'nprofile',
-      data: {
-        pubkey: secp256k1.utils.bytesToHex(tlv[0][0]),
-        relays: tlv[1].map(d => utf8Decoder.decode(d))
+      return {
+        type: 'nprofile',
+        data: {
+          pubkey: secp256k1.utils.bytesToHex(tlv[0][0]),
+          relays: tlv[1].map(d => utf8Decoder.decode(d))
+        }
       }
     }
-  }
+    case 'nevent': {
+      let tlv = parseTLV(data)
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nevent')
+      if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
 
-  if (prefix === 'nevent') {
-    let tlv = parseTLV(data)
-    if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nevent')
-    if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
-
-    return {
-      type: 'nevent',
-      data: {
-        id: secp256k1.utils.bytesToHex(tlv[0][0]),
-        relays: tlv[1].map(d => utf8Decoder.decode(d))
+      return {
+        type: 'nevent',
+        data: {
+          id: secp256k1.utils.bytesToHex(tlv[0][0]),
+          relays: tlv[1].map(d => utf8Decoder.decode(d))
+        }
       }
     }
-  }
 
-  if (prefix === 'nsec' || prefix === 'npub' || prefix === 'note') {
-    return {type: prefix, data: secp256k1.utils.bytesToHex(data)}
-  }
+    case 'naddr': {
+      let tlv = parseTLV(data)
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for naddr')
+      if (!tlv[2]?.[0]) throw new Error('missing TLV 2 for naddr')
+      if (tlv[2][0].length !== 32) throw new Error('TLV 2 should be 32 bytes')
+      if (!tlv[3]?.[0]) throw new Error('missing TLV 3 for naddr')
+      if (tlv[3][0].length !== 4) throw new Error('TLV 3 should be 4 bytes')
 
-  throw new Error(`unknown prefix ${prefix}`)
+      return {
+        type: 'naddr',
+        data: {
+          identifier: utf8Decoder.decode(tlv[0][0]),
+          pubkey: secp256k1.utils.bytesToHex(tlv[2][0]),
+          kind: parseInt(secp256k1.utils.bytesToHex(tlv[3][0]), 16),
+          relays: tlv[1].map(d => utf8Decoder.decode(d))
+        }
+      }
+    }
+
+    case 'nsec':
+    case 'npub':
+    case 'note':
+      return {type: prefix, data: secp256k1.utils.bytesToHex(data)}
+
+    default:
+      throw new Error(`unknown prefix ${prefix}`)
+  }
 }
 
 type TLV = {[t: number]: Uint8Array[]}
@@ -108,6 +137,20 @@ export function neventEncode(event: EventPointer): string {
   })
   let words = bech32.toWords(data)
   return bech32.encode('nevent', words, Bech32MaxSize)
+}
+
+export function naddrEncode(addr: AddressPointer): string {
+  let kind = new ArrayBuffer(4)
+  new DataView(kind).setUint32(0, addr.kind, false)
+
+  let data = encodeTLV({
+    0: [utf8Encoder.encode(addr.identifier)],
+    1: (addr.relays || []).map(url => utf8Encoder.encode(url)),
+    2: [secp256k1.utils.hexToBytes(addr.pubkey)],
+    3: [new Uint8Array(kind)]
+  })
+  let words = bech32.toWords(data)
+  return bech32.encode('naddr', words, Bech32MaxSize)
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {
