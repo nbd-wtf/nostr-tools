@@ -2,6 +2,7 @@ import * as secp256k1 from '@noble/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
 
 import {utf8Encoder} from './utils'
+import {getPublicKey} from './keys'
 
 /* eslint-disable no-unused-vars */
 export enum Kind {
@@ -45,6 +46,14 @@ export function getBlankEvent(): EventTemplate {
     tags: [],
     created_at: 0
   }
+}
+
+export function finishEvent(t: EventTemplate, privateKey: string): Event {
+  let event = t as Event
+  event.pubkey = getPublicKey(privateKey)
+  event.id = getEventHash(event)
+  event.sig = signEvent(event, privateKey)
+  return event
 }
 
 export function serializeEvent(evt: Event): string {
