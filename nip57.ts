@@ -50,17 +50,20 @@ export function makeZapRequest({
 }: {
   profile: string
   event: string | null
-  amount: string
+  amount: number
   comment: string
   relays: string[]
 }): EventTemplate {
+  if (!amount) throw new Error('amount not given')
+  if (!profile) throw new Error('profile not given')
+
   let zr = {
     kind: 9734,
     created_at: Math.round(Date.now() / 1000),
     content: comment,
     tags: [
       ['p', profile],
-      ['amount', amount],
+      ['amount', amount.toString()],
       ['relays', ...relays]
     ]
   }
