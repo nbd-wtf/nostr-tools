@@ -1,3 +1,5 @@
+/* global WebSocket */
+
 globalThis.WebSocket ?? require('websocket-polyfill')
 
 import {Event, verifySignature, validateEvent} from './event'
