@@ -71,3 +71,37 @@ export function makeZapRequest({
 
   return zr
 }
+
+export function makeZapReceipt({
+  zapRequest,
+  preimage,
+  bolt11,
+  paidAt
+}: {
+  zapRequest: string
+  preimage: string | null
+  bolt11: string
+  paidAt: Date
+}): EventTemplate {
+  let zr: Event = JSON.parse(zapRequest)
+  let tagsFromZapRequest = zr.tags.filter(
+    ([t]) => t === 'e' || t === 'p' || t === 'a'
+  )
+
+  let zap = {
+    kind: 9735,
+    created_at: Math.round(paidAt.getTime() / 1000),
+    content: '',
+    tags: [
+      ...tagsFromZapRequest,
+      ['bolt11', bolt11],
+      ['description', zapRequest]
+    ]
+  }
+
+  if (preimage) {
+    zap.tags.push(['preimage', preimage])
+  }
+
+  return zap
+}
