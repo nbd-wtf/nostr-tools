@@ -4,6 +4,13 @@ Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
 Only depends on _@scure_ and _@noble_ packages.
 
+## Installation
+
+```bash
+ npm install nostr-tools # or yarn add nostr-tools
+```
+
+
 ## Usage
 
 ### Generating a private key and a public key
