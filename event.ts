@@ -33,8 +33,11 @@ export type EventTemplate = {
   created_at: number
 }
 
-export type Event = EventTemplate & {
+export type UnsignedEvent = EventTemplate & {
   pubkey: string
+}
+
+export type Event = UnsignedEvent & {
   id: string
   sig: string
 }
@@ -56,7 +59,7 @@ export function finishEvent(t: EventTemplate, privateKey: string): Event {
   return event
 }
 
-export function serializeEvent(evt: Event): string {
+export function serializeEvent(evt: UnsignedEvent): string {
   if (!validateEvent(evt))
     throw new Error("can't serialize event with wrong or missing properties")
 
@@ -70,12 +73,12 @@ export function serializeEvent(evt: Event): string {
   ])
 }
 
-export function getEventHash(event: Event): string {
+export function getEventHash(event: UnsignedEvent): string {
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
   return secp256k1.utils.bytesToHex(eventHash)
 }
 
-export function validateEvent(event: Event): boolean {
+export function validateEvent(event: UnsignedEvent): boolean {
   if (typeof event !== 'object') return false
   if (typeof event.content !== 'string') return false
   if (typeof event.created_at !== 'number') return false
