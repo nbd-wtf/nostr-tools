@@ -1,6 +1,6 @@
 import {bech32} from '@scure/base'
 
-import {Event, EventTemplate} from './event'
+import {Event, EventTemplate, validateEvent, verifySignature} from './event'
 import {utf8Decoder} from './utils'
 
 var _fetch: any
@@ -73,6 +73,34 @@ export function makeZapRequest({
   }
 
   return zr
+}
+
+export function validateZapRequest(zapRequestString: string): string | null {
+  let zapRequest: Event
+
+  try {
+    zapRequest = JSON.parse(zapRequestString)
+  } catch (err) {
+    return 'Invalid zap request JSON.'
+  }
+
+  if (!validateEvent(zapRequest))
+    return 'Zap request is not a valid Nostr event.'
+  if (!verifySignature(zapRequest)) return 'Invalid signature on zap request.'
+
+  let p = zapRequest.tags.find(([t, v]) => t === 'p' && v)
+  if (!p) return "Zap request doesn't have a 'p' tag."
+  if (!p[1].match(/^[a-f0-9]{64}$/))
+    return "Zap request 'p' tag is not valid hex."
+
+  let e = zapRequest.tags.find(([t, v]) => t === 'e' && v)
+  if (e && !e[1].match(/^[a-f0-9]{64}$/))
+    return "Zap request 'e' tag is not valid hex."
+
+  let relays = zapRequest.tags.find(([t, v]) => t === 'relays' && v)
+  if (!relays) return "Zap request doesn't have a 'relays' tag."
+
+  return null
 }
 
 export function makeZapReceipt({
