@@ -105,7 +105,7 @@ export function verifySignature(event: Event & {sig: string}): boolean {
   )
 }
 
-export function signEvent(event: Event, key: string): string {
+export function signEvent(event: UnsignedEvent, key: string): string {
   return secp256k1.utils.bytesToHex(
     secp256k1.schnorr.signSync(getEventHash(event), key)
   )
