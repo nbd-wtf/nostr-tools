@@ -10,7 +10,7 @@ export type Relay = {
   url: string
   status: number
   connect: () => Promise<void>
-  close: () => Promise<void>
+  close: () => void
   sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
   list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
   get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
@@ -37,7 +37,6 @@ export type SubscriptionOptions = {
 
 export function relayInit(url: string): Relay {
   var ws: WebSocket
-  var resolveClose: () => void
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
     connect: Array<() => void>
@@ -78,7 +77,6 @@ export function relayInit(url: string): Relay {
       }
       ws.onclose = async () => {
         listeners.disconnect.forEach(cb => cb())
-        resolveClose && resolveClose()
       }
 
       let incomingMessageQueue: string[] = []
@@ -291,16 +289,13 @@ export function relayInit(url: string): Relay {
       }
     },
     connect,
-    close(): Promise<void> {
+    close(): void {
       listeners = {connect: [], disconnect: [], error: [], notice: []}
       subListeners = {}
       pubListeners = {}
 
-      if (ws.readyState > 1) return Promise.resolve()
+      if (ws.readyState > 1) return
       ws.close()
-      return new Promise<void>(resolve => {
-        resolveClose = resolve
-      })
     },
     get status() {
       return ws?.readyState ?? 3
