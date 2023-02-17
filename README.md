@@ -120,7 +120,7 @@ let event = await relay.get({
   ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245']
 })
 
-await relay.close()
+relay.close()
 ```
 
 To use this on Node.js you first must install `websocket-polyfill` and import it:

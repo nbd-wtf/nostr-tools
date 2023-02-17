@@ -15,8 +15,8 @@ beforeAll(() => {
   relay.connect()
 })
 
-afterAll(async () => {
-  await relay.close()
+afterAll(() => {
+  relay.close()
 })
 
 test('connectivity', () => {
