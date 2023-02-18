@@ -20,8 +20,8 @@ export type Relay = {
   list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
   get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
   publish: (event: Event) => Pub
-  off: <T extends keyof RelayEvent, U extends RelayEvent[T] = RelayEvent[T]>(event: T, listener: U) => void
-  on: <T extends keyof RelayEvent, U extends RelayEvent[T] = RelayEvent[T]>(event: T, listener: U) => void
+  off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
+  on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
 }
 export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
@@ -246,7 +246,7 @@ export function relayInit(
 	on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(type: T, cb: U): void => {
 		listeners[type].push(cb)
 		if (type === 'connect' && ws?.readyState === 1) {
-			// i would love to now why we need this
+			// i would love to know why we need this
 			(cb as ()=> void)()
 		}
 	},
