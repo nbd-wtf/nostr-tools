@@ -19,8 +19,8 @@ let relays = [
   'wss://nostr.zebedee.cloud/'
 ]
 
-afterAll(async () => {
-  await pool.close([
+afterAll(() => {
+  pool.close([
     ...relays,
     'wss://nostr-relay.untethr.me',
     'wss://offchain.pub',
