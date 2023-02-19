@@ -7,7 +7,11 @@
     "url": "https://github.com/fiatjaf/nostr-tools.git"
   },
   "main": "lib/nostr.cjs.js",
-  "module": "lib/nostr.esm.js",
+  "module": "lib/esm/nostr.mjs",
+  "exports": {
+    "import": "./lib/esm/nostr.mjs",
+    "require": "./lib/nostr.cjs.js"
+  },
   "dependencies": {
     "@noble/hashes": "1.0.0",
     "@noble/secp256k1": "^1.7.1",
