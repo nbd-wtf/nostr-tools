@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs')
 const esbuild = require('esbuild')
 
 let common = {
@@ -11,11 +12,16 @@ let common = {
 esbuild
   .build({
     ...common,
-    outfile: 'lib/nostr.esm.js',
+    outfile: 'lib/esm/nostr.mjs',
     format: 'esm',
     packages: 'external'
   })
-  .then(() => console.log('esm build success.'))
+  .then(() => {
+    const packageJson = JSON.stringify({ type: 'module' })
+    fs.writeFileSync(`${__dirname}/lib/esm/package.json`, packageJson, 'utf8')
+
+    console.log('esm build success.')
+  })
 
 esbuild
   .build({
