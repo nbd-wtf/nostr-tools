@@ -1,8 +1,8 @@
 /* global WebSocket */
 
-import {Event, verifySignature, validateEvent} from './event'
-import {Filter, matchFilters} from './filter'
-import {getHex64, getSubscriptionId} from './fakejson'
+import { Event, verifySignature, validateEvent } from './event'
+import { Filter, matchFilters } from './filter'
+import { getHex64, getSubscriptionId } from './fakejson'
 
 type RelayEvent = 'connect' | 'disconnect' | 'error' | 'notice'
 
@@ -37,7 +37,7 @@ export type SubscriptionOptions = {
 
 export function relayInit(url: string): Relay {
   var ws: WebSocket
-  var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
+  var openSubs: { [id: string]: { filters: Filter[] } & SubscriptionOptions } = {}
   var listeners: {
     connect: Array<() => void>
     disconnect: Array<() => void>
@@ -128,7 +128,7 @@ export function relayInit(url: string): Relay {
                 matchFilters(openSubs[id].filters, event)
               ) {
                 openSubs[id]
-                ;(subListeners[id]?.event || []).forEach(cb => cb(event))
+                  ; (subListeners[id]?.event || []).forEach(cb => cb(event))
               }
               return
             case 'EOSE': {
@@ -163,14 +163,20 @@ export function relayInit(url: string): Relay {
     })
   }
 
+  function connected() {
+    return ws?.readyState === 1
+  }
+
   async function connect(): Promise<void> {
-    if (ws?.readyState && ws.readyState === 1) return // ws already open
+    if (connected()) return // ws already open
     await connectRelay()
   }
 
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
-
+    if (!connected()) {
+      return
+    }
     try {
       ws.send(msg)
     } catch (err) {
@@ -290,12 +296,11 @@ export function relayInit(url: string): Relay {
     },
     connect,
     close(): void {
-      listeners = {connect: [], disconnect: [], error: [], notice: []}
+      listeners = { connect: [], disconnect: [], error: [], notice: [] }
       subListeners = {}
       pubListeners = {}
 
-      if (ws.readyState > 1) return
-      ws.close()
+      ws?.close()
     },
     get status() {
       return ws?.readyState ?? 3
