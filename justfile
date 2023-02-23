@@ -14,3 +14,6 @@ testOnly file: build
 
 publish: build
     npm publish
+
+format:
+    prettier --plugin-search-dir . --write .
