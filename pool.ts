@@ -13,10 +13,10 @@ export class SimplePool {
   }
 
   close(relays: string[]): void {
-      relays.map(url => {
-        let relay = this._conn[normalizeURL(url)]
-        if (relay) relay.close()
-      })
+    relays.map(url => {
+      let relay = this._conn[normalizeURL(url)]
+      if (relay) relay.close()
+    })
   }
 
   async ensureRelay(url: string): Promise<Relay> {

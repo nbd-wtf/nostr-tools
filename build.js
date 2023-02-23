@@ -17,7 +17,7 @@ esbuild
     packages: 'external'
   })
   .then(() => {
-    const packageJson = JSON.stringify({ type: 'module' })
+    const packageJson = JSON.stringify({type: 'module'})
     fs.writeFileSync(`${__dirname}/lib/esm/package.json`, packageJson, 'utf8')
 
     console.log('esm build success.')

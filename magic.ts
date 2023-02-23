@@ -109,9 +109,9 @@ class MagicPool {
     }
 
     // start subscription
-    for (let r in relays) {
-        r.
-    }
+    // for (let r in relays) {
+    //     r.
+    // }
 
     return {
       page(n: number) {}
