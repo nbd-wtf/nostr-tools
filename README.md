@@ -10,7 +10,6 @@ Only depends on _@scure_ and _@noble_ packages.
  npm install nostr-tools # or yarn add nostr-tools
 ```
 
-
 ## Usage
 
 ### Generating a private key and a public key
