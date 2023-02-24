@@ -13,10 +13,10 @@ export class SimplePool {
   }
 
   close(relays: string[]): void {
-      relays.map(url => {
-        let relay = this._conn[normalizeURL(url)]
-        if (relay) relay.close()
-      })
+    relays.map(url => {
+      let relay = this._conn[normalizeURL(url)]
+      if (relay) relay.close()
+    })
   }
 
   async ensureRelay(url: string): Promise<Relay> {
@@ -54,7 +54,13 @@ export class SimplePool {
     }, 2400)
 
     relays.forEach(async relay => {
-      let r = await this.ensureRelay(relay)
+      let r
+      try {
+        r = await this.ensureRelay(relay)
+      } catch (err) {
+        handleEose()
+        return
+      }
       if (!r) return
       let s = r.sub(filters, modifiedOpts)
       s.on('event', (event: Event) => {
@@ -63,14 +69,17 @@ export class SimplePool {
       })
       s.on('eose', () => {
         if (eoseSent) return
+        handleEose()
+      })
+      subs.push(s)
 
+      function handleEose() {
         eosesMissing--
         if (eosesMissing === 0) {
           clearTimeout(eoseTimeout)
           for (let cb of eoseListeners.values()) cb()
         }
-      })
-      subs.push(s)
+      }
     })
 
     let greaterSub: Sub = {
