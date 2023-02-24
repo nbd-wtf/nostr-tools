@@ -13,7 +13,7 @@ export class SimplePool {
   }
 
   close(relays: string[]): void {
-    relays.map(url => {
+    relays.forEach(url => {
       let relay = this._conn[normalizeURL(url)]
       if (relay) relay.close()
     })
