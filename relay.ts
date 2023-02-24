@@ -163,14 +163,20 @@ export function relayInit(url: string): Relay {
     })
   }
 
+  function connected() {
+    return ws?.readyState === 1
+  }
+
   async function connect(): Promise<void> {
-    if (ws?.readyState && ws.readyState === 1) return // ws already open
+    if (connected()) return // ws already open
     await connectRelay()
   }
 
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
-
+    if (!connected()) {
+      return
+    }
     try {
       ws.send(msg)
     } catch (err) {
@@ -294,8 +300,7 @@ export function relayInit(url: string): Relay {
       subListeners = {}
       pubListeners = {}
 
-      if (ws.readyState > 1) return
-      ws.close()
+      ws?.close()
     },
     get status() {
       return ws?.readyState ?? 3
