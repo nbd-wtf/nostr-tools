@@ -56,3 +56,15 @@ test('encode and decode naddr', () => {
   expect(data.kind).toEqual(30023)
   expect(data.identifier).toEqual('banana')
 })
+
+test('encode and decode naddr from habla.news', () => {
+  let {type, data} = nip19.decode(
+    'naddr1qq98yetxv4ex2mnrv4esygrl54h466tz4v0re4pyuavvxqptsejl0vxcmnhfl60z3rth2xkpjspsgqqqw4rsf34vl5'
+  )
+  expect(type).toEqual('naddr')
+  expect(data.pubkey).toEqual(
+    '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194'
+  )
+  expect(data.kind).toEqual(30023)
+  expect(data.identifier).toEqual('references')
+})
