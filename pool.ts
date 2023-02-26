@@ -8,8 +8,13 @@ export class SimplePool {
   private _conn: {[url: string]: Relay}
   private _seenOn: {[id: string]: Set<string>} = {} // a map of all events we've seen in each relay
 
-  constructor() {
+  private eoseSubTimeout: number
+  private getTimeout: number
+
+  constructor(options: {eoseSubTimeout?: number; getTimeout?: number} = {}) {
     this._conn = {}
+    this.eoseSubTimeout = options.eoseSubTimeout || 3400
+    this.getTimeout = options.getTimeout || 3400
   }
 
   close(relays: string[]): void {
@@ -51,7 +56,7 @@ export class SimplePool {
     let eoseTimeout = setTimeout(() => {
       eoseSent = true
       for (let cb of eoseListeners.values()) cb()
-    }, 3500)
+    }, this.eoseSubTimeout)
 
     relays.forEach(async relay => {
       let r
@@ -120,7 +125,7 @@ export class SimplePool {
       let timeout = setTimeout(() => {
         sub.unsub()
         resolve(null)
-      }, 3500)
+      }, this.getTimeout)
       sub.on('event', (event: Event) => {
         resolve(event)
         clearTimeout(timeout)
