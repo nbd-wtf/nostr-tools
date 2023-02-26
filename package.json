@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",

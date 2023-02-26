@@ -155,13 +155,23 @@ export class SimplePool {
     })
   }
 
-  publish(relays: string[], event: Event): Pub[] {
-    return relays.map(relay => {
+  publish(relays: string[], event: Event): Pub {
+    let pubs = relays.map(relay => {
       let r = this._conn[normalizeURL(relay)]
       if (!r) return badPub(relay)
-      let s = r.publish(event)
-      return s
+      return r.publish(event)
     })
+
+    return {
+      on(type, cb) {
+        pubs.forEach((pub, i) => {
+          pub.on(type, () => cb(relays[i]))
+        })
+      },
+      off() {
+        // do nothing here, FIXME
+      }
+    }
   }
 
   seenOn(id: string): string[] {
