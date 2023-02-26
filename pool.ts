@@ -51,7 +51,7 @@ export class SimplePool {
     let eoseTimeout = setTimeout(() => {
       eoseSent = true
       for (let cb of eoseListeners.values()) cb()
-    }, 2400)
+    }, 3500)
 
     relays.forEach(async relay => {
       let r
@@ -120,7 +120,7 @@ export class SimplePool {
       let timeout = setTimeout(() => {
         sub.unsub()
         resolve(null)
-      }, 1500)
+      }, 3500)
       sub.on('event', (event: Event) => {
         resolve(event)
         clearTimeout(timeout)
