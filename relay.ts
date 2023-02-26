@@ -175,7 +175,10 @@ export function relayInit(url: string): Relay {
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
     if (!connected()) {
-      return
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!connected()) {
+        return
+      }
     }
     try {
       ws.send(msg)
