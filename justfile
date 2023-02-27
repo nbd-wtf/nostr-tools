@@ -12,9 +12,9 @@ test: build
 test-only file: build
     jest {{file}}
 
-type-check:
+emit-types:
     tsc
 
 publish: build
-    types
+    emit-types
     npm publish
