@@ -16,6 +16,7 @@ jobs:
       - run: just install-dependencies
       - run: just build
       - run: just test
+      - run: just emit-types
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
