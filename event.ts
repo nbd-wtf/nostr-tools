@@ -80,6 +80,7 @@ export function getEventHash(event: UnsignedEvent): string {
 
 export function validateEvent(event: UnsignedEvent): boolean {
   if (typeof event !== 'object') return false
+  if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
   if (typeof event.created_at !== 'number') return false
   if (typeof event.pubkey !== 'string') return false
