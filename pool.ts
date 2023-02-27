@@ -29,7 +29,10 @@ export class SimplePool {
     const existing = this._conn[nm]
     if (existing) return existing
 
-    const relay = relayInit(nm)
+    const relay = relayInit(nm, {
+      getTimeout: this.getTimeout * 0.9,
+      listTimeout: this.getTimeout * 0.9
+    })
     this._conn[nm] = relay
 
     await relay.connect()
