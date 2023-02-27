@@ -12,5 +12,9 @@ test: build
 testOnly file: build
     jest {{file}}
 
+types: 
+    npx tsc
+    
 publish: build
+    types
     npm publish
