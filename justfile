@@ -18,3 +18,6 @@ emit-types:
 publish: build
     emit-types
     npm publish
+
+format:
+    prettier --plugin-search-dir . --write .
