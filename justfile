@@ -9,10 +9,14 @@ build:
 test: build
     jest
 
-testOnly file: build
+test-only file: build
     jest {{file}}
 
+emit-types:
+    tsc
+
 publish: build
+    emit-types
     npm publish
 
 format:

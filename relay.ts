@@ -35,7 +35,15 @@ export type SubscriptionOptions = {
   alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
 }
 
-export function relayInit(url: string): Relay {
+export function relayInit(
+  url: string,
+  options: {
+    getTimeout?: number
+    listTimeout?: number
+  } = {}
+): Relay {
+  let {listTimeout = 3000, getTimeout = 3000} = options
+
   var ws: WebSocket
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners: {
@@ -175,7 +183,10 @@ export function relayInit(url: string): Relay {
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
     if (!connected()) {
-      return
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!connected()) {
+        return
+      }
     }
     try {
       ws.send(msg)
@@ -249,7 +260,7 @@ export function relayInit(url: string): Relay {
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(events)
-        }, 1500)
+        }, listTimeout)
         s.on('eose', () => {
           s.unsub()
           clearTimeout(timeout)
@@ -265,7 +276,7 @@ export function relayInit(url: string): Relay {
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(null)
-        }, 1500)
+        }, getTimeout)
         s.on('event', (event: Event) => {
           s.unsub()
           clearTimeout(timeout)

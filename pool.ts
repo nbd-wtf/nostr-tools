@@ -8,8 +8,13 @@ export class SimplePool {
   private _conn: {[url: string]: Relay}
   private _seenOn: {[id: string]: Set<string>} = {} // a map of all events we've seen in each relay
 
-  constructor() {
+  private eoseSubTimeout: number
+  private getTimeout: number
+
+  constructor(options: {eoseSubTimeout?: number; getTimeout?: number} = {}) {
     this._conn = {}
+    this.eoseSubTimeout = options.eoseSubTimeout || 3400
+    this.getTimeout = options.getTimeout || 3400
   }
 
   close(relays: string[]): void {
@@ -24,7 +29,10 @@ export class SimplePool {
     const existing = this._conn[nm]
     if (existing) return existing
 
-    const relay = relayInit(nm)
+    const relay = relayInit(nm, {
+      getTimeout: this.getTimeout * 0.9,
+      listTimeout: this.getTimeout * 0.9
+    })
     this._conn[nm] = relay
 
     await relay.connect()
@@ -51,7 +59,7 @@ export class SimplePool {
     let eoseTimeout = setTimeout(() => {
       eoseSent = true
       for (let cb of eoseListeners.values()) cb()
-    }, 2400)
+    }, this.eoseSubTimeout)
 
     relays.forEach(async relay => {
       let r
@@ -120,7 +128,7 @@ export class SimplePool {
       let timeout = setTimeout(() => {
         sub.unsub()
         resolve(null)
-      }, 1500)
+      }, this.getTimeout)
       sub.on('event', (event: Event) => {
         resolve(event)
         clearTimeout(timeout)
@@ -150,13 +158,23 @@ export class SimplePool {
     })
   }
 
-  publish(relays: string[], event: Event): Pub[] {
-    return relays.map(relay => {
+  publish(relays: string[], event: Event): Pub {
+    let pubs = relays.map(relay => {
       let r = this._conn[normalizeURL(relay)]
       if (!r) return badPub(relay)
-      let s = r.publish(event)
-      return s
+      return r.publish(event)
     })
+
+    return {
+      on(type, cb) {
+        pubs.forEach((pub, i) => {
+          pub.on(type, () => cb(relays[i]))
+        })
+      },
+      off() {
+        // do nothing here, FIXME
+      }
+    }
   }
 
   seenOn(id: string): string[] {

@@ -1,11 +1,13 @@
 {
   "name": "nostr-tools",
-  "version": "1.6.0",
+  "version": "1.7.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fiatjaf/nostr-tools.git"
+    "url": "https://github.com/nbd-wtf/nostr-tools.git"
   },
+  "files": ["./lib/**/*"],
+  "types": "./lib/index.d.ts",
   "main": "lib/nostr.cjs.js",
   "module": "lib/esm/nostr.mjs",
   "exports": {
