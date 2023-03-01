@@ -154,11 +154,10 @@ sub.on('event', event => {
 })
 
 let pubs = pool.publish(relays, newEvent)
-pubs.forEach(pub =>
-  pub.on('ok', () => {
-    // ...
-  })
-)
+pubs.on('ok', () => {
+  // this may be called multiple times, once for every relay that accepts the event
+  // ...
+})
 
 let events = await pool.list(relays, [{kinds: [0, 1]}])
 let event = await pool.get(relays, {
