@@ -48,7 +48,6 @@ test('encode and decode naddr', () => {
     identifier: 'banana'
   })
   expect(naddr).toMatch(/naddr1\w+/)
-  console.log(naddr)
   let {type, data} = nip19.decode(naddr)
   expect(type).toEqual('naddr')
   expect(data.pubkey).toEqual(pk)
