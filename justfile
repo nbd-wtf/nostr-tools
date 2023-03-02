@@ -4,6 +4,7 @@ install-dependencies:
     yarn --ignore-engines
 
 build:
+    rm -rf lib
     node build.js
 
 test: build
