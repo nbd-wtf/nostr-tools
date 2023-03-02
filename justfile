@@ -13,10 +13,9 @@ test-only file: build
     jest {{file}}
 
 emit-types:
-    tsc
+    tsc # see tsconfig.json
 
-publish: build
-    emit-types
+publish: build emit-types
     npm publish
 
 format:
