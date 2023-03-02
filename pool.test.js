@@ -12,17 +12,17 @@ const {
 let pool = new SimplePool()
 
 let relays = [
-  'wss://nostr-dev.wellorder.net/',
+  'wss://relay.damus.io/',
   'wss://relay.nostr.bg/',
   'wss://nostr.fmt.wiz.biz/',
   'wss://relay.nostr.band/',
-  'wss://nostr.zebedee.cloud/'
+  'wss://nos.lol/'
 ]
 
 afterAll(() => {
   pool.close([
     ...relays,
-    'wss://nostr-relay.untethr.me',
+    'wss://nostr.wine',
     'wss://offchain.pub',
     'wss://eden.nostr.land'
   ])
