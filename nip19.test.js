@@ -35,6 +35,21 @@ test('encode and decode nprofile', () => {
   expect(data.relays).toContain(relays[1])
 })
 
+test('decode nprofile without relays', () => {
+  expect(
+    nip19.decode(
+      nip19.nprofileEncode({
+        pubkey:
+          '97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322',
+        relays: []
+      })
+    ).data
+  ).toHaveProperty(
+    'pubkey',
+    '97c70a44366a6535c145b333f973ea86dfdc2d7a99da618c40c64705ad98e322'
+  )
+})
+
 test('encode and decode naddr', () => {
   let pk = getPublicKey(generatePrivateKey())
   let relays = [
