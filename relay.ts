@@ -310,8 +310,9 @@ export function relayInit(
       listeners = {connect: [], disconnect: [], error: [], notice: []}
       subListeners = {}
       pubListeners = {}
-
-      ws?.close()
+      if (ws.readyState === WebSocket.OPEN) {
+        ws?.close()
+      }
     },
     get status() {
       return ws?.readyState ?? 3
