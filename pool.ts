@@ -27,7 +27,12 @@ export class SimplePool {
   async ensureRelay(url: string): Promise<Relay> {
     const nm = normalizeURL(url)
     const existing = this._conn[nm]
-    if (existing) return existing
+    if (existing && existing.status === 1) return existing
+
+    if (existing) {
+      await existing.connect();
+      return existing
+    }
 
     const relay = relayInit(nm, {
       getTimeout: this.getTimeout * 0.9,
