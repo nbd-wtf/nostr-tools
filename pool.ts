@@ -30,7 +30,7 @@ export class SimplePool {
     if (existing && existing.status === 1) return existing
 
     if (existing) {
-      await existing.connect();
+      await existing.connect()
       return existing
     }
 
@@ -47,8 +47,9 @@ export class SimplePool {
 
   sub(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Sub {
     let _knownIds: Set<string> = new Set()
-    let modifiedOpts = opts || {}
-    modifiedOpts.alreadyHaveEvent = (id, url) => {
+    let modifiedOpts = {...opts || {}}
+	modifiedOpts.alreadyHaveEvent = (id, url) => {
+      if (opts?.alreadyHaveEvent?.(id, url)) { return true }
       let set = this._seenOn[id] || new Set()
       set.add(url)
       this._seenOn[id] = set
