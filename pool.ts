@@ -47,9 +47,11 @@ export class SimplePool {
 
   sub(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Sub {
     let _knownIds: Set<string> = new Set()
-    let modifiedOpts = {...opts || {}}
-	modifiedOpts.alreadyHaveEvent = (id, url) => {
-      if (opts?.alreadyHaveEvent?.(id, url)) { return true }
+    let modifiedOpts = {...(opts || {})}
+    modifiedOpts.alreadyHaveEvent = (id, url) => {
+      if (opts?.alreadyHaveEvent?.(id, url)) {
+        return true
+      }
       let set = this._seenOn[id] || new Set()
       set.add(url)
       this._seenOn[id] = set
@@ -165,12 +167,14 @@ export class SimplePool {
   }
 
   publish(relays: string[], event: Event): Pub {
-    let pubs = relays.map(relay => {
-      let r = this._conn[normalizeURL(relay)]
-      if (!r) return badPub(relay)
-      return r.publish(event)
+    const pubs: Pub[] = []
+    relays.forEach(async relay => {
+      let r
+      try {
+        r = await this.ensureRelay(relay)
+        pubs.push(r.publish(event))
+      } catch (_) {}
     })
-
     return {
       on(type, cb) {
         pubs.forEach((pub, i) => {
@@ -185,14 +189,5 @@ export class SimplePool {
 
   seenOn(id: string): string[] {
     return Array.from(this._seenOn[id]?.values?.() || [])
-  }
-}
-
-function badPub(relay: string): Pub {
-  return {
-    on(typ, cb) {
-      if (typ === 'failed') cb(`relay ${relay} not connected`)
-    },
-    off() {}
   }
 }
