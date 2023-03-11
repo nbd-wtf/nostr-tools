@@ -26,11 +26,11 @@ export type Relay = {
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
-  ) => void | Promise<void>
+  ) => void
   on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
-  ) => void | Promise<void>
+  ) => void 
 }
 export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
@@ -42,11 +42,11 @@ export type Sub = {
   on: <T extends keyof SubEvent, U extends SubEvent[T]>(
     event: T,
     listener: U
-  ) => void | Promise<void>
+  ) => void
   off: <T extends keyof SubEvent, U extends SubEvent[T]>(
     event: T,
     listener: U
-  ) => void | Promise<void>
+  ) => void
 }
 
 export type SubscriptionOptions = {
@@ -240,7 +240,7 @@ export function relayInit(
       on: <T extends keyof SubEvent, U extends SubEvent[T]>(
         type: T,
         cb: U
-      ): void | Promise<void> => {
+      ): void => {
         subListeners[subid] = subListeners[subid] || {
           event: [],
           eose: []
@@ -250,7 +250,7 @@ export function relayInit(
       off: <T extends keyof SubEvent, U extends SubEvent[T]>(
         type: T,
         cb: U
-      ): void | Promise<void> => {
+      ): void => {
         let listeners = subListeners[subid]
         let idx = listeners[type].indexOf(cb)
         if (idx >= 0) listeners[type].splice(idx, 1)
@@ -264,17 +264,17 @@ export function relayInit(
     on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
       type: T,
       cb: U
-    ): void | Promise<void> => {
+    ): void => {
       listeners[type].push(cb)
       if (type === 'connect' && ws?.readyState === 1) {
         // i would love to know why we need this
-        ;(cb as () => void | Promise<void>)()
+        ;(cb as () => void)()
       }
     },
     off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
       type: T,
       cb: U
-    ): void | Promise<void> => {
+    ): void => {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
