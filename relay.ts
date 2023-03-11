@@ -5,10 +5,10 @@ import {Filter, matchFilters} from './filter'
 import {getHex64, getSubscriptionId} from './fakejson'
 
 type RelayEvent = {
-	connect: () => void
-	disconnect: () => void
-	error: () => void
-	notice: (msg: string) => void
+  connect: () => void | Promise<void>
+  disconnect: () => void | Promise<void>
+  error: () => void | Promise<void>
+  notice: (msg: string) => void | Promise<void>
 }
 
 export type Relay = {
@@ -20,8 +20,14 @@ export type Relay = {
   list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
   get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
   publish: (event: Event) => Pub
-  off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
-  on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
+  off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
+  on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
 }
 export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
@@ -51,7 +57,7 @@ export function relayInit(
 
   var ws: WebSocket
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
-  var listeners: { [TK in keyof RelayEvent]: RelayEvent[TK][]} = {
+  var listeners: {[TK in keyof RelayEvent]: RelayEvent[TK][]} = {
     connect: [],
     disconnect: [],
     error: [],
@@ -242,15 +248,21 @@ export function relayInit(
 
   return {
     url,
-	sub,
-	on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(type: T, cb: U): void => {
-		listeners[type].push(cb)
-		if (type === 'connect' && ws?.readyState === 1) {
-			// i would love to know why we need this
-			(cb as ()=> void)()
-		}
-	},
-	off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(type: T, cb: U): void => {
+    sub,
+    on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+      type: T,
+      cb: U
+    ): void => {
+      listeners[type].push(cb)
+      if (type === 'connect' && ws?.readyState === 1) {
+        // i would love to know why we need this
+        ;(cb as () => void)()
+      }
+    },
+    off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+      type: T,
+      cb: U
+    ): void => {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
