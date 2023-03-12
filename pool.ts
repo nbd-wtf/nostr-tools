@@ -107,19 +107,17 @@ export class SimplePool {
         subs.forEach(sub => sub.unsub())
       },
       on(type, cb) {
-        switch (type) {
-          case 'event':
-            eventListeners.add(cb)
-            break
-          case 'eose':
-            eoseListeners.add(cb)
-            break
+        if (type === 'event') {
+          eventListeners.add(cb)
+        } else if (type === 'eose') {
+          eoseListeners.add(cb as () => void | Promise<void>)
         }
       },
       off(type, cb) {
         if (type === 'event') {
           eventListeners.delete(cb)
-        } else if (type === 'eose') eoseListeners.delete(cb)
+        } else if (type === 'eose')
+          eoseListeners.delete(cb as () => void | Promise<void>)
       }
     }
 
