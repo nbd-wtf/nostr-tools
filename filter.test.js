@@ -37,6 +37,16 @@ describe('Filter', () => {
       expect(result).toEqual(false)
     })
 
+    it('should return true when the event id starts with a prefix', () => {
+      const filter = {ids: ['22', '00']}
+
+      const event = {id: '001'}
+
+      const result = matchFilter(filter, event)
+
+      expect(result).toEqual(true)
+    })
+
     it('should return false when the event kind is not in the filter', () => {
       const filter = {kinds: [1, 2, 3]}
 
@@ -126,6 +136,20 @@ describe('Filter', () => {
       ]
 
       const event = {id: '789', kind: 3, pubkey: 'ghi'}
+
+      const result = matchFilters(filters, event)
+
+      expect(result).toEqual(true)
+    })
+
+    it('should return true when at least one prefix matches the event', () => {
+      const filters = [
+        {ids: ['1'], kinds: [1], authors: ['a']},
+        {ids: ['4'], kinds: [2], authors: ['d']},
+        {ids: ['9'], kinds: [3], authors: ['g']}
+      ]
+
+      const event = {id: '987', kind: 3, pubkey: 'ghi'}
 
       const result = matchFilters(filters, event)
 
