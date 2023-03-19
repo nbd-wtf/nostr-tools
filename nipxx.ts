@@ -1,16 +1,12 @@
 import * as secp256k1 from '@noble/secp256k1'
-
 import {hkdf} from '@noble/hashes/hkdf'
-
 import {sha256} from '@noble/hashes/sha256'
-
 import {queryProfile} from './nip05'
-
 import {getPublicKey} from './keys'
 import {ProfilePointer} from './nip19'
 
 /**
- * 
+ *
  * @param username nip02/nip05 identifier
  * @param caip10 CAIP identifier for the blockchain account
  * @param sig Deterministic signature from X-wallet provider
@@ -37,12 +33,12 @@ export let registerWithX = privateKeyFromX // alias
 export let loginWithX = signInWithX // alias
 
 /**
- * 
+ *
  * @param username nip02/nip05 identifier
  * @param caip10 CAIP identifier for the blockchain account
  * @param sig Deterministic signature from X-wallet provider
  * @param password Optional password
- * @returns 
+ * @returns
  */
 export async function signInWithX(
   username: string,
@@ -65,7 +61,7 @@ export async function signInWithX(
     }
     if(profile == null){
       throw new Error("Nostr Profile Not Found")
-    } 
+    }
     petname = (username.split("@").length == 2) ? username.split("@")[0] : username.split(".")[0]
   }
   let privkey = await privateKeyFromX(username, caip10, sig, password)

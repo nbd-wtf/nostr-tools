@@ -38,6 +38,7 @@
     "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
     "jest": "^29.4.2",
+    "jest-cli": "^29.4.2",
     "node-fetch": "^2.6.9",
     "ts-jest": "^29.0.5",
     "tsd": "^0.22.0",
