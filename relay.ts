@@ -30,7 +30,7 @@ export type Relay = {
   on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
-  ) => void 
+  ) => void
 }
 export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
@@ -85,7 +85,11 @@ export function relayInit(
 
   async function connectRelay(): Promise<void> {
     return new Promise((resolve, reject) => {
-      ws = new WebSocket(url)
+      try {
+        ws = new WebSocket(url)
+      } catch (err) {
+        reject(err)
+      }
 
       ws.onopen = () => {
         listeners.connect.forEach(cb => cb())
