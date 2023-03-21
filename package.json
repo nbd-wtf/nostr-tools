@@ -1,7 +1,8 @@
 {
   "name": "nostr-tools",
   "version": "1.6.0",
-  "description": "Tools for making a Nostr client.",
+  "description": "Tools for making a Nostr client",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/fiatjaf/nostr-tools.git"
@@ -11,6 +12,12 @@
   "exports": {
     "import": "./lib/esm/nostr.mjs",
     "require": "./lib/nostr.cjs.js"
+  },
+  "scripts": {
+    "clean": "rm -r ./lib",
+    "build": "node build.js",
+    "test": "jest",
+    "testh": "jest nipxx.test.js"
   },
   "dependencies": {
     "@noble/hashes": "1.0.0",
@@ -31,11 +38,13 @@
     "@types/node": "^18.13.0",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
+    "dotenv": "^16.0.3",
     "esbuild": "0.16.9",
     "esbuild-plugin-alias": "^0.2.1",
     "eslint": "^8.33.0",
     "eslint-plugin-babel": "^5.3.1",
     "esm-loader-typescript": "^1.0.3",
+    "ethers": "^6.2.0",
     "events": "^3.3.0",
     "jest": "^29.4.2",
     "jest-cli": "^29.4.2",

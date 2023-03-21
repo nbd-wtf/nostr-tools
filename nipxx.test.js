@@ -1,66 +1,80 @@
 /* eslint-env jest */
-
+const ethers = require('ethers')
+const fetch = require('node-fetch')
+const { nipxx, nip05 } = require('./lib/nostr.cjs')
 globalThis.crypto = require('crypto')
-const {
-  nipxx
-} = require('./lib/nostr.cjs')
+require('dotenv').config({ path: '.env.nipxx' })
 
+privateKey = process.env.ETHER_PRIVATE_KEY;
+let wallet = new ethers.Wallet(privateKey);
 
-let username2 = '0xc0de4c0ffee@0xc0de4c0ffee.eth.limo'
-let address = '0xc0De4c0FFEEC0dE4C0FfeEC0de4c0fFeec0de420' // address checksummed
-let signer_info = `eip155:1:${address}`
-let password = 'horse staple battery'
-let sig = 'f'.padEnd(130, 'f')
+nipxx.useFetchImplementation(fetch)
+nip05.useFetchImplementation(fetch)
 
-test('private key from deterministic signature and identifiers', async () => {
-  let username = 'me@example.com'
+let username1 = 'nipxxtest1'
+let username2 = 'nipxxtest1@sshmatrix.eth.limo'
+let petname3 = 'nipxxtest2'
+let username3 = 'nipxxtest2@sshmatrix.eth.limo'
+// ↓ YOU MUST ENTER THE CORRESPONDING PRIVATE KEY IN THE .env.nipxx FILE
+let address = '0x0d2C290bb3fE24D8D566268d5c41527c519715Db' // ← signing checksummed ethereum pubkey/address 
+let info = `eip155:1:${address}`
+let password = 'hello dear fucker'
+let signature1 = 'f'.padEnd(130, 'f')
+let message = `Login to Nostr as ${'username'}\n\nImportant: Please verify the integrity and authenticity of your Nostr client before signing this message.\n${'info'}`;
+let promise = wallet.signMessage(message) // ↑ signed by address's private key
+
+// uses arbitrary signature not linked to any ethereum account to test key generation
+test('Private Key from Deterministic Signature and Identifiers', async () => {
+  let username_ = 'me@example.com'
   expect(
-    await nipxx.privateKeyFromX(username, signer_info, sig, password)
-  ).toEqual('ad94cd8ca2877102ad92d0fa3d2a918f4903dfb0445e33930e115f56deb733b9')
+    await nipxx.privateKeyFromX(username_, info, signature1, password)
+  ).toEqual('fd6a6c03eadf0db178f79de3a2dd3f0464fb5fac96608842d68ce64da2e40954')
 
   // without password
-  //expect(
-  //  await nipxx.privateKeyFromX(username, signer_info, sig)
-  //).toEqual('26ef9e1404ce02014e9bb503f6e99f5b9f2792722251856aaa3921222a98ef0e')
-
-  // 0x+hex signature
   expect(
-    await nipxx.privateKeyFromX(username, signer_info, '0x' + sig, password)
-  ).toEqual('ad94cd8ca2877102ad92d0fa3d2a918f4903dfb0445e33930e115f56deb733b9')
+    await nipxx.privateKeyFromX(username_, info, signature1)
+  ).toEqual('897c5140a6e0e09b512c755cfd60829998fb0d046c52fae0846cca045185a52b')
+
+  // 0x+hex signature; SHOULD BE agnostic to '0x' prefix
+  expect(
+    await nipxx.privateKeyFromX(username_, info, '0x' + signature1, password)
+  ).toEqual('fd6a6c03eadf0db178f79de3a2dd3f0464fb5fac96608842d68ce64da2e40954')
 })
 
 
-test('Login with deterministic signature and NIP02 identifiers', async () => {
+test('Login with Deterministic Signature and NIP-02 Identifiers', async () => {
   expect(
-    await nipxx.signInWithX('user123', signer_info, sig, password)
+    await nipxx.signInWithX(username1, info, signature1, password)
   ).toEqual({
-    'petname': 'user123',
-    'privkey': 'e9257bd2c0d05af3533b580551d1964a04a43d53da1fc2167fa425f050e41012',
+    'petname': username1,
+    'privkey': '3f0b9c0ddb02d7056c4908d362c8d03072ef3f2dc1eb10a6ef9706dc3f017198',
+    // pubkey : 6cb22c9037a08313f0f1f2cfafebcb14cc57acef43b11c6343e6a0d5b46a4abe
     'profile': null
   })
 })
 
-test('Invalid signature / password in NIP05 identifiers', async () => {
+test('Invalid Signature/Password in NIP-05 Identifiers', async () => {
   await expect(async () => {
-    await nipxx.signInWithX('0xc0de4c0ffee@0xc0de4c0ffee.eth.limo', signer_info, sig, password)
+    await nipxx.signInWithX(username2, info, signature1, password)
   }).rejects.toThrow('Invalid Signature/Password');
 })
 
-test('NIP05 identifiers not set', async () => {
+test('NIP-05 Identifiers Not Set', async () => {
   await expect(async () => {
-    await nipxx.signInWithX('zuck@cash.app', signer_info, sig, password)
+    await nipxx.signInWithX('zuck@cash.app', info, signature1, password)
   }).rejects.toThrow('Nostr Profile Not Found');
 })
 
-test('Login with deterministic signature and NIP05 identifiers', async () => {
+test('Login with Deterministic Signature and NIP-05 Identifiers', async () => {
+  let signature2 = await promise;
   expect(
-    await nipxx.signInWithX('nipxxtest@0xc0de4c0ffee.eth.limo', signer_info, sig, password)
+    await nipxx.signInWithX(username3, info, signature2, password)
   ).toEqual({
-    'petname': 'nipxxtest',
+    'petname': petname3,
     'profile': {
-      'pubkey': '2f88ee2dcc3c031533eca9f9185fab3b855e3213ac6861e1ece0ffab3cace470',
+      'pubkey': '12345801001efeae691482d5951e0a48d2b29c37e9e80a399c4c8c3da2fdf580',
       'relays': []
     },
-    'privkey': '6a6a9cf580951d436fc30993d7480bf2a28be1ff3b80ae4236a5aaf378c87f0a'
+    'privkey': '9c3f5a1924bcdf49d1761b8844735dfc6b35b49fa73c7646674954f2869afade'
   })
 })

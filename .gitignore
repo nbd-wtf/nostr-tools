@@ -4,3 +4,4 @@ yarn.lock
 package-lock.json
 .envrc
 test.html
+!.env.nipxx

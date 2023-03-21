@@ -5,9 +5,19 @@ import {queryProfile} from './nip05'
 import {getPublicKey} from './keys'
 import {ProfilePointer} from './nip19'
 
+var _fetch: any
+
+try {
+  _fetch = fetch
+} catch {}
+
+export function useFetchImplementation(fetchImplementation: any) {
+  _fetch = fetchImplementation
+}
+
 /**
  *
- * @param username nip02/nip05 identifier
+ * @param username NIP-02/NIP-05 identifier
  * @param caip10 CAIP identifier for the blockchain account
  * @param sig Deterministic signature from X-wallet provider
  * @param password Optional password
@@ -20,7 +30,7 @@ export async function privateKeyFromX(
   password: string | undefined
 ): Promise < string > {
   if (sig.length < 64)
-    throw new Error("Signature too short");
+    throw new Error("Signature too short; length should be 65 bytes");
   let inputKey = await sha256(secp256k1.utils.hexToBytes(sig.toLowerCase().startsWith("0x") ? sig.slice(2) : sig))
   let info = `${caip10}:${username}`
   let salt = await sha256(`${info}:${password?password:""}:${sig.slice(-64)}`)
@@ -34,7 +44,7 @@ export let loginWithX = signInWithX // alias
 
 /**
  *
- * @param username nip02/nip05 identifier
+ * @param username NIP-02/NIP-05 identifier
  * @param caip10 CAIP identifier for the blockchain account
  * @param sig Deterministic signature from X-wallet provider
  * @param password Optional password
@@ -66,6 +76,9 @@ export async function signInWithX(
   }
   let privkey = await privateKeyFromX(username, caip10, sig, password)
   let pubkey = getPublicKey(privkey)
+  //console.log('PubKey', pubkey)
+  //console.log('PrivKey', privkey)
+  //console.log('ProfilePubKey', profile?.pubkey)
   if (profile?.pubkey && pubkey !== profile.pubkey) {
     throw new Error("Invalid Signature/Password")
   }
