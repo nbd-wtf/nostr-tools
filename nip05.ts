@@ -37,10 +37,16 @@ export async function queryProfile(
   }
 
   if (!name.match(/^[A-Za-z0-9-_]+$/)) return null
+  if (!domain.includes('.')) return null
 
-  let res = await (
-    await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
-  ).json()
+  let res
+  try {
+    res = await (
+      await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+    ).json()
+  } catch (err) {
+    return null
+  }
 
   if (!res?.names?.[name]) return null
 

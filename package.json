@@ -1,25 +1,22 @@
 {
   "name": "nostr-tools",
-  "version": "1.6.0",
-  "description": "Tools for making a Nostr client",
-  "license": "MIT",
+  "version": "1.7.5",
+  "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fiatjaf/nostr-tools.git"
+    "url": "https://github.com/nbd-wtf/nostr-tools.git"
   },
+  "files": [
+    "./lib/**/*"
+  ],
+  "types": "./lib/index.d.ts",
   "main": "lib/nostr.cjs.js",
   "module": "lib/esm/nostr.mjs",
   "exports": {
     "import": "./lib/esm/nostr.mjs",
     "require": "./lib/nostr.cjs.js"
   },
-  "scripts": {
-    "clean": "rm -r ./lib",
-    "build": "node build.js",
-    "test": "jest",
-    "test nipxx": "jest nipxx.test.js",
-    "test nip05": "jest nip05.test.js"
-  },
+  "license": "Public domain",
   "dependencies": {
     "@noble/hashes": "1.0.0",
     "@noble/secp256k1": "^1.7.1",

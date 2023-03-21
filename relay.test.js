@@ -9,7 +9,7 @@ const {
   signEvent
 } = require('./lib/nostr.cjs')
 
-let relay = relayInit('wss://nostr-dev.wellorder.net/')
+let relay = relayInit('wss://relay.damus.io/')
 
 beforeAll(() => {
   relay.connect()

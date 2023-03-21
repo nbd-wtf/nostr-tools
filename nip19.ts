@@ -39,7 +39,7 @@ export function decode(nip19: string): {
         type: 'nprofile',
         data: {
           pubkey: secp256k1.utils.bytesToHex(tlv[0][0]),
-          relays: tlv[1].map(d => utf8Decoder.decode(d))
+          relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
         }
       }
     }
@@ -52,7 +52,7 @@ export function decode(nip19: string): {
         type: 'nevent',
         data: {
           id: secp256k1.utils.bytesToHex(tlv[0][0]),
-          relays: tlv[1].map(d => utf8Decoder.decode(d))
+          relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
         }
       }
     }
@@ -71,7 +71,7 @@ export function decode(nip19: string): {
           identifier: utf8Decoder.decode(tlv[0][0]),
           pubkey: secp256k1.utils.bytesToHex(tlv[2][0]),
           kind: parseInt(secp256k1.utils.bytesToHex(tlv[3][0]), 16),
-          relays: tlv[1].map(d => utf8Decoder.decode(d))
+          relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
         }
       }
     }

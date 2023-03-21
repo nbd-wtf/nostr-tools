@@ -4,8 +4,16 @@ import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
 import {getHex64, getSubscriptionId} from './fakejson'
 
-type RelayEvent = 'connect' | 'disconnect' | 'error' | 'notice'
-
+type RelayEvent = {
+  connect: () => void | Promise<void>
+  disconnect: () => void | Promise<void>
+  error: () => void | Promise<void>
+  notice: (msg: string) => void | Promise<void>
+}
+type SubEvent = {
+  event: (event: Event) => void | Promise<void>
+  eose: () => void | Promise<void>
+}
 export type Relay = {
   url: string
   status: number
@@ -15,8 +23,14 @@ export type Relay = {
   list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
   get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
   publish: (event: Event) => Pub
-  on: (type: RelayEvent, cb: any) => void
-  off: (type: RelayEvent, cb: any) => void
+  off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
+  on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
 }
 export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
@@ -25,8 +39,14 @@ export type Pub = {
 export type Sub = {
   sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
   unsub: () => void
-  on: (type: 'event' | 'eose', cb: any) => void
-  off: (type: 'event' | 'eose', cb: any) => void
+  on: <T extends keyof SubEvent, U extends SubEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
+  off: <T extends keyof SubEvent, U extends SubEvent[T]>(
+    event: T,
+    listener: U
+  ) => void
 }
 
 export type SubscriptionOptions = {
@@ -35,25 +55,25 @@ export type SubscriptionOptions = {
   alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
 }
 
-export function relayInit(url: string): Relay {
+export function relayInit(
+  url: string,
+  options: {
+    getTimeout?: number
+    listTimeout?: number
+  } = {}
+): Relay {
+  let {listTimeout = 3000, getTimeout = 3000} = options
+
   var ws: WebSocket
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
-  var listeners: {
-    connect: Array<() => void>
-    disconnect: Array<() => void>
-    error: Array<() => void>
-    notice: Array<(msg: string) => void>
-  } = {
+  var listeners: {[TK in keyof RelayEvent]: RelayEvent[TK][]} = {
     connect: [],
     disconnect: [],
     error: [],
     notice: []
   }
   var subListeners: {
-    [subid: string]: {
-      event: Array<(event: Event) => void>
-      eose: Array<() => void>
-    }
+    [subid: string]: {[TK in keyof SubEvent]: SubEvent[TK][]}
   } = {}
   var pubListeners: {
     [eventid: string]: {
@@ -65,7 +85,11 @@ export function relayInit(url: string): Relay {
 
   async function connectRelay(): Promise<void> {
     return new Promise((resolve, reject) => {
-      ws = new WebSocket(url)
+      try {
+        ws = new WebSocket(url)
+      } catch (err) {
+        reject(err)
+      }
 
       ws.onopen = () => {
         listeners.connect.forEach(cb => cb())
@@ -175,7 +199,10 @@ export function relayInit(url: string): Relay {
   async function trySend(params: [string, ...any]) {
     let msg = JSON.stringify(params)
     if (!connected()) {
-      return
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!connected()) {
+        return
+      }
     }
     try {
       ws.send(msg)
@@ -214,14 +241,20 @@ export function relayInit(url: string): Relay {
         delete subListeners[subid]
         trySend(['CLOSE', subid])
       },
-      on: (type: 'event' | 'eose', cb: any): void => {
+      on: <T extends keyof SubEvent, U extends SubEvent[T]>(
+        type: T,
+        cb: U
+      ): void => {
         subListeners[subid] = subListeners[subid] || {
           event: [],
           eose: []
         }
         subListeners[subid][type].push(cb)
       },
-      off: (type: 'event' | 'eose', cb: any): void => {
+      off: <T extends keyof SubEvent, U extends SubEvent[T]>(
+        type: T,
+        cb: U
+      ): void => {
         let listeners = subListeners[subid]
         let idx = listeners[type].indexOf(cb)
         if (idx >= 0) listeners[type].splice(idx, 1)
@@ -232,13 +265,20 @@ export function relayInit(url: string): Relay {
   return {
     url,
     sub,
-    on: (type: RelayEvent, cb: any): void => {
+    on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+      type: T,
+      cb: U
+    ): void => {
       listeners[type].push(cb)
       if (type === 'connect' && ws?.readyState === 1) {
-        cb()
+        // i would love to know why we need this
+        ;(cb as () => void)()
       }
     },
-    off: (type: RelayEvent, cb: any): void => {
+    off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
+      type: T,
+      cb: U
+    ): void => {
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
@@ -249,7 +289,7 @@ export function relayInit(url: string): Relay {
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(events)
-        }, 1500)
+        }, listTimeout)
         s.on('eose', () => {
           s.unsub()
           clearTimeout(timeout)
@@ -265,7 +305,7 @@ export function relayInit(url: string): Relay {
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(null)
-        }, 1500)
+        }, getTimeout)
         s.on('event', (event: Event) => {
           s.unsub()
           clearTimeout(timeout)
@@ -299,8 +339,9 @@ export function relayInit(url: string): Relay {
       listeners = {connect: [], disconnect: [], error: [], notice: []}
       subListeners = {}
       pubListeners = {}
-
-      ws?.close()
+      if (ws.readyState === WebSocket.OPEN) {
+        ws?.close()
+      }
     },
     get status() {
       return ws?.readyState ?? 3

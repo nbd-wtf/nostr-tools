@@ -4,13 +4,20 @@ install-dependencies:
     yarn --ignore-engines
 
 build:
+    rm -rf lib
     node build.js
 
 test: build
     jest
 
-testOnly file: build
+test-only file: build
     jest {{file}}
 
-publish: build
+emit-types:
+    tsc # see tsconfig.json
+
+publish: build emit-types
     npm publish
+
+format:
+    prettier --plugin-search-dir . --write .
