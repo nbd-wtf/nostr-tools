@@ -15,7 +15,7 @@ let username1 = 'nipxxtest1'
 let username2 = 'nipxxtest1@sshmatrix.eth.limo'
 let petname3 = 'nipxxtest2'
 let username3 = 'nipxxtest2@sshmatrix.eth.limo'
-// ↓ YOU MUST ENTER THE CORRESPONDING PRIVATE KEY IN THE .env.nipxx FILE
+// @dev: ↓ YOU MUST ENTER THE CORRESPONDING PRIVATE KEY IN THE .env.nipxx FILE
 let address = '0x0d2C290bb3fE24D8D566268d5c41527c519715Db' // ← signing checksummed ethereum pubkey/address 
 let info = `eip155:1:${address}`
 let password = 'hello dear fucker'
@@ -23,7 +23,8 @@ let signature1 = 'f'.padEnd(130, 'f')
 let message = `Login to Nostr as ${'username'}\n\nImportant: Please verify the integrity and authenticity of your Nostr client before signing this message.\n${'info'}`;
 let promise = wallet.signMessage(message) // ↑ signed by address's private key
 
-// uses arbitrary signature not linked to any ethereum account to test key generation
+// @dev : uses arbitrary signature not linked to any ethereum account to test key generation
+// SHOULD result in successful key generation
 test('Private Key from Deterministic Signature and Identifiers', async () => {
   let username_ = 'me@example.com'
   expect(
@@ -41,7 +42,8 @@ test('Private Key from Deterministic Signature and Identifiers', async () => {
   ).toEqual('fd6a6c03eadf0db178f79de3a2dd3f0464fb5fac96608842d68ce64da2e40954')
 })
 
-
+// @dev : uses arbitrary signature plus NIP-02 identifier to Sign-In-With-X (SIWX)
+// SHOULD result in successful key generation and login
 test('Login with Deterministic Signature and NIP-02 Identifiers', async () => {
   expect(
     await nipxx.signInWithX(username1, info, signature1, password)
@@ -53,18 +55,24 @@ test('Login with Deterministic Signature and NIP-02 Identifiers', async () => {
   })
 })
 
+// @dev : uses arbitrary signature on a NIP-05 identifier to Sign-In-With-X (SIWX)
+// SHOULD result in 'Invalid Signature/Password' since NIP-05 identifiers must sign in with an X wallet
 test('Invalid Signature/Password in NIP-05 Identifiers', async () => {
   await expect(async () => {
     await nipxx.signInWithX(username2, info, signature1, password)
   }).rejects.toThrow('Invalid Signature/Password');
 })
 
+// @dev : uses arbitrary signature on an arbitrary non-existent NIP-05 identifier to Sign-In-With-X (SIWX)
+// SHOULD result in 'Nostr Profile Not Found' since NIP-05 doesn't exist
 test('NIP-05 Identifiers Not Set', async () => {
   await expect(async () => {
     await nipxx.signInWithX('zuck@cash.app', info, signature1, password)
   }).rejects.toThrow('Nostr Profile Not Found');
 })
 
+// @dev : uses ethereum signature from a valid NIP-05 identifier with an associated ethereum account to Sign-In-With-Ethereum (SIWE)
+// SHOULD result in successful key generation and login from a valid signature verified to originate from the correct ethereum account
 test('Login with Deterministic Signature and NIP-05 Identifiers', async () => {
   let signature2 = await promise;
   expect(

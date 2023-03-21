@@ -76,9 +76,7 @@ export async function signInWithX(
   }
   let privkey = await privateKeyFromX(username, caip10, sig, password)
   let pubkey = getPublicKey(privkey)
-  //console.log('PubKey', pubkey)
-  //console.log('PrivKey', privkey)
-  //console.log('ProfilePubKey', profile?.pubkey)
+ 
   if (profile?.pubkey && pubkey !== profile.pubkey) {
     throw new Error("Invalid Signature/Password")
   }
