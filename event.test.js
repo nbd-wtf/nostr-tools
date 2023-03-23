@@ -307,5 +307,34 @@ describe('Event', () => {
       expect(sig.length).toEqual(128)
       expect(isValid).toEqual(true)
     })
+
+    it('should not sign an event with different private key', () => {
+      const privateKey =
+        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const publicKey = getPublicKey(privateKey)
+
+      const wrongPrivateKey =
+        'a91e2a9d9e0f70f0877bea0dbf034e8f95d7392a27a7f07da0d14b9e9d456be7'
+
+      const unsignedEvent = {
+        kind: Kind.Text,
+        tags: [],
+        content: 'Hello, world!',
+        created_at: 1617932115,
+        pubkey: publicKey
+      }
+
+      const sig = signEvent(unsignedEvent, wrongPrivateKey)
+
+      // verify the signature
+      const isValid = verifySignature({
+        ...unsignedEvent,
+        sig
+      })
+
+      expect(typeof sig).toEqual('string')
+      expect(sig.length).toEqual(128)
+      expect(isValid).toEqual(false)
+    })
   })
 })
