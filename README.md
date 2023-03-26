@@ -170,6 +170,26 @@ let relaysForEvent = pool.seenOn(
 // relaysForEvent will be an array of URLs from relays a given event was seen on
 ```
 
+### Parsing references (mentions) from a content using NIP-10 and NIP-27
+
+```js
+import {parseReferences} from 'nostr-tools'
+
+let references = parseReferences(event)
+let simpleAugmentedContent = event.content
+for (let i = 0; i < references.length; i++) {
+  let {text, profile, event, address} = references[i]
+  let augmentedReference = profile
+    ? `<strong>@${profilesCache[profile.pubkey].name}</strong>`
+    : event
+    ? `<em>${eventsCache[event.id].content.slice(0, 5)}</em>`
+    : address
+    ? `<a href="${text}">[link]</a>`
+    : text
+  simpleAugmentedContent.replaceAll(text, augmentedReference)
+}
+```
+
 ### Querying profile data from a NIP-05 address
 
 ```js
