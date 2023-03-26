@@ -48,7 +48,8 @@ export function decode(nip19: string): {
       let tlv = parseTLV(data)
       if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nevent')
       if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
-      if (tlv[2]?.[0].length !== 32) throw new Error('TLV 2 should be 32 bytes')
+      if (tlv[2] && tlv[2][0].length !== 32)
+        throw new Error('TLV 2 should be 32 bytes')
 
       return {
         type: 'nevent',
