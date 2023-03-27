@@ -55,7 +55,6 @@ export class SimplePool {
       let set = this._seenOn[id] || new Set()
       set.add(url)
       this._seenOn[id] = set
-      _knownIds.add(id)
       return _knownIds.has(id)
     }
 
@@ -81,6 +80,7 @@ export class SimplePool {
       if (!r) return
       let s = r.sub(filters, modifiedOpts)
       s.on('event', (event: Event) => {
+        _knownIds.add(event.id as string)
         for (let cb of eventListeners.values()) cb(event)
       })
       s.on('eose', () => {
