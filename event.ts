@@ -78,7 +78,7 @@ export function getEventHash(event: UnsignedEvent): string {
   return secp256k1.utils.bytesToHex(eventHash)
 }
 
-export function validateEvent(event: UnsignedEvent): boolean {
+export function validateEvent<T>(event: T): event is T & UnsignedEvent {
   if (typeof event !== 'object') return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
