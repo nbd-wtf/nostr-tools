@@ -76,7 +76,7 @@ export async function signInWithX(
   }
   let privkey = await privateKeyFromX(username, caip10, sig, password)
   let pubkey = getPublicKey(privkey)
- 
+
   if (profile?.pubkey && pubkey !== profile.pubkey) {
     throw new Error("Invalid Signature/Password")
   }
@@ -84,5 +84,36 @@ export async function signInWithX(
     petname,
     profile,
     privkey
+  }
+}
+
+/**
+ * @dev returns pubkey for a NIP-02/NIP-05 identifier without verification
+ * @param username NIP-02/NIP-05 identifier
+ * @param caip10 CAIP identifier for the blockchain account
+ * @param sig Deterministic signature from X-wallet provider
+ * @param password Optional password
+ * @returns
+ */
+export async function signInWithXStandalone(
+  username: string,
+  caip10: string,
+  sig: string,
+  password: string | undefined
+): Promise < {
+  petname: string,
+  pubkey: string
+} > {
+  let profile = null
+  let petname = username
+  if (username.includes(".")) {
+    petname = (username.split("@").length == 2) ? username.split("@")[0] : username.split(".")[0]
+  }
+  let privkey = await privateKeyFromX(username, caip10, sig, password)
+  let pubkey = getPublicKey(privkey)
+
+  return {
+    petname,
+    pubkey
   }
 }

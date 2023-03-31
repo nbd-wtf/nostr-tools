@@ -16,7 +16,14 @@
     "import": "./lib/esm/nostr.mjs",
     "require": "./lib/nostr.cjs.js"
   },
-  "license": "Public domain",
+  "scripts": {
+    "clean": "rm -r ./lib",
+    "build": "node build.js",
+    "test": "jest",
+    "test nipxx": "jest nipxx.test.js",
+    "test nip05": "jest nip05.test.js"
+  },
+  "license": "MIT",
   "dependencies": {
     "@noble/hashes": "1.0.0",
     "@noble/secp256k1": "^1.7.1",
