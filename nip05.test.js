@@ -21,7 +21,7 @@ test('fetch nip05 profiles', async () => {
   // @dev : NIP-05 tests querying web3 gateways (.eth.limo) specific to SIWX implementation (NIP-XX)
   let p3 = await nip05.queryProfile('nipxxtest1@sshmatrix.eth.limo')
   expect(p3.pubkey).toEqual(
-    '6cb22c9037a08313f0f1f2cfafebcb14cc57acef43b11c6343e6a0d5b46a4abe'
+    'b093e667e573003c04c0b0222328e7035b941f647708626e017b3a375ffcf06e'
   )
   expect(p3.relays).toEqual([])
 
