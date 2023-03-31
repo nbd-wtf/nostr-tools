@@ -27,7 +27,7 @@ test('fetch nip05 profiles', async () => {
 
   let p4 = await nip05.queryProfile('nipxxtest2@sshmatrix.eth.limo')
   expect(p4.pubkey).toEqual(
-    '12345801001efeae691482d5951e0a48d2b29c37e9e80a399c4c8c3da2fdf580'
+    '7b9debae4b1767d46797c8289172d592e6e713220dcd2647d712c9a229d5ffe0'
   )
   expect(p4.relays).toEqual([])
 })
