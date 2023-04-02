@@ -73,9 +73,21 @@ describe('parse NIP10-referenced events', () => {
         }
       ],
       pubkeys: [
-        '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
-        '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
-        '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0'
+        {
+          pubkey:
+            '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
+          relays: []
+        },
+        {
+          pubkey:
+            '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
+          relays: []
+        },
+        {
+          pubkey:
+            '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0',
+          relays: []
+        }
       ],
       reply: {
         id: '89f220b63465c93542b1a78caa3a952cf4f196e91a50596493c8093c533ebc4d',
@@ -126,9 +138,21 @@ describe('parse NIP10-referenced events', () => {
         }
       ],
       pubkeys: [
-        '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
-        '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
-        '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0'
+        {
+          pubkey:
+            '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
+          relays: []
+        },
+        {
+          pubkey:
+            '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
+          relays: []
+        },
+        {
+          pubkey:
+            '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0',
+          relays: []
+        }
       ],
       reply: {
         id: '5e081ebb19153357d7c31e8a10b9ceeef29313f58dc8d701f66727fab02aef64',
@@ -170,9 +194,21 @@ describe('parse NIP10-referenced events', () => {
     expect(nip10.parse(event)).toEqual({
       mentions: [],
       pubkeys: [
-        '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
-        '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
-        '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0'
+        {
+          pubkey:
+            '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
+          relays: []
+        },
+        {
+          pubkey:
+            '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
+          relays: []
+        },
+        {
+          pubkey:
+            '4ca4f5533e40da5e0508796d409e6bb35a50b26fc304345617ab017183d83ac0',
+          relays: []
+        }
       ],
       reply: {
         id: 'bbd72f0ae14374aa8fb166b483cfcf99b57d7f4cf1600ccbf17c350040834631',
@@ -202,7 +238,11 @@ describe('parse NIP10-referenced events', () => {
     expect(nip10.parse(event)).toEqual({
       mentions: [],
       pubkeys: [
-        '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec'
+        {
+          pubkey:
+            '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
+          relays: []
+        }
       ],
       reply: undefined,
       root: {
@@ -267,13 +307,41 @@ describe('parse NIP10-referenced events', () => {
     expect(nip10.parse(event)).toEqual({
       mentions: [],
       pubkeys: [
-        'a8c21fcd8aa1f4befba14d72fc7a012397732d30d8b3131af912642f3c726f52',
-        '003d7fd21fd09ff7f6f63a75daf194dd99feefbe6919cc376b7359d5090aa9a6',
-        '2f6fbe452edd3987d3c67f3b034c03ec5bcf4d054c521c3a954686f89f03212e',
-        '44c7c74668ff222b0e0b30579c49fc6e22dafcdeaad091036c947f9856590f1e',
-        'c5cf39149caebda4cdd61771c51f6ba91ef5645919004e5c4998a4ea69f00512',
-        '094d44bb1e812696c57f57ad1c0c707812dedbe72c07e538b80639032c236a9e',
-        'a1ba0ac9b6ec098f726a3c11ec654df4a32cbb84b5377e8788395e9c27d9ecda'
+        {
+          pubkey:
+            'a8c21fcd8aa1f4befba14d72fc7a012397732d30d8b3131af912642f3c726f52',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            '003d7fd21fd09ff7f6f63a75daf194dd99feefbe6919cc376b7359d5090aa9a6',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            '2f6fbe452edd3987d3c67f3b034c03ec5bcf4d054c521c3a954686f89f03212e',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            '44c7c74668ff222b0e0b30579c49fc6e22dafcdeaad091036c947f9856590f1e',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            'c5cf39149caebda4cdd61771c51f6ba91ef5645919004e5c4998a4ea69f00512',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            '094d44bb1e812696c57f57ad1c0c707812dedbe72c07e538b80639032c236a9e',
+          relays: ['wss://relay.mostr.pub']
+        },
+        {
+          pubkey:
+            'a1ba0ac9b6ec098f726a3c11ec654df4a32cbb84b5377e8788395e9c27d9ecda',
+          relays: ['wss://relay.mostr.pub']
+        }
       ],
       reply: {
         id: 'f9472913904ab7e9da008dcb2d85fd4af2d2993ada483d00c646d0c4481d031d',
