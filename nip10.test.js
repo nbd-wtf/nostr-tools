@@ -72,7 +72,7 @@ describe('parse NIP10-referenced events', () => {
           relays: []
         }
       ],
-      pubkeys: [
+      profiles: [
         {
           pubkey:
             '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
@@ -137,7 +137,7 @@ describe('parse NIP10-referenced events', () => {
           relays: []
         }
       ],
-      pubkeys: [
+      profiles: [
         {
           pubkey:
             '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
@@ -193,7 +193,7 @@ describe('parse NIP10-referenced events', () => {
 
     expect(nip10.parse(event)).toEqual({
       mentions: [],
-      pubkeys: [
+      profiles: [
         {
           pubkey:
             '77ce56f89d1228f7ff3743ce1ad1b254857b9008564727ebd5a1f317362f6ca7',
@@ -237,7 +237,7 @@ describe('parse NIP10-referenced events', () => {
 
     expect(nip10.parse(event)).toEqual({
       mentions: [],
-      pubkeys: [
+      profiles: [
         {
           pubkey:
             '534780e44da7b494485e85cd4cca6af4f6caa1627472432b6f2a4ece0e9e54ec',
@@ -306,7 +306,7 @@ describe('parse NIP10-referenced events', () => {
 
     expect(nip10.parse(event)).toEqual({
       mentions: [],
-      pubkeys: [
+      profiles: [
         {
           pubkey:
             'a8c21fcd8aa1f4befba14d72fc7a012397732d30d8b3131af912642f3c726f52',
