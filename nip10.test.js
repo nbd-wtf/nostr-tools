@@ -212,9 +212,74 @@ describe('parse NIP10-referenced events', () => {
     })
   })
 
-  // No events with NIP-10 explicit root/reply/mention markers were found in the wild for these tests :(
   test.todo('recommended + a lot of events')
   test.todo('recommended + 3 events')
   test.todo('recommended + 2 events')
-  test.todo('recommended + 1 event')
+
+  test('recommended + 1 event', () => {
+    let event = {
+      tags: [
+        [
+          'p',
+          'a8c21fcd8aa1f4befba14d72fc7a012397732d30d8b3131af912642f3c726f52',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          '003d7fd21fd09ff7f6f63a75daf194dd99feefbe6919cc376b7359d5090aa9a6',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          '2f6fbe452edd3987d3c67f3b034c03ec5bcf4d054c521c3a954686f89f03212e',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          '44c7c74668ff222b0e0b30579c49fc6e22dafcdeaad091036c947f9856590f1e',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          'c5cf39149caebda4cdd61771c51f6ba91ef5645919004e5c4998a4ea69f00512',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          '094d44bb1e812696c57f57ad1c0c707812dedbe72c07e538b80639032c236a9e',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'p',
+          'a1ba0ac9b6ec098f726a3c11ec654df4a32cbb84b5377e8788395e9c27d9ecda',
+          'wss://relay.mostr.pub'
+        ],
+        [
+          'e',
+          'f9472913904ab7e9da008dcb2d85fd4af2d2993ada483d00c646d0c4481d031d',
+          'wss://relay.mostr.pub',
+          'reply'
+        ],
+        ['mostr', 'https://poa.st/objects/dc50684b-6364-4264-ab16-49f4622f05ea']
+      ]
+    }
+
+    expect(nip10.parse(event)).toEqual({
+      mentions: [],
+      pubkeys: [
+        'a8c21fcd8aa1f4befba14d72fc7a012397732d30d8b3131af912642f3c726f52',
+        '003d7fd21fd09ff7f6f63a75daf194dd99feefbe6919cc376b7359d5090aa9a6',
+        '2f6fbe452edd3987d3c67f3b034c03ec5bcf4d054c521c3a954686f89f03212e',
+        '44c7c74668ff222b0e0b30579c49fc6e22dafcdeaad091036c947f9856590f1e',
+        'c5cf39149caebda4cdd61771c51f6ba91ef5645919004e5c4998a4ea69f00512',
+        '094d44bb1e812696c57f57ad1c0c707812dedbe72c07e538b80639032c236a9e',
+        'a1ba0ac9b6ec098f726a3c11ec654df4a32cbb84b5377e8788395e9c27d9ecda'
+      ],
+      reply: {
+        id: 'f9472913904ab7e9da008dcb2d85fd4af2d2993ada483d00c646d0c4481d031d',
+        relays: ['wss://relay.mostr.pub']
+      },
+      root: undefined
+    })
+  })
 })

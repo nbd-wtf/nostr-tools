@@ -61,12 +61,27 @@ export function parse(event: Pick<Event, 'tags'>): NIP10Result {
     const isFirstETag = eTagIndex === 0
     const isLastETag = eTagIndex === eTags.length - 1
 
-    if (eTagMarker === 'root' || isFirstETag) {
+    if (eTagMarker === 'root') {
       result.root = eventPointer
       continue
     }
 
-    if (eTagMarker === 'reply' || isLastETag) {
+    if (eTagMarker === 'reply') {
+      result.reply = eventPointer
+      continue
+    }
+
+    if (eTagMarker === 'mention') {
+      result.mentions.push(eventPointer)
+      continue
+    }
+
+    if (isFirstETag) {
+      result.root = eventPointer
+      continue
+    }
+
+    if (isLastETag) {
       result.reply = eventPointer
       continue
     }
