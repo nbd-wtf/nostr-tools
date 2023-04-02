@@ -1,5 +1,5 @@
 import type {Event} from './event'
-import {EventPointer} from './nip19'
+import type {EventPointer, ProfilePointer} from './nip19'
 
 export type NIP10Result = {
   /**
@@ -20,7 +20,7 @@ export type NIP10Result = {
   /**
    * List of pubkeys that are involved in the thread in no particular order.
    */
-  pubkeys: string[]
+  pubkeys: ProfilePointer[]
 }
 
 export function parse(event: Pick<Event, 'tags'>): NIP10Result {
@@ -39,7 +39,10 @@ export function parse(event: Pick<Event, 'tags'>): NIP10Result {
     }
 
     if (tag[0] === 'p' && tag[1]) {
-      result.pubkeys.push(tag[1])
+      result.pubkeys.push({
+        pubkey: tag[1],
+        relays: tag[2] ? [tag[2]] : []
+      })
     }
   }
 
