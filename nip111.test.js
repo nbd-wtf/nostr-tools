@@ -13,7 +13,7 @@ nip05.useFetchImplementation(fetch)
 
 // @dev: ↓ YOU MUST ENTER THE CORRESPONDING PRIVATE KEY IN THE .env.nip111 FILE
 let address = '0x0d2C290bb3fE24D8D566268d5c41527c519715Db' // ← signing checksummed ethereum pubkey/address
-let info = `eip155:1:${address}`
+let caip10 = `eip155:1:${address}`
 
 // @dev : uses arbitrary signature not linked to any ethereum account to test key generation
 // SHOULD result in successful key generation
@@ -22,17 +22,17 @@ test('Private Key from Deterministic Signature and Identifiers', async () => {
   let signature = 'f'.padEnd(130, 'f')
   let password = 'hello dear fucker'
   expect(
-    await nip111.privateKeyFromX(username, info, signature, password)
+    await nip111.privateKeyFromX(username, caip10, signature, password)
   ).toEqual('fd6a6c03eadf0db178f79de3a2dd3f0464fb5fac96608842d68ce64da2e40954')
 
   // without password
   expect(
-    await nip111.privateKeyFromX(username, info, signature)
+    await nip111.privateKeyFromX(username, caip10, signature)
   ).toEqual('897c5140a6e0e09b512c755cfd60829998fb0d046c52fae0846cca045185a52b')
 
   // 0x+hex signature; SHOULD BE agnostic to '0x' prefix
   expect(
-    await nip111.privateKeyFromX(username, info, '0x' + signature, password)
+    await nip111.privateKeyFromX(username, caip10, '0x' + signature, password)
   ).toEqual('fd6a6c03eadf0db178f79de3a2dd3f0464fb5fac96608842d68ce64da2e40954')
 })
 
@@ -43,7 +43,7 @@ test('Login with Deterministic Signature and NIP-02 Identifiers', async () => {
   let signature = 'f'.padEnd(130, 'f')
   let password = 'hello dear fucker'
   expect(
-    await nip111.signInWithX(username, info, signature, password)
+    await nip111.signInWithX(username, caip10, signature, password)
   ).toEqual({
     'petname': username,
     'privkey': '3f0b9c0ddb02d7056c4908d362c8d03072ef3f2dc1eb10a6ef9706dc3f017198',
@@ -56,12 +56,12 @@ test('Login with Deterministic Signature and NIP-02 Identifiers', async () => {
 // SHOULD result in private key generation for registration
 test('Generate Public Key for NIP-05 Identifier without verifying record', async () => {
   let username = 'zuck@cash.app'
-  let message = `Log into Nostr client as '${username}'\n\nIMPORTANT: Please verify the integrity and authenticity of connected Nostr client before signing this message\n\nSIGNED BY: ${info}`
+  let message = `Log into Nostr client as '${username}'\n\nIMPORTANT: Please verify the integrity and authenticity of connected Nostr client before signing this message\n\nSIGNED BY: ${caip10}`
   let promise = wallet.signMessage(message)
   let signature = await promise;
   let password = ''
   expect(
-    await nip111.signInWithXStandalone('zuck@cash.app', info, signature, password)
+    await nip111.signInWithXStandalone('zuck@cash.app', caip10, signature, password)
   ).toEqual({
     'petname': username.split('@')[0],
     'pubkey': '84ef21c0150c3a6abaf9da9c6e078281c2c1af09abb72a6518dce2ff82c9cb45',
@@ -75,7 +75,7 @@ test('Invalid Signature/Password in NIP-05 Identifiers', async () => {
   let signature = 'f'.padEnd(130, 'f')
   let password = ''
   await expect(async () => {
-    await nip111.signInWithX(username, info, signature, password)
+    await nip111.signInWithX(username, caip10, signature, password)
   }).rejects.toThrow('Invalid Signature/Password');
 })
 
@@ -85,7 +85,7 @@ test('NIP-05 Identifiers Not Set', async () => {
   let signature = 'f'.padEnd(130, 'f')
   let password = 'hello dear fucker'
   await expect(async () => {
-    await nip111.signInWithX('zuck@cash.app', info, signature, password)
+    await nip111.signInWithX('zuck@cash.app', caip10, signature, password)
   }).rejects.toThrow('Nostr Profile Not Found');
 })
 
@@ -93,13 +93,13 @@ test('NIP-05 Identifiers Not Set', async () => {
 // SHOULD result in successful key generation and login from a valid signature verified to originate from the correct ethereum account
 test('Login with Deterministic Signature and NIP-05 Identifiers', async () => {
   let username = 'nipxxtest2@sshmatrix.eth.limo'
-  let message = `Log into Nostr client as '${username}'\n\nIMPORTANT: Please verify the integrity and authenticity of connected Nostr client before signing this message\n\nSIGNED BY: ${info}`
+  let message = `Log into Nostr client as '${username}'\n\nIMPORTANT: Please verify the integrity and authenticity of connected Nostr client before signing this message\n\nSIGNED BY: ${caip10}`
   let promise = wallet.signMessage(message) // ↑ signed by address's private key
   let signature = await promise;
   let password = 'hello dear fucker'
 
   expect(
-    await nip111.signInWithX(username, info, signature, password)
+    await nip111.signInWithX(username, caip10, signature, password)
   ).toEqual({
     'petname': username.split('@')[0],
     'profile': {
