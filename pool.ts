@@ -159,22 +159,36 @@ export class SimplePool {
   }
 
   publish(relays: string[], event: Event): Pub {
-    const pubs: Pub[] = []
-    relays.forEach(async relay => {
+    const pubPromises: Promise<Pub>[] = relays.map(async relay => {
       let r
       try {
         r = await this.ensureRelay(relay)
-        pubs.push(r.publish(event))
-      } catch (_) {}
+        return r.publish(event)
+      } catch (_) {
+        return {on() {}, off() {}}
+      }
     })
+
+    const callbackMap = new Map()
+
     return {
       on(type, cb) {
-        pubs.forEach((pub, i) => {
-          pub.on(type, () => cb(relays[i]))
+        relays.forEach(async (relay, i) => {
+          let pub = await pubPromises[i]
+          let callback = () => cb(relay)
+          callbackMap.set(cb, callback)
+          pub.on(type, callback)
         })
       },
-      off() {
-        // do nothing here, FIXME
+
+      off(type, cb) {
+        relays.forEach(async (_, i) => {
+          let callback = callbackMap.get(cb)
+          if (callback) {
+            let pub = await pubPromises[i]
+            pub.off(type, callback)
+          }
+        })
       }
     }
   }
