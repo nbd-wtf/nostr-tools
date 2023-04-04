@@ -83,8 +83,10 @@ export function relayInit(
     }
   } = {}
 
+  var connectionPromise: Promise<void> | undefined
   async function connectRelay(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    if (connectionPromise) return connectionPromise
+    connectionPromise = new Promise((resolve, reject) => {
       try {
         ws = new WebSocket(url)
       } catch (err) {
@@ -96,10 +98,12 @@ export function relayInit(
         resolve()
       }
       ws.onerror = () => {
+        connectionPromise = undefined
         listeners.error.forEach(cb => cb())
         reject()
       }
       ws.onclose = async () => {
+        connectionPromise = undefined
         listeners.disconnect.forEach(cb => cb())
       }
 
@@ -185,6 +189,8 @@ export function relayInit(
         }
       }
     })
+
+    return connectionPromise
   }
 
   function connected() {
