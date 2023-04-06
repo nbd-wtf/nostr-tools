@@ -18,7 +18,7 @@ export function privateKeyFromSeedWords(
 }
 
 export function generateSeedWords(): string {
-  return generateMnemonic(wordlist)
+  return generateMnemonic(wordlist, 256)
 }
 
 export function validateWords(words: string): boolean {
