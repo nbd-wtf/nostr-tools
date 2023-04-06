@@ -81,7 +81,7 @@ export function parseReferences(evt: Event): Reference[] {
         }
         case 'a': {
           try {
-            let [kind, pubkey, identifier] = ref[1].split(':')
+            let [kind, pubkey, identifier] = tag[1].split(':')
             references.push({
               text: ref[0],
               address: {
