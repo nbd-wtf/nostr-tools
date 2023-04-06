@@ -13,7 +13,7 @@ export type Filter = {
 
 export function matchFilter(
   filter: Filter,
-  event: Event & {id: string}
+  event: Event
 ): boolean {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) return false
   if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
@@ -42,7 +42,7 @@ export function matchFilter(
 
 export function matchFilters(
   filters: Filter[],
-  event: Event & {id: string}
+  event: Event
 ): boolean {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true
