@@ -98,7 +98,7 @@ export function validateEvent(event: UnsignedEvent): boolean {
   return true
 }
 
-export function verifySignature(event: Event & {sig: string}): boolean {
+export function verifySignature(event: Event): boolean {
   return secp256k1.schnorr.verifySync(
     event.sig,
     getEventHash(event),
