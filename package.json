@@ -32,6 +32,11 @@
     "client",
     "nostr"
   ],
+  "scripts": {
+    "build": "node build",
+    "format": "prettier --plugin-search-dir . --write .",
+    "test": "node build && jest"
+  },
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
