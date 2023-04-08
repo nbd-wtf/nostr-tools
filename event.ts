@@ -78,8 +78,10 @@ export function getEventHash(event: UnsignedEvent): string {
   return secp256k1.utils.bytesToHex(eventHash)
 }
 
+const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
+
 export function validateEvent<T>(event: T): event is T & UnsignedEvent {
-  if (typeof event !== 'object') return false
+  if (!isRecord(event)) return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
   if (typeof event.created_at !== 'number') return false
