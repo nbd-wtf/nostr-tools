@@ -18,12 +18,11 @@
   },
   "license": "Public domain",
   "dependencies": {
-    "@noble/hashes": "1.0.0",
-    "@noble/secp256k1": "^1.7.1",
-    "@scure/base": "^1.1.1",
-    "@scure/bip32": "^1.1.5",
-    "@scure/bip39": "^1.1.1",
-    "prettier": "^2.8.4"
+    "@noble/hashes": "1.2.0",
+    "@noble/secp256k1": "1.7.0",
+    "@scure/base": "1.1.1",
+    "@scure/bip32": "1.1.4",
+    "@scure/bip39": "1.1.1"
   },
   "keywords": [
     "decentralization",
@@ -49,6 +48,7 @@
     "events": "^3.3.0",
     "jest": "^29.4.2",
     "node-fetch": "^2.6.9",
+    "prettier": "^2.8.4",
     "ts-jest": "^29.0.5",
     "tsd": "^0.22.0",
     "typescript": "^4.9.5",
