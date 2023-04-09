@@ -13,12 +13,19 @@ export type Filter = {
 
 export function matchFilter(
   filter: Filter,
-  event: Event & {id: string}
+  event: Event
 ): boolean {
-  if (filter.ids && filter.ids.indexOf(event.id) === -1) return false
+  if (filter.ids && filter.ids.indexOf(event.id) === -1) {
+    if (!filter.ids.some(prefix => event.id.startsWith(prefix))) {
+      return false
+    }
+  }
   if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
-  if (filter.authors && filter.authors.indexOf(event.pubkey) === -1)
-    return false
+  if (filter.authors && filter.authors.indexOf(event.pubkey) === -1) {
+    if (!filter.authors.some(prefix => event.pubkey.startsWith(prefix))) {
+      return false
+    }
+  }
 
   for (let f in filter) {
     if (f[0] === '#') {
@@ -42,7 +49,7 @@ export function matchFilter(
 
 export function matchFilters(
   filters: Filter[],
-  event: Event & {id: string}
+  event: Event
 ): boolean {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true

@@ -13,6 +13,7 @@ export type ProfilePointer = {
 export type EventPointer = {
   id: string // hex
   relays?: string[]
+  author?: string
 }
 
 export type AddressPointer = {
@@ -47,12 +48,17 @@ export function decode(nip19: string): {
       let tlv = parseTLV(data)
       if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nevent')
       if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
+      if (tlv[2] && tlv[2][0].length !== 32)
+        throw new Error('TLV 2 should be 32 bytes')
 
       return {
         type: 'nevent',
         data: {
           id: secp256k1.utils.bytesToHex(tlv[0][0]),
-          relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
+          relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
+          author: tlv[2]?.[0]
+            ? secp256k1.utils.bytesToHex(tlv[2][0])
+            : undefined
         }
       }
     }
@@ -133,7 +139,8 @@ export function nprofileEncode(profile: ProfilePointer): string {
 export function neventEncode(event: EventPointer): string {
   let data = encodeTLV({
     0: [secp256k1.utils.hexToBytes(event.id)],
-    1: (event.relays || []).map(url => utf8Encoder.encode(url))
+    1: (event.relays || []).map(url => utf8Encoder.encode(url)),
+    2: event.author ? [secp256k1.utils.hexToBytes(event.author)] : []
   })
   let words = bech32.toWords(data)
   return bech32.encode('nevent', words, Bech32MaxSize)

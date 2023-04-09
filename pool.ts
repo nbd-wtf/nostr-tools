@@ -26,22 +26,16 @@ export class SimplePool {
 
   async ensureRelay(url: string): Promise<Relay> {
     const nm = normalizeURL(url)
-    const existing = this._conn[nm]
-    if (existing && existing.status === 1) return existing
 
-    if (existing) {
-      await existing.connect()
-      return existing
+    if (!this._conn[nm]) {
+      this._conn[nm] = relayInit(nm, {
+        getTimeout: this.getTimeout * 0.9,
+        listTimeout: this.getTimeout * 0.9
+      })
     }
 
-    const relay = relayInit(nm, {
-      getTimeout: this.getTimeout * 0.9,
-      listTimeout: this.getTimeout * 0.9
-    })
-    this._conn[nm] = relay
-
+    const relay = this._conn[nm]
     await relay.connect()
-
     return relay
   }
 
@@ -165,22 +159,36 @@ export class SimplePool {
   }
 
   publish(relays: string[], event: Event): Pub {
-    const pubs: Pub[] = []
-    relays.forEach(async relay => {
+    const pubPromises: Promise<Pub>[] = relays.map(async relay => {
       let r
       try {
         r = await this.ensureRelay(relay)
-        pubs.push(r.publish(event))
-      } catch (_) {}
+        return r.publish(event)
+      } catch (_) {
+        return {on() {}, off() {}}
+      }
     })
+
+    const callbackMap = new Map()
+
     return {
       on(type, cb) {
-        pubs.forEach((pub, i) => {
-          pub.on(type, () => cb(relays[i]))
+        relays.forEach(async (relay, i) => {
+          let pub = await pubPromises[i]
+          let callback = () => cb(relay)
+          callbackMap.set(cb, callback)
+          pub.on(type, callback)
         })
       },
-      off() {
-        // do nothing here, FIXME
+
+      off(type, cb) {
+        relays.forEach(async (_, i) => {
+          let callback = callbackMap.get(cb)
+          if (callback) {
+            let pub = await pubPromises[i]
+            pub.off(type, callback)
+          }
+        })
       }
     }
   }
