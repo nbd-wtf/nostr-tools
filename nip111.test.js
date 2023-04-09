@@ -3,10 +3,10 @@ const ethers = require('ethers')
 const fetch = require('node-fetch')
 const { nip111, nip05 } = require('./lib/nostr.cjs')
 globalThis.crypto = require('crypto')
-require('dotenv').config({ path: '.env.nip111' })
+// ↓ THIS IS AN EXPOSED ETHER KEY IN TEST ENVIRONMENT. DO NOT USE IT ELSEWHERE!
+let ETHER_PRIVATE_KEY = 'e76878c781aacf151d3ff3f3e7700e218ac2be0acaf75af707093e769c25914a';
 
-privateKey = process.env.ETHER_PRIVATE_KEY;
-let wallet = new ethers.Wallet(privateKey);
+let wallet = new ethers.Wallet(ETHER_PRIVATE_KEY);
 
 nip111.useFetchImplementation(fetch)
 nip05.useFetchImplementation(fetch)

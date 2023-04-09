@@ -5,4 +5,5 @@ yarn-error.log
 package-lock.json
 .envrc
 test.html
-!.env.nip111
+yarn-error.log
+.DS_Store
