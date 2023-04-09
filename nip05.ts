@@ -36,7 +36,7 @@ export async function queryProfile(
     name = '_'
   }
 
-  if (!name.match(/^[A-Za-z0-9-_]+$/)) return null
+  if (!name.match(/^[A-Za-z0-9-_.]+$/)) return null
   if (!domain.includes('.')) return null
 
   let res
