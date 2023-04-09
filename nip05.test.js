@@ -17,4 +17,9 @@ test('fetch nip05 profiles', async () => {
     '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'
   )
   expect(p2.relays).toEqual(['wss://relay.damus.io'])
+
+  let p3 = await nip05.queryProfile('channel.ninja@channel.ninja')
+  expect(p3.pubkey).toEqual(
+    '36e65b503eba8a6b698e724a59137603101166a1cddb45ddc704247fc8aa0fce'
+  )
 })
