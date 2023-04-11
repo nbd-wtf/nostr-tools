@@ -13,6 +13,7 @@ export enum Kind {
   EncryptedDirectMessage = 4,
   EventDeletion = 5,
   Reaction = 7,
+  BadgeAward = 8,
   ChannelCreation = 40,
   ChannelMetadata = 41,
   ChannelMessage = 42,
@@ -23,6 +24,8 @@ export enum Kind {
   Zap = 9735,
   RelayList = 10002,
   ClientAuth = 22242,
+  BadgeDefinition = 30008,
+  ProfileBadge = 30009,
   Article = 30023
 }
 
