@@ -1,6 +1,12 @@
 import {bech32} from '@scure/base'
 
-import {Event, EventTemplate, validateEvent, verifySignature, Kind} from './event'
+import {
+  Event,
+  EventTemplate,
+  validateEvent,
+  verifySignature,
+  Kind
+} from './event'
 import {utf8Decoder} from './utils'
 
 var _fetch: any
@@ -13,7 +19,9 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function getZapEndpoint(metadata: Event<Kind.Metadata>): Promise<null | string> {
+export async function getZapEndpoint(
+  metadata: Event<Kind.Metadata>
+): Promise<null | string> {
   try {
     let lnurl: string = ''
     let {lud06, lud16} = JSON.parse(metadata.content)
@@ -86,6 +94,7 @@ export function validateZapRequest(zapRequestString: string): string | null {
 
   if (!validateEvent(zapRequest))
     return 'Zap request is not a valid Nostr event.'
+
   if (!verifySignature(zapRequest)) return 'Invalid signature on zap request.'
 
   let p = zapRequest.tags.find(([t, v]) => t === 'p' && v)

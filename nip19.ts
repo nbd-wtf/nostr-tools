@@ -1,4 +1,4 @@
-import * as secp256k1 from '@noble/secp256k1'
+import {bytesToHex, concatBytes, hexToBytes} from '@noble/hashes/utils'
 import {bech32} from '@scure/base'
 
 import {utf8Decoder, utf8Encoder} from './utils'
@@ -52,7 +52,7 @@ export function decode(nip19: string): DecodeResult {
       return {
         type: 'nprofile',
         data: {
-          pubkey: secp256k1.utils.bytesToHex(tlv[0][0]),
+          pubkey: bytesToHex(tlv[0][0]),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
         }
       }
@@ -67,10 +67,10 @@ export function decode(nip19: string): DecodeResult {
       return {
         type: 'nevent',
         data: {
-          id: secp256k1.utils.bytesToHex(tlv[0][0]),
+          id: bytesToHex(tlv[0][0]),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
           author: tlv[2]?.[0]
-            ? secp256k1.utils.bytesToHex(tlv[2][0])
+            ? bytesToHex(tlv[2][0])
             : undefined
         }
       }
@@ -88,8 +88,8 @@ export function decode(nip19: string): DecodeResult {
         type: 'naddr',
         data: {
           identifier: utf8Decoder.decode(tlv[0][0]),
-          pubkey: secp256k1.utils.bytesToHex(tlv[2][0]),
-          kind: parseInt(secp256k1.utils.bytesToHex(tlv[3][0]), 16),
+          pubkey: bytesToHex(tlv[2][0]),
+          kind: parseInt(bytesToHex(tlv[3][0]), 16),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : []
         }
       }
@@ -108,7 +108,7 @@ export function decode(nip19: string): DecodeResult {
     case 'nsec':
     case 'npub':
     case 'note':
-      return {type: prefix, data: secp256k1.utils.bytesToHex(data)}
+      return {type: prefix, data: bytesToHex(data)}
 
     default:
       throw new Error(`unknown prefix ${prefix}`)
@@ -145,14 +145,14 @@ export function noteEncode(hex: string): string {
 }
 
 function encodeBytes(prefix: string, hex: string): string {
-  let data = secp256k1.utils.hexToBytes(hex)
+  let data = hexToBytes(hex)
   let words = bech32.toWords(data)
   return bech32.encode(prefix, words, Bech32MaxSize)
 }
 
 export function nprofileEncode(profile: ProfilePointer): string {
   let data = encodeTLV({
-    0: [secp256k1.utils.hexToBytes(profile.pubkey)],
+    0: [hexToBytes(profile.pubkey)],
     1: (profile.relays || []).map(url => utf8Encoder.encode(url))
   })
   let words = bech32.toWords(data)
@@ -161,9 +161,9 @@ export function nprofileEncode(profile: ProfilePointer): string {
 
 export function neventEncode(event: EventPointer): string {
   let data = encodeTLV({
-    0: [secp256k1.utils.hexToBytes(event.id)],
+    0: [hexToBytes(event.id)],
     1: (event.relays || []).map(url => utf8Encoder.encode(url)),
-    2: event.author ? [secp256k1.utils.hexToBytes(event.author)] : []
+    2: event.author ? [hexToBytes(event.author)] : []
   })
   let words = bech32.toWords(data)
   return bech32.encode('nevent', words, Bech32MaxSize)
@@ -176,7 +176,7 @@ export function naddrEncode(addr: AddressPointer): string {
   let data = encodeTLV({
     0: [utf8Encoder.encode(addr.identifier)],
     1: (addr.relays || []).map(url => utf8Encoder.encode(url)),
-    2: [secp256k1.utils.hexToBytes(addr.pubkey)],
+    2: [hexToBytes(addr.pubkey)],
     3: [new Uint8Array(kind)]
   })
   let words = bech32.toWords(data)
@@ -204,5 +204,5 @@ function encodeTLV(tlv: TLV): Uint8Array {
     })
   })
 
-  return secp256k1.utils.concatBytes(...entries)
+  return concatBytes(...entries)
 }

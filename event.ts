@@ -1,5 +1,6 @@
-import * as secp256k1 from '@noble/secp256k1'
+import {schnorr} from '@noble/curves/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
+import {bytesToHex} from '@noble/hashes/utils'
 
 import {utf8Encoder} from './utils'
 import {getPublicKey} from './keys'
@@ -58,7 +59,10 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   }
 }
 
-export function finishEvent<K extends number = Kind>(t: EventTemplate<K>, privateKey: string): Event<K> {
+export function finishEvent<K extends number = Kind>(
+  t: EventTemplate<K>,
+  privateKey: string
+): Event<K> {
   let event = t as Event<K>
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
@@ -82,10 +86,11 @@ export function serializeEvent(evt: UnsignedEvent<number>): string {
 
 export function getEventHash(event: UnsignedEvent<number>): string {
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
-  return secp256k1.utils.bytesToHex(eventHash)
+  return bytesToHex(eventHash)
 }
 
-const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
+const isRecord = (obj: unknown): obj is Record<string, unknown> =>
+  obj instanceof Object
 
 export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
   if (!isRecord(event)) return false
@@ -108,11 +113,11 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
 }
 
 export function verifySignature(event: Event<number>): boolean {
-  return secp256k1.schnorr.verifySync(
-    event.sig,
-    getEventHash(event),
-    event.pubkey
-  )
+  try {
+    return schnorr.verify(event.sig, getEventHash(event), event.pubkey)
+  } catch (err) {
+    return false
+  }
 }
 
 /** @deprecated Use `getSignature` instead. */
@@ -124,8 +129,9 @@ export function signEvent(event: UnsignedEvent<number>, key: string): string {
 }
 
 /** Calculate the signature for an event. */
-export function getSignature(event: UnsignedEvent<number>, key: string): string {
-  return secp256k1.utils.bytesToHex(
-    secp256k1.schnorr.signSync(getEventHash(event), key)
-  )
+export function getSignature(
+  event: UnsignedEvent<number>,
+  key: string
+): string {
+  return bytesToHex(schnorr.sign(getEventHash(event), key))
 }

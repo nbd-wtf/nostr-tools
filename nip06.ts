@@ -1,4 +1,4 @@
-import * as secp256k1 from '@noble/secp256k1'
+import {bytesToHex} from '@noble/hashes/utils'
 import {wordlist} from '@scure/bip39/wordlists/english.js'
 import {
   generateMnemonic,
@@ -14,7 +14,7 @@ export function privateKeyFromSeedWords(
   let root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
   let privateKey = root.derive(`m/44'/1237'/0'/0/0`).privateKey
   if (!privateKey) throw new Error('could not derive private key')
-  return secp256k1.utils.bytesToHex(privateKey)
+  return bytesToHex(privateKey)
 }
 
 export function generateSeedWords(): string {
