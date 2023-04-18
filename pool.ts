@@ -2,7 +2,7 @@ import {Relay, relayInit} from './relay'
 import {normalizeURL} from './utils'
 import {Filter} from './filter'
 import {Event} from './event'
-import {SubscriptionOptions, Sub, Pub} from './relay'
+import {SubscriptionOptions, Sub, Pub, CountPayload} from './relay'
 
 export class SimplePool {
   private _conn: {[url: string]: Relay}
@@ -53,7 +53,7 @@ export class SimplePool {
     }
 
     let subs: Sub[] = []
-    let eventListeners: Set<(event: Event) => void> = new Set()
+    let eventListeners: Set<any> = new Set()
     let eoseListeners: Set<() => void> = new Set()
     let eosesMissing = relays.length
 

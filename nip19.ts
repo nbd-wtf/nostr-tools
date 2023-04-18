@@ -25,6 +25,7 @@ export type AddressPointer = {
 
 export type DecodeResult =
   | {type: 'nprofile'; data: ProfilePointer}
+  | {type: 'nrelay'; data: string}
   | {type: 'nevent'; data: EventPointer}
   | {type: 'naddr'; data: AddressPointer}
   | {type: 'nsec'; data: string}

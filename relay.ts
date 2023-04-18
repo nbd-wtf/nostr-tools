@@ -11,7 +11,7 @@ type RelayEvent = {
   notice: (msg: string) => void | Promise<void>
   auth: (challenge: string) => void | Promise<void>
 }
-type CountPayload = {
+export type CountPayload = {
   count: number
 }
 type SubEvent = {
@@ -371,10 +371,7 @@ export function relayInit(
           resolve(event)
         })
       }),
-    count: (
-      filters: Filter[],
-      opts?: SubscriptionOptions
-    ): Promise<CountPayload | null> =>
+    count: (filters: Filter[]): Promise<CountPayload | null> =>
       new Promise(resolve => {
         let s = sub(filters, {...sub, verb: 'COUNT'})
         let timeout = setTimeout(() => {
