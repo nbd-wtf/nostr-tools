@@ -1,6 +1,5 @@
-import {schnorr} from '@noble/curves/secp256k1'
+import * as secp256k1 from '@noble/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
-import {bytesToHex} from '@noble/hashes/utils'
 
 import {utf8Encoder} from './utils'
 import {getPublicKey} from './keys'
@@ -79,7 +78,7 @@ export function serializeEvent(evt: UnsignedEvent): string {
 
 export function getEventHash(event: UnsignedEvent): string {
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
-  return bytesToHex(eventHash)
+  return secp256k1.utils.bytesToHex(eventHash)
 }
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
@@ -105,7 +104,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
 }
 
 export function verifySignature(event: Event): boolean {
-  return schnorr.verify(
+  return secp256k1.schnorr.verifySync(
     event.sig,
     getEventHash(event),
     event.pubkey
@@ -113,7 +112,7 @@ export function verifySignature(event: Event): boolean {
 }
 
 export function signEvent(event: UnsignedEvent, key: string): string {
-  return bytesToHex(
-    schnorr.sign(getEventHash(event), key)
+  return secp256k1.utils.bytesToHex(
+    secp256k1.schnorr.signSync(getEventHash(event), key)
   )
 }

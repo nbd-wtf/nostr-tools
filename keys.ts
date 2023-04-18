@@ -1,10 +1,9 @@
-import {schnorr} from '@noble/curves/secp256k1'
-import {bytesToHex} from '@noble/hashes/utils'
+import * as secp256k1 from '@noble/secp256k1'
 
 export function generatePrivateKey(): string {
-  return bytesToHex(schnorr.utils.randomPrivateKey())
+  return secp256k1.utils.bytesToHex(secp256k1.utils.randomPrivateKey())
 }
 
 export function getPublicKey(privateKey: string): string {
-  return bytesToHex(schnorr.getPublicKey(privateKey))
+  return secp256k1.utils.bytesToHex(secp256k1.schnorr.getPublicKey(privateKey))
 }

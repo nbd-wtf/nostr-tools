@@ -1,5 +1,4 @@
-import {schnorr} from '@noble/curves/secp256k1'
-import {bytesToHex} from '@noble/hashes/utils'
+import * as secp256k1 from '@noble/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
 
 import {Event} from './event'
@@ -37,8 +36,8 @@ export function createDelegation(
     utf8Encoder.encode(`nostr:delegation:${parameters.pubkey}:${cond}`)
   )
 
-  let sig = bytesToHex(
-    schnorr.sign(sighash, privateKey)
+  let sig = secp256k1.utils.bytesToHex(
+    secp256k1.schnorr.signSync(sighash, privateKey)
   )
 
   return {
@@ -85,7 +84,7 @@ export function getDelegator(event: Event): string | null {
   let sighash = sha256(
     utf8Encoder.encode(`nostr:delegation:${event.pubkey}:${cond}`)
   )
-  if (!schnorr.verify(sig, sighash, pubkey)) return null
+  if (!secp256k1.schnorr.verifySync(sig, sighash, pubkey)) return null
 
   return pubkey
 }

@@ -1,8 +1,8 @@
-import {hexToBytes} from '@noble/hashes/utils'
+import * as secp256k1 from '@noble/secp256k1'
 
 /** Get POW difficulty from a Nostr hex ID. */
 export function getPow(id: string): number {
-  return getLeadingZeroBits(hexToBytes(id))
+  return getLeadingZeroBits(secp256k1.utils.hexToBytes(id))
 }
 
 /**
