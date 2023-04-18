@@ -4,7 +4,6 @@ import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
 import {getHex64, getSubscriptionId} from './fakejson'
 
-type OutgoingEventType = 'EVENT' | 'AUTH'
 type RelayEvent = {
   connect: () => void | Promise<void>
   disconnect: () => void | Promise<void>
@@ -32,7 +31,8 @@ export type Relay = {
     filters: Filter[],
     opts?: SubscriptionOptions
   ) => Promise<CountPayload | null>
-  publish: (event: Event, type?: OutgoingEventType) => Pub
+  publish: (event: Event) => Pub
+  auth: (event: Event) => Pub
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
@@ -179,7 +179,7 @@ export function relayInit(
               let id = data[1]
               let payload = data[2]
               if (openSubs[id]) {
-                (subListeners[id]?.count || []).forEach(cb => cb(payload))
+                ;(subListeners[id]?.count || []).forEach(cb => cb(payload))
               }
               return
             case 'EOSE': {
@@ -298,6 +298,29 @@ export function relayInit(
     }
   }
 
+  function _publishEvent(event: Event, type: string) {
+    if (!event.id) throw new Error(`event ${event} has no id`)
+    let id = event.id
+
+    trySend([type, event])
+
+    return {
+      on: (type: 'ok' | 'failed', cb: any) => {
+        pubListeners[id] = pubListeners[id] || {
+          ok: [],
+          failed: []
+        }
+        pubListeners[id][type].push(cb)
+      },
+      off: (type: 'ok' | 'failed', cb: any) => {
+        let listeners = pubListeners[id]
+        if (!listeners) return
+        let idx = listeners[type].indexOf(cb)
+        if (idx >= 0) listeners[type].splice(idx, 1)
+      }
+    }
+  }
+
   return {
     url,
     sub,
@@ -364,27 +387,11 @@ export function relayInit(
           resolve(event)
         })
       }),
-    publish(event, type = 'EVENT'): Pub {
-      if (!event.id) throw new Error(`event ${event} has no id`)
-      let id = event.id
-
-      trySend([type, event])
-
-      return {
-        on: (type: 'ok' | 'failed', cb: any) => {
-          pubListeners[id] = pubListeners[id] || {
-            ok: [],
-            failed: []
-          }
-          pubListeners[id][type].push(cb)
-        },
-        off: (type: 'ok' | 'failed', cb: any) => {
-          let listeners = pubListeners[id]
-          if (!listeners) return
-          let idx = listeners[type].indexOf(cb)
-          if (idx >= 0) listeners[type].splice(idx, 1)
-        }
-      }
+    publish(event): Pub {
+      return _publishEvent(event, 'EVENT')
+    },
+    auth(event): Pub {
+      return _publishEvent(event, 'AUTH')
     },
     connect,
     close(): void {
