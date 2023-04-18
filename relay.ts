@@ -4,11 +4,13 @@ import {Event, verifySignature, validateEvent} from './event'
 import {Filter, matchFilters} from './filter'
 import {getHex64, getSubscriptionId} from './fakejson'
 
+type OutgoingEventType = 'EVENT' | 'AUTH'
 type RelayEvent = {
   connect: () => void | Promise<void>
   disconnect: () => void | Promise<void>
   error: () => void | Promise<void>
   notice: (msg: string) => void | Promise<void>
+  auth: (challenge: string) => void | Promise<void>
 }
 type CountPayload = {
   count: number
@@ -26,8 +28,11 @@ export type Relay = {
   sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
   list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
   get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
-  count: (filters: Filter[], opts?: SubscriptionOptions) => Promise<CountPayload | null>
-  publish: (event: Event) => Pub
+  count: (
+    filters: Filter[],
+    opts?: SubscriptionOptions
+  ) => Promise<CountPayload | null>
+  publish: (event: Event, type?: OutgoingEventType) => Pub
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
@@ -61,6 +66,14 @@ export type SubscriptionOptions = {
   alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
 }
 
+const newListeners = (): {[TK in keyof RelayEvent]: RelayEvent[TK][]} => ({
+  connect: [],
+  disconnect: [],
+  error: [],
+  notice: [],
+  auth: []
+})
+
 export function relayInit(
   url: string,
   options: {
@@ -73,12 +86,7 @@ export function relayInit(
 
   var ws: WebSocket
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
-  var listeners: {[TK in keyof RelayEvent]: RelayEvent[TK][]} = {
-    connect: [],
-    disconnect: [],
-    error: [],
-    notice: []
-  }
+  var listeners = newListeners()
   var subListeners: {
     [subid: string]: {[TK in keyof SubEvent]: SubEvent[TK][]}
   } = {}
@@ -198,6 +206,11 @@ export function relayInit(
               let notice = data[1]
               listeners.notice.forEach(cb => cb(notice))
               return
+            case 'AUTH': {
+              let challenge = data[1]
+              listeners.auth?.forEach(cb => cb(challenge))
+              return
+            }
           }
         } catch (err) {
           return
@@ -351,11 +364,11 @@ export function relayInit(
           resolve(event)
         })
       }),
-    publish(event: Event): Pub {
+    publish(event, type = 'EVENT'): Pub {
       if (!event.id) throw new Error(`event ${event} has no id`)
       let id = event.id
 
-      trySend(['EVENT', event])
+      trySend([type, event])
 
       return {
         on: (type: 'ok' | 'failed', cb: any) => {
@@ -375,7 +388,7 @@ export function relayInit(
     },
     connect,
     close(): void {
-      listeners = {connect: [], disconnect: [], error: [], notice: []}
+      listeners = newListeners()
       subListeners = {}
       pubListeners = {}
       if (ws.readyState === WebSocket.OPEN) {
