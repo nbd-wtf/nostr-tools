@@ -23,10 +23,15 @@ export type AddressPointer = {
   relays?: string[]
 }
 
-export function decode(nip19: string): {
-  type: string
-  data: ProfilePointer | EventPointer | AddressPointer | string
-} {
+export type DecodeResult =
+  | {type: 'nprofile'; data: ProfilePointer}
+  | {type: 'nevent'; data: EventPointer}
+  | {type: 'naddr'; data: AddressPointer}
+  | {type: 'nsec'; data: string}
+  | {type: 'npub'; data: string}
+  | {type: 'note'; data: string}
+
+export function decode(nip19: string): DecodeResult {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
