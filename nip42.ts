@@ -28,14 +28,14 @@ export const authenticate = async ({
     ],
     content: ''
   }
-  const sub = relay.publish(await sign(e), 'AUTH')
+  const pub = relay.auth(await sign(e))
   return new Promise((resolve, reject) => {
-    sub.on('ok', function ok() {
-      sub.off('ok', ok)
+    pub.on('ok', function ok() {
+      pub.off('ok', ok)
       resolve()
     })
-    sub.on('failed', function fail(reason: string) {
-      sub.off('failed', fail)
+    pub.on('failed', function fail(reason: string) {
+      pub.off('failed', fail)
       reject(reason)
     })
   })
