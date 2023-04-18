@@ -56,7 +56,7 @@ export type Sub = {
 
 export type SubscriptionOptions = {
   id?: string
-  verb?: 'REQ' | 'COUNT',
+  verb?: 'REQ' | 'COUNT'
   skipVerification?: boolean
   alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
 }
@@ -153,7 +153,7 @@ export function relayInit(
           // will naturally be caught by the encompassing try..catch block
 
           switch (data[0]) {
-            case 'EVENT':
+            case 'EVENT': {
               let id = data[1]
               let event = data[2]
               if (
@@ -166,6 +166,7 @@ export function relayInit(
                 ;(subListeners[id]?.event || []).forEach(cb => cb(event))
               }
               return
+            }
             case 'COUNT':
               let id = data[1]
               let payload = data[2]
@@ -334,14 +335,17 @@ export function relayInit(
           resolve(event)
         })
       }),
-    count: (filters: Filter[], opts?: SubscriptionOptions): Promise<CountPayload | null> =>
+    count: (
+      filters: Filter[],
+      opts?: SubscriptionOptions
+    ): Promise<CountPayload | null> =>
       new Promise(resolve => {
         let s = sub(filters, {...sub, verb: 'COUNT'})
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(null)
         }, countTimeout)
-        s.on('count', (event: Event) => {
+        s.on('count', (event: CountPayload) => {
           s.unsub()
           clearTimeout(timeout)
           resolve(event)
