@@ -325,4 +325,4 @@ Please consult the tests or [the source code](https://github.com/fiatjaf/nostr-t
 
 ## License
 
-Public domain.
+This is free and unencumbered software released into the public domain. By submitting patches to this project, you agree to dedicate any and all copyright interest in this software to the public domain.
