@@ -16,7 +16,7 @@
     "import": "./lib/esm/nostr.mjs",
     "require": "./lib/nostr.cjs.js"
   },
-  "license": "Public domain",
+  "license": "Unlicense",
   "dependencies": {
     "@noble/hashes": "1.2.0",
     "@noble/secp256k1": "1.7.0",
