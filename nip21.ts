@@ -5,14 +5,18 @@ import * as nip21 from './nip21'
  * Bech32 regex.
  * @see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
  */
-export const BECH32_REGEX = /[\x21-\x7E]{1,83}1[023456789acdefghjklmnpqrstuvwxyz]{6,}/
+export const BECH32_REGEX =
+  /[\x21-\x7E]{1,83}1[023456789acdefghjklmnpqrstuvwxyz]{6,}/
 
 /** Nostr URI regex, eg `nostr:npub1...` */
 export const NOSTR_URI_REGEX = new RegExp(`nostr:(${BECH32_REGEX.source})`)
 
 /** Test whether the value is a Nostr URI. */
 export function test(value: unknown): value is `nostr:${string}` {
-  return typeof value === 'string' && new RegExp(`^${NOSTR_URI_REGEX.source}$`).test(value)
+  return (
+    typeof value === 'string' &&
+    new RegExp(`^${NOSTR_URI_REGEX.source}$`).test(value)
+  )
 }
 
 /** Parsed Nostr URI data. */
@@ -32,6 +36,6 @@ export function parse(uri: string): NostrURI {
   return {
     uri: match[0] as `nostr:${string}`,
     value: match[1],
-    decoded: nip19.decode(match[1]),
+    decoded: nip19.decode(match[1])
   }
 }

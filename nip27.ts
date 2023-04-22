@@ -2,7 +2,8 @@ import * as nip19 from './nip19'
 import * as nip21 from './nip21'
 
 /** Regex to find NIP-21 URIs inside event content. */
-export const regex = () => new RegExp(`\\b${nip21.NOSTR_URI_REGEX.source}\\b`, 'g')
+export const regex = () =>
+  new RegExp(`\\b${nip21.NOSTR_URI_REGEX.source}\\b`, 'g')
 
 /** Match result for a Nostr URI in event content. */
 export interface NostrURIMatch extends nip21.NostrURI {
@@ -16,7 +17,7 @@ export interface NostrURIMatch extends nip21.NostrURI {
 export function find(content: string): NostrURIMatch[] {
   const matches = content.matchAll(regex())
 
-  return [...matches].map((match) => {
+  return [...matches].map(match => {
     const [uri, value] = match
 
     return {
@@ -24,7 +25,7 @@ export function find(content: string): NostrURIMatch[] {
       value,
       decoded: nip19.decode(value),
       start: match.index!,
-      end: match.index! + uri.length,
+      end: match.index! + uri.length
     }
   })
 }
@@ -48,12 +49,15 @@ export function find(content: string): NostrURIMatch[] {
  * })
  * ```
  */
-export function replaceAll(content: string, replacer: (match: nip21.NostrURI) => string): string {
+export function replaceAll(
+  content: string,
+  replacer: (match: nip21.NostrURI) => string
+): string {
   return content.replaceAll(regex(), (uri, value) => {
     return replacer({
       uri: uri as `nostr:${string}`,
       value,
-      decoded: nip19.decode(value),
+      decoded: nip19.decode(value)
     })
   })
 }
