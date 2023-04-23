@@ -1,8 +1,8 @@
 /* eslint-env jest */
 const {nip27} = require('./lib/nostr.cjs')
 
-test('find', () => {
-  const result = nip27.find(
+test('matchAll', () => {
+  const result = nip27.matchAll(
     'Hello nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
   )
 
