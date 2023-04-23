@@ -58,7 +58,7 @@ export function finishEvent(t: EventTemplate, privateKey: string): Event {
   let event = t as Event
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
-  event.sig = signEvent(event, privateKey)
+  event.sig = getSignature(event, privateKey)
   return event
 }
 
@@ -111,7 +111,8 @@ export function verifySignature(event: Event): boolean {
   )
 }
 
-export function signEvent(event: UnsignedEvent, key: string): string {
+/** Calculate the signature for an event. */
+export function getSignature(event: UnsignedEvent, key: string): string {
   return secp256k1.utils.bytesToHex(
     secp256k1.schnorr.signSync(getEventHash(event), key)
   )

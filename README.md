@@ -27,7 +27,7 @@ let pk = getPublicKey(sk) // `pk` is a hex string
 import {
   validateEvent,
   verifySignature,
-  signEvent,
+  getSignature,
   getEventHash,
   getPublicKey
 } from 'nostr-tools'
@@ -41,7 +41,7 @@ let event = {
 }
 
 event.id = getEventHash(event)
-event.sig = signEvent(event, privateKey)
+event.sig = getSignature(event, privateKey)
 
 let ok = validateEvent(event)
 let veryOk = verifySignature(event)
@@ -55,7 +55,7 @@ import {
   generatePrivateKey,
   getPublicKey,
   getEventHash,
-  signEvent
+  getSignature
 } from 'nostr-tools'
 
 const relay = relayInit('wss://relay.example.com')
@@ -104,7 +104,7 @@ let event = {
   content: 'hello world'
 }
 event.id = getEventHash(event)
-event.sig = signEvent(event, sk)
+event.sig = getSignature(event, sk)
 
 let pub = relay.publish(event)
 pub.on('ok', () => {

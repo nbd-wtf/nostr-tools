@@ -6,7 +6,7 @@ const {
   generatePrivateKey,
   getPublicKey,
   getEventHash,
-  signEvent
+  getSignature
 } = require('./lib/nostr.cjs')
 
 let pool = new SimplePool()
@@ -50,7 +50,7 @@ test('removing duplicates when querying', async () => {
     tags: []
   }
   event.id = getEventHash(event)
-  event.sig = signEvent(event, priv)
+  event.sig = getSignature(event, priv)
 
   pool.publish(relays, event)
 
@@ -84,7 +84,7 @@ test('same with double querying', async () => {
     tags: []
   }
   event.id = getEventHash(event)
-  event.sig = signEvent(event, priv)
+  event.sig = getSignature(event, priv)
 
   pool.publish(relays, event)
 

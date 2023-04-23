@@ -6,7 +6,7 @@ const {
   generatePrivateKey,
   getPublicKey,
   getEventHash,
-  signEvent
+  getSignature
 } = require('./lib/nostr.cjs')
 
 let relay = relayInit('wss://relay.damus.io/')
@@ -124,7 +124,7 @@ test('listening (twice) and publishing', async () => {
     content: 'nostr-tools test suite'
   }
   event.id = getEventHash(event)
-  event.sig = signEvent(event, sk)
+  event.sig = getSignature(event, sk)
 
   relay.publish(event)
   return expect(
