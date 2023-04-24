@@ -111,6 +111,14 @@ export function verifySignature(event: Event): boolean {
   )
 }
 
+/** @deprecated Use `getSignature` instead. */
+export function signEvent(event: UnsignedEvent, key: string): string {
+  console.warn(
+    'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.'
+  )
+  return getSignature(event, key)
+}
+
 /** Calculate the signature for an event. */
 export function getSignature(event: UnsignedEvent, key: string): string {
   return secp256k1.utils.bytesToHex(
