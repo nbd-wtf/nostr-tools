@@ -1,8 +1,14 @@
 import {randomBytes} from '@noble/hashes/utils'
 import * as secp256k1 from '@noble/secp256k1'
 import {base64} from '@scure/base'
+import crypto from 'crypto'
 
 import {utf8Decoder, utf8Encoder} from './utils'
+
+if (!crypto.subtle) {
+  // @ts-ignore
+  crypto.subtle = crypto.webcrypto.subtle
+}
 
 export async function encrypt(
   privkey: string,
