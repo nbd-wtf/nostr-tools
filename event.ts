@@ -29,23 +29,23 @@ export enum Kind {
   Article = 30023
 }
 
-export type EventTemplate = {
-  kind: Kind
+export type EventTemplate<K extends number = Kind> = {
+  kind: K
   tags: string[][]
   content: string
   created_at: number
 }
 
-export type UnsignedEvent = EventTemplate & {
+export type UnsignedEvent<K extends number = Kind> = EventTemplate<K> & {
   pubkey: string
 }
 
-export type Event = UnsignedEvent & {
+export type Event<K extends number = Kind> = UnsignedEvent<K> & {
   id: string
   sig: string
 }
 
-export function getBlankEvent(): EventTemplate {
+export function getBlankEvent(): EventTemplate<number> {
   return {
     kind: 255,
     content: '',
