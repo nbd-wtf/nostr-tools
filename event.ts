@@ -6,6 +6,7 @@ import {getPublicKey} from './keys'
 
 /* eslint-disable no-unused-vars */
 export enum Kind {
+  UndefinedKindNumber = 255,
   Metadata = 0,
   Text = 1,
   RecommendRelay = 2,
@@ -45,9 +46,9 @@ export type Event<K extends number = Kind> = UnsignedEvent<K> & {
   sig: string
 }
 
-export function getBlankEvent(): EventTemplate<number> {
+export function getBlankEvent<K extends Kind = Kind.UndefinedKindNumber>(kind?: K): EventTemplate<K> {
   return {
-    kind: 255,
+    kind: kind || ( Kind.UndefinedKindNumber as K),
     content: '',
     tags: [],
     created_at: 0
