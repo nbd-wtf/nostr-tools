@@ -20,6 +20,15 @@ describe('Event', () => {
         created_at: 0
       })
     })
+
+    it('should return a blank event object with defined kind', () => {
+      expect(getBlankEvent(Kind.Text)).toEqual({
+        kind: 1,
+        content: '',
+        tags: [],
+        created_at: 0
+      })
+    })
   })
 
   describe('finishEvent', () => {
