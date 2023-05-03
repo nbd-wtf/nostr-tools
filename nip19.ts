@@ -5,6 +5,13 @@ import {utf8Decoder, utf8Encoder} from './utils'
 
 const Bech32MaxSize = 5000
 
+/**
+ * Bech32 regex.
+ * @see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
+ */
+export const BECH32_REGEX =
+  /[\x21-\x7E]{1,83}1[023456789acdefghjklmnpqrstuvwxyz]{6,}/
+
 export type ProfilePointer = {
   pubkey: string // hex
   relays?: string[]
