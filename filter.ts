@@ -1,8 +1,8 @@
-import {Event} from './event'
+import {Event, type Kind} from './event'
 
-export type Filter = {
+export type Filter<K extends number = Kind> = {
   ids?: string[]
-  kinds?: number[]
+  kinds?: K[]
   authors?: string[]
   since?: number
   until?: number
