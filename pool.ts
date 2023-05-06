@@ -2,7 +2,7 @@ import {Relay, relayInit} from './relay'
 import {normalizeURL} from './utils'
 import {Filter} from './filter'
 import {Event} from './event'
-import {SubscriptionOptions, Sub, Pub, CountPayload} from './relay'
+import {SubscriptionOptions, Sub, Pub} from './relay'
 
 export class SimplePool {
   private _conn: {[url: string]: Relay}
@@ -39,7 +39,7 @@ export class SimplePool {
     return relay
   }
 
-  sub(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Sub {
+  sub<K extends number = number>(relays: string[], filters: Filter<K>[], opts?: SubscriptionOptions): Sub<K> {
     let _knownIds: Set<string> = new Set()
     let modifiedOpts = {...(opts || {})}
     modifiedOpts.alreadyHaveEvent = (id, url) => {
@@ -73,7 +73,7 @@ export class SimplePool {
       }
       if (!r) return
       let s = r.sub(filters, modifiedOpts)
-      s.on('event', (event: Event) => {
+      s.on('event', (event) => {
         _knownIds.add(event.id as string)
         for (let cb of eventListeners.values()) cb(event)
       })
@@ -118,18 +118,18 @@ export class SimplePool {
     return greaterSub
   }
 
-  get(
+  get<K extends number = number>(
     relays: string[],
-    filter: Filter,
+    filter: Filter<K>,
     opts?: SubscriptionOptions
-  ): Promise<Event | null> {
+  ): Promise<Event<K> | null> {
     return new Promise(resolve => {
       let sub = this.sub(relays, [filter], opts)
       let timeout = setTimeout(() => {
         sub.unsub()
         resolve(null)
       }, this.getTimeout)
-      sub.on('event', (event: Event) => {
+      sub.on('event', (event) => {
         resolve(event)
         clearTimeout(timeout)
         sub.unsub()
@@ -137,16 +137,16 @@ export class SimplePool {
     })
   }
 
-  list(
+  list<K extends number = number>(
     relays: string[],
-    filters: Filter[],
+    filters: Filter<K>[],
     opts?: SubscriptionOptions
-  ): Promise<Event[]> {
+  ): Promise<Event<K>[]> {
     return new Promise(resolve => {
-      let events: Event[] = []
+      let events: Event<K>[] = []
       let sub = this.sub(relays, filters, opts)
 
-      sub.on('event', (event: Event) => {
+      sub.on('event', (event) => {
         events.push(event)
       })
 
@@ -158,7 +158,7 @@ export class SimplePool {
     })
   }
 
-  publish(relays: string[], event: Event): Pub {
+  publish(relays: string[], event: Event<number>): Pub {
     const pubPromises: Promise<Pub>[] = relays.map(async relay => {
       let r
       try {

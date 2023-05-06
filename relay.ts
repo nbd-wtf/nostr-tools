@@ -14,8 +14,8 @@ type RelayEvent = {
 export type CountPayload = {
   count: number
 }
-type SubEvent = {
-  event: (event: Event) => void | Promise<void>
+type SubEvent<K extends number> = {
+  event: (event: Event<K>) => void | Promise<void>
   count: (payload: CountPayload) => void | Promise<void>
   eose: () => void | Promise<void>
 }
@@ -24,15 +24,15 @@ export type Relay = {
   status: number
   connect: () => Promise<void>
   close: () => void
-  sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
-  list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
-  get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
+  sub: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Sub<K>
+  list: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Promise<Event<K>[]>
+  get: <K extends number = number>(filter: Filter<K>, opts?: SubscriptionOptions) => Promise<Event<K> | null>
   count: (
     filters: Filter[],
     opts?: SubscriptionOptions
   ) => Promise<CountPayload | null>
-  publish: (event: Event) => Pub
-  auth: (event: Event) => Pub
+  publish: (event: Event<number>) => Pub
+  auth: (event: Event<number>) => Pub
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
@@ -46,14 +46,14 @@ export type Pub = {
   on: (type: 'ok' | 'failed', cb: any) => void
   off: (type: 'ok' | 'failed', cb: any) => void
 }
-export type Sub = {
-  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
+export type Sub<K extends number = number> = {
+  sub: <K extends number = number>(filters: Filter<K>[], opts: SubscriptionOptions) => Sub<K>
   unsub: () => void
-  on: <T extends keyof SubEvent, U extends SubEvent[T]>(
+  on: <T extends keyof SubEvent<K>, U extends SubEvent<K>[T]>(
     event: T,
     listener: U
   ) => void
-  off: <T extends keyof SubEvent, U extends SubEvent[T]>(
+  off: <T extends keyof SubEvent<K>, U extends SubEvent<K>[T]>(
     event: T,
     listener: U
   ) => void
@@ -88,7 +88,7 @@ export function relayInit(
   var openSubs: {[id: string]: {filters: Filter[]} & SubscriptionOptions} = {}
   var listeners = newListeners()
   var subListeners: {
-    [subid: string]: {[TK in keyof SubEvent]: SubEvent[TK][]}
+    [subid: string]: {[TK in keyof SubEvent<any>]: SubEvent<any>[TK][]}
   } = {}
   var pubListeners: {
     [eventid: string]: {
@@ -245,15 +245,15 @@ export function relayInit(
     }
   }
 
-  const sub = (
-    filters: Filter[],
+  const sub = <K extends number = number>(
+    filters: Filter<K>[],
     {
       verb = 'REQ',
       skipVerification = false,
       alreadyHaveEvent = null,
       id = Math.random().toString().slice(2)
     }: SubscriptionOptions = {}
-  ): Sub => {
+  ): Sub<K> => {
     let subid = id
 
     openSubs[subid] = {
@@ -276,10 +276,7 @@ export function relayInit(
         delete subListeners[subid]
         trySend(['CLOSE', subid])
       },
-      on: <T extends keyof SubEvent, U extends SubEvent[T]>(
-        type: T,
-        cb: U
-      ): void => {
+      on: (type, cb) => {
         subListeners[subid] = subListeners[subid] || {
           event: [],
           count: [],
@@ -287,10 +284,7 @@ export function relayInit(
         }
         subListeners[subid][type].push(cb)
       },
-      off: <T extends keyof SubEvent, U extends SubEvent[T]>(
-        type: T,
-        cb: U
-      ): void => {
+      off: (type, cb): void => {
         let listeners = subListeners[subid]
         let idx = listeners[type].indexOf(cb)
         if (idx >= 0) listeners[type].splice(idx, 1)
@@ -298,7 +292,7 @@ export function relayInit(
     }
   }
 
-  function _publishEvent(event: Event, type: string) {
+  function _publishEvent(event: Event<number>, type: string) {
     if (!event.id) throw new Error(`event ${event} has no id`)
     let id = event.id
 
@@ -341,10 +335,10 @@ export function relayInit(
       let index = listeners[type].indexOf(cb)
       if (index !== -1) listeners[type].splice(index, 1)
     },
-    list: (filters: Filter[], opts?: SubscriptionOptions): Promise<Event[]> =>
+    list: (filters, opts?: SubscriptionOptions) =>
       new Promise(resolve => {
         let s = sub(filters, opts)
-        let events: Event[] = []
+        let events: Event<any>[] = []
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(events)
@@ -354,18 +348,18 @@ export function relayInit(
           clearTimeout(timeout)
           resolve(events)
         })
-        s.on('event', (event: Event) => {
+        s.on('event', (event) => {
           events.push(event)
         })
       }),
-    get: (filter: Filter, opts?: SubscriptionOptions): Promise<Event | null> =>
+    get: (filter, opts?: SubscriptionOptions) =>
       new Promise(resolve => {
         let s = sub([filter], opts)
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(null)
         }, getTimeout)
-        s.on('event', (event: Event) => {
+        s.on('event', (event) => {
           s.unsub()
           clearTimeout(timeout)
           resolve(event)
