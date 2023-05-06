@@ -21,8 +21,8 @@ export function normalizeURL(url: string): string {
 // fast insert-into-sorted-array functions adapted from https://github.com/terrymorse58/fast-sorted-array
 //
 export function insertEventIntoDescendingList(
-  sortedArray: Event[],
-  event: Event
+  sortedArray: Event<number>[],
+  event: Event<number>
 ) {
   let start = 0
   let end = sortedArray.length - 1
@@ -66,8 +66,8 @@ export function insertEventIntoDescendingList(
 }
 
 export function insertEventIntoAscendingList(
-  sortedArray: Event[],
-  event: Event
+  sortedArray: Event<number>[],
+  event: Event<number>
 ) {
   let start = 0
   let end = sortedArray.length - 1

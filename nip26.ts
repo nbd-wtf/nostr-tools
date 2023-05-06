@@ -48,7 +48,7 @@ export function createDelegation(
   }
 }
 
-export function getDelegator(event: Event): string | null {
+export function getDelegator(event: Event<number>): string | null {
   // find delegation tag
   let tag = event.tags.find(tag => tag[0] === 'delegation' && tag.length >= 4)
   if (!tag) return null
