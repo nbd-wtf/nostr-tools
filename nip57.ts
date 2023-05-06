@@ -1,6 +1,6 @@
 import {bech32} from '@scure/base'
 
-import {Event, EventTemplate, validateEvent, verifySignature} from './event'
+import {Event, EventTemplate, validateEvent, verifySignature, Kind} from './event'
 import {utf8Decoder} from './utils'
 
 var _fetch: any
@@ -13,7 +13,7 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function getZapEndpoint(metadata: Event<0>): Promise<null | string> {
+export async function getZapEndpoint(metadata: Event<Kind.Metadata>): Promise<null | string> {
   try {
     let lnurl: string = ''
     let {lud06, lud16} = JSON.parse(metadata.content)
@@ -53,11 +53,11 @@ export function makeZapRequest({
   amount: number
   comment: string
   relays: string[]
-}): EventTemplate<9734> {
+}): EventTemplate<Kind.ZapRequest> {
   if (!amount) throw new Error('amount not given')
   if (!profile) throw new Error('profile not given')
 
-  let zr: EventTemplate<9734> = {
+  let zr: EventTemplate<Kind.ZapRequest> = {
     kind: 9734,
     created_at: Math.round(Date.now() / 1000),
     content: comment,
@@ -113,13 +113,13 @@ export function makeZapReceipt({
   preimage: string | null
   bolt11: string
   paidAt: Date
-}): EventTemplate<9735> {
-  let zr: Event<9734> = JSON.parse(zapRequest)
+}): EventTemplate<Kind.Zap> {
+  let zr: Event<Kind.ZapRequest> = JSON.parse(zapRequest)
   let tagsFromZapRequest = zr.tags.filter(
     ([t]) => t === 'e' || t === 'p' || t === 'a'
   )
 
-  let zap: EventTemplate<9735> = {
+  let zap: EventTemplate<Kind.Zap> = {
     kind: 9735,
     created_at: Math.round(paidAt.getTime() / 1000),
     content: '',
