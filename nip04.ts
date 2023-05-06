@@ -5,7 +5,7 @@ import {base64} from '@scure/base'
 import {utf8Decoder, utf8Encoder} from './utils'
 
 // @ts-ignore
-if (typeof(crypto) !== 'undefined' && !crypto.subtle  && crypto.webcrypto) {
+if (typeof crypto !== 'undefined' && !crypto.subtle && crypto.webcrypto) {
   // @ts-ignore
   crypto.subtle = crypto.webcrypto.subtle
 }

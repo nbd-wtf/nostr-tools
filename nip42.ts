@@ -17,7 +17,7 @@ export const authenticate = async ({
 }: {
   challenge: string
   relay: Relay
-  sign: (e: EventTemplate) => Promise<Event>
+  sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>>
 }): Promise<void> => {
   const e: EventTemplate = {
     kind: Kind.ClientAuth,

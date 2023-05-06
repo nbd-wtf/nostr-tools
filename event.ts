@@ -6,7 +6,6 @@ import {getPublicKey} from './keys'
 
 /* eslint-disable no-unused-vars */
 export enum Kind {
-  UndefinedKindNumber = 255,
   Metadata = 0,
   Text = 1,
   RecommendRelay = 2,
@@ -20,6 +19,7 @@ export enum Kind {
   ChannelMessage = 42,
   ChannelHideMessage = 43,
   ChannelMuteUser = 44,
+  Blank = 255,
   Report = 1984,
   ZapRequest = 9734,
   Zap = 9735,
@@ -46,24 +46,26 @@ export type Event<K extends number = Kind> = UnsignedEvent<K> & {
   sig: string
 }
 
-export function getBlankEvent<K extends Kind = Kind.UndefinedKindNumber>(kind?: K): EventTemplate<K> {
+export function getBlankEvent(): EventTemplate<Kind.Blank>
+export function getBlankEvent<K extends number>(kind: K): EventTemplate<K>
+export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   return {
-    kind: kind || ( Kind.UndefinedKindNumber as K),
+    kind,
     content: '',
     tags: [],
     created_at: 0
   }
 }
 
-export function finishEvent(t: EventTemplate, privateKey: string): Event {
-  let event = t as Event
+export function finishEvent<K extends number = Kind>(t: EventTemplate<K>, privateKey: string): Event<K> {
+  let event = t as Event<K>
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
   event.sig = getSignature(event, privateKey)
   return event
 }
 
-export function serializeEvent(evt: UnsignedEvent): string {
+export function serializeEvent(evt: UnsignedEvent<number>): string {
   if (!validateEvent(evt))
     throw new Error("can't serialize event with wrong or missing properties")
 
@@ -77,14 +79,14 @@ export function serializeEvent(evt: UnsignedEvent): string {
   ])
 }
 
-export function getEventHash(event: UnsignedEvent): string {
+export function getEventHash(event: UnsignedEvent<number>): string {
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
   return secp256k1.utils.bytesToHex(eventHash)
 }
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
 
-export function validateEvent<T>(event: T): event is T & UnsignedEvent {
+export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
   if (!isRecord(event)) return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
@@ -104,7 +106,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
   return true
 }
 
-export function verifySignature(event: Event): boolean {
+export function verifySignature(event: Event<number>): boolean {
   return secp256k1.schnorr.verifySync(
     event.sig,
     getEventHash(event),
@@ -113,7 +115,7 @@ export function verifySignature(event: Event): boolean {
 }
 
 /** @deprecated Use `getSignature` instead. */
-export function signEvent(event: UnsignedEvent, key: string): string {
+export function signEvent(event: UnsignedEvent<number>, key: string): string {
   console.warn(
     'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.'
   )
@@ -121,7 +123,7 @@ export function signEvent(event: UnsignedEvent, key: string): string {
 }
 
 /** Calculate the signature for an event. */
-export function getSignature(event: UnsignedEvent, key: string): string {
+export function getSignature(event: UnsignedEvent<number>, key: string): string {
   return secp256k1.utils.bytesToHex(
     secp256k1.schnorr.signSync(getEventHash(event), key)
   )
