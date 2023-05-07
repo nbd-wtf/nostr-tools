@@ -1,5 +1,14 @@
 import {ProfilePointer} from './nip19'
 
+/**
+ * NIP-05 regex. The localpart is optional, and should be assumed to be `_` otherwise.
+ *
+ * - 0: full match
+ * - 1: name (optional)
+ * - 2: domain
+ */
+export const NIP05_REGEX = /^(?:([\w.+-]+)@)?([\w.-]+)$/
+
 var _fetch: any
 
 try {
@@ -25,36 +34,53 @@ export async function searchDomain(
   }
 }
 
-export async function queryProfile(
-  fullname: string
-): Promise<ProfilePointer | null> {
-  let [name, domain] = fullname.split('@')
-
-  if (!domain) {
-    // if there is no @, it is because it is just a domain, so assume the name is "_"
-    domain = name
-    name = '_'
+/** nostr.json result. */
+export interface NIP05Result {
+  names: {
+    [name: string]: string
   }
+  relays?: {
+    [pubkey: string]: string[]
+  }
+}
 
-  if (!name.match(/^[A-Za-z0-9-_.]+$/)) return null
-  if (!domain.includes('.')) return null
+export async function queryProfile(fullname: string): Promise<ProfilePointer | null> {
+  const match = fullname.match(NIP05_REGEX)
+  if (!match) return null
 
-  let res
+  const [_, name = '_', domain] = match
+
   try {
-    res = await (
-      await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
-    ).json()
-  } catch (err) {
+    const res = await fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+    const { names, relays } = parseNIP05Result(await res.json())
+
+    const pubkey = names[name]
+    return pubkey ? { pubkey, relays: relays?.[pubkey] } : null
+  } catch (_e) {
     return null
   }
+}
 
-  if (!res?.names?.[name]) return null
-
-  let pubkey = res.names[name] as string
-  let relays = (res.relays?.[pubkey] || []) as string[] // nip35
-
-  return {
-    pubkey,
-    relays
+/** Parse the nostr.json and throw if it's not valid. */
+function parseNIP05Result(json: any): NIP05Result {
+  const result: NIP05Result = {
+    names: {},
   }
+
+  for (const [name, pubkey] of Object.entries(json.names)) {
+    if (typeof name === 'string' && typeof pubkey === 'string') {
+      result.names[name] = pubkey
+    }
+  }
+
+  if (json.relays) {
+    result.relays = {}
+    for (const [pubkey, relays] of Object.entries(json.relays)) {
+      if (typeof pubkey === 'string' && Array.isArray(relays)) {
+        result.relays[pubkey] = relays.filter((relay: unknown) => typeof relay === 'string')
+      }
+    }
+  }
+
+  return result
 }
