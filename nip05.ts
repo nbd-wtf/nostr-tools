@@ -41,7 +41,7 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   const [_, name = '_', domain] = match
 
   try {
-    const res = await fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+    const res = await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
     const { names, relays } = parseNIP05Result(await res.json())
 
     const pubkey = names[name]
