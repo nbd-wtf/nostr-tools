@@ -55,14 +55,14 @@ export function getRepostedEventPointer(event: Event<number>): undefined | Event
     }
   }
 
-  if (lastETag === undefined || lastPTag === undefined) {
+  if (lastETag === undefined) {
     return undefined
   }
 
   return {
     id: lastETag[1],
-    relays: [ lastETag[2], lastPTag[2] ].filter((x) => x !== undefined),
-    author: lastPTag[1],
+    relays: [ lastETag[2], lastPTag?.[2] ].filter((x): x is string => typeof x === 'string'),
+    author: lastPTag?.[1],
   }
 }
 

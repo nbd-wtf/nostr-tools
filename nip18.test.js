@@ -2,10 +2,11 @@
 
 const {nip18, finishEvent, getPublicKey, Kind} = require('./lib/nostr.cjs')
 
+const relayUrl = 'https://relay.example.com'
+
 describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () => {
   const privateKey =
         'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
-  const relayUrl = 'https://relay.example.com'
 
   const publicKey = getPublicKey(privateKey)
 
@@ -97,5 +98,22 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
     const repostedEventFromContent = nip18.getRepostedEvent(event)
 
     expect(repostedEventFromContent).toEqual(undefined)
+  })
+})
+
+describe('getRepostedEventPointer', () => {
+  it('should parse an event with only an `e` tag', () => {
+    const event = {
+      kind: Kind.Repost,
+      tags: [
+        ['e', 'reposted event id', relayUrl],
+      ],
+    }
+
+    const repostedEventPointer = nip18.getRepostedEventPointer(event)
+
+    expect(repostedEventPointer.id).toEqual('reposted event id')
+    expect(repostedEventPointer.author).toEqual(undefined)
+    expect(repostedEventPointer.relays).toEqual([ relayUrl ])
   })
 })
