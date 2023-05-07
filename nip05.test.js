@@ -22,4 +22,18 @@ test('fetch nip05 profiles', async () => {
   expect(p3.pubkey).toEqual(
     '36e65b503eba8a6b698e724a59137603101166a1cddb45ddc704247fc8aa0fce'
   )
+  expect(p3.relays).toEqual(undefined)
+
+  let p4 = await nip05.queryProfile('_@fiatjaf.com')
+  expect(p4.pubkey).toEqual(
+    '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
+  )
+  expect(p4.relays).toEqual([
+    'wss://relay.nostr.bg',
+    'wss://nos.lol',
+    'wss://nostr-verified.wellorder.net',
+    'wss://nostr.zebedee.cloud',
+    'wss://eden.nostr.land',
+    'wss://nostr.milou.lol',
+  ])
 })

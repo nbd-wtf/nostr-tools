@@ -34,16 +34,6 @@ export async function searchDomain(
   }
 }
 
-/** nostr.json result. */
-export interface NIP05Result {
-  names: {
-    [name: string]: string
-  }
-  relays?: {
-    [pubkey: string]: string[]
-  }
-}
-
 export async function queryProfile(fullname: string): Promise<ProfilePointer | null> {
   const match = fullname.match(NIP05_REGEX)
   if (!match) return null
@@ -58,6 +48,16 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
     return pubkey ? { pubkey, relays: relays?.[pubkey] } : null
   } catch (_e) {
     return null
+  }
+}
+
+/** nostr.json result. */
+export interface NIP05Result {
+  names: {
+    [name: string]: string
+  }
+  relays?: {
+    [pubkey: string]: string[]
   }
 }
 
