@@ -102,7 +102,7 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
 })
 
 test('encode and decode nrelay', () => {
-  let url = "wss://relay.nostr.example"
+  let url = 'wss://relay.nostr.example'
   let nrelay = nip19.nrelayEncode(url)
   expect(nrelay).toMatch(/nrelay1\w+/)
   let {type, data} = nip19.decode(nrelay)

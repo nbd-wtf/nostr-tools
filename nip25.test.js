@@ -4,19 +4,22 @@ const {nip25, finishEvent, getPublicKey, Kind} = require('./lib/nostr.cjs')
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
   const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+    'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
   const publicKey = getPublicKey(privateKey)
 
-  const reactedEvent = finishEvent({
-    kind: Kind.Text,
-    tags: [
-      ['e', 'replied event id'],
-      ['p', 'replied event pubkey'],
-    ],
-    content: 'Replied to a post',
-    created_at: 1617932115
-  }, privateKey)
+  const reactedEvent = finishEvent(
+    {
+      kind: Kind.Text,
+      tags: [
+        ['e', 'replied event id'],
+        ['p', 'replied event pubkey']
+      ],
+      content: 'Replied to a post',
+      created_at: 1617932115
+    },
+    privateKey
+  )
 
   it('should create a signed event from a minimal template', () => {
     const template = {
@@ -27,22 +30,10 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     expect(event.kind).toEqual(Kind.Reaction)
     expect(event.tags).toEqual([
-      [
-        'e',
-        'replied event id',
-      ],
-      [
-        'p',
-        'replied event pubkey',
-      ],
-      [
-        'e',
-        '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1',
-      ],
-      [
-        'p',
-        '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f',
-      ],
+      ['e', 'replied event id'],
+      ['p', 'replied event pubkey'],
+      ['e', '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1'],
+      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f']
     ])
     expect(event.content).toEqual('+')
     expect(event.created_at).toEqual(template.created_at)
@@ -58,9 +49,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
   it('should create a signed event from a filled template', () => {
     const template = {
-      tags: [
-        ['nonstandard', 'tag'],
-      ],
+      tags: [['nonstandard', 'tag']],
       content: '👍',
       created_at: 1617932115
     }
@@ -69,26 +58,11 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     expect(event.kind).toEqual(Kind.Reaction)
     expect(event.tags).toEqual([
-      [
-        'nonstandard',
-        'tag',
-      ],
-      [
-        'e',
-        'replied event id',
-      ],
-      [
-        'p',
-        'replied event pubkey',
-      ],
-      [
-        'e',
-        '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1',
-      ],
-      [
-        'p',
-        '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f',
-      ],
+      ['nonstandard', 'tag'],
+      ['e', 'replied event id'],
+      ['p', 'replied event pubkey'],
+      ['e', '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1'],
+      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f']
     ])
     expect(event.content).toEqual('👍')
     expect(event.created_at).toEqual(template.created_at)
