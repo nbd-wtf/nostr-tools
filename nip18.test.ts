@@ -1,4 +1,5 @@
 import {nip18, finishEvent, getPublicKey, Kind} from '.'
+import { buildEvent } from './test-helpers'
 
 const relayUrl = 'https://relay.example.com'
 
@@ -95,15 +96,10 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
 describe('getRepostedEventPointer', () => {
   it('should parse an event with only an `e` tag', () => {
-    const event = {
+    const event = buildEvent({
       kind: Kind.Repost,
       tags: [['e', 'reposted event id', relayUrl]],
-      content: '',
-      created_at: 0,
-      pubkey: '',
-      id: '',
-      sig: '',
-    }
+    })
 
     const repostedEventPointer = nip18.getRepostedEventPointer(event)
 
