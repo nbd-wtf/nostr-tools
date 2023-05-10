@@ -15,5 +15,4 @@ jobs:
           node-version: 18
       - uses: extractions/setup-just@v1
       - run: just install-dependencies
-      - run: just build
       - run: just test
