@@ -7,10 +7,10 @@ build:
     rm -rf lib
     node build.js
 
-test: build
+test:
     jest
 
-test-only file: build
+test-only file:
     jest {{file}}
 
 emit-types:
