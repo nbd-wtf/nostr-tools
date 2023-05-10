@@ -1,7 +1,6 @@
-/* eslint-env jest */
-const {nip21} = require('./lib/nostr.cjs')
+import {nip21} from '.'
 
-test('test', () => {
+test('test()', () => {
   expect(
     nip21.test(
       'nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6'

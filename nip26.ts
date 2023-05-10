@@ -8,9 +8,9 @@ import {getPublicKey} from './keys'
 
 export type Parameters = {
   pubkey: string // the key to whom the delegation will be given
-  kind: number | undefined
-  until: number | undefined // delegation will only be valid until this date
-  since: number | undefined // delegation will be valid from this date on
+  kind?: number
+  until?: number // delegation will only be valid until this date
+  since?: number // delegation will be valid from this date on
 }
 
 export type Delegation = {

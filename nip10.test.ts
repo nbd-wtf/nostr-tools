@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {nip10} = require('./lib/nostr.cjs')
+import {nip10} from '.'
 
 describe('parse NIP10-referenced events', () => {
   test('legacy + a lot of events', () => {

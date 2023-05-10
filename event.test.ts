@@ -1,4 +1,4 @@
-const {
+import {
   getBlankEvent,
   finishEvent,
   serializeEvent,
@@ -8,7 +8,7 @@ const {
   getSignature,
   getPublicKey,
   Kind
-} = require('./lib/nostr.cjs')
+} from '.'
 
 describe('Event', () => {
   describe('getBlankEvent', () => {
@@ -97,6 +97,7 @@ describe('Event', () => {
       }
 
       expect(() => {
+        // @ts-expect-error
         serializeEvent(invalidEvent)
       }).toThrow("can't serialize event with wrong or missing properties")
     })
@@ -307,6 +308,7 @@ describe('Event', () => {
       const sig = getSignature(unsignedEvent, privateKey)
 
       // verify the signature
+      // @ts-expect-error
       const isValid = verifySignature({
         ...unsignedEvent,
         sig
@@ -336,6 +338,7 @@ describe('Event', () => {
       const sig = getSignature(unsignedEvent, wrongPrivateKey)
 
       // verify the signature
+      // @ts-expect-error
       const isValid = verifySignature({
         ...unsignedEvent,
         sig

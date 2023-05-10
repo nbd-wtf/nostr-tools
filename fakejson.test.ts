@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {fj} = require('./lib/nostr.cjs')
+import {fj} from '.'
 
 test('match id', () => {
   expect(

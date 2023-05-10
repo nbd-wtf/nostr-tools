@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {nip18, finishEvent, getPublicKey, Kind} = require('./lib/nostr.cjs')
+import {nip18, finishEvent, getPublicKey, Kind} from '.'
 
 const relayUrl = 'https://relay.example.com'
 
@@ -48,9 +46,9 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
     const repostedEventPointer = nip18.getRepostedEventPointer(event)
 
-    expect(repostedEventPointer.id).toEqual(repostedEvent.id)
-    expect(repostedEventPointer.author).toEqual(repostedEvent.pubkey)
-    expect(repostedEventPointer.relays).toEqual([relayUrl])
+    expect(repostedEventPointer!.id).toEqual(repostedEvent.id)
+    expect(repostedEventPointer!.author).toEqual(repostedEvent.pubkey)
+    expect(repostedEventPointer!.relays).toEqual([relayUrl])
 
     const repostedEventFromContent = nip18.getRepostedEvent(event)
 
@@ -60,7 +58,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
   it('should create a signed event from a filled template', () => {
     const template = {
       tags: [['nonstandard', 'tag']],
-      content: '',
+      content: '' as const,
       created_at: 1617932115
     }
 
@@ -85,9 +83,9 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
     const repostedEventPointer = nip18.getRepostedEventPointer(event)
 
-    expect(repostedEventPointer.id).toEqual(repostedEvent.id)
-    expect(repostedEventPointer.author).toEqual(repostedEvent.pubkey)
-    expect(repostedEventPointer.relays).toEqual([relayUrl])
+    expect(repostedEventPointer!.id).toEqual(repostedEvent.id)
+    expect(repostedEventPointer!.author).toEqual(repostedEvent.pubkey)
+    expect(repostedEventPointer!.relays).toEqual([relayUrl])
 
     const repostedEventFromContent = nip18.getRepostedEvent(event)
 
@@ -99,13 +97,18 @@ describe('getRepostedEventPointer', () => {
   it('should parse an event with only an `e` tag', () => {
     const event = {
       kind: Kind.Repost,
-      tags: [['e', 'reposted event id', relayUrl]]
+      tags: [['e', 'reposted event id', relayUrl]],
+      content: '',
+      created_at: 0,
+      pubkey: '',
+      id: '',
+      sig: '',
     }
 
     const repostedEventPointer = nip18.getRepostedEventPointer(event)
 
-    expect(repostedEventPointer.id).toEqual('reposted event id')
-    expect(repostedEventPointer.author).toEqual(undefined)
-    expect(repostedEventPointer.relays).toEqual([relayUrl])
+    expect(repostedEventPointer!.id).toEqual('reposted event id')
+    expect(repostedEventPointer!.author).toEqual(undefined)
+    expect(repostedEventPointer!.relays).toEqual([relayUrl])
   })
 })
