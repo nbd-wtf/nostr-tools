@@ -34,10 +34,12 @@
   "scripts": {
     "build": "node build",
     "format": "prettier --plugin-search-dir . --write .",
-    "test": "node build && jest"
+    "test": "jest"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.1",
     "@types/node": "^18.13.0",
+    "@types/node-fetch": "^2.6.3",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "esbuild": "0.16.9",
@@ -46,12 +48,12 @@
     "eslint-plugin-babel": "^5.3.1",
     "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
-    "jest": "^29.4.2",
+    "jest": "^29.5.0",
     "node-fetch": "^2.6.9",
     "prettier": "^2.8.4",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "^29.1.0",
     "tsd": "^0.22.0",
-    "typescript": "^4.9.5",
+    "typescript": "^5.0.4",
     "websocket-polyfill": "^0.0.3"
   }
 }
