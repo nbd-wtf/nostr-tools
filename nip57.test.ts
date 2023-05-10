@@ -1,14 +1,14 @@
-const {bech32} = require('@scure/base')
-const {
+import {
   nip57,
   generatePrivateKey,
   getPublicKey,
   finishEvent
-} = require('./lib/nostr.cjs')
+} from '.'
+import { buildEvent } from './test-helpers'
 
 describe('getZapEndpoint', () => {
   test('returns null if neither lud06 nor lud16 is present', async () => {
-    const metadata = {content: '{}'}
+    const metadata = buildEvent({kind: 0, content: '{}'})
     const result = await nip57.getZapEndpoint(metadata)
 
     expect(result).toBeNull()
@@ -18,7 +18,7 @@ describe('getZapEndpoint', () => {
     const fetchImplementation = jest.fn(() => Promise.reject(new Error()))
     nip57.useFetchImplementation(fetchImplementation)
 
-    const metadata = {content: '{"lud16": "name@domain"}'}
+    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
     const result = await nip57.getZapEndpoint(metadata)
 
     expect(result).toBeNull()
@@ -33,7 +33,7 @@ describe('getZapEndpoint', () => {
     )
     nip57.useFetchImplementation(fetchImplementation)
 
-    const metadata = {content: '{"lud16": "name@domain"}'}
+    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
     const result = await nip57.getZapEndpoint(metadata)
 
     expect(result).toBeNull()
@@ -54,7 +54,7 @@ describe('getZapEndpoint', () => {
     )
     nip57.useFetchImplementation(fetchImplementation)
 
-    const metadata = {content: '{"lud16": "name@domain"}'}
+    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
     const result = await nip57.getZapEndpoint(metadata)
 
     expect(result).toBe('callback')
@@ -67,6 +67,7 @@ describe('getZapEndpoint', () => {
 describe('makeZapRequest', () => {
   test('throws an error if amount is not given', () => {
     expect(() =>
+      // @ts-expect-error
       nip57.makeZapRequest({
         profile: 'profile',
         event: null,
@@ -78,6 +79,7 @@ describe('makeZapRequest', () => {
 
   test('throws an error if profile is not given', () => {
     expect(() =>
+      // @ts-expect-error
       nip57.makeZapRequest({
         event: null,
         amount: 100,

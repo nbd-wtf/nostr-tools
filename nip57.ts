@@ -119,7 +119,7 @@ export function makeZapReceipt({
   paidAt
 }: {
   zapRequest: string
-  preimage: string | null
+  preimage?: string
   bolt11: string
   paidAt: Date
 }): EventTemplate<Kind.Zap> {

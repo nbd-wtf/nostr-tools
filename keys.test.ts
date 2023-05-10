@@ -1,16 +1,14 @@
-/* eslint-env jest */
+import {generatePrivateKey, getPublicKey} from '.'
 
-const {generatePrivateKey, getPublicKey} = require('./lib/nostr.cjs')
-
-test('test private key generation', () => {
+test('private key generation', () => {
   expect(generatePrivateKey()).toMatch(/[a-f0-9]{64}/)
 })
 
-test('test public key generation', () => {
+test('public key generation', () => {
   expect(getPublicKey(generatePrivateKey())).toMatch(/[a-f0-9]{64}/)
 })
 
-test('test public key from private key deterministic', () => {
+test('public key from private key deterministic', () => {
   let sk = generatePrivateKey()
   let pk = getPublicKey(sk)
 

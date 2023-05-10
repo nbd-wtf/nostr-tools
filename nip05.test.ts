@@ -1,5 +1,3 @@
-/* eslint-env jest */
-
 import fetch from 'node-fetch'
 import {nip05} from '.'
 

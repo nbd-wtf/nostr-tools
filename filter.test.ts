@@ -1,6 +1,5 @@
-/* eslint-env jest */
-
-const {matchFilter, matchFilters} = require('./lib/nostr.cjs.js')
+import {matchFilter, matchFilters} from '.'
+import {buildEvent} from './test-helpers'
 
 describe('Filter', () => {
   describe('matchFilter', () => {
@@ -14,13 +13,13 @@ describe('Filter', () => {
         '#tag': ['value']
       }
 
-      const event = {
+      const event = buildEvent({
         id: '123',
         kind: 1,
         pubkey: 'abc',
         created_at: 150,
-        tags: [['tag', 'value']]
-      }
+        tags: [['tag', 'value']],
+      })
 
       const result = matchFilter(filter, event)
 
@@ -30,7 +29,7 @@ describe('Filter', () => {
     it('should return false when the event id is not in the filter', () => {
       const filter = {ids: ['123', '456']}
 
-      const event = {id: '789'}
+      const event = buildEvent({id: '789'})
 
       const result = matchFilter(filter, event)
 
@@ -40,7 +39,7 @@ describe('Filter', () => {
     it('should return true when the event id starts with a prefix', () => {
       const filter = {ids: ['22', '00']}
 
-      const event = {id: '001'}
+      const event = buildEvent({id: '001'})
 
       const result = matchFilter(filter, event)
 
@@ -50,7 +49,7 @@ describe('Filter', () => {
     it('should return false when the event kind is not in the filter', () => {
       const filter = {kinds: [1, 2, 3]}
 
-      const event = {kind: 4}
+      const event = buildEvent({kind: 4})
 
       const result = matchFilter(filter, event)
 
@@ -60,7 +59,7 @@ describe('Filter', () => {
     it('should return false when the event author is not in the filter', () => {
       const filter = {authors: ['abc', 'def']}
 
-      const event = {pubkey: 'ghi'}
+      const event = buildEvent({pubkey: 'ghi'})
 
       const result = matchFilter(filter, event)
 
@@ -70,7 +69,7 @@ describe('Filter', () => {
     it('should return false when a tag is not present in the event', () => {
       const filter = {'#tag': ['value1', 'value2']}
 
-      const event = {tags: [['not_tag', 'value1']]}
+      const event = buildEvent({tags: [['not_tag', 'value1']]})
 
       const result = matchFilter(filter, event)
 
@@ -80,7 +79,7 @@ describe('Filter', () => {
     it('should return false when a tag value is not present in the event', () => {
       const filter = {'#tag': ['value1', 'value2']}
 
-      const event = {tags: [['tag', 'value3']]}
+      const event = buildEvent({tags: [['tag', 'value3']]})
 
       const result = matchFilter(filter, event)
 
@@ -90,7 +89,7 @@ describe('Filter', () => {
     it('should return true when filter has tags that is present in the event', () => {
       const filter = {'#tag1': ['foo']}
 
-      const event = {
+      const event = buildEvent({
         id: '123',
         kind: 1,
         pubkey: 'abc',
@@ -99,7 +98,7 @@ describe('Filter', () => {
           ['tag1', 'foo'],
           ['tag2', 'bar']
         ]
-      }
+      })
 
       const result = matchFilter(filter, event)
 
@@ -109,7 +108,7 @@ describe('Filter', () => {
     it('should return false when the event is before the filter since value', () => {
       const filter = {since: 100}
 
-      const event = {created_at: 50}
+      const event = buildEvent({created_at: 50})
 
       const result = matchFilter(filter, event)
 
@@ -119,7 +118,7 @@ describe('Filter', () => {
     it('should return false when the event is after the filter until value', () => {
       const filter = {until: 100}
 
-      const event = {created_at: 150}
+      const event = buildEvent({created_at: 150})
 
       const result = matchFilter(filter, event)
 
@@ -135,7 +134,7 @@ describe('Filter', () => {
         {ids: ['789'], kinds: [3], authors: ['ghi']}
       ]
 
-      const event = {id: '789', kind: 3, pubkey: 'ghi'}
+      const event = buildEvent({id: '789', kind: 3, pubkey: 'ghi'})
 
       const result = matchFilters(filters, event)
 
@@ -149,7 +148,7 @@ describe('Filter', () => {
         {ids: ['9'], kinds: [3], authors: ['g']}
       ]
 
-      const event = {id: '987', kind: 3, pubkey: 'ghi'}
+      const event = buildEvent({id: '987', kind: 3, pubkey: 'ghi'})
 
       const result = matchFilters(filters, event)
 
@@ -163,7 +162,7 @@ describe('Filter', () => {
         {authors: ['abc'], limit: 3}
       ]
 
-      const event = {id: '123', kind: 1, pubkey: 'abc', created_at: 150}
+      const event = buildEvent({id: '123', kind: 1, pubkey: 'abc', created_at: 150})
 
       const result = matchFilters(filters, event)
 
@@ -177,7 +176,7 @@ describe('Filter', () => {
         {ids: ['789'], kinds: [3], authors: ['ghi']}
       ]
 
-      const event = {id: '100', kind: 4, pubkey: 'jkl'}
+      const event = buildEvent({id: '100', kind: 4, pubkey: 'jkl'})
 
       const result = matchFilters(filters, event)
 
@@ -190,7 +189,7 @@ describe('Filter', () => {
         {kinds: [1], limit: 2},
         {authors: ['abc'], limit: 3}
       ]
-      const event = {id: '456', kind: 2, pubkey: 'def', created_at: 200}
+      const event = buildEvent({id: '456', kind: 2, pubkey: 'def', created_at: 200})
 
       const result = matchFilters(filters, event)
 

@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {nip25, finishEvent, getPublicKey, Kind} = require('./lib/nostr.cjs')
+import {nip25, finishEvent, getPublicKey, Kind} from '.'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
   const privateKey =
@@ -43,8 +41,8 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     const reactedEventPointer = nip25.getReactedEventPointer(event)
 
-    expect(reactedEventPointer.id).toEqual(reactedEvent.id)
-    expect(reactedEventPointer.author).toEqual(reactedEvent.pubkey)
+    expect(reactedEventPointer!.id).toEqual(reactedEvent.id)
+    expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)
   })
 
   it('should create a signed event from a filled template', () => {
@@ -72,7 +70,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     const reactedEventPointer = nip25.getReactedEventPointer(event)
 
-    expect(reactedEventPointer.id).toEqual(reactedEvent.id)
-    expect(reactedEventPointer.author).toEqual(reactedEvent.pubkey)
+    expect(reactedEventPointer!.id).toEqual(reactedEvent.id)
+    expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)
   })
 })

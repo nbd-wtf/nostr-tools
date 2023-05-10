@@ -2,7 +2,7 @@
   "root": true,
 
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "babel"],
 
   "parserOptions": {
     "ecmaVersion": 9,
@@ -17,8 +17,6 @@
     "es6": true,
     "node": true
   },
-
-  "plugins": ["babel"],
 
   "globals": {
     "document": false,
@@ -152,5 +150,13 @@
     "wrap-iife": [2, "any"],
     "yield-star-spacing": [2, "both"],
     "yoda": [0]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "env": { "jest/globals": true },
+      "plugins": ["jest"],
+      "extends": ["plugin:jest/recommended"]
+    }
+  ]
 }

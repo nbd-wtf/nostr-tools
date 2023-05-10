@@ -1,5 +1,4 @@
-/* eslint-env jest */
-const {nip06} = require('./lib/nostr.cjs')
+import {nip06} from '.'
 
 test('generate private key from a mnemonic', async () => {
   const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'

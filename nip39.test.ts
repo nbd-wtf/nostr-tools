@@ -1,7 +1,5 @@
-/* eslint-env jest */
-
-const fetch = require('node-fetch')
-const {nip39} = require('./lib/nostr.cjs.js')
+import fetch from 'node-fetch'
+import {nip39} from '.'
 
 test('validate github claim', async () => {
   nip39.useFetchImplementation(fetch)

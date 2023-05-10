@@ -1,9 +1,10 @@
-/* eslint-env jest */
-
-const {parseReferences} = require('./lib/nostr.cjs')
+import {parseReferences} from '.'
 
 test('parse mentions', () => {
   let evt = {
+    kind: 1,
+    id: '',
+    pubkey: '',
     tags: [
       [
         'p',
@@ -23,7 +24,9 @@ test('parse mentions', () => {
       ]
     ],
     content:
-      'hello #[0], have you seen #[2]? it was made by nostr:nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg on nostr:nevent1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8ychxp5v4! broken #[3]'
+      'hello #[0], have you seen #[2]? it was made by nostr:nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg on nostr:nevent1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8ychxp5v4! broken #[3]',
+    created_at: 0,
+    sig: '',
   }
 
   expect(parseReferences(evt)).toEqual([

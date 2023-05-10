@@ -1,13 +1,10 @@
-/* eslint-env jest */
-
-require('websocket-polyfill')
-const {
+import 'websocket-polyfill'
+import {
   relayInit,
   generatePrivateKey,
   getPublicKey,
-  getEventHash,
-  getSignature
-} = require('./lib/nostr.cjs')
+  finishEvent,
+} from '.'
 
 let relay = relayInit('wss://relay.damus.io/')
 
@@ -33,8 +30,8 @@ test('connectivity', () => {
 })
 
 test('querying', async () => {
-  var resolve1
-  var resolve2
+  var resolve1: (value: boolean) => void
+  var resolve2: (value: boolean) => void
 
   let sub = relay.sub([
     {
@@ -53,10 +50,10 @@ test('querying', async () => {
   })
 
   let [t1, t2] = await Promise.all([
-    new Promise(resolve => {
+    new Promise<boolean>(resolve => {
       resolve1 = resolve
     }),
-    new Promise(resolve => {
+    new Promise<boolean>(resolve => {
       resolve2 = resolve
     })
   ])
@@ -93,8 +90,8 @@ test('list()', async () => {
 test('listening (twice) and publishing', async () => {
   let sk = generatePrivateKey()
   let pk = getPublicKey(sk)
-  var resolve1
-  var resolve2
+  var resolve1: (value: boolean) => void
+  var resolve2: (value: boolean) => void
 
   let sub = relay.sub([
     {
@@ -116,15 +113,12 @@ test('listening (twice) and publishing', async () => {
     resolve2(true)
   })
 
-  let event = {
+  let event = finishEvent({
     kind: 27572,
-    pubkey: pk,
     created_at: Math.floor(Date.now() / 1000),
     tags: [],
     content: 'nostr-tools test suite'
-  }
-  event.id = getEventHash(event)
-  event.sig = getSignature(event, sk)
+  }, sk)
 
   relay.publish(event)
   return expect(

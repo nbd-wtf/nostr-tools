@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {nip26, getPublicKey, generatePrivateKey} = require('./lib/nostr.cjs')
+import {nip26, getPublicKey, generatePrivateKey} from '.'
 
 test('parse good delegation from NIP', async () => {
   expect(
@@ -99,7 +97,11 @@ test('create and verify delegation', async () => {
   let event = {
     kind: 1,
     tags: [['delegation', delegation.from, delegation.cond, delegation.sig]],
-    pubkey: pk2
+    pubkey: pk2,
+    content: '',
+    created_at: 0,
+    id: '',
+    sig: '',
   }
   expect(nip26.getDelegator(event)).toEqual(pk1)
 })

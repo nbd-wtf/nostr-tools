@@ -1,5 +1,4 @@
-/* eslint-env jest */
-const {nip27} = require('./lib/nostr.cjs')
+import {nip27} from '.'
 
 test('matchAll', () => {
   const result = nip27.matchAll(

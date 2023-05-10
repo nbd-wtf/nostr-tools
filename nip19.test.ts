@@ -1,6 +1,4 @@
-/* eslint-env jest */
-
-const {nip19, generatePrivateKey, getPublicKey} = require('./lib/nostr.cjs')
+import {nip19, generatePrivateKey, getPublicKey} from '.'
 
 test('encode and decode nsec', () => {
   let sk = generatePrivateKey()
@@ -30,9 +28,10 @@ test('encode and decode nprofile', () => {
   expect(nprofile).toMatch(/nprofile1\w+/)
   let {type, data} = nip19.decode(nprofile)
   expect(type).toEqual('nprofile')
-  expect(data.pubkey).toEqual(pk)
-  expect(data.relays).toContain(relays[0])
-  expect(data.relays).toContain(relays[1])
+  const pointer = data as nip19.ProfilePointer
+  expect(pointer.pubkey).toEqual(pk)
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.relays).toContain(relays[1])
 })
 
 test('decode nprofile without relays', () => {
@@ -65,11 +64,12 @@ test('encode and decode naddr', () => {
   expect(naddr).toMatch(/naddr1\w+/)
   let {type, data} = nip19.decode(naddr)
   expect(type).toEqual('naddr')
-  expect(data.pubkey).toEqual(pk)
-  expect(data.relays).toContain(relays[0])
-  expect(data.relays).toContain(relays[1])
-  expect(data.kind).toEqual(30023)
-  expect(data.identifier).toEqual('banana')
+  const pointer = data as nip19.AddressPointer
+  expect(pointer.pubkey).toEqual(pk)
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.relays).toContain(relays[1])
+  expect(pointer.kind).toEqual(30023)
+  expect(pointer.identifier).toEqual('banana')
 })
 
 test('decode naddr from habla.news', () => {
@@ -77,11 +77,12 @@ test('decode naddr from habla.news', () => {
     'naddr1qq98yetxv4ex2mnrv4esygrl54h466tz4v0re4pyuavvxqptsejl0vxcmnhfl60z3rth2xkpjspsgqqqw4rsf34vl5'
   )
   expect(type).toEqual('naddr')
-  expect(data.pubkey).toEqual(
+  const pointer = data as nip19.AddressPointer
+  expect(pointer.pubkey).toEqual(
     '7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194'
   )
-  expect(data.kind).toEqual(30023)
-  expect(data.identifier).toEqual('references')
+  expect(pointer.kind).toEqual(30023)
+  expect(pointer.identifier).toEqual('references')
 })
 
 test('decode naddr from go-nostr with different TLV ordering', () => {
@@ -90,15 +91,16 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
   )
 
   expect(type).toEqual('naddr')
-  expect(data.pubkey).toEqual(
+  const pointer = data as nip19.AddressPointer
+  expect(pointer.pubkey).toEqual(
     '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
   )
-  expect(data.relays).toContain(
+  expect(pointer.relays).toContain(
     'wss://relay.nostr.example.mydomain.example.com'
   )
-  expect(data.relays).toContain('wss://nostr.banana.com')
-  expect(data.kind).toEqual(30023)
-  expect(data.identifier).toEqual('banana')
+  expect(pointer.relays).toContain('wss://nostr.banana.com')
+  expect(pointer.kind).toEqual(30023)
+  expect(pointer.identifier).toEqual('banana')
 })
 
 test('encode and decode nrelay', () => {

@@ -1,7 +1,9 @@
-/* eslint-env jest */
+import {nip04, getPublicKey, generatePrivateKey} from '.'
+import crypto from 'crypto'
 
-globalThis.crypto = require('crypto')
-const {nip04, getPublicKey, generatePrivateKey} = require('./lib/nostr.cjs')
+// @ts-ignore
+// eslint-disable-next-line no-undef
+globalThis.crypto = crypto
 
 test('encrypt and decrypt message', async () => {
   let sk1 = generatePrivateKey()
