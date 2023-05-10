@@ -14,7 +14,8 @@
   "module": "lib/esm/nostr.mjs",
   "exports": {
     "import": "./lib/esm/nostr.mjs",
-    "require": "./lib/nostr.cjs.js"
+    "require": "./lib/nostr.cjs.js",
+    "types": "./lib/index.d.ts"
   },
   "license": "Unlicense",
   "dependencies": {
