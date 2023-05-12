@@ -1,9 +1,14 @@
-import {Relay, relayInit} from './relay'
-import {normalizeURL} from './utils'
-import {Filter} from './filter'
-import {Event} from './event'
-import {SubscriptionOptions, Sub, Pub} from './relay'
+import {
+  relayInit,
+  type Pub,
+  type Relay,
+  type Sub,
+  type SubscriptionOptions,
+} from './relay.ts'
+import {normalizeURL} from './utils.ts'
 
+import type {Event} from './event.ts'
+import type {Filter} from './filter.ts'
 export class SimplePool {
   private _conn: {[url: string]: Relay}
   private _seenOn: {[id: string]: Set<string>} = {} // a map of all events we've seen in each relay

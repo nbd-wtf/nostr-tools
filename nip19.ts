@@ -1,7 +1,7 @@
 import {bytesToHex, concatBytes, hexToBytes} from '@noble/hashes/utils'
 import {bech32} from '@scure/base'
 
-import {utf8Decoder, utf8Encoder} from './utils'
+import {utf8Decoder, utf8Encoder} from './utils.ts'
 
 const Bech32MaxSize = 5000
 

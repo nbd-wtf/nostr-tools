@@ -2,8 +2,8 @@ import {schnorr} from '@noble/curves/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
 import {bytesToHex} from '@noble/hashes/utils'
 
-import {utf8Encoder} from './utils'
-import {getPublicKey} from './keys'
+import {getPublicKey} from './keys.ts'
+import {utf8Encoder} from './utils.ts'
 
 /* eslint-disable no-unused-vars */
 export enum Kind {

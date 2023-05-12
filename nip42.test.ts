@@ -1,10 +1,9 @@
 import 'websocket-polyfill'
-import {
-  relayInit,
-  generatePrivateKey,
-  finishEvent,
-  nip42
-} from '.'
+
+import {finishEvent} from './event.ts'
+import {generatePrivateKey} from './keys.ts'
+import {authenticate} from './nip42.ts'
+import {relayInit} from './relay.ts'
 
 test('auth flow', () => {
   const relay = relayInit('wss://nostr.kollider.xyz')
@@ -14,7 +13,7 @@ test('auth flow', () => {
   return new Promise<void>((resolve) => {
     relay.on('auth', async challenge => {
       await expect(
-        nip42.authenticate({
+        authenticate({
           challenge,
           relay,
           sign: (e) => finishEvent(e, sk)

@@ -1,5 +1,5 @@
-import {parseReferences} from '.'
-import { buildEvent } from './test-helpers'
+import {parseReferences} from './references.ts'
+import {buildEvent} from './test-helpers.ts'
 
 test('parse mentions', () => {
   let evt = buildEvent({

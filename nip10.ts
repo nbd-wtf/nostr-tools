@@ -1,5 +1,5 @@
-import type {Event} from './event'
-import type {EventPointer, ProfilePointer} from './nip19'
+import type {Event} from './event.ts'
+import type {EventPointer, ProfilePointer} from './nip19.ts'
 
 export type NIP10Result = {
   /**

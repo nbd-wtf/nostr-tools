@@ -1,8 +1,8 @@
 /* global WebSocket */
 
-import {Event, verifySignature, validateEvent} from './event'
-import {Filter, matchFilters} from './filter'
-import {getHex64, getSubscriptionId} from './fakejson'
+import {verifySignature, validateEvent, type Event} from './event.ts'
+import {matchFilters, type Filter} from './filter.ts'
+import {getHex64, getSubscriptionId} from './fakejson.ts'
 
 type RelayEvent = {
   connect: () => void | Promise<void>

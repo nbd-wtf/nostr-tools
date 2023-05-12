@@ -1,4 +1,6 @@
-import {nip25, finishEvent, getPublicKey, Kind} from '.'
+import {finishEvent, Kind} from './event.ts'
+import {getPublicKey} from './keys.ts'
+import {finishReactionEvent, getReactedEventPointer} from './nip25.ts'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
   const privateKey =
@@ -24,7 +26,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
       created_at: 1617932115
     }
 
-    const event = nip25.finishReactionEvent(template, reactedEvent, privateKey)
+    const event = finishReactionEvent(template, reactedEvent, privateKey)
 
     expect(event.kind).toEqual(Kind.Reaction)
     expect(event.tags).toEqual([
@@ -39,7 +41,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
     expect(typeof event.id).toEqual('string')
     expect(typeof event.sig).toEqual('string')
 
-    const reactedEventPointer = nip25.getReactedEventPointer(event)
+    const reactedEventPointer = getReactedEventPointer(event)
 
     expect(reactedEventPointer!.id).toEqual(reactedEvent.id)
     expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)
@@ -52,7 +54,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
       created_at: 1617932115
     }
 
-    const event = nip25.finishReactionEvent(template, reactedEvent, privateKey)
+    const event = finishReactionEvent(template, reactedEvent, privateKey)
 
     expect(event.kind).toEqual(Kind.Reaction)
     expect(event.tags).toEqual([
@@ -68,7 +70,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
     expect(typeof event.id).toEqual('string')
     expect(typeof event.sig).toEqual('string')
 
-    const reactedEventPointer = nip25.getReactedEventPointer(event)
+    const reactedEventPointer = getReactedEventPointer(event)
 
     expect(reactedEventPointer!.id).toEqual(reactedEvent.id)
     expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)

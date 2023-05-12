@@ -1,10 +1,8 @@
 import 'websocket-polyfill'
-import {
-  relayInit,
-  generatePrivateKey,
-  getPublicKey,
-  finishEvent,
-} from '.'
+
+import {finishEvent} from './event.ts'
+import {generatePrivateKey, getPublicKey} from './keys.ts'
+import {relayInit} from './relay.ts'
 
 let relay = relayInit('wss://relay.damus.io/')
 

@@ -1,7 +1,10 @@
-import {utils, type Event} from '.'
-import {buildEvent} from './test-helpers'
+import {buildEvent} from './test-helpers.ts'
+import {
+  insertEventIntoAscendingList,
+  insertEventIntoDescendingList,
+} from './utils.ts'
 
-const {insertEventIntoAscendingList, insertEventIntoDescendingList} = utils
+import type {Event} from './event.ts'
 
 describe('inserting into a desc sorted list of events', () => {
   test('insert into an empty list', async () => {

@@ -1,5 +1,11 @@
-import {Event} from './event'
-import {decode, AddressPointer, ProfilePointer, EventPointer} from './nip19'
+import {
+  decode,
+  type AddressPointer,
+  type ProfilePointer,
+  type EventPointer,
+} from './nip19.ts'
+
+import type {Event} from './event.ts'
 
 type Reference = {
   text: string

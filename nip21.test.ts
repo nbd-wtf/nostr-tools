@@ -1,32 +1,32 @@
-import {nip21} from '.'
+import {test as testRegex, parse} from './nip21.ts'
 
 test('test()', () => {
   expect(
-    nip21.test(
+    testRegex(
       'nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6'
     )
   ).toBe(true)
   expect(
-    nip21.test(
+    testRegex(
       'nostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
     )
   ).toBe(true)
   expect(
-    nip21.test(
+    testRegex(
       ' nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6'
     )
   ).toBe(false)
-  expect(nip21.test('nostr:')).toBe(false)
+  expect(testRegex('nostr:')).toBe(false)
   expect(
-    nip21.test(
+    testRegex(
       'nostr:npub108pv4cg5ag52nQq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6'
     )
   ).toBe(false)
-  expect(nip21.test('gggggg')).toBe(false)
+  expect(testRegex('gggggg')).toBe(false)
 })
 
 test('parse', () => {
-  const result = nip21.parse(
+  const result = parse(
     'nostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
   )
 
