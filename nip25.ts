@@ -1,5 +1,6 @@
-import { Event, finishEvent, Kind } from './event'
-import { EventPointer } from './nip19'
+import {Event, finishEvent, Kind} from './event.ts'
+
+import type {EventPointer} from './nip19.ts'
 
 export type ReactionEventTemplate = {
   /**

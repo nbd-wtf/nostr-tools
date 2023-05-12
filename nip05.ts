@@ -1,4 +1,4 @@
-import {ProfilePointer} from './nip19'
+import {ProfilePointer} from './nip19.ts'
 
 /**
  * NIP-05 regex. The localpart is optional, and should be assumed to be `_` otherwise.

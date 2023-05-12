@@ -1,5 +1,7 @@
-import {nip04, getPublicKey, generatePrivateKey} from '.'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
+
+import {encrypt, decrypt} from './nip04.ts'
+import {getPublicKey, generatePrivateKey} from './keys.ts'
 
 // @ts-ignore
 // eslint-disable-next-line no-undef
@@ -12,6 +14,6 @@ test('encrypt and decrypt message', async () => {
   let pk2 = getPublicKey(sk2)
 
   expect(
-    await nip04.decrypt(sk2, pk1, await nip04.encrypt(sk1, pk2, 'hello'))
+    await decrypt(sk2, pk1, await encrypt(sk1, pk2, 'hello'))
   ).toEqual('hello')
 })

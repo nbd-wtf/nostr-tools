@@ -1,5 +1,5 @@
-import {matchFilter, matchFilters} from '.'
-import {buildEvent} from './test-helpers'
+import {matchFilter, matchFilters} from './filter.ts'
+import {buildEvent} from './test-helpers.ts'
 
 describe('Filter', () => {
   describe('matchFilter', () => {

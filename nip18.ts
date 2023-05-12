@@ -1,5 +1,5 @@
-import { Event, finishEvent, Kind, verifySignature } from './event'
-import { EventPointer } from './nip19'
+import {Event, finishEvent, Kind, verifySignature} from './event.ts'
+import {EventPointer} from './nip19.ts'
 
 export type RepostEventTemplate = {
   /**

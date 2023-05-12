@@ -1,25 +1,28 @@
+import {finishEvent} from './event.ts'
+import {getPublicKey, generatePrivateKey} from './keys.ts'
 import {
-  nip57,
-  generatePrivateKey,
-  getPublicKey,
-  finishEvent
-} from '.'
-import { buildEvent } from './test-helpers'
+  getZapEndpoint,
+  makeZapReceipt,
+  makeZapRequest,
+  useFetchImplementation,
+  validateZapRequest,
+} from './nip57.ts'
+import {buildEvent} from './test-helpers.ts'
 
 describe('getZapEndpoint', () => {
   test('returns null if neither lud06 nor lud16 is present', async () => {
     const metadata = buildEvent({kind: 0, content: '{}'})
-    const result = await nip57.getZapEndpoint(metadata)
+    const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
   })
 
   test('returns null if fetch fails', async () => {
     const fetchImplementation = jest.fn(() => Promise.reject(new Error()))
-    nip57.useFetchImplementation(fetchImplementation)
+    useFetchImplementation(fetchImplementation)
 
     const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
-    const result = await nip57.getZapEndpoint(metadata)
+    const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
     expect(fetchImplementation).toHaveBeenCalledWith(
@@ -31,10 +34,10 @@ describe('getZapEndpoint', () => {
     const fetchImplementation = jest.fn(() =>
       Promise.resolve({json: () => ({allowsNostr: false})})
     )
-    nip57.useFetchImplementation(fetchImplementation)
+    useFetchImplementation(fetchImplementation)
 
     const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
-    const result = await nip57.getZapEndpoint(metadata)
+    const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
     expect(fetchImplementation).toHaveBeenCalledWith(
@@ -52,10 +55,10 @@ describe('getZapEndpoint', () => {
         })
       })
     )
-    nip57.useFetchImplementation(fetchImplementation)
+    useFetchImplementation(fetchImplementation)
 
     const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
-    const result = await nip57.getZapEndpoint(metadata)
+    const result = await getZapEndpoint(metadata)
 
     expect(result).toBe('callback')
     expect(fetchImplementation).toHaveBeenCalledWith(
@@ -68,7 +71,7 @@ describe('makeZapRequest', () => {
   test('throws an error if amount is not given', () => {
     expect(() =>
       // @ts-expect-error
-      nip57.makeZapRequest({
+      makeZapRequest({
         profile: 'profile',
         event: null,
         relays: [],
@@ -80,7 +83,7 @@ describe('makeZapRequest', () => {
   test('throws an error if profile is not given', () => {
     expect(() =>
       // @ts-expect-error
-      nip57.makeZapRequest({
+      makeZapRequest({
         event: null,
         amount: 100,
         relays: [],
@@ -90,7 +93,7 @@ describe('makeZapRequest', () => {
   })
 
   test('returns a valid Zap request', () => {
-    const result = nip57.makeZapRequest({
+    const result = makeZapRequest({
       profile: 'profile',
       event: 'event',
       amount: 100,
@@ -113,7 +116,7 @@ describe('makeZapRequest', () => {
 
 describe('validateZapRequest', () => {
   test('returns an error message for invalid JSON', () => {
-    expect(nip57.validateZapRequest('invalid JSON')).toBe(
+    expect(validateZapRequest('invalid JSON')).toBe(
       'Invalid zap request JSON.'
     )
   })
@@ -130,7 +133,7 @@ describe('validateZapRequest', () => {
       ]
     }
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       'Zap request is not a valid Nostr event.'
     )
   })
@@ -151,7 +154,7 @@ describe('validateZapRequest', () => {
       ]
     }
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       'Invalid signature on zap request.'
     )
   })
@@ -172,7 +175,7 @@ describe('validateZapRequest', () => {
       privateKey
     )
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       "Zap request doesn't have a 'p' tag."
     )
   })
@@ -194,7 +197,7 @@ describe('validateZapRequest', () => {
       privateKey
     )
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       "Zap request 'p' tag is not valid hex."
     )
   })
@@ -218,7 +221,7 @@ describe('validateZapRequest', () => {
       privateKey
     )
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       "Zap request 'e' tag is not valid hex."
     )
   })
@@ -240,7 +243,7 @@ describe('validateZapRequest', () => {
       privateKey
     )
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBe(
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
       "Zap request doesn't have a 'relays' tag."
     )
   })
@@ -263,7 +266,7 @@ describe('validateZapRequest', () => {
       privateKey
     )
 
-    expect(nip57.validateZapRequest(JSON.stringify(zapRequest))).toBeNull()
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBeNull()
   })
 })
 
@@ -291,7 +294,7 @@ describe('makeZapReceipt', () => {
     const bolt11 = 'bolt11'
     const paidAt = new Date()
 
-    const result = nip57.makeZapReceipt({zapRequest, preimage, bolt11, paidAt})
+    const result = makeZapReceipt({zapRequest, preimage, bolt11, paidAt})
 
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)
@@ -324,7 +327,7 @@ describe('makeZapReceipt', () => {
     const bolt11 = 'bolt11'
     const paidAt = new Date()
 
-    const result = nip57.makeZapReceipt({zapRequest, bolt11, paidAt})
+    const result = makeZapReceipt({zapRequest, bolt11, paidAt})
 
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)

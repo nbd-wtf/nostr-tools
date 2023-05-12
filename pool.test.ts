@@ -1,11 +1,8 @@
 import 'websocket-polyfill'
-import {
-  SimplePool,
-  generatePrivateKey,
-  getPublicKey,
-  finishEvent,
-  type Event,
-} from '.'
+
+import {finishEvent, type Event} from './event.ts'
+import {generatePrivateKey, getPublicKey} from './keys.ts'
+import {SimplePool} from './pool.ts'
 
 let pool = new SimplePool()
 

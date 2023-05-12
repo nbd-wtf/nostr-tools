@@ -1,13 +1,13 @@
 import {bech32} from '@scure/base'
 
 import {
-  Event,
-  EventTemplate,
+  Kind,
   validateEvent,
   verifySignature,
-  Kind
-} from './event'
-import {utf8Decoder} from './utils'
+  type Event,
+  type EventTemplate,
+} from './event.ts'
+import {utf8Decoder} from './utils.ts'
 
 var _fetch: any
 

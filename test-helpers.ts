@@ -1,4 +1,4 @@
-import {type Event} from '.'
+import type {Event} from './event.ts'
 
 type EventParams<K extends number> = Partial<Event<K>>
 

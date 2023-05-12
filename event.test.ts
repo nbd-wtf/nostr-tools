@@ -6,9 +6,9 @@ import {
   validateEvent,
   verifySignature,
   getSignature,
-  getPublicKey,
-  Kind
-} from '.'
+  Kind,
+} from './event.ts'
+import {getPublicKey} from './keys.ts'
 
 describe('Event', () => {
   describe('getBlankEvent', () => {
