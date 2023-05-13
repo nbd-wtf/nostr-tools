@@ -1,5 +1,6 @@
 import {buildEvent} from './test-helpers.ts'
 import {
+  MessageQueue,
   insertEventIntoAscendingList,
   insertEventIntoDescendingList,
 } from './utils.ts'
@@ -189,5 +190,50 @@ describe('inserting into a asc sorted list of events', () => {
       created_at: 30
     }))
     expect(list1).toHaveLength(3)
+  })
+})
+
+describe('enque a message into MessageQueue', () => {
+  test('enque into an empty queue', () => {
+    const queue = new MessageQueue()
+    queue.enqueue('node1')
+    expect(queue.first!.value).toBe('node1')
+  })
+  test('enque into a non-empty queue', () => {
+    const queue = new MessageQueue()
+    queue.enqueue('node1')
+    queue.enqueue('node3')
+    queue.enqueue('node2')
+    expect(queue.first!.value).toBe('node1')
+    expect(queue.last!.value).toBe('node2')
+    expect(queue.size).toBe(3)
+  })
+  test('dequeue from an empty queue', () => {
+    const queue = new MessageQueue()
+    const item1 = queue.dequeue()
+    expect(item1).toBe(null)
+    expect(queue.size).toBe(0)
+  })
+  test('dequeue from a non-empty queue', () => {
+    const queue = new MessageQueue()
+    queue.enqueue('node1')
+    queue.enqueue('node3')
+    queue.enqueue('node2')
+    const item1 = queue.dequeue()
+    expect(item1).toBe('node1')
+    const item2 = queue.dequeue()
+    expect(item2).toBe('node3')
+  })
+  test('dequeue more than in queue', () => {
+    const queue = new MessageQueue()
+    queue.enqueue('node1')
+    queue.enqueue('node3')
+    const item1 = queue.dequeue()
+    expect(item1).toBe('node1')
+    const item2 = queue.dequeue()
+    expect(item2).toBe('node3')
+    expect(queue.size).toBe(0)
+    const item3 = queue.dequeue()
+    expect(item3).toBe(null)
   })
 })
