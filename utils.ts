@@ -111,77 +111,77 @@ export function insertEventIntoAscendingList(
 }
 
 export class MessageNode {
-  private _value: string;
-  private _next: MessageNode|null;
+  private _value: string
+  private _next: MessageNode | null
 
   public get value(): string {
-    return this._value;
+    return this._value
   }
   public set value(message: string) {
-    this._value = message;
+    this._value = message
   }
-  public get next(): MessageNode|null {
-    return this._next;
+  public get next(): MessageNode | null {
+    return this._next
   }
-  public set next(node: MessageNode|null) {
-    this._next = node;
+  public set next(node: MessageNode | null) {
+    this._next = node
   }
 
   constructor(message: string) {
-    this._value = message;
-    this._next = null;
+    this._value = message
+    this._next = null
   }
 }
 
 export class MessageQueue {
-  private _first: MessageNode|null;
-  private _last: MessageNode|null;
+  private _first: MessageNode | null
+  private _last: MessageNode | null
 
-  public get first(): MessageNode|null {
-    return this._first;
+  public get first(): MessageNode | null {
+    return this._first
   }
-  public set first(messageNode: MessageNode|null) {
-    this._first = messageNode;
+  public set first(messageNode: MessageNode | null) {
+    this._first = messageNode
   }
-  public get last(): MessageNode|null {
-    return this._last;
+  public get last(): MessageNode | null {
+    return this._last
   }
-  public set last(messageNode: MessageNode|null) {
-    this._last = messageNode;
+  public set last(messageNode: MessageNode | null) {
+    this._last = messageNode
   }
-  private _size: number;
+  private _size: number
   public get size(): number {
-    return this._size;
+    return this._size
   }
   public set size(v: number) {
-    this._size = v;
+    this._size = v
   }
 
   constructor() {
-    this._first = null;
-    this._last = null;
-    this._size = 0;
+    this._first = null
+    this._last = null
+    this._size = 0
   }
   enqueue(message: string): boolean {
-    const newNode = new MessageNode(message);
-    if (this._size == 0 || !this._last) {
-      this._first = newNode;
-      this._last = newNode;
+    const newNode = new MessageNode(message)
+    if (this._size === 0 || !this._last) {
+      this._first = newNode
+      this._last = newNode
     } else {
-        this._last.next = newNode;
-        this._last = newNode;
+      this._last.next = newNode
+      this._last = newNode
     }
-    this._size++;
-    return true;
+    this._size++
+    return true
   }
-  dequeue(): string|null {
-     if (this._size == 0 || !this._first) return null;
+  dequeue(): string | null {
+    if (this._size === 0 || !this._first) return null
 
-     let prev = this._first;
-     this._first = prev.next;
-     prev.next = null;
+    let prev = this._first
+    this._first = prev.next
+    prev.next = null
 
-     this._size--;
-     return prev.value;
-   }
+    this._size--
+    return prev.value
+  }
 }
