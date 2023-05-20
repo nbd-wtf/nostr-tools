@@ -3,6 +3,7 @@
 import {verifySignature, validateEvent, type Event} from './event.ts'
 import {matchFilters, type Filter} from './filter.ts'
 import {getHex64, getSubscriptionId} from './fakejson.ts'
+import { MessageQueue } from './utils.ts'
 
 type RelayEvent = {
   connect: () => void | Promise<void>
@@ -122,24 +123,24 @@ export function relayInit(
         listeners.disconnect.forEach(cb => cb())
       }
 
-      let incomingMessageQueue: string[] = []
+      let incomingMessageQueue: MessageQueue = new MessageQueue()
       let handleNextInterval: any
 
       ws.onmessage = e => {
-        incomingMessageQueue.push(e.data)
+        incomingMessageQueue.enqueue(e.data)
         if (!handleNextInterval) {
           handleNextInterval = setInterval(handleNext, 0)
         }
       }
 
       function handleNext() {
-        if (incomingMessageQueue.length === 0) {
+        if (incomingMessageQueue.size === 0) {
           clearInterval(handleNextInterval)
           handleNextInterval = null
           return
         }
 
-        var json = incomingMessageQueue.shift()
+        var json = incomingMessageQueue.dequeue()
         if (!json) return
 
         let subid = getSubscriptionId(json)
