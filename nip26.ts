@@ -9,7 +9,7 @@ import type {Event} from './event.ts'
 
 export type Parameters = {
   pubkey: string // the key to whom the delegation will be given
-  kind?: number
+  kind?: number | Array<number>
   until?: number // delegation will only be valid until this date
   since?: number // delegation will be valid from this date on
 }
@@ -26,7 +26,14 @@ export function createDelegation(
   parameters: Parameters
 ): Delegation {
   let conditions = []
-  if ((parameters.kind || -1) >= 0) conditions.push(`kind=${parameters.kind}`)
+  let kinds = Array.isArray(parameters.kind) ? parameters.kind : [parameters.kind]
+
+  kinds.forEach(kind => {
+    if ((kind || -1) >= 0) {
+      conditions.push(`kind=${kind}`)
+    }
+  })
+
   if (parameters.until) conditions.push(`created_at<${parameters.until}`)
   if (parameters.since) conditions.push(`created_at>${parameters.since}`)
   let cond = conditions.join('&')

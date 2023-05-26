@@ -103,3 +103,13 @@ test('create and verify delegation', async () => {
   })
   expect(getDelegator(event)).toEqual(pk1)
 })
+
+test('can create delegation with multiple kinds', async () => {
+  let sk1 = generatePrivateKey()
+  let sk2 = generatePrivateKey()
+  let pk2 = getPublicKey(sk2)
+  let delegation = createDelegation(sk1, {pubkey: pk2, kind: [1, 4]})
+
+  expect(delegation.cond).toContain('kind=1')
+  expect(delegation.cond).toContain('kind=4')
+})
