@@ -69,9 +69,7 @@ export function decode(nip19: string): DecodeResult {
         data: {
           id: bytesToHex(tlv[0][0]),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
-          author: tlv[2]?.[0]
-            ? bytesToHex(tlv[2][0])
-            : undefined
+          author: tlv[2]?.[0] ? bytesToHex(tlv[2][0]) : undefined
         }
       }
     }
@@ -123,9 +121,10 @@ function parseTLV(data: Uint8Array): TLV {
   while (rest.length > 0) {
     let t = rest[0]
     let l = rest[1]
+    if (!l) throw new Error(`malformed TLV ${t}`)
     let v = rest.slice(2, 2 + l)
     rest = rest.slice(2 + l)
-    if (v.length < l) continue
+    if (v.length < l) throw new Error(`not enough data to read on TLV ${t}`)
     result[t] = result[t] || []
     result[t].push(v)
   }
