@@ -56,3 +56,37 @@ export function matchFilters(
   }
   return false
 }
+
+export function mergeFilters(...filters: Filter<number>[]): Filter<number> {
+  let result: Filter<number> = {}
+  for (let i = 0; i < filters.length; i++) {
+    let filter = filters[i]
+    Object.entries(filter).forEach(([property, values]) => {
+      if (
+        property === 'kinds' ||
+        property === 'ids' ||
+        property === 'authors' ||
+        property[0] === '#'
+      ) {
+        // @ts-ignore
+        result[property] = result[property] || []
+        // @ts-ignore
+        for (let v = 0; v < values.length; v++) {
+          // @ts-ignore
+          let value = values[v]
+          // @ts-ignore
+          if (!result[property].includes(value)) result[property].push(value)
+        }
+      }
+    })
+
+    if (filter.limit && (!result.limit || filter.limit > result.limit))
+      result.limit = filter.limit
+    if (filter.until && (!result.until || filter.until > result.until))
+      result.until = filter.until
+    if (filter.since && (!result.since || filter.since < result.since))
+      result.since = filter.since
+  }
+
+  return result
+}

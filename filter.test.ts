@@ -1,4 +1,4 @@
-import {matchFilter, matchFilters} from './filter.ts'
+import {matchFilter, matchFilters, mergeFilters} from './filter.ts'
 import {buildEvent} from './test-helpers.ts'
 
 describe('Filter', () => {
@@ -18,7 +18,7 @@ describe('Filter', () => {
         kind: 1,
         pubkey: 'abc',
         created_at: 150,
-        tags: [['tag', 'value']],
+        tags: [['tag', 'value']]
       })
 
       const result = matchFilter(filter, event)
@@ -162,7 +162,12 @@ describe('Filter', () => {
         {authors: ['abc'], limit: 3}
       ]
 
-      const event = buildEvent({id: '123', kind: 1, pubkey: 'abc', created_at: 150})
+      const event = buildEvent({
+        id: '123',
+        kind: 1,
+        pubkey: 'abc',
+        created_at: 150
+      })
 
       const result = matchFilters(filters, event)
 
@@ -189,11 +194,35 @@ describe('Filter', () => {
         {kinds: [1], limit: 2},
         {authors: ['abc'], limit: 3}
       ]
-      const event = buildEvent({id: '456', kind: 2, pubkey: 'def', created_at: 200})
+      const event = buildEvent({
+        id: '456',
+        kind: 2,
+        pubkey: 'def',
+        created_at: 200
+      })
 
       const result = matchFilters(filters, event)
 
       expect(result).toEqual(false)
+    })
+  })
+
+  describe('mergeFilters', () => {
+    it('should merge filters', () => {
+      expect(
+        mergeFilters(
+          {ids: ['a', 'b'], limit: 3},
+          {authors: ['x'], ids: ['b', 'c']}
+        )
+      ).toEqual({ids: ['a', 'b', 'c'], limit: 3, authors: ['x']})
+
+      expect(
+        mergeFilters(
+          {kinds: [1], since: 15, until: 30},
+          {since: 10, kinds: [7], until: 15},
+          {kinds: [9, 10]}
+        )
+      ).toEqual({kinds: [1, 7, 9, 10], since: 10, until: 30})
     })
   })
 })
