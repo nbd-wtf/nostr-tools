@@ -27,8 +27,8 @@ export enum Kind {
   Zap = 9735,
   RelayList = 10002,
   ClientAuth = 22242,
-  BadgeDefinition = 30008,
-  ProfileBadge = 30009,
+  ProfileBadge = 30008,
+  BadgeDefinition = 30009,
   Article = 30023
 }
 
