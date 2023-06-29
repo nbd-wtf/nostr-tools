@@ -31,7 +31,7 @@ test('matchAll', () => {
 
 test('matchAll with an invalid nip19', () => {
   const result = matchAll(
-    'Hello npub129tvj896hqqkljerxkccpj9flshwnw999v9uwn9lfmwlj8vnzwgq9y5llnpub1rujdpkd8mwezrvpqd2rx2zphfaztqrtsfg6w3vdnlj!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
+    'Hello nostr:npub129tvj896hqqkljerxkccpj9flshwnw999v9uwn9lfmwlj8vnzwgq9y5llnpub1rujdpkd8mwezrvpqd2rx2zphfaztqrtsfg6w3vdnlj!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
   )
 
   expect([...result]).toEqual([
@@ -40,8 +40,8 @@ test('matchAll with an invalid nip19', () => {
         data: '46d731680add2990efe1cc619dc9b8014feeb23261ab9dee50e9d11814de5a2b',
         type: 'note'
       },
-      end: 187,
-      start: 118,
+      end: 193,
+      start: 124,
       uri: 'nostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
       value: 'note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
     }
