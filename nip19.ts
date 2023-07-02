@@ -30,22 +30,26 @@ export type AddressPointer = {
   relays?: string[]
 }
 
-export type DecodeResult =
-  | {type: 'nprofile'; data: ProfilePointer}
-  | {type: 'nrelay'; data: string}
-  | {type: 'nevent'; data: EventPointer}
-  | {type: 'naddr'; data: AddressPointer}
-  | {type: 'nsec'; data: string}
-  | {type: 'npub'; data: string}
-  | {type: 'note'; data: string}
+type Prefixes = {
+  nprofile: ProfilePointer
+  nrelay: string
+  nevent: EventPointer
+  naddr: AddressPointer
+  nsec: string
+  npub: string
+  note: string
+}
 
-export function decode(nip19: `nprofile1${string}`): {type: 'nprofile'; data: ProfilePointer}
-export function decode(nip19: `nrelay1${string}`): {type: 'nrelay'; data: string}
-export function decode(nip19: `nevent1${string}`): {type: 'nevent'; data: EventPointer}
-export function decode(nip19: `naddr1${string}`): {type: 'naddr'; data: AddressPointer}
-export function decode(nip19: `nsec1${string}`): {type: 'nsec'; data: string}
-export function decode(nip19: `npub1${string}`): {type: 'npub'; data: string}
-export function decode(nip19: `note1${string}`): {type: 'note'; data: string}
+type DecodeValue<Prefix extends keyof Prefixes> = {
+  type: Prefix
+  data: Prefixes[Prefix]
+}
+
+export type DecodeResult = {
+  [P in keyof Prefixes]: DecodeValue<P>
+}[keyof Prefixes]
+
+export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
 export function decode(nip19: string): DecodeResult
 export function decode(nip19: string): DecodeResult {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
