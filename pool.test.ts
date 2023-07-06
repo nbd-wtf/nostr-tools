@@ -121,3 +121,20 @@ test('list()', async () => {
     .reduce((acc, n) => acc.concat(n), [])
   expect(relaysForAllEvents.length).toBeGreaterThanOrEqual(events.length)
 })
+
+test('seenOnEnabled: false', async () => {
+  const poolWithoutSeenOn = new SimplePool({seenOnEnabled: false})
+
+  const event = await poolWithoutSeenOn.get(relays, {
+    ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027']
+  })
+
+  expect(event).toHaveProperty(
+    'id',
+    'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'
+  )
+
+  const relaysForEvent = poolWithoutSeenOn.seenOn(event!.id)
+
+  expect(relaysForEvent).toHaveLength(0)
+})
