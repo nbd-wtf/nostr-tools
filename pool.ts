@@ -15,11 +15,13 @@ export class SimplePool {
 
   private eoseSubTimeout: number
   private getTimeout: number
+  private seenOnEnabled: boolean = true
 
-  constructor(options: {eoseSubTimeout?: number; getTimeout?: number} = {}) {
+  constructor(options: {eoseSubTimeout?: number; getTimeout?: number; seenOnEnabled?: boolean} = {}) {
     this._conn = {}
     this.eoseSubTimeout = options.eoseSubTimeout || 3400
     this.getTimeout = options.getTimeout || 3400
+    this.seenOnEnabled = options.seenOnEnabled !== false
   }
 
   close(relays: string[]): void {
@@ -51,9 +53,11 @@ export class SimplePool {
       if (opts?.alreadyHaveEvent?.(id, url)) {
         return true
       }
-      let set = this._seenOn[id] || new Set()
-      set.add(url)
-      this._seenOn[id] = set
+      if (this.seenOnEnabled) {
+        let set = this._seenOn[id] || new Set()
+        set.add(url)
+        this._seenOn[id] = set
+      }
       return _knownIds.has(id)
     }
 
