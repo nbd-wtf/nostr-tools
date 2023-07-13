@@ -49,7 +49,7 @@ export type DecodeResult = {
   [P in keyof Prefixes]: DecodeValue<P>
 }[keyof Prefixes]
 
-export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
+export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeResult
 export function decode(nip19: string): DecodeResult
 export function decode(nip19: string): DecodeResult {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
