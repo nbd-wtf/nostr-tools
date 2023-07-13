@@ -13,7 +13,7 @@ export interface NostrURIMatch extends NostrURI {
 }
 
 /** Find and decode all NIP-21 URIs. */
-export function* matchAll(content: string): Iterable<NostrURIMatch> {
+export function * matchAll(content: string): Iterable<NostrURIMatch> {
   const matches = content.matchAll(regex())
 
   for (const match of matches) {
@@ -56,7 +56,7 @@ export function replaceAll(
   content: string,
   replacer: (match: NostrURI) => string
 ): string {
-  return content.replaceAll(regex(), (uri, value) => {
+  return content.replaceAll(regex(), (uri, value: string) => {
     return replacer({
       uri: uri as `nostr:${string}`,
       value,
