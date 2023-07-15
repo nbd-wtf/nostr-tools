@@ -115,6 +115,16 @@ describe('Filter', () => {
       expect(result).toEqual(false)
     })
 
+    it('should return true when the timestamp of event is equal to the filter since value', () => {
+      const filter = {since: 100}
+
+      const event = buildEvent({created_at: 100})
+
+      const result = matchFilter(filter, event)
+
+      expect(result).toEqual(true)
+    })
+
     it('should return false when the event is after the filter until value', () => {
       const filter = {until: 100}
 
@@ -123,6 +133,16 @@ describe('Filter', () => {
       const result = matchFilter(filter, event)
 
       expect(result).toEqual(false)
+    })
+
+    it('should return true when the timestamp of event is equal to the filter until value', () => {
+      const filter = {until: 100}
+
+      const event = buildEvent({created_at: 100})
+
+      const result = matchFilter(filter, event)
+
+      expect(result).toEqual(true)
     })
   })
 
