@@ -19,6 +19,7 @@ export * as nip27 from './nip27.ts'
 export * as nip39 from './nip39.ts'
 export * as nip42 from './nip42.ts'
 export * as nip57 from './nip57.ts'
+export * as nip98 from './nip98.ts'
 
 export * as fj from './fakejson.ts'
 export * as utils from './utils.ts'
