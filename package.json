@@ -19,10 +19,10 @@
   },
   "license": "Unlicense",
   "dependencies": {
-    "@noble/curves": "1.0.0",
-    "@noble/hashes": "1.3.0",
+    "@noble/curves": "1.1.0",
+    "@noble/hashes": "1.3.1",
     "@scure/base": "1.1.1",
-    "@scure/bip32": "1.3.0",
+    "@scure/bip32": "1.3.1",
     "@scure/bip39": "1.2.1"
   },
   "keywords": [
