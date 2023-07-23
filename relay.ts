@@ -1,4 +1,5 @@
 /* global WebSocket */
+import 'websocket-polyfill'
 
 import {verifySignature, validateEvent, type Event} from './event.ts'
 import {matchFilters, type Filter} from './filter.ts'
