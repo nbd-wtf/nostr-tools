@@ -3,7 +3,7 @@
 import {verifySignature, validateEvent, type Event} from './event.ts'
 import {matchFilters, type Filter} from './filter.ts'
 import {getHex64, getSubscriptionId} from './fakejson.ts'
-import { MessageQueue } from './utils.ts'
+import {MessageQueue} from './utils.ts'
 
 type RelayEvent = {
   connect: () => void | Promise<void>
@@ -25,15 +25,24 @@ export type Relay = {
   status: number
   connect: () => Promise<void>
   close: () => void
-  sub: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Sub<K>
-  list: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Promise<Event<K>[]>
-  get: <K extends number = number>(filter: Filter<K>, opts?: SubscriptionOptions) => Promise<Event<K> | null>
+  sub: <K extends number = number>(
+    filters: Filter<K>[],
+    opts?: SubscriptionOptions
+  ) => Sub<K>
+  list: <K extends number = number>(
+    filters: Filter<K>[],
+    opts?: SubscriptionOptions
+  ) => Promise<Event<K>[]>
+  get: <K extends number = number>(
+    filter: Filter<K>,
+    opts?: SubscriptionOptions
+  ) => Promise<Event<K> | null>
   count: (
     filters: Filter[],
     opts?: SubscriptionOptions
   ) => Promise<CountPayload | null>
-  publish: (event: Event<number>) => Pub
-  auth: (event: Event<number>) => Pub
+  publish: (event: Event<number>) => Promise<void>
+  auth: (event: Event<number>) => Promise<void>
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(
     event: T,
     listener: U
@@ -43,12 +52,11 @@ export type Relay = {
     listener: U
   ) => void
 }
-export type Pub = {
-  on: (type: 'ok' | 'failed', cb: any) => void
-  off: (type: 'ok' | 'failed', cb: any) => void
-}
 export type Sub<K extends number = number> = {
-  sub: <K extends number = number>(filters: Filter<K>[], opts: SubscriptionOptions) => Sub<K>
+  sub: <K extends number = number>(
+    filters: Filter<K>[],
+    opts: SubscriptionOptions
+  ) => Sub<K>
   unsub: () => void
   on: <T extends keyof SubEvent<K>, U extends SubEvent<K>[T]>(
     event: T,
@@ -93,9 +101,8 @@ export function relayInit(
   } = {}
   var pubListeners: {
     [eventid: string]: {
-      ok: Array<() => void>
-      seen: Array<() => void>
-      failed: Array<(reason: string) => void>
+      resolve: (_: unknown) => void
+      reject: (err: Error) => void
     }
   } = {}
 
@@ -196,10 +203,9 @@ export function relayInit(
               let ok: boolean = data[2]
               let reason: string = data[3] || ''
               if (id in pubListeners) {
-                if (ok) pubListeners[id].ok.forEach(cb => cb())
-                else pubListeners[id].failed.forEach(cb => cb(reason))
-                pubListeners[id].ok = [] // 'ok' only happens once per pub, so stop listeners here
-                pubListeners[id].failed = []
+                let {resolve, reject} = pubListeners[id]
+                if (ok) resolve(null)
+                else reject(new Error(reason))
               }
               return
             }
@@ -294,26 +300,16 @@ export function relayInit(
   }
 
   function _publishEvent(event: Event<number>, type: string) {
-    if (!event.id) throw new Error(`event ${event} has no id`)
-    let id = event.id
-
-    trySend([type, event])
-
-    return {
-      on: (type: 'ok' | 'failed', cb: any) => {
-        pubListeners[id] = pubListeners[id] || {
-          ok: [],
-          failed: []
-        }
-        pubListeners[id][type].push(cb)
-      },
-      off: (type: 'ok' | 'failed', cb: any) => {
-        let listeners = pubListeners[id]
-        if (!listeners) return
-        let idx = listeners[type].indexOf(cb)
-        if (idx >= 0) listeners[type].splice(idx, 1)
+    return new Promise((resolve, reject) => {
+      if (!event.id) {
+        reject(new Error(`event ${event} has no id`))
+        return
       }
-    }
+
+      let id = event.id
+      trySend([type, event])
+      pubListeners[id] = {resolve, reject}
+    })
   }
 
   return {
@@ -349,7 +345,7 @@ export function relayInit(
           clearTimeout(timeout)
           resolve(events)
         })
-        s.on('event', (event) => {
+        s.on('event', event => {
           events.push(event)
         })
       }),
@@ -360,7 +356,7 @@ export function relayInit(
           s.unsub()
           resolve(null)
         }, getTimeout)
-        s.on('event', (event) => {
+        s.on('event', event => {
           s.unsub()
           clearTimeout(timeout)
           resolve(event)
@@ -379,11 +375,11 @@ export function relayInit(
           resolve(event)
         })
       }),
-    publish(event): Pub {
-      return _publishEvent(event, 'EVENT')
+    async publish(event): Promise<void> {
+      await _publishEvent(event, 'EVENT')
     },
-    auth(event): Pub {
-      return _publishEvent(event, 'AUTH')
+    async auth(event): Promise<void> {
+      await _publishEvent(event, 'AUTH')
     },
     connect,
     close(): void {

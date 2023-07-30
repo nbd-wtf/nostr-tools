@@ -108,13 +108,7 @@ let event = {
 event.id = getEventHash(event)
 event.sig = getSignature(event, sk)
 
-let pub = relay.publish(event)
-pub.on('ok', () => {
-  console.log(`${relay.url} has accepted our event`)
-})
-pub.on('failed', reason => {
-  console.log(`failed to publish to ${relay.url}: ${reason}`)
-})
+await relay.publish(event)
 
 let events = await relay.list([{kinds: [0, 1]}])
 let event = await relay.get({
