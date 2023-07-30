@@ -1,9 +1,8 @@
 import {
   relayInit,
-  type Pub,
   type Relay,
   type Sub,
-  type SubscriptionOptions,
+  type SubscriptionOptions
 } from './relay.ts'
 import {normalizeURL} from './utils.ts'
 
@@ -17,7 +16,13 @@ export class SimplePool {
   private getTimeout: number
   private seenOnEnabled: boolean = true
 
-  constructor(options: {eoseSubTimeout?: number; getTimeout?: number; seenOnEnabled?: boolean} = {}) {
+  constructor(
+    options: {
+      eoseSubTimeout?: number
+      getTimeout?: number
+      seenOnEnabled?: boolean
+    } = {}
+  ) {
     this._conn = {}
     this.eoseSubTimeout = options.eoseSubTimeout || 3400
     this.getTimeout = options.getTimeout || 3400
@@ -46,7 +51,11 @@ export class SimplePool {
     return relay
   }
 
-  sub<K extends number = number>(relays: string[], filters: Filter<K>[], opts?: SubscriptionOptions): Sub<K> {
+  sub<K extends number = number>(
+    relays: string[],
+    filters: Filter<K>[],
+    opts?: SubscriptionOptions
+  ): Sub<K> {
     let _knownIds: Set<string> = new Set()
     let modifiedOpts = {...(opts || {})}
     modifiedOpts.alreadyHaveEvent = (id, url) => {
@@ -82,7 +91,7 @@ export class SimplePool {
       }
       if (!r) return
       let s = r.sub(filters, modifiedOpts)
-      s.on('event', (event) => {
+      s.on('event', event => {
         _knownIds.add(event.id as string)
         for (let cb of eventListeners.values()) cb(event)
       })
@@ -138,7 +147,7 @@ export class SimplePool {
         sub.unsub()
         resolve(null)
       }, this.getTimeout)
-      sub.on('event', (event) => {
+      sub.on('event', event => {
         resolve(event)
         clearTimeout(timeout)
         sub.unsub()
@@ -155,7 +164,7 @@ export class SimplePool {
       let events: Event<K>[] = []
       let sub = this.sub(relays, filters, opts)
 
-      sub.on('event', (event) => {
+      sub.on('event', event => {
         events.push(event)
       })
 
@@ -167,39 +176,11 @@ export class SimplePool {
     })
   }
 
-  publish(relays: string[], event: Event<number>): Pub {
-    const pubPromises: Promise<Pub>[] = relays.map(async relay => {
-      let r
-      try {
-        r = await this.ensureRelay(relay)
-        return r.publish(event)
-      } catch (_) {
-        return {on() {}, off() {}}
-      }
+  publish(relays: string[], event: Event<number>): Promise<void>[] {
+    return relays.map(async relay => {
+      let r = await this.ensureRelay(relay)
+      return r.publish(event)
     })
-
-    const callbackMap = new Map()
-
-    return {
-      on(type, cb) {
-        relays.forEach(async (relay, i) => {
-          let pub = await pubPromises[i]
-          let callback = () => cb(relay)
-          callbackMap.set(cb, callback)
-          pub.on(type, callback)
-        })
-      },
-
-      off(type, cb) {
-        relays.forEach(async (_, i) => {
-          let callback = callbackMap.get(cb)
-          if (callback) {
-            let pub = await pubPromises[i]
-            pub.off(type, callback)
-          }
-        })
-      }
-    }
   }
 
   seenOn(id: string): string[] {
