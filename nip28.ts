@@ -31,7 +31,7 @@ export interface ChannelMessageEventTemplate {
 }
 
 export interface ChannelHideMessageEventTemplate {
-  channel_message_event_id: string,
+  channel_message_event_id: string
   content: string | { reason: string }
   created_at: number
   tags?: string[][]
