@@ -10,7 +10,8 @@ import {
   ChannelMessageEventTemplate
 } from './nip28.ts'
 
-const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+const privateKey =
+  'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 const publicKey = getPublicKey(privateKey)
 
 describe('NIP-28 Functions', () => {
@@ -41,9 +42,7 @@ describe('NIP-28 Functions', () => {
 
     const event = channelMetadataEvent(template, privateKey)
     expect(event!.kind).toEqual(Kind.ChannelMetadata)
-    expect(event!.tags).toEqual([
-      ['e', template.channel_create_event_id]
-    ])
+    expect(event!.tags).toEqual([['e', template.channel_create_event_id]])
     expect(event!.content).toEqual(JSON.stringify(template.content))
     expect(event!.pubkey).toEqual(publicKey)
     expect(typeof event!.id).toEqual('string')
@@ -61,7 +60,10 @@ describe('NIP-28 Functions', () => {
     const event = channelMessageEvent(template, privateKey)
     expect(event.kind).toEqual(Kind.ChannelMessage)
     expect(event.tags[0]).toEqual([
-      'e', template.channel_create_event_id, template.relay_url, 'root'
+      'e',
+      template.channel_create_event_id,
+      template.relay_url,
+      'root'
     ])
     expect(event.content).toEqual(template.content)
     expect(event.pubkey).toEqual(publicKey)
@@ -81,10 +83,16 @@ describe('NIP-28 Functions', () => {
     const event = channelMessageEvent(template, privateKey)
     expect(event.kind).toEqual(Kind.ChannelMessage)
     expect(event.tags).toContainEqual([
-      'e', template.channel_create_event_id, template.relay_url, 'root'
+      'e',
+      template.channel_create_event_id,
+      template.relay_url,
+      'root'
     ])
     expect(event.tags).toContainEqual([
-      'e', template.reply_to_channel_message_event_id, template.relay_url, 'reply'
+      'e',
+      template.reply_to_channel_message_event_id,
+      template.relay_url,
+      'reply'
     ])
     expect(event.content).toEqual(template.content)
     expect(event.pubkey).toEqual(publicKey)
@@ -95,15 +103,13 @@ describe('NIP-28 Functions', () => {
   it('channelHideMessageEvent should create a signed event with given template', () => {
     const template = {
       channel_message_event_id: 'channel message event id',
-      content: { reason: 'Inappropriate content' },
+      content: {reason: 'Inappropriate content'},
       created_at: 1617932115
     }
 
     const event = channelHideMessageEvent(template, privateKey)
     expect(event!.kind).toEqual(Kind.ChannelHideMessage)
-    expect(event!.tags).toEqual([
-      ['e', template.channel_message_event_id]
-    ])
+    expect(event!.tags).toEqual([['e', template.channel_message_event_id]])
     expect(event!.content).toEqual(JSON.stringify(template.content))
     expect(event!.pubkey).toEqual(publicKey)
     expect(typeof event!.id).toEqual('string')
@@ -112,16 +118,14 @@ describe('NIP-28 Functions', () => {
 
   it('channelMuteUserEvent should create a signed event with given template', () => {
     const template = {
-      content: { reason: 'Spamming' },
+      content: {reason: 'Spamming'},
       created_at: 1617932115,
       pubkey_to_mute: 'pubkey to mute'
     }
 
     const event = channelMuteUserEvent(template, privateKey)
     expect(event!.kind).toEqual(Kind.ChannelMuteUser)
-    expect(event!.tags).toEqual([
-      ['p', template.pubkey_to_mute]
-    ])
+    expect(event!.tags).toEqual([['p', template.pubkey_to_mute]])
     expect(event!.content).toEqual(JSON.stringify(template.content))
     expect(event!.pubkey).toEqual(publicKey)
     expect(typeof event!.id).toEqual('string')
