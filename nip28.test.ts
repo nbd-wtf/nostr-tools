@@ -35,7 +35,7 @@ describe('NIP-28 Functions', () => {
 
   it('channelMetadataEvent should create a signed event with given template', () => {
     const template = {
-      channel_create_event_id: 'channelCreationEventID',
+      channel_create_event_id: 'channel creation event id',
       content: channelMetadata,
       created_at: 1617932115
     }
