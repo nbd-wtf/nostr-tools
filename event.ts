@@ -30,6 +30,8 @@ export enum Kind {
   HttpAuth = 27235,
   ProfileBadge = 30008,
   BadgeDefinition = 30009,
+  MarketStall = 30017,
+  MarketProduct = 30018,
   Article = 30023
 }
 
