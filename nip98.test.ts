@@ -1,7 +1,5 @@
-import {base64} from '@scure/base'
-import {getToken, validateToken} from './nip98.ts'
+import {getToken, unpackEventFromToken, validateEvent, validateToken} from './nip98.ts'
 import {Event, Kind, finishEvent} from './event.ts'
-import {utf8Decoder} from './utils.ts'
 import {generatePrivateKey, getPublicKey} from './keys.ts'
 
 const sk = generatePrivateKey()
@@ -12,9 +10,7 @@ describe('getToken', () => {
       finishEvent(e, sk)
     )
 
-    const decodedResult: Event = JSON.parse(
-      utf8Decoder.decode(base64.decode(result))
-    )
+    const decodedResult: Event = await unpackEventFromToken(result)
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
@@ -31,9 +27,7 @@ describe('getToken', () => {
       finishEvent(e, sk)
     )
 
-    const decodedResult: Event = JSON.parse(
-      utf8Decoder.decode(base64.decode(result))
-    )
+    const decodedResult: Event = await unpackEventFromToken(result)
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
@@ -57,9 +51,7 @@ describe('getToken', () => {
 
     expect(result.startsWith(authorizationScheme)).toBe(true)
 
-    const decodedResult: Event = JSON.parse(
-      utf8Decoder.decode(base64.decode(result.replace(authorizationScheme, '')))
-    )
+    const decodedResult: Event = await unpackEventFromToken(result)
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
@@ -134,6 +126,45 @@ describe('validateToken', () => {
     )
 
     const result = validateToken(validToken, 'http://test.com', 'post')
+    await expect(result).rejects.toThrow(Error)
+  })
+
+  test('validateEvent returns true for valid decoded token with authorization scheme', async () => {
+    const validToken = await getToken(
+      'http://test.com',
+      'get',
+      e => finishEvent(e, sk),
+      true
+    )
+    const decodedResult: Event = await unpackEventFromToken(validToken)
+
+    const result = await validateEvent(decodedResult, 'http://test.com', 'get')
+    expect(result).toBe(true)
+  })
+
+  test('validateEvent throws an error for a wrong url', async () => {
+    const validToken = await getToken(
+      'http://test.com',
+      'get',
+      e => finishEvent(e, sk),
+      true
+    )
+    const decodedResult: Event = await unpackEventFromToken(validToken)
+
+    const result = validateEvent(decodedResult, 'http://wrong-test.com', 'get')
+    await expect(result).rejects.toThrow(Error)
+  })
+
+  test('validateEvent throws an error for a wrong method', async () => {
+    const validToken = await getToken(
+      'http://test.com',
+      'get',
+      e => finishEvent(e, sk),
+      true
+    )
+    const decodedResult: Event = await unpackEventFromToken(validToken)
+
+    const result = validateEvent(decodedResult, 'http://test.com', 'post')
     await expect(result).rejects.toThrow(Error)
   })
 })

@@ -65,6 +65,13 @@ export async function validateToken(
   url: string,
   method: string
 ): Promise<boolean> {
+  const event = await unpackEventFromToken(token).catch((error) => { throw(error) })
+  const valid = await validateEvent(event, url, method).catch((error) => { throw(error) })
+
+  return valid
+}
+
+export async function unpackEventFromToken(token: string): Promise<Event> {
   if (!token) {
     throw new Error('Missing token')
   }
@@ -76,6 +83,15 @@ export async function validateToken(
   }
 
   const event = JSON.parse(eventB64) as Event
+
+  return event
+}
+
+export async function validateEvent(
+  event: Event,
+  url: string,
+  method: string
+): Promise<boolean> {
   if (!event) {
     throw new Error('Invalid nostr event')
   }
