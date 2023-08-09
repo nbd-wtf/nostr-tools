@@ -31,6 +31,7 @@ export enum Kind {
   Zap = 9735,
   RelayList = 10002,
   ClientAuth = 22242,
+  NwcRequest = 23194,
   HttpAuth = 27235,
   ProfileBadge = 30008,
   BadgeDefinition = 30009,
