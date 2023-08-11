@@ -386,8 +386,8 @@ export function relayInit(
       listeners = newListeners()
       subListeners = {}
       pubListeners = {}
-      if (ws.readyState === WebSocket.OPEN) {
-        ws?.close()
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.close()
       }
     },
     get status() {
