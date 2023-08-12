@@ -6,7 +6,7 @@ import {
   validateEvent,
   verifySignature,
   getSignature,
-  Kind,
+  Kind
 } from './event.ts'
 import {getPublicKey} from './keys.ts'
 

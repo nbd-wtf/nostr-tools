@@ -5,7 +5,7 @@ import {
   makeZapReceipt,
   makeZapRequest,
   useFetchImplementation,
-  validateZapRequest,
+  validateZapRequest
 } from './nip57.ts'
 import {buildEvent} from './test-helpers.ts'
 
@@ -116,9 +116,7 @@ describe('makeZapRequest', () => {
 
 describe('validateZapRequest', () => {
   test('returns an error message for invalid JSON', () => {
-    expect(validateZapRequest('invalid JSON')).toBe(
-      'Invalid zap request JSON.'
-    )
+    expect(validateZapRequest('invalid JSON')).toBe('Invalid zap request JSON.')
   })
 
   test('returns an error message if the Zap request is not a valid Nostr event', () => {

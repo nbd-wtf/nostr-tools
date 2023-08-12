@@ -36,9 +36,7 @@ test('match subscription id', () => {
   expect(getSubscriptionId('["EVENT","",{}]')).toEqual('')
   expect(getSubscriptionId('["EVENT","_",{}]')).toEqual('_')
   expect(getSubscriptionId('["EVENT","subname",{}]')).toEqual('subname')
-  expect(getSubscriptionId('["EVENT", "kasjbdjkav", {}]')).toEqual(
-    'kasjbdjkav'
-  )
+  expect(getSubscriptionId('["EVENT", "kasjbdjkav", {}]')).toEqual('kasjbdjkav')
   expect(
     getSubscriptionId(
       '  [ \n\n "EVENT"  , \n\n "y4d5ow45gfwoiudfÇA VSADLKAN KLDASB[12312535]SFMZSNJKLH" , {}]'

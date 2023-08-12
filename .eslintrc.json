@@ -154,7 +154,7 @@
   "overrides": [
     {
       "files": ["**/*.test.ts"],
-      "env": { "jest/globals": true },
+      "env": {"jest/globals": true},
       "plugins": ["jest"],
       "extends": ["plugin:jest/recommended"]
     }

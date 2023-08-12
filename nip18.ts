@@ -13,7 +13,7 @@ export type RepostEventTemplate = {
    * Any other content will be ignored and replaced with the stringified JSON of the reposted event.
    * @default Stringified JSON of the reposted event
    */
-  content?: '';
+  content?: ''
 
   created_at: number
 }
@@ -22,21 +22,26 @@ export function finishRepostEvent(
   t: RepostEventTemplate,
   reposted: Event<number>,
   relayUrl: string,
-  privateKey: string,
+  privateKey: string
 ): Event<Kind.Repost> {
-  return finishEvent({
-    kind: Kind.Repost,
-    tags: [
-      ...(t.tags ?? []),
-      [ 'e', reposted.id, relayUrl ],
-      [ 'p', reposted.pubkey ],
-    ],
-    content: t.content === '' ? '' : JSON.stringify(reposted),
-    created_at: t.created_at,
-  }, privateKey)
+  return finishEvent(
+    {
+      kind: Kind.Repost,
+      tags: [
+        ...(t.tags ?? []),
+        ['e', reposted.id, relayUrl],
+        ['p', reposted.pubkey]
+      ],
+      content: t.content === '' ? '' : JSON.stringify(reposted),
+      created_at: t.created_at
+    },
+    privateKey
+  )
 }
 
-export function getRepostedEventPointer(event: Event<number>): undefined | EventPointer {
+export function getRepostedEventPointer(
+  event: Event<number>
+): undefined | EventPointer {
   if (event.kind !== Kind.Repost) {
     return undefined
   }
@@ -44,7 +49,11 @@ export function getRepostedEventPointer(event: Event<number>): undefined | Event
   let lastETag: undefined | string[]
   let lastPTag: undefined | string[]
 
-  for (let i = event.tags.length - 1; i >= 0 && (lastETag === undefined || lastPTag === undefined); i--) {
+  for (
+    let i = event.tags.length - 1;
+    i >= 0 && (lastETag === undefined || lastPTag === undefined);
+    i--
+  ) {
     const tag = event.tags[i]
     if (tag.length >= 2) {
       if (tag[0] === 'e' && lastETag === undefined) {
@@ -61,16 +70,21 @@ export function getRepostedEventPointer(event: Event<number>): undefined | Event
 
   return {
     id: lastETag[1],
-    relays: [ lastETag[2], lastPTag?.[2] ].filter((x): x is string => typeof x === 'string'),
-    author: lastPTag?.[1],
+    relays: [lastETag[2], lastPTag?.[2]].filter(
+      (x): x is string => typeof x === 'string'
+    ),
+    author: lastPTag?.[1]
   }
 }
 
 export type GetRepostedEventOptions = {
-  skipVerification?: boolean,
-};
+  skipVerification?: boolean
+}
 
-export function getRepostedEvent(event: Event<number>, { skipVerification }: GetRepostedEventOptions = {}): undefined | Event<number> {
+export function getRepostedEvent(
+  event: Event<number>,
+  {skipVerification}: GetRepostedEventOptions = {}
+): undefined | Event<number> {
   const pointer = getRepostedEventPointer(event)
 
   if (pointer === undefined || event.content === '') {

@@ -1,4 +1,9 @@
-import {getToken, unpackEventFromToken, validateEvent, validateToken} from './nip98.ts'
+import {
+  getToken,
+  unpackEventFromToken,
+  validateEvent,
+  validateToken
+} from './nip98.ts'
 import {Event, Kind, finishEvent} from './event.ts'
 import {generatePrivateKey, getPublicKey} from './keys.ts'
 

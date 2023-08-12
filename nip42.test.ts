@@ -10,13 +10,13 @@ test('auth flow', () => {
   relay.connect()
   const sk = generatePrivateKey()
 
-  return new Promise<void>((resolve) => {
+  return new Promise<void>(resolve => {
     relay.on('auth', async challenge => {
       await expect(
         authenticate({
           challenge,
           relay,
-          sign: (e) => finishEvent(e, sk)
+          sign: e => finishEvent(e, sk)
         })
       ).rejects.toBeTruthy()
       relay.close()

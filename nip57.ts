@@ -5,7 +5,7 @@ import {
   validateEvent,
   verifySignature,
   type Event,
-  type EventTemplate,
+  type EventTemplate
 } from './event.ts'
 import {utf8Decoder} from './utils.ts'
 

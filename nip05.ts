@@ -34,18 +34,22 @@ export async function searchDomain(
   }
 }
 
-export async function queryProfile(fullname: string): Promise<ProfilePointer | null> {
+export async function queryProfile(
+  fullname: string
+): Promise<ProfilePointer | null> {
   const match = fullname.match(NIP05_REGEX)
   if (!match) return null
 
   const [_, name = '_', domain] = match
 
   try {
-    const res = await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
-    const { names, relays } = parseNIP05Result(await res.json())
+    const res = await _fetch(
+      `https://${domain}/.well-known/nostr.json?name=${name}`
+    )
+    const {names, relays} = parseNIP05Result(await res.json())
 
     const pubkey = names[name]
-    return pubkey ? { pubkey, relays: relays?.[pubkey] } : null
+    return pubkey ? {pubkey, relays: relays?.[pubkey]} : null
   } catch (_e) {
     return null
   }
@@ -64,7 +68,7 @@ export interface NIP05Result {
 /** Parse the nostr.json and throw if it's not valid. */
 function parseNIP05Result(json: any): NIP05Result {
   const result: NIP05Result = {
-    names: {},
+    names: {}
   }
 
   for (const [name, pubkey] of Object.entries(json.names)) {
@@ -77,7 +81,9 @@ function parseNIP05Result(json: any): NIP05Result {
     result.relays = {}
     for (const [pubkey, relays] of Object.entries(json.relays)) {
       if (typeof pubkey === 'string' && Array.isArray(relays)) {
-        result.relays[pubkey] = relays.filter((relay: unknown) => typeof relay === 'string')
+        result.relays[pubkey] = relays.filter(
+          (relay: unknown) => typeof relay === 'string'
+        )
       }
     }
   }

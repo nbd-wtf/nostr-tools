@@ -38,9 +38,7 @@ export function createDelegation(
     utf8Encoder.encode(`nostr:delegation:${parameters.pubkey}:${cond}`)
   )
 
-  let sig = bytesToHex(
-    schnorr.sign(sighash, privateKey)
-  )
+  let sig = bytesToHex(schnorr.sign(sighash, privateKey))
 
   return {
     from: getPublicKey(privateKey),

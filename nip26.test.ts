@@ -99,7 +99,7 @@ test('create and verify delegation', async () => {
   let event = buildEvent({
     kind: 1,
     tags: [['delegation', delegation.from, delegation.cond, delegation.sig]],
-    pubkey: pk2,
+    pubkey: pk2
   })
   expect(getDelegator(event)).toEqual(pk1)
 })

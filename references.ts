@@ -2,7 +2,7 @@ import {
   decode,
   type AddressPointer,
   type ProfilePointer,
-  type EventPointer,
+  type EventPointer
 } from './nip19.ts'
 
 import type {Event} from './event.ts'

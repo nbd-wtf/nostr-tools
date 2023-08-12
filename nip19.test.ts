@@ -7,7 +7,7 @@ import {
   nrelayEncode,
   nsecEncode,
   type AddressPointer,
-  type ProfilePointer,
+  type ProfilePointer
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {

@@ -111,12 +111,15 @@ test('listening (twice) and publishing', async () => {
     resolve2(true)
   })
 
-  let event = finishEvent({
-    kind: 27572,
-    created_at: Math.floor(Date.now() / 1000),
-    tags: [],
-    content: 'nostr-tools test suite'
-  }, sk)
+  let event = finishEvent(
+    {
+      kind: 27572,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'nostr-tools test suite'
+    },
+    sk
+  )
 
   relay.publish(event)
   return expect(
