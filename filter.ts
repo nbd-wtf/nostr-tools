@@ -8,7 +8,7 @@ export type Filter<K extends number = Kind> = {
   until?: number
   limit?: number
   search?: string
-  [key: `#${string}`]: string[]
+  [key: `#${string}`]: string[] | undefined
 }
 
 export function matchFilter(
@@ -34,7 +34,7 @@ export function matchFilter(
       if (
         values &&
         !event.tags.find(
-          ([t, v]) => t === f.slice(1) && values.indexOf(v) !== -1
+          ([t, v]) => t === f.slice(1) && values!.indexOf(v) !== -1
         )
       )
         return false
