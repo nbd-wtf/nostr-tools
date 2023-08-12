@@ -19,6 +19,7 @@ export * as nip27 from './nip27.ts'
 export * as nip28 from './nip28.ts'
 export * as nip39 from './nip39.ts'
 export * as nip42 from './nip42.ts'
+export * as nip44 from './nip44.ts'
 export * as nip57 from './nip57.ts'
 export * as nip98 from './nip98.ts'
 
