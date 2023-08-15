@@ -13,7 +13,5 @@ test('encrypt and decrypt message', async () => {
   let pk1 = getPublicKey(sk1)
   let pk2 = getPublicKey(sk2)
 
-  expect(await decrypt(sk2, pk1, await encrypt(sk1, pk2, 'hello'))).toEqual(
-    'hello'
-  )
+  expect(decrypt(sk2, pk1, encrypt(sk1, pk2, 'hello'))).toEqual('hello')
 })
