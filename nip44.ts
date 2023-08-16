@@ -27,13 +27,7 @@ export function encrypt(key: Uint8Array, text: string, v = 1) {
 }
 
 export function decrypt(key: Uint8Array, payload: string) {
-  let data
-  try {
-    data = base64.decode(payload)
-  } catch (e) {
-    throw new Error(`NIP44: failed to base64 decode payload: ${e}`)
-  }
-
+  let data = base64.decode(payload)
   if (data[0] !== 1) {
     throw new Error(`NIP44: unknown encryption version: ${data[0]}`)
   }
