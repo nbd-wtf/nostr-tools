@@ -6,7 +6,7 @@ import {base64} from '@scure/base'
 import {utf8Decoder, utf8Encoder} from './utils.ts'
 import {ensureBytes} from '@noble/ciphers/utils'
 
-export function getConversationKey(
+export function getSharedSecret(
   privkeyA: string,
   pubkeyB: string
 ): Uint8Array {
@@ -36,12 +36,7 @@ export function decrypt(key: Uint8Array, ciphertext: string): string {
   ensureBytes(key)
   if (typeof ciphertext !== 'string')
     throw new Error('ciphertext must be string')
-  let data: Uint8Array
-  try {
-    data = base64.decode(ciphertext)
-  } catch (e) {
-    throw new Error('failed to base64-decode ciphertext')
-  }
+  let data: Uint8Array = base64.decode(ciphertext)
   if (data.length < 26)
     throw new Error('NIP44: length must be at least 26 bytes')
   let v = data[0]

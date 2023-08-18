@@ -1,4 +1,4 @@
-import {encrypt, decrypt, getConversationKey} from './nip44.ts'
+import {encrypt, decrypt, getSharedSecret} from './nip44.ts'
 import {bytesToHex, hexToBytes} from '@noble/hashes/utils'
 import {default as vectors} from './nip44.vectors.json'
 import {getPublicKey} from './keys.ts'
@@ -6,7 +6,7 @@ import {getPublicKey} from './keys.ts'
 test('NIP44: valid_sec', async () => {
   for (const v of vectors.valid_sec) {
     const pub2 = getPublicKey(v.sec2)
-    const key = getConversationKey(v.sec1, pub2)
+    const key = getSharedSecret(v.sec1, pub2)
     expect(bytesToHex(key)).toEqual(v.shared)
     const ciphertext = encrypt(key, v.plaintext, {nonce: hexToBytes(v.nonce)})
     expect(ciphertext).toEqual(v.ciphertext)
@@ -17,7 +17,7 @@ test('NIP44: valid_sec', async () => {
 
 test('NIP44: valid_pub', async () => {
   for (const v of vectors.valid_pub) {
-    const key = getConversationKey(v.sec1, v.pub2)
+    const key = getSharedSecret(v.sec1, v.pub2)
     expect(bytesToHex(key)).toEqual(v.shared)
     const ciphertext = encrypt(key, v.plaintext, {nonce: hexToBytes(v.nonce)})
     expect(ciphertext).toEqual(v.ciphertext)
@@ -29,7 +29,7 @@ test('NIP44: valid_pub', async () => {
 test('NIP44: invalid', async () => {
   for (const v of vectors.invalid) {
     expect(() => {
-      const key = getConversationKey(v.sec1, v.pub2)
+      const key = getSharedSecret(v.sec1, v.pub2)
       const ciphertext = encrypt(key, v.plaintext)
     }).toThrowError()
   }
