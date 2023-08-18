@@ -4,6 +4,8 @@ Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
 Only depends on _@scure_ and _@noble_ packages.
 
+This package is only providing lower-level functionality. If you want an easy-to-use fully-fledged solution that abstracts the hard parts of Nostr and makes decisions on your behalf, take a look at [NDK](https://github.com/nostr-dev-kit/ndk) and [@snort/system](https://www.npmjs.com/package/@snort/system).
+
 ## Installation
 
 ```bash
@@ -106,13 +108,7 @@ let event = {
 event.id = getEventHash(event)
 event.sig = getSignature(event, sk)
 
-let pub = relay.publish(event)
-pub.on('ok', () => {
-  console.log(`${relay.url} has accepted our event`)
-})
-pub.on('failed', reason => {
-  console.log(`failed to publish to ${relay.url}: ${reason}`)
-})
+await relay.publish(event)
 
 let events = await relay.list([{kinds: [0, 1]}])
 let event = await relay.get({

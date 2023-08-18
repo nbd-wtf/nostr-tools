@@ -17,17 +17,11 @@ test('fetch nip05 profiles', async () => {
   )
   expect(p2!.relays).toEqual(['wss://relay.damus.io'])
 
-  let p3 = await queryProfile('channel.ninja@channel.ninja')
+  let p3 = await queryProfile('_@fiatjaf.com')
   expect(p3!.pubkey).toEqual(
-    '36e65b503eba8a6b698e724a59137603101166a1cddb45ddc704247fc8aa0fce'
-  )
-  expect(p3!.relays).toEqual(undefined)
-
-  let p4 = await queryProfile('_@fiatjaf.com')
-  expect(p4!.pubkey).toEqual(
     '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
   )
-  expect(p4!.relays).toEqual([
+  expect(p3!.relays).toEqual([
     'wss://relay.nostr.bg',
     'wss://nos.lol',
     'wss://nostr-verified.wellorder.net',

@@ -17,7 +17,9 @@ export const authenticate = async ({
 }: {
   challenge: string
   relay: Relay
-  sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>> | Event<K>
+  sign: <K extends number = number>(
+    e: EventTemplate<K>
+  ) => Promise<Event<K>> | Event<K>
 }): Promise<void> => {
   const e: EventTemplate = {
     kind: Kind.ClientAuth,
@@ -28,15 +30,5 @@ export const authenticate = async ({
     ],
     content: ''
   }
-  const pub = relay.auth(await sign(e))
-  return new Promise((resolve, reject) => {
-    pub.on('ok', function ok() {
-      pub.off('ok', ok)
-      resolve()
-    })
-    pub.on('failed', function fail(reason: string) {
-      pub.off('failed', fail)
-      reject(reason)
-    })
-  })
+  return relay.auth(await sign(e))
 }

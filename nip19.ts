@@ -30,15 +30,27 @@ export type AddressPointer = {
   relays?: string[]
 }
 
-export type DecodeResult =
-  | {type: 'nprofile'; data: ProfilePointer}
-  | {type: 'nrelay'; data: string}
-  | {type: 'nevent'; data: EventPointer}
-  | {type: 'naddr'; data: AddressPointer}
-  | {type: 'nsec'; data: string}
-  | {type: 'npub'; data: string}
-  | {type: 'note'; data: string}
+type Prefixes = {
+  nprofile: ProfilePointer
+  nrelay: string
+  nevent: EventPointer
+  naddr: AddressPointer
+  nsec: string
+  npub: string
+  note: string
+}
 
+type DecodeValue<Prefix extends keyof Prefixes> = {
+  type: Prefix
+  data: Prefixes[Prefix]
+}
+
+export type DecodeResult = {
+  [P in keyof Prefixes]: DecodeValue<P>
+}[keyof Prefixes]
+
+export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
+export function decode(nip19: string): DecodeResult
 export function decode(nip19: string): DecodeResult {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
@@ -69,9 +81,7 @@ export function decode(nip19: string): DecodeResult {
         data: {
           id: bytesToHex(tlv[0][0]),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
-          author: tlv[2]?.[0]
-            ? bytesToHex(tlv[2][0])
-            : undefined
+          author: tlv[2]?.[0] ? bytesToHex(tlv[2][0]) : undefined
         }
       }
     }
@@ -123,53 +133,56 @@ function parseTLV(data: Uint8Array): TLV {
   while (rest.length > 0) {
     let t = rest[0]
     let l = rest[1]
+    if (!l) throw new Error(`malformed TLV ${t}`)
     let v = rest.slice(2, 2 + l)
     rest = rest.slice(2 + l)
-    if (v.length < l) continue
+    if (v.length < l) throw new Error(`not enough data to read on TLV ${t}`)
     result[t] = result[t] || []
     result[t].push(v)
   }
   return result
 }
 
-export function nsecEncode(hex: string): string {
+export function nsecEncode(hex: string): `nsec1${string}` {
   return encodeBytes('nsec', hex)
 }
 
-export function npubEncode(hex: string): string {
+export function npubEncode(hex: string): `npub1${string}` {
   return encodeBytes('npub', hex)
 }
 
-export function noteEncode(hex: string): string {
+export function noteEncode(hex: string): `note1${string}` {
   return encodeBytes('note', hex)
 }
 
-function encodeBytes(prefix: string, hex: string): string {
-  let data = hexToBytes(hex)
+function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): `${Prefix}1${string}` {
   let words = bech32.toWords(data)
-  return bech32.encode(prefix, words, Bech32MaxSize)
+  return bech32.encode(prefix, words, Bech32MaxSize) as `${Prefix}1${string}`
 }
 
-export function nprofileEncode(profile: ProfilePointer): string {
+function encodeBytes<Prefix extends string>(prefix: Prefix, hex: string): `${Prefix}1${string}` {
+  let data = hexToBytes(hex)
+  return encodeBech32(prefix, data)
+}
+
+export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
   let data = encodeTLV({
     0: [hexToBytes(profile.pubkey)],
     1: (profile.relays || []).map(url => utf8Encoder.encode(url))
   })
-  let words = bech32.toWords(data)
-  return bech32.encode('nprofile', words, Bech32MaxSize)
+  return encodeBech32('nprofile', data)
 }
 
-export function neventEncode(event: EventPointer): string {
+export function neventEncode(event: EventPointer): `nevent1${string}` {
   let data = encodeTLV({
     0: [hexToBytes(event.id)],
     1: (event.relays || []).map(url => utf8Encoder.encode(url)),
     2: event.author ? [hexToBytes(event.author)] : []
   })
-  let words = bech32.toWords(data)
-  return bech32.encode('nevent', words, Bech32MaxSize)
+  return encodeBech32('nevent', data)
 }
 
-export function naddrEncode(addr: AddressPointer): string {
+export function naddrEncode(addr: AddressPointer): `naddr1${string}` {
   let kind = new ArrayBuffer(4)
   new DataView(kind).setUint32(0, addr.kind, false)
 
@@ -179,16 +192,14 @@ export function naddrEncode(addr: AddressPointer): string {
     2: [hexToBytes(addr.pubkey)],
     3: [new Uint8Array(kind)]
   })
-  let words = bech32.toWords(data)
-  return bech32.encode('naddr', words, Bech32MaxSize)
+  return encodeBech32('naddr', data)
 }
 
-export function nrelayEncode(url: string): string {
+export function nrelayEncode(url: string): `nrelay1${string}` {
   let data = encodeTLV({
     0: [utf8Encoder.encode(url)]
   })
-  let words = bech32.toWords(data)
-  return bech32.encode('nrelay', words, Bech32MaxSize)
+  return encodeBech32('nrelay', data)
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {
