@@ -1,15 +1,36 @@
-import crypto from 'node:crypto'
+import {encrypt, decrypt, getConversationKey} from './nip44.ts'
+import {bytesToHex, hexToBytes} from '@noble/hashes/utils'
+import {default as vectors} from './nip44.vectors.json'
+import {getPublicKey} from './keys.ts'
 
-import {encrypt, decrypt} from './nip44.ts'
-import {getPublicKey, generatePrivateKey} from './keys.ts'
+test('NIP44: valid_sec', async () => {
+  for (const v of vectors.valid_sec) {
+    const pub2 = getPublicKey(v.sec2)
+    const key = getConversationKey(v.sec1, pub2)
+    expect(bytesToHex(key)).toEqual(v.shared)
+    const ciphertext = encrypt(key, v.plaintext, {nonce: hexToBytes(v.nonce)})
+    expect(ciphertext).toEqual(v.ciphertext)
+    const decrypted = decrypt(key, ciphertext)
+    expect(decrypted).toEqual(v.plaintext)
+  }
+})
 
-test('encrypt and decrypt NIP44 message', async () => {
-  let sk1 = generatePrivateKey()
-  let sk2 = generatePrivateKey()
-  let pk1 = getPublicKey(sk1)
-  let pk2 = getPublicKey(sk2)
+test('NIP44: valid_pub', async () => {
+  for (const v of vectors.valid_pub) {
+    const key = getConversationKey(v.sec1, v.pub2)
+    expect(bytesToHex(key)).toEqual(v.shared)
+    const ciphertext = encrypt(key, v.plaintext, {nonce: hexToBytes(v.nonce)})
+    expect(ciphertext).toEqual(v.ciphertext)
+    const decrypted = decrypt(key, ciphertext)
+    expect(decrypted).toEqual(v.plaintext)
+  }
+})
 
-  expect(
-    await decrypt(sk2, pk1, await encrypt(sk1, pk2, 'hello'))
-  ).toEqual('hello')
+test('NIP44: invalid', async () => {
+  for (const v of vectors.invalid) {
+    expect(() => {
+      const key = getConversationKey(v.sec1, v.pub2)
+      const ciphertext = encrypt(key, v.plaintext)
+    }).toThrowError()
+  }
 })
