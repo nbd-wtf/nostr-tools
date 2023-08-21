@@ -31,7 +31,8 @@ export enum Kind {
   HttpAuth = 27235,
   ProfileBadge = 30008,
   BadgeDefinition = 30009,
-  Article = 30023
+  Article = 30023,
+  FileMetadata = 1063
 }
 
 export type EventTemplate<K extends number = number> = {
