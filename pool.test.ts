@@ -1,8 +1,8 @@
 import 'websocket-polyfill'
 
-import {finishEvent, type Event} from './event.ts'
-import {generatePrivateKey, getPublicKey} from './keys.ts'
-import {SimplePool} from './pool.ts'
+import {finishEvent, Event} from './event'
+import {generatePrivateKey, getPublicKey} from './keys'
+import {SimplePool} from './pool'
 
 let pool = new SimplePool()
 
@@ -37,12 +37,15 @@ test('removing duplicates when querying', async () => {
     received.push(event)
   })
 
-  let event = finishEvent({
-    created_at: Math.round(Date.now() / 1000),
-    content: 'test',
-    kind: 22345,
-    tags: []
-  }, priv)
+  let event = finishEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test',
+      kind: 22345,
+      tags: []
+    },
+    priv
+  )
 
   pool.publish(relays, event)
 
@@ -68,12 +71,15 @@ test('same with double querying', async () => {
     received.push(event)
   })
 
-  let event = finishEvent({
-    created_at: Math.round(Date.now() / 1000),
-    content: 'test2',
-    kind: 22346,
-    tags: []
-  }, priv)
+  let event = finishEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test2',
+      kind: 22346,
+      tags: []
+    },
+    priv
+  )
 
   pool.publish(relays, event)
 

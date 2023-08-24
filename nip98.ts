@@ -58,8 +58,12 @@ export async function validateToken(
   url: string,
   method: string
 ): Promise<boolean> {
-  const event = await unpackEventFromToken(token).catch((error) => { throw(error) })
-  const valid = await validateEvent(event, url, method).catch((error) => { throw(error) })
+  const event = await unpackEventFromToken(token).catch(error => {
+    throw error
+  })
+  const valid = await validateEvent(event, url, method).catch(error => {
+    throw error
+  })
 
   return valid
 }

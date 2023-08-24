@@ -34,7 +34,7 @@ function msb(b: number) {
   }
 
   // eslint-disable-next-line no-cond-assign
-  while (b >>= 1) {
+  while ((b >>= 1)) {
     n++
   }
 

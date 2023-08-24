@@ -2,10 +2,10 @@ import {schnorr} from '@noble/curves/secp256k1'
 import {bytesToHex} from '@noble/hashes/utils'
 import {sha256} from '@noble/hashes/sha256'
 
-import {utf8Encoder} from './utils.ts'
-import {getPublicKey} from './keys.ts'
+import {utf8Encoder} from './utils'
+import {getPublicKey} from './keys'
 
-import type {Event} from './event.ts'
+import type {Event} from './event'
 
 export type Parameters = {
   pubkey: string // the key to whom the delegation will be given
@@ -38,9 +38,7 @@ export function createDelegation(
     utf8Encoder.encode(`nostr:delegation:${parameters.pubkey}:${cond}`)
   )
 
-  let sig = bytesToHex(
-    schnorr.sign(sighash, privateKey)
-  )
+  let sig = bytesToHex(schnorr.sign(sighash, privateKey))
 
   return {
     from: getPublicKey(privateKey),

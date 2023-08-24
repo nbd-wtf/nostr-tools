@@ -1,5 +1,5 @@
-import {parseReferences} from './references.ts'
-import {buildEvent} from './test-helpers.ts'
+import {parseReferences} from './references'
+import {buildEvent} from './test-helpers'
 
 test('parse mentions', () => {
   let evt = buildEvent({
@@ -22,7 +22,7 @@ test('parse mentions', () => {
       ]
     ],
     content:
-      'hello #[0], have you seen #[2]? it was made by nostr:nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg on nostr:nevent1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8ychxp5v4! broken #[3]',
+      'hello #[0], have you seen #[2]? it was made by nostr:nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg on nostr:nevent1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8ychxp5v4! broken #[3]'
   })
 
   expect(parseReferences(evt)).toEqual([

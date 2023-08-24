@@ -1,4 +1,4 @@
-import {privateKeyFromSeedWords} from './nip06.ts'
+import {privateKeyFromSeedWords} from './nip06'
 
 test('generate private key from a mnemonic', async () => {
   const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'

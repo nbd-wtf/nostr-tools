@@ -1,4 +1,4 @@
-import {BECH32_REGEX, decode, type DecodeResult} from './nip19.ts'
+import {BECH32_REGEX, decode, DecodeResult} from './nip19'
 
 /** Nostr URI regex, eg `nostr:npub1...` */
 export const NOSTR_URI_REGEX = new RegExp(`nostr:(${BECH32_REGEX.source})`)

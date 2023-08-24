@@ -1,4 +1,4 @@
-import {generatePrivateKey, getPublicKey} from './keys.ts'
+import {generatePrivateKey, getPublicKey} from './keys'
 
 test('private key generation', () => {
   expect(generatePrivateKey()).toMatch(/[a-f0-9]{64}/)

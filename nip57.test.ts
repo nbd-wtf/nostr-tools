@@ -1,13 +1,13 @@
-import {finishEvent} from './event.ts'
-import {getPublicKey, generatePrivateKey} from './keys.ts'
+import {finishEvent} from './event'
+import {getPublicKey, generatePrivateKey} from './keys'
 import {
   getZapEndpoint,
   makeZapReceipt,
   makeZapRequest,
   useFetchImplementation,
-  validateZapRequest,
-} from './nip57.ts'
-import {buildEvent} from './test-helpers.ts'
+  validateZapRequest
+} from './nip57'
+import {buildEvent} from './test-helpers'
 
 describe('getZapEndpoint', () => {
   test('returns null if neither lud06 nor lud16 is present', async () => {
@@ -116,9 +116,7 @@ describe('makeZapRequest', () => {
 
 describe('validateZapRequest', () => {
   test('returns an error message for invalid JSON', () => {
-    expect(validateZapRequest('invalid JSON')).toBe(
-      'Invalid zap request JSON.'
-    )
+    expect(validateZapRequest('invalid JSON')).toBe('Invalid zap request JSON.')
   })
 
   test('returns an error message if the Zap request is not a valid Nostr event', () => {

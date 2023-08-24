@@ -1,6 +1,11 @@
-import {getToken, unpackEventFromToken, validateEvent, validateToken} from './nip98.ts'
-import {Event, Kind, finishEvent} from './event.ts'
-import {generatePrivateKey, getPublicKey} from './keys.ts'
+import {
+  getToken,
+  unpackEventFromToken,
+  validateEvent,
+  validateToken
+} from './nip98'
+import {Event, Kind, finishEvent} from './event'
+import {generatePrivateKey, getPublicKey} from './keys'
 
 const sk = generatePrivateKey()
 

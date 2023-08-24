@@ -1,5 +1,5 @@
-import {Kind, type EventTemplate, type Event} from './event.ts'
-import {Relay} from './relay.ts'
+import {Kind, EventTemplate, Event} from './event'
+import {Relay} from './relay'
 
 /**
  * Authenticate via NIP-42 flow.

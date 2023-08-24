@@ -1,4 +1,4 @@
-import {test as testRegex, parse} from './nip21.ts'
+import {test as testRegex, parse} from './nip21'
 
 test('test()', () => {
   expect(

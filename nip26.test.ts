@@ -1,6 +1,6 @@
-import {getPublicKey, generatePrivateKey} from './keys.ts'
-import {getDelegator, createDelegation} from './nip26.ts'
-import {buildEvent} from './test-helpers.ts'
+import {getPublicKey, generatePrivateKey} from './keys'
+import {getDelegator, createDelegation} from './nip26'
+import {buildEvent} from './test-helpers'
 
 test('parse good delegation from NIP', async () => {
   expect(
@@ -99,7 +99,7 @@ test('create and verify delegation', async () => {
   let event = buildEvent({
     kind: 1,
     tags: [['delegation', delegation.from, delegation.cond, delegation.sig]],
-    pubkey: pk2,
+    pubkey: pk2
   })
   expect(getDelegator(event)).toEqual(pk1)
 })

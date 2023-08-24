@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 
-import {useFetchImplementation, validateGithub} from './nip39.ts'
+import {useFetchImplementation, validateGithub} from './nip39'
 
 test('validate github claim', async () => {
   useFetchImplementation(fetch)

@@ -1,4 +1,4 @@
-import {parse} from './nip10.ts'
+import {parse} from './nip10'
 
 describe('parse NIP10-referenced events', () => {
   test('legacy + a lot of events', () => {

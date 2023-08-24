@@ -1,7 +1,7 @@
 import {bytesToHex, concatBytes, hexToBytes} from '@noble/hashes/utils'
 import {bech32} from '@scure/base'
 
-import {utf8Decoder, utf8Encoder} from './utils.ts'
+import {utf8Decoder, utf8Encoder} from './utils'
 
 const Bech32MaxSize = 5000
 
@@ -49,7 +49,9 @@ export type DecodeResult = {
   [P in keyof Prefixes]: DecodeValue<P>
 }[keyof Prefixes]
 
-export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
+export function decode<Prefix extends keyof Prefixes>(
+  nip19: `${Prefix}1${string}`
+): DecodeValue<Prefix>
 export function decode(nip19: string): DecodeResult
 export function decode(nip19: string): DecodeResult {
   let {prefix, words} = bech32.decode(nip19, Bech32MaxSize)
@@ -155,12 +157,18 @@ export function noteEncode(hex: string): `note1${string}` {
   return encodeBytes('note', hex)
 }
 
-function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): `${Prefix}1${string}` {
+function encodeBech32<Prefix extends string>(
+  prefix: Prefix,
+  data: Uint8Array
+): `${Prefix}1${string}` {
   let words = bech32.toWords(data)
   return bech32.encode(prefix, words, Bech32MaxSize) as `${Prefix}1${string}`
 }
 
-function encodeBytes<Prefix extends string>(prefix: Prefix, hex: string): `${Prefix}1${string}` {
+function encodeBytes<Prefix extends string>(
+  prefix: Prefix,
+  hex: string
+): `${Prefix}1${string}` {
   let data = hexToBytes(hex)
   return encodeBech32(prefix, data)
 }

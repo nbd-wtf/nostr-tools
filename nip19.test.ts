@@ -1,4 +1,4 @@
-import {generatePrivateKey, getPublicKey} from './keys.ts'
+import {generatePrivateKey, getPublicKey} from './keys'
 import {
   decode,
   naddrEncode,
@@ -7,8 +7,8 @@ import {
   nrelayEncode,
   nsecEncode,
   type AddressPointer,
-  type ProfilePointer,
-} from './nip19.ts'
+  type ProfilePointer
+} from './nip19'
 
 test('encode and decode nsec', () => {
   let sk = generatePrivateKey()

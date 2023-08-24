@@ -1,5 +1,5 @@
-import {Kind} from './event.ts'
-import {getPublicKey} from './keys.ts'
+import {Kind} from './event'
+import {getPublicKey} from './keys'
 import {
   channelCreateEvent,
   channelMetadataEvent,
@@ -8,7 +8,7 @@ import {
   channelMuteUserEvent,
   ChannelMetadata,
   ChannelMessageEventTemplate
-} from './nip28.ts'
+} from './nip28'
 
 const privateKey =
   'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'

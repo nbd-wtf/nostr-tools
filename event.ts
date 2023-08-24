@@ -2,8 +2,8 @@ import {schnorr} from '@noble/curves/secp256k1'
 import {sha256} from '@noble/hashes/sha256'
 import {bytesToHex} from '@noble/hashes/utils'
 
-import {getPublicKey} from './keys.ts'
-import {utf8Encoder} from './utils.ts'
+import {getPublicKey} from './keys'
+import {utf8Encoder} from './utils'
 
 /** @deprecated Use numbers instead. */
 /* eslint-disable no-unused-vars */

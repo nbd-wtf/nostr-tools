@@ -1,6 +1,6 @@
-import {finishEvent, Kind} from './event.ts'
-import {getPublicKey} from './keys.ts'
-import {finishReactionEvent, getReactedEventPointer} from './nip25.ts'
+import {finishEvent, Kind} from './event'
+import {getPublicKey} from './keys'
+import {finishReactionEvent, getReactedEventPointer} from './nip25'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
   const privateKey =

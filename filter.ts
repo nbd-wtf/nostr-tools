@@ -1,4 +1,4 @@
-import {Event, type Kind} from './event.ts'
+import {Event, Kind} from './event'
 
 export type Filter<K extends number = number> = {
   ids?: string[]

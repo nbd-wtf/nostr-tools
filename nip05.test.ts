@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 
-import {useFetchImplementation, queryProfile} from './nip05.ts'
+import {useFetchImplementation, queryProfile} from './nip05'
 
 test('fetch nip05 profiles', async () => {
   useFetchImplementation(fetch)
@@ -27,6 +27,6 @@ test('fetch nip05 profiles', async () => {
     'wss://nostr-verified.wellorder.net',
     'wss://nostr.zebedee.cloud',
     'wss://eden.nostr.land',
-    'wss://nostr.milou.lol',
+    'wss://nostr.milou.lol'
   ])
 })

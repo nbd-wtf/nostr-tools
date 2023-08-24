@@ -1,6 +1,6 @@
-import {Event, finishEvent, Kind} from './event.ts'
+import {Event, finishEvent, Kind} from './event'
 
-import type {EventPointer} from './nip19.ts'
+import type {EventPointer} from './nip19'
 
 export type ReactionEventTemplate = {
   /**
@@ -19,26 +19,31 @@ export type ReactionEventTemplate = {
 export function finishReactionEvent(
   t: ReactionEventTemplate,
   reacted: Event<number>,
-  privateKey: string,
+  privateKey: string
 ): Event<Kind.Reaction> {
   const inheritedTags = reacted.tags.filter(
-    (tag) => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p'),
+    tag => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p')
   )
 
-  return finishEvent({
-    ...t,
-    kind: Kind.Reaction,
-    tags: [
-      ...(t.tags ?? []),
-      ...inheritedTags,
-      ['e', reacted.id],
-      ['p', reacted.pubkey],
-    ],
-    content: t.content ?? '+',
-  }, privateKey)
+  return finishEvent(
+    {
+      ...t,
+      kind: Kind.Reaction,
+      tags: [
+        ...(t.tags ?? []),
+        ...inheritedTags,
+        ['e', reacted.id],
+        ['p', reacted.pubkey]
+      ],
+      content: t.content ?? '+'
+    },
+    privateKey
+  )
 }
 
-export function getReactedEventPointer(event: Event<number>): undefined | EventPointer {
+export function getReactedEventPointer(
+  event: Event<number>
+): undefined | EventPointer {
   if (event.kind !== Kind.Reaction) {
     return undefined
   }
@@ -46,7 +51,11 @@ export function getReactedEventPointer(event: Event<number>): undefined | EventP
   let lastETag: undefined | string[]
   let lastPTag: undefined | string[]
 
-  for (let i = event.tags.length - 1; i >= 0 && (lastETag === undefined || lastPTag === undefined); i--) {
+  for (
+    let i = event.tags.length - 1;
+    i >= 0 && (lastETag === undefined || lastPTag === undefined);
+    i--
+  ) {
     const tag = event.tags[i]
     if (tag.length >= 2) {
       if (tag[0] === 'e' && lastETag === undefined) {
@@ -63,7 +72,7 @@ export function getReactedEventPointer(event: Event<number>): undefined | EventP
 
   return {
     id: lastETag[1],
-    relays: [ lastETag[2], lastPTag[2] ].filter((x) => x !== undefined),
-    author: lastPTag[1],
+    relays: [lastETag[2], lastPTag[2]].filter(x => x !== undefined),
+    author: lastPTag[1]
   }
 }

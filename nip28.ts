@@ -1,4 +1,4 @@
-import {Event, finishEvent, Kind} from './event.ts'
+import {Event, finishEvent, Kind} from './event'
 
 export interface ChannelMetadata {
   name: string

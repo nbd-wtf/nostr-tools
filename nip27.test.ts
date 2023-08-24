@@ -1,4 +1,4 @@
-import {matchAll, replaceAll} from './nip27.ts'
+import {matchAll, replaceAll} from './nip27'
 
 test('matchAll', () => {
   const result = matchAll(

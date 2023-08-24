@@ -1,13 +1,8 @@
-import {
-  relayInit,
-  type Relay,
-  type Sub,
-  type SubscriptionOptions
-} from './relay.ts'
-import {normalizeURL} from './utils.ts'
+import {relayInit, Relay, Sub, SubscriptionOptions} from './relay'
+import {normalizeURL} from './utils'
 
-import type {Event} from './event.ts'
-import {matchFilters, type Filter} from './filter.ts'
+import type {Event} from './event'
+import {matchFilters, Filter} from './filter'
 
 type BatchedRequest = {
   filters: Filter<any>[]

@@ -1,7 +1,11 @@
-import {finishEvent, Kind} from './event.ts'
-import {getPublicKey} from './keys.ts'
-import {finishRepostEvent, getRepostedEventPointer, getRepostedEvent} from './nip18.ts'
-import {buildEvent} from './test-helpers.ts'
+import {finishEvent, Kind} from './event'
+import {getPublicKey} from './keys'
+import {
+  finishRepostEvent,
+  getRepostedEventPointer,
+  getRepostedEvent
+} from './nip18'
+import {buildEvent} from './test-helpers'
 
 const relayUrl = 'https://relay.example.com'
 
@@ -100,7 +104,7 @@ describe('getRepostedEventPointer', () => {
   it('should parse an event with only an `e` tag', () => {
     const event = buildEvent({
       kind: Kind.Repost,
-      tags: [['e', 'reposted event id', relayUrl]],
+      tags: [['e', 'reposted event id', relayUrl]]
     })
 
     const repostedEventPointer = getRepostedEventPointer(event)

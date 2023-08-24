@@ -10,7 +10,6 @@
     "esModuleInterop": true,
     "emitDeclarationOnly": true,
     "outDir": "lib",
-    "rootDir": ".",
-    "allowImportingTsExtensions": true
+    "rootDir": "."
   }
 }

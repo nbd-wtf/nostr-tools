@@ -5,9 +5,9 @@ import {
   validateEvent,
   verifySignature,
   type Event,
-  type EventTemplate,
-} from './event.ts'
-import {utf8Decoder} from './utils.ts'
+  type EventTemplate
+} from './event'
+import {utf8Decoder} from './utils'
 
 var _fetch: any
 
