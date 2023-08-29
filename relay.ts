@@ -73,7 +73,7 @@ export type SubscriptionOptions = {
   verb?: 'REQ' | 'COUNT'
   skipVerification?: boolean
   alreadyHaveEvent?: null | ((id: string, relay: string) => boolean)
-  eoseSubTimeout: number
+  eoseSubTimeout?: number
 }
 
 const newListeners = (): {[TK in keyof RelayEvent]: RelayEvent[TK][]} => ({
