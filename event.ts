@@ -5,6 +5,7 @@ import {bytesToHex} from '@noble/hashes/utils'
 import {getPublicKey} from './keys.ts'
 import {utf8Encoder} from './utils.ts'
 
+/** @deprecated Use numbers instead. */
 /* eslint-disable no-unused-vars */
 export enum Kind {
   Metadata = 0,
@@ -32,21 +33,22 @@ export enum Kind {
   BadgeDefinition = 30009,
   MarketStall = 30017,
   MarketProduct = 30018,
-  Article = 30023
+  Article = 30023,
+  FileMetadata = 1063
 }
 
-export type EventTemplate<K extends number = Kind> = {
+export type EventTemplate<K extends number = number> = {
   kind: K
   tags: string[][]
   content: string
   created_at: number
 }
 
-export type UnsignedEvent<K extends number = Kind> = EventTemplate<K> & {
+export type UnsignedEvent<K extends number = number> = EventTemplate<K> & {
   pubkey: string
 }
 
-export type Event<K extends number = Kind> = UnsignedEvent<K> & {
+export type Event<K extends number = number> = UnsignedEvent<K> & {
   id: string
   sig: string
 }
@@ -62,7 +64,7 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   }
 }
 
-export function finishEvent<K extends number = Kind>(
+export function finishEvent<K extends number = number>(
   t: EventTemplate<K>,
   privateKey: string
 ): Event<K> {

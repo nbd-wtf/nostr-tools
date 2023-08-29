@@ -54,10 +54,9 @@ let veryOk = verifySignature(event)
 ```js
 import {
   relayInit,
+  finishEvent,
   generatePrivateKey,
   getPublicKey,
-  getEventHash,
-  getSignature
 } from 'nostr-tools'
 
 const relay = relayInit('wss://relay.example.com')
@@ -105,10 +104,10 @@ let event = {
   tags: [],
   content: 'hello world'
 }
-event.id = getEventHash(event)
-event.sig = getSignature(event, sk)
 
-await relay.publish(event)
+// this calculates the event id and signs the event in a single step
+const signedEvent = finishEvent(event, sk)
+await relay.publish(signedEvent)
 
 let events = await relay.list([{kinds: [0, 1]}])
 let event = await relay.get({
@@ -150,10 +149,7 @@ sub.on('event', event => {
 })
 
 let pubs = pool.publish(relays, newEvent)
-pubs.on('ok', () => {
-  // this may be called multiple times, once for every relay that accepts the event
-  // ...
-})
+await Promise.all(pubs)
 
 let events = await pool.list(relays, [{kinds: [0, 1]}])
 let event = await pool.get(relays, {
@@ -164,6 +160,8 @@ let relaysForEvent = pool.seenOn(
   '44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'
 )
 // relaysForEvent will be an array of URLs from relays a given event was seen on
+
+pool.close()
 ```
 
 ### Parsing references (mentions) from a content using NIP-10 and NIP-27
@@ -198,7 +196,7 @@ console.log(profile.relays)
 // prints: [wss://relay.damus.io]
 ```
 
-To use this on Node.js you first must install `node-fetch@2` and call something like this:
+To use this on Node.js < v18, you first must install `node-fetch@2` and call something like this:
 
 ```js
 nip05.useFetchImplementation(require('node-fetch'))
@@ -261,7 +259,7 @@ let event = {
 sendEvent(event)
 
 // on the receiver side
-sub.on('event', event => {
+sub.on('event', async event => {
   let sender = event.pubkey
   pk1 === sender
   let plaintext = await nip04.decrypt(sk2, pk1, event.content)
