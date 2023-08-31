@@ -21,3 +21,6 @@ publish: build emit-types
 
 format:
     prettier --plugin-search-dir . --write .
+
+format-check:
+    prettier --plugin-search-dir . --check .

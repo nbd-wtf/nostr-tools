@@ -16,3 +16,12 @@ jobs:
       - uses: extractions/setup-just@v1
       - run: just install-dependencies
       - run: just test
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: just install-dependencies
+      - run: just format-check
