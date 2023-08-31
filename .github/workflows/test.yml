@@ -23,5 +23,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - uses: extractions/setup-just@v1
       - run: just install-dependencies
       - run: just lint
