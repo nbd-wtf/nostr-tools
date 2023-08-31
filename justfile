@@ -22,5 +22,6 @@ publish: build emit-types
 format:
     prettier --plugin-search-dir . --write .
 
-format-check:
+lint:
+    eslint --ext .ts .
     prettier --plugin-search-dir . --check .

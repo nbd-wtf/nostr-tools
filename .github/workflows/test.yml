@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: 18
       - run: just install-dependencies
-      - run: just format-check
+      - run: just lint
