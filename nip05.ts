@@ -1,4 +1,4 @@
-import {ProfilePointer} from './nip19.ts'
+import { ProfilePointer } from './nip19.ts'
 
 /**
  * NIP-05 regex. The localpart is optional, and should be assumed to be `_` otherwise.
@@ -19,14 +19,9 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function searchDomain(
-  domain: string,
-  query = ''
-): Promise<{[name: string]: string}> {
+export async function searchDomain(domain: string, query = ''): Promise<{ [name: string]: string }> {
   try {
-    let res = await (
-      await _fetch(`https://${domain}/.well-known/nostr.json?name=${query}`)
-    ).json()
+    let res = await (await _fetch(`https://${domain}/.well-known/nostr.json?name=${query}`)).json()
 
     return res.names
   } catch (_) {

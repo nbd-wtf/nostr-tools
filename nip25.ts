@@ -1,6 +1,6 @@
-import {Event, finishEvent, Kind} from './event.ts'
+import { Event, finishEvent, Kind } from './event.ts'
 
-import type {EventPointer} from './nip19.ts'
+import type { EventPointer } from './nip19.ts'
 
 export type ReactionEventTemplate = {
   /**
@@ -21,21 +21,17 @@ export function finishReactionEvent(
   reacted: Event<number>,
   privateKey: string,
 ): Event<Kind.Reaction> {
-  const inheritedTags = reacted.tags.filter(
-    (tag) => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p'),
-  )
+  const inheritedTags = reacted.tags.filter(tag => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p'))
 
-  return finishEvent({
-    ...t,
-    kind: Kind.Reaction,
-    tags: [
-      ...(t.tags ?? []),
-      ...inheritedTags,
-      ['e', reacted.id],
-      ['p', reacted.pubkey],
-    ],
-    content: t.content ?? '+',
-  }, privateKey)
+  return finishEvent(
+    {
+      ...t,
+      kind: Kind.Reaction,
+      tags: [...(t.tags ?? []), ...inheritedTags, ['e', reacted.id], ['p', reacted.pubkey]],
+      content: t.content ?? '+',
+    },
+    privateKey,
+  )
 }
 
 export function getReactedEventPointer(event: Event<number>): undefined | EventPointer {
@@ -63,7 +59,7 @@ export function getReactedEventPointer(event: Event<number>): undefined | EventP
 
   return {
     id: lastETag[1],
-    relays: [ lastETag[2], lastPTag[2] ].filter((x) => x !== undefined),
+    relays: [lastETag[2], lastPTag[2]].filter(x => x !== undefined),
     author: lastPTag[1],
   }
 }

@@ -1,5 +1,5 @@
-import type {Event} from './event.ts'
-import type {EventPointer, ProfilePointer} from './nip19.ts'
+import type { Event } from './event.ts'
+import type { EventPointer, ProfilePointer } from './nip19.ts'
 
 export type NIP10Result = {
   /**
@@ -28,7 +28,7 @@ export function parse(event: Pick<Event, 'tags'>): NIP10Result {
     reply: undefined,
     root: undefined,
     mentions: [],
-    profiles: []
+    profiles: [],
   }
 
   const eTags: string[][] = []
@@ -41,7 +41,7 @@ export function parse(event: Pick<Event, 'tags'>): NIP10Result {
     if (tag[0] === 'p' && tag[1]) {
       result.profiles.push({
         pubkey: tag[1],
-        relays: tag[2] ? [tag[2]] : []
+        relays: tag[2] ? [tag[2]] : [],
       })
     }
   }
@@ -49,16 +49,11 @@ export function parse(event: Pick<Event, 'tags'>): NIP10Result {
   for (let eTagIndex = 0; eTagIndex < eTags.length; eTagIndex++) {
     const eTag = eTags[eTagIndex]
 
-    const [_, eTagEventId, eTagRelayUrl, eTagMarker] = eTag as [
-      string,
-      string,
-      undefined | string,
-      undefined | string
-    ]
+    const [_, eTagEventId, eTagRelayUrl, eTagMarker] = eTag as [string, string, undefined | string, undefined | string]
 
     const eventPointer: EventPointer = {
       id: eTagEventId,
-      relays: eTagRelayUrl ? [eTagRelayUrl] : []
+      relays: eTagRelayUrl ? [eTagRelayUrl] : [],
     }
 
     const isFirstETag = eTagIndex === 0

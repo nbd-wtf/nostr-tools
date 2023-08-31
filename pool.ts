@@ -1,13 +1,8 @@
-import {
-  relayInit,
-  type Relay,
-  type Sub,
-  type SubscriptionOptions
-} from './relay.ts'
-import {normalizeURL} from './utils.ts'
+import { relayInit, type Relay, type Sub, type SubscriptionOptions } from './relay.ts'
+import { normalizeURL } from './utils.ts'
 
-import type {Event} from './event.ts'
-import {matchFilters, type Filter} from './filter.ts'
+import type { Event } from './event.ts'
+import { matchFilters, type Filter } from './filter.ts'
 
 type BatchedRequest = {
   filters: Filter<any>[]
@@ -17,9 +12,9 @@ type BatchedRequest = {
 }
 
 export class SimplePool {
-  private _conn: {[url: string]: Relay}
-  private _seenOn: {[id: string]: Set<string>} = {} // a map of all events we've seen in each relay
-  private batchedByKey: {[batchKey: string]: BatchedRequest[]} = {}
+  private _conn: { [url: string]: Relay }
+  private _seenOn: { [id: string]: Set<string> } = {} // a map of all events we've seen in each relay
+  private batchedByKey: { [batchKey: string]: BatchedRequest[] } = {}
 
   private eoseSubTimeout: number
   private getTimeout: number
@@ -32,7 +27,7 @@ export class SimplePool {
       getTimeout?: number
       seenOnEnabled?: boolean
       batchInterval?: number
-    } = {}
+    } = {},
   ) {
     this._conn = {}
     this.eoseSubTimeout = options.eoseSubTimeout || 3400
@@ -54,7 +49,7 @@ export class SimplePool {
     if (!this._conn[nm]) {
       this._conn[nm] = relayInit(nm, {
         getTimeout: this.getTimeout * 0.9,
-        listTimeout: this.getTimeout * 0.9
+        listTimeout: this.getTimeout * 0.9,
       })
     }
 
@@ -63,13 +58,9 @@ export class SimplePool {
     return relay
   }
 
-  sub<K extends number = number>(
-    relays: string[],
-    filters: Filter<K>[],
-    opts?: SubscriptionOptions
-  ): Sub<K> {
+  sub<K extends number = number>(relays: string[], filters: Filter<K>[], opts?: SubscriptionOptions): Sub<K> {
     let _knownIds: Set<string> = new Set()
-    let modifiedOpts = {...(opts || {})}
+    let modifiedOpts = { ...(opts || {}) }
     modifiedOpts.alreadyHaveEvent = (id, url) => {
       if (opts?.alreadyHaveEvent?.(id, url)) {
         return true
@@ -142,9 +133,8 @@ export class SimplePool {
       off(type, cb) {
         if (type === 'event') {
           eventListeners.delete(cb)
-        } else if (type === 'eose')
-          eoseListeners.delete(cb as () => void | Promise<void>)
-      }
+        } else if (type === 'eose') eoseListeners.delete(cb as () => void | Promise<void>)
+      },
     }
 
     return greaterSub
@@ -153,7 +143,7 @@ export class SimplePool {
   get<K extends number = number>(
     relays: string[],
     filter: Filter<K>,
-    opts?: SubscriptionOptions
+    opts?: SubscriptionOptions,
   ): Promise<Event<K> | null> {
     return new Promise(resolve => {
       let sub = this.sub(relays, [filter], opts)
@@ -172,7 +162,7 @@ export class SimplePool {
   list<K extends number = number>(
     relays: string[],
     filters: Filter<K>[],
-    opts?: SubscriptionOptions
+    opts?: SubscriptionOptions,
   ): Promise<Event<K>[]> {
     return new Promise(resolve => {
       let events: Event<K>[] = []
@@ -193,7 +183,7 @@ export class SimplePool {
   batchedList<K extends number = number>(
     batchKey: string,
     relays: string[],
-    filters: Filter<K>[]
+    filters: Filter<K>[],
   ): Promise<Event<K>[]> {
     return new Promise(resolve => {
       if (!this.batchedByKey[batchKey]) {
@@ -202,8 +192,8 @@ export class SimplePool {
             filters,
             relays,
             resolve,
-            events: []
-          }
+            events: [],
+          },
         ]
 
         setTimeout(() => {
@@ -219,9 +209,7 @@ export class SimplePool {
 
             const sub = this.sub(relays, filters)
             sub.on('event', event => {
-              batchedRequests.forEach(
-                br => matchFilters(br.filters, event) && br.events.push(event)
-              )
+              batchedRequests.forEach(br => matchFilters(br.filters, event) && br.events.push(event))
             })
             sub.on('eose', () => {
               sub.unsub()
@@ -236,7 +224,7 @@ export class SimplePool {
           filters,
           relays,
           resolve,
-          events: []
+          events: [],
         })
       }
     })

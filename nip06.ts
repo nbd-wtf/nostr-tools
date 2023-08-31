@@ -1,16 +1,9 @@
-import {bytesToHex} from '@noble/hashes/utils'
-import {wordlist} from '@scure/bip39/wordlists/english'
-import {
-  generateMnemonic,
-  mnemonicToSeedSync,
-  validateMnemonic
-} from '@scure/bip39'
-import {HDKey} from '@scure/bip32'
+import { bytesToHex } from '@noble/hashes/utils'
+import { wordlist } from '@scure/bip39/wordlists/english'
+import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from '@scure/bip39'
+import { HDKey } from '@scure/bip32'
 
-export function privateKeyFromSeedWords(
-  mnemonic: string,
-  passphrase?: string
-): string {
+export function privateKeyFromSeedWords(mnemonic: string, passphrase?: string): string {
   let root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
   let privateKey = root.derive(`m/44'/1237'/0'/0/0`).privateKey
   if (!privateKey) throw new Error('could not derive private key')

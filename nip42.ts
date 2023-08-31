@@ -1,5 +1,5 @@
-import {Kind, type EventTemplate, type Event} from './event.ts'
-import {Relay} from './relay.ts'
+import { Kind, type EventTemplate, type Event } from './event.ts'
+import { Relay } from './relay.ts'
 
 /**
  * Authenticate via NIP-42 flow.
@@ -13,22 +13,20 @@ import {Relay} from './relay.ts'
 export const authenticate = async ({
   challenge,
   relay,
-  sign
+  sign,
 }: {
   challenge: string
   relay: Relay
-  sign: <K extends number = number>(
-    e: EventTemplate<K>
-  ) => Promise<Event<K>> | Event<K>
+  sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>> | Event<K>
 }): Promise<void> => {
   const e: EventTemplate = {
     kind: Kind.ClientAuth,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
       ['relay', relay.url],
-      ['challenge', challenge]
+      ['challenge', challenge],
     ],
-    content: ''
+    content: '',
   }
   return relay.auth(await sign(e))
 }
