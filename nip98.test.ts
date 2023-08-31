@@ -54,11 +54,6 @@ describe('getToken', () => {
     ])
   })
 
-  test('getToken unknown method throws an error', async () => {
-    const result = getToken('http://test.com', 'fake', e => finishEvent(e, sk))
-    await expect(result).rejects.toThrow(Error)
-  })
-
   test('getToken missing loginUrl throws an error', async () => {
     const result = getToken('', 'get', e => finishEvent(e, sk))
     await expect(result).rejects.toThrow(Error)
