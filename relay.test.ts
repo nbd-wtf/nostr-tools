@@ -55,7 +55,7 @@ test('querying', async () => {
 
   expect(t1).toEqual(true)
   expect(t2).toEqual(true)
-})
+}, 10000)
 
 test('get()', async () => {
   let event = await relay.get({
