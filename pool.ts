@@ -94,7 +94,7 @@ export class SimplePool {
     }, this.eoseSubTimeout)
 
     relays
-      .filter((r, i, a) => a.indexOf(r) == i)
+      .filter((r, i, a) => a.indexOf(r) === i)
       .forEach(async relay => {
         let r
         try {
