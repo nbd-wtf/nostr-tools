@@ -12,6 +12,8 @@ This package is only providing lower-level functionality. If you want an easy-to
  npm install nostr-tools # or yarn add nostr-tools
 ```
 
+If using TypeScript, this package requires TypeScript >= 5.0.
+
 ## Usage
 
 ### Generating a private key and a public key
