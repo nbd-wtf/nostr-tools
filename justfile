@@ -20,6 +20,7 @@ publish: build emit-types
     npm publish
 
 format:
+    eslint --ext .ts --fix .
     prettier --plugin-search-dir . --write .
 
 lint:
