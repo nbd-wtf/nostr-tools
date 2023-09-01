@@ -1,9 +1,9 @@
-import {schnorr} from '@noble/curves/secp256k1'
-import {sha256} from '@noble/hashes/sha256'
-import {bytesToHex} from '@noble/hashes/utils'
+import { schnorr } from '@noble/curves/secp256k1'
+import { sha256 } from '@noble/hashes/sha256'
+import { bytesToHex } from '@noble/hashes/utils'
 
-import {getPublicKey} from './keys.ts'
-import {utf8Encoder} from './utils.ts'
+import { getPublicKey } from './keys.ts'
+import { utf8Encoder } from './utils.ts'
 
 /** @deprecated Use numbers instead. */
 /* eslint-disable no-unused-vars */
@@ -32,7 +32,7 @@ export enum Kind {
   ProfileBadge = 30008,
   BadgeDefinition = 30009,
   Article = 30023,
-  FileMetadata = 1063
+  FileMetadata = 1063,
 }
 
 export type EventTemplate<K extends number = number> = {
@@ -58,14 +58,11 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
     kind,
     content: '',
     tags: [],
-    created_at: 0
+    created_at: 0,
   }
 }
 
-export function finishEvent<K extends number = number>(
-  t: EventTemplate<K>,
-  privateKey: string
-): Event<K> {
+export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): Event<K> {
   let event = t as Event<K>
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
@@ -74,17 +71,9 @@ export function finishEvent<K extends number = number>(
 }
 
 export function serializeEvent(evt: UnsignedEvent<number>): string {
-  if (!validateEvent(evt))
-    throw new Error("can't serialize event with wrong or missing properties")
+  if (!validateEvent(evt)) throw new Error("can't serialize event with wrong or missing properties")
 
-  return JSON.stringify([
-    0,
-    evt.pubkey,
-    evt.created_at,
-    evt.kind,
-    evt.tags,
-    evt.content
-  ])
+  return JSON.stringify([0, evt.pubkey, evt.created_at, evt.kind, evt.tags, evt.content])
 }
 
 export function getEventHash(event: UnsignedEvent<number>): string {
@@ -92,8 +81,7 @@ export function getEventHash(event: UnsignedEvent<number>): string {
   return bytesToHex(eventHash)
 }
 
-const isRecord = (obj: unknown): obj is Record<string, unknown> =>
-  obj instanceof Object
+const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
 
 export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
   if (!isRecord(event)) return false
@@ -126,15 +114,12 @@ export function verifySignature(event: Event<number>): boolean {
 /** @deprecated Use `getSignature` instead. */
 export function signEvent(event: UnsignedEvent<number>, key: string): string {
   console.warn(
-    'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.'
+    'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.',
   )
   return getSignature(event, key)
 }
 
 /** Calculate the signature for an event. */
-export function getSignature(
-  event: UnsignedEvent<number>,
-  key: string
-): string {
+export function getSignature(event: UnsignedEvent<number>, key: string): string {
   return bytesToHex(schnorr.sign(getEventHash(event), key))
 }

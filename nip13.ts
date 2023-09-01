@@ -1,4 +1,4 @@
-import {hexToBytes} from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils'
 
 /** Get POW difficulty from a Nostr hex ID. */
 export function getPow(id: string): number {
@@ -34,7 +34,7 @@ function msb(b: number) {
   }
 
   // eslint-disable-next-line no-cond-assign
-  while (b >>= 1) {
+  while ((b >>= 1)) {
     n++
   }
 

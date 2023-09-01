@@ -1,4 +1,4 @@
-import {classifyKind} from './kinds.ts'
+import { classifyKind } from './kinds.ts'
 
 test('kind classification', () => {
   expect(classifyKind(1)).toBe('regular')

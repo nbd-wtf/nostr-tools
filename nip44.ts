@@ -1,10 +1,10 @@
-import {base64} from '@scure/base'
-import {randomBytes} from '@noble/hashes/utils'
-import {secp256k1} from '@noble/curves/secp256k1'
-import {sha256} from '@noble/hashes/sha256'
-import {xchacha20} from '@noble/ciphers/chacha'
+import { base64 } from '@scure/base'
+import { randomBytes } from '@noble/hashes/utils'
+import { secp256k1 } from '@noble/curves/secp256k1'
+import { sha256 } from '@noble/hashes/sha256'
+import { xchacha20 } from '@noble/ciphers/chacha'
 
-import {utf8Decoder, utf8Encoder} from './utils.ts'
+import { utf8Decoder, utf8Encoder } from './utils.ts'
 
 export const getSharedSecret = (privkey: string, pubkey: string): Uint8Array =>
   sha256(secp256k1.getSharedSecret(privkey, '02' + pubkey).subarray(1, 33))

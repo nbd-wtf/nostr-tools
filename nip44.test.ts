@@ -1,8 +1,8 @@
 import crypto from 'node:crypto'
-import {hexToBytes} from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils'
 
-import {encrypt, decrypt, getSharedSecret} from './nip44.ts'
-import {getPublicKey, generatePrivateKey} from './keys.ts'
+import { encrypt, decrypt, getSharedSecret } from './nip44.ts'
+import { getPublicKey, generatePrivateKey } from './keys.ts'
 
 // @ts-ignore
 // eslint-disable-next-line no-undef
