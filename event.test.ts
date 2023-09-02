@@ -7,6 +7,7 @@ import {
   verifySignature,
   getSignature,
   Kind,
+  verifiedSymbol,
 } from './event.ts'
 import { getPublicKey } from './keys.ts'
 
@@ -236,7 +237,7 @@ describe('Event', () => {
     it('should return false for an invalid event signature', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
@@ -260,7 +261,7 @@ describe('Event', () => {
       const privateKey2 = '5b4a34f4e4b23c63ad55a35e3f84a3b53d96dbf266edf521a8358f71d19cbf67'
       const publicKey2 = getPublicKey(privateKey2)
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
@@ -282,7 +283,7 @@ describe('Event', () => {
     it('should return false for an invalid event id', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: 1,
           tags: [],

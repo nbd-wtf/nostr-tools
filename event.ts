@@ -119,14 +119,13 @@ export function verifySignature<K extends number>(event: Event<K>): event is Ver
 
   const hash = getEventHash(event)
   if (hash !== event.id) {
-    return false
+    return (event[verifiedSymbol] = false)
   }
 
   try {
-    event[verifiedSymbol] = schnorr.verify(event.sig, hash, event.pubkey)
-    return event[verifiedSymbol]
+    return (event[verifiedSymbol] = schnorr.verify(event.sig, hash, event.pubkey))
   } catch (err) {
-    return false
+    return (event[verifiedSymbol] = false)
   }
 }
 
