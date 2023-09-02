@@ -5,6 +5,9 @@ import { bytesToHex } from '@noble/hashes/utils'
 import { getPublicKey } from './keys.ts'
 import { utf8Encoder } from './utils.ts'
 
+/** Designates a verified event signature. */
+export const verifiedSymbol = Symbol('verified')
+
 /** @deprecated Use numbers instead. */
 /* eslint-disable no-unused-vars */
 export enum Kind {
@@ -35,20 +38,26 @@ export enum Kind {
   FileMetadata = 1063,
 }
 
-export type EventTemplate<K extends number = number> = {
+export interface Event<K extends number = number> {
   kind: K
   tags: string[][]
   content: string
   created_at: number
-}
-
-export type UnsignedEvent<K extends number = number> = EventTemplate<K> & {
   pubkey: string
-}
-
-export type Event<K extends number = number> = UnsignedEvent<K> & {
   id: string
   sig: string
+  [verifiedSymbol]?: boolean
+}
+
+export type EventTemplate<K extends number = number> = Pick<Event<K>, 'kind' | 'tags' | 'content' | 'created_at'>
+export type UnsignedEvent<K extends number = number> = Pick<
+  Event<K>,
+  'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'
+>
+
+/** An event whose signature has been verified. */
+export interface VerifiedEvent<K extends number = number> extends Event<K> {
+  [verifiedSymbol]: true
 }
 
 export function getBlankEvent(): EventTemplate<Kind.Blank>
@@ -103,9 +112,12 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
   return true
 }
 
-export function verifySignature(event: Event<number>): boolean {
+/** Verify the event's signature. This function mutates the event with a `verified` symbol, making it idempotent. */
+export function verifySignature<K extends number>(event: Event<K>): event is VerifiedEvent<K> {
+  if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
   try {
-    return schnorr.verify(event.sig, getEventHash(event), event.pubkey)
+    event[verifiedSymbol] = schnorr.verify(event.sig, getEventHash(event), event.pubkey)
+    return event[verifiedSymbol]
   } catch (err) {
     return false
   }
