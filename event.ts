@@ -71,11 +71,12 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   }
 }
 
-export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): Event<K> {
-  let event = t as Event<K>
+export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): VerifiedEvent<K> {
+  const event = t as VerifiedEvent<K>
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
   event.sig = getSignature(event, privateKey)
+  event[verifiedSymbol] = true
   return event
 }
 
