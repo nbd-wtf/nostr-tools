@@ -71,11 +71,12 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   }
 }
 
-export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): Event<K> {
-  let event = t as Event<K>
+export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): VerifiedEvent<K> {
+  const event = t as VerifiedEvent<K>
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
   event.sig = getSignature(event, privateKey)
+  event[verifiedSymbol] = true
   return event
 }
 
@@ -115,11 +116,16 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
 /** Verify the event's signature. This function mutates the event with a `verified` symbol, making it idempotent. */
 export function verifySignature<K extends number>(event: Event<K>): event is VerifiedEvent<K> {
   if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
+
+  const hash = getEventHash(event)
+  if (hash !== event.id) {
+    return (event[verifiedSymbol] = false)
+  }
+
   try {
-    event[verifiedSymbol] = schnorr.verify(event.sig, getEventHash(event), event.pubkey)
-    return event[verifiedSymbol]
+    return (event[verifiedSymbol] = schnorr.verify(event.sig, hash, event.pubkey))
   } catch (err) {
-    return false
+    return (event[verifiedSymbol] = false)
   }
 }
 

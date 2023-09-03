@@ -79,10 +79,13 @@ export class SimplePool {
     let eosesMissing = relays.length
 
     let eoseSent = false
-    let eoseTimeout = setTimeout(() => {
-      eoseSent = true
-      for (let cb of eoseListeners.values()) cb()
-    }, opts?.eoseSubTimeout || this.eoseSubTimeout)
+    let eoseTimeout = setTimeout(
+      () => {
+        eoseSent = true
+        for (let cb of eoseListeners.values()) cb()
+      },
+      opts?.eoseSubTimeout || this.eoseSubTimeout,
+    )
 
     relays
       .filter((r, i, a) => a.indexOf(r) === i)

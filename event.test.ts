@@ -7,6 +7,7 @@ import {
   verifySignature,
   getSignature,
   Kind,
+  verifiedSymbol,
 } from './event.ts'
 import { getPublicKey } from './keys.ts'
 
@@ -236,7 +237,7 @@ describe('Event', () => {
     it('should return false for an invalid event signature', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
@@ -247,7 +248,7 @@ describe('Event', () => {
       )
 
       // tamper with the signature
-      event.sig = event.sig.replace(/0/g, '1')
+      event.sig = event.sig.replace(/^.{3}/g, '666')
 
       const isValid = verifySignature(event)
 
@@ -260,7 +261,7 @@ describe('Event', () => {
       const privateKey2 = '5b4a34f4e4b23c63ad55a35e3f84a3b53d96dbf266edf521a8358f71d19cbf67'
       const publicKey2 = getPublicKey(privateKey2)
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
@@ -275,6 +276,27 @@ describe('Event', () => {
         ...event,
         pubkey: publicKey2,
       })
+
+      expect(isValid).toEqual(false)
+    })
+
+    it('should return false for an invalid event id', () => {
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
+        {
+          kind: 1,
+          tags: [],
+          content: 'Hello, world!',
+          created_at: 1617932115,
+        },
+        privateKey,
+      )
+
+      // tamper with the id
+      event.id = event.id.replace(/^.{3}/g, '666')
+
+      const isValid = verifySignature(event)
 
       expect(isValid).toEqual(false)
     })
@@ -296,9 +318,9 @@ describe('Event', () => {
       const sig = getSignature(unsignedEvent, privateKey)
 
       // verify the signature
-      // @ts-expect-error
       const isValid = verifySignature({
         ...unsignedEvent,
+        id: getEventHash(unsignedEvent),
         sig,
       })
 
