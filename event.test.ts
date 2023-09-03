@@ -248,7 +248,7 @@ describe('Event', () => {
       )
 
       // tamper with the signature
-      event.sig = event.sig.replace(/0/g, '1')
+      event.sig = event.sig.replace(/^.{3}/g, '666')
 
       const isValid = verifySignature(event)
 
@@ -294,7 +294,7 @@ describe('Event', () => {
       )
 
       // tamper with the id
-      event.id = event.id.replace(/0/g, '1')
+      event.id = event.id.replace(/^.{3}/g, '666')
 
       const isValid = verifySignature(event)
 
