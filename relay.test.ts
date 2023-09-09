@@ -57,6 +57,19 @@ test('querying', async () => {
   expect(t2).toEqual(true)
 }, 10000)
 
+test('async iterator', async () => {
+  let sub = relay.sub([
+    {
+      ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
+    },
+  ])
+
+  for await (const event of sub.events) {
+    expect(event).toHaveProperty('id', 'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027')
+    break
+  }
+})
+
 test('get()', async () => {
   let event = await relay.get({
     ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
