@@ -1,4 +1,4 @@
-import { relayInit, type Relay, type Sub, type SubscriptionOptions } from './relay.ts'
+import { relayInit, eventsGenerator, type Relay, type Sub, type SubscriptionOptions } from './relay.ts'
 import { normalizeURL } from './utils.ts'
 
 import type { Event } from './event.ts'
@@ -118,10 +118,10 @@ export class SimplePool {
         }
       })
 
-    let greaterSub: Sub = {
+    let greaterSub: Sub<K> = {
       sub(filters, opts) {
         subs.forEach(sub => sub.sub(filters, opts))
-        return greaterSub
+        return greaterSub as any
       },
       unsub() {
         subs.forEach(sub => sub.unsub())
@@ -137,6 +137,9 @@ export class SimplePool {
         if (type === 'event') {
           eventListeners.delete(cb)
         } else if (type === 'eose') eoseListeners.delete(cb as () => void | Promise<void>)
+      },
+      get events() {
+        return eventsGenerator(greaterSub)
       },
     }
 
