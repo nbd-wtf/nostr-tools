@@ -90,13 +90,12 @@ sub.on('event', event => {
 
 let event = {
   kind: 1,
-  pubkey: pk,
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
   content: 'hello world',
 }
 
-// this calculates the event id and signs the event in a single step
+// this assigns the pubkey, calculates the event id and signs the event in a single step
 const signedEvent = finishEvent(event, sk)
 await relay.publish(signedEvent)
 
