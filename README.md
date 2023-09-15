@@ -144,11 +144,17 @@ let event = await pool.get(relays, {
   ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
 })
 
+let batchedEvents = await pool.batchedList('notes', relays, [{ kinds: [1] }])
+// `batchedList` will wait for other function calls with the same `batchKey`
+// (e.g. 'notes', 'authors', etc) within a fixed amount of time (default: `100ms`) before sending
+// next ws request, and batch all requests with similar `batchKey`s together in a single request.
+
 let relaysForEvent = pool.seenOn('44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245')
 // relaysForEvent will be an array of URLs from relays a given event was seen on
 
 pool.close()
 ```
+read more details about `batchedList` on this pr: [https://github.com/nbd-wtf/nostr-tools/pull/279](https://github.com/nbd-wtf/nostr-tools/pull/279#issue-1859315757)
 
 ### Parsing references (mentions) from a content using NIP-10 and NIP-27
 
