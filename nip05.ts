@@ -7,7 +7,7 @@ import { ProfilePointer } from './nip19.ts'
  * - 1: name (optional)
  * - 2: domain
  */
-export const NIP05_REGEX = /^(?:([\w.+-]+)@)?([\w.-]+)$/
+export const NIP05_REGEX = /^(?:([\w.+\-]+|[\p{Lo}\p{Emoji}]+)@)?(([\w\-]+|[\p{Lo}\p{Emoji}]+)+(\.[\w\-.]+)*)$/u
 
 var _fetch: any
 
