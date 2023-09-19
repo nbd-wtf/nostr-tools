@@ -53,7 +53,7 @@ export type EventTemplate<K extends number = number> = Pick<Event<K>, 'kind' | '
 export type UnsignedEvent<K extends number = number> = Pick<
   Event<K>,
   'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'
->
+> & Partial<Pick<Event<K>, 'id'>>
 
 /** An event whose signature has been verified. */
 export interface VerifiedEvent<K extends number = number> extends Event<K> {
@@ -139,5 +139,5 @@ export function signEvent(event: UnsignedEvent<number>, key: string): string {
 
 /** Calculate the signature for an event. */
 export function getSignature(event: UnsignedEvent<number>, key: string): string {
-  return bytesToHex(schnorr.sign(getEventHash(event), key))
+  return bytesToHex(schnorr.sign(event.id ?? getEventHash(event), key))
 }
