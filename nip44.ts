@@ -1,49 +1,93 @@
-import {xchacha20} from '@noble/ciphers/chacha'
+import {chacha20} from '@noble/ciphers/chacha'
+import {ensureBytes, equalBytes} from '@noble/ciphers/utils'
 import {secp256k1} from '@noble/curves/secp256k1'
+import {hkdf} from '@noble/hashes/hkdf'
+import {hmac} from '@noble/hashes/hmac'
 import {sha256} from '@noble/hashes/sha256'
 import {concatBytes, randomBytes} from '@noble/hashes/utils'
 import {base64} from '@scure/base'
 import {utf8Decoder, utf8Encoder} from './utils.ts'
-import {ensureBytes} from '@noble/ciphers/utils'
 
-export function getSharedSecret(
-  privkeyA: string,
-  pubkeyB: string
-): Uint8Array {
-  const key = secp256k1.getSharedSecret(privkeyA, '02' + pubkeyB)
-  return sha256(key.subarray(1, 33))
+export const utils = {
+  v1: {
+    maxPlaintextSize: 65536 - 128, // 64kb - 128
+    minCiphertextSize: 100, // should be 128 if min padded to 32b: base64(1+32+32+32)
+    maxCiphertextSize: 102400, // 100kb
+
+    getConversationKey(privkeyA: string, pubkeyB: string): Uint8Array {
+      const key = secp256k1.getSharedSecret(privkeyA, '02' + pubkeyB)
+      return key.subarray(1, 33)
+    },
+
+    getMessageKeys(conversationKey: Uint8Array, salt: Uint8Array) {
+      const keys = hkdf(sha256, conversationKey, salt, 'nip44-v1', 76)
+      return {
+        enc: keys.subarray(0, 32),
+        nonce: keys.subarray(32, 44),
+        auth: keys.subarray(44, 76)
+      }
+    },
+
+    pad(unpadded: string): Uint8Array {
+      const unpaddedB = utf8Encoder.encode(unpadded)
+      const len = unpaddedB.length
+      if (len < 1 || len >= utils.v1.maxPlaintextSize)
+        throw new Error('plaintext should be between 1b and 64KB')
+      let minpad = 0
+      for (let i = 5; i < 17; i++) {
+        minpad = Math.pow(2, i)
+        if (len < minpad) break
+      }
+      const zeros = new Uint8Array(minpad - len)
+      const lenBuf = new Uint8Array(2)
+      new DataView(lenBuf.buffer).setUint16(0, len)
+      return concatBytes(lenBuf, unpaddedB, zeros)
+    },
+
+    unpad(padded: Uint8Array): string {
+      const unpaddedLength = new DataView(padded.buffer).getUint16(0)
+      const plaintextBytes = padded.subarray(2, 2 + unpaddedLength)
+      return utf8Decoder.decode(plaintextBytes)
+    }
+  }
 }
 
 export function encrypt(
   key: Uint8Array,
   plaintext: string,
-  opts: {version?: number; nonce?: Uint8Array} = {}
+  options: {salt?: Uint8Array; version?: number} = {}
 ): string {
-  ensureBytes(key)
-  if (typeof plaintext !== 'string') throw new Error('plaintext must be string')
-  if (!opts) opts = Object.assign({}, opts, {version: 1})
-  const v = opts.version ?? 1
-  if (v !== 1) throw new Error('NIP44: unknown encryption version ' + v)
-  let nonce = opts.nonce ?? randomBytes(24)
-  ensureBytes(nonce)
-  let plaintext_ = utf8Encoder.encode(plaintext)
-  let ciphertext = xchacha20(key, nonce, plaintext_, plaintext_)
-  let output = concatBytes(new Uint8Array([v]), nonce, ciphertext)
-  return base64.encode(output)
+  const version = options.version ?? 1
+  const salt = options.salt ?? randomBytes(32)
+  if (version !== 1) throw new Error('unknown encryption version')
+  const vers = version.toString(16) // 1 => 01, 16 => 0f
+  ensureBytes(salt, 32)
+
+  const keys = utils.v1.getMessageKeys(key, salt)
+  const padded = utils.v1.pad(plaintext)
+  const ciphertext = chacha20(keys.enc, keys.nonce, padded)
+  const mac = hmac(sha256, keys.auth, ciphertext)
+  const compressed = base64.encode(concatBytes(salt, ciphertext, mac))
+  return vers + compressed
 }
 
 export function decrypt(key: Uint8Array, ciphertext: string): string {
-  ensureBytes(key)
-  if (typeof ciphertext !== 'string')
-    throw new Error('ciphertext must be string')
-  let data: Uint8Array = base64.decode(ciphertext)
-  if (data.length < 26)
-    throw new Error('NIP44: length must be at least 26 bytes')
-  let v = data[0]
-  if (v !== 1) throw new Error('NIP44: unknown encryption version ' + v)
-  let nonce = data.slice(1, 25)
-  let ciphertext_ = data.slice(25)
-  let plaintext = xchacha20(key, nonce, ciphertext_)
-  let text = utf8Decoder.decode(plaintext)
-  return text
+  const clen = ciphertext.length
+  const version = Number.parseInt(ciphertext.slice(0, 1), 16)
+  if (version !== 1) throw new Error('unknown encryption version')
+  if (clen < utils.v1.minCiphertextSize || clen >= utils.v1.maxCiphertextSize)
+    throw new Error('ciphertext length is invalid')
+
+  const data = base64.decode(ciphertext.slice(1))
+  const salt = data.subarray(0, 32)
+  const ciphertext_ = data.subarray(32, -32)
+  const mac = data.subarray(-32)
+
+  const keys = utils.v1.getMessageKeys(key, salt)
+  const calculatedMac = hmac(sha256, keys.auth, ciphertext_)
+  if (!equalBytes(calculatedMac, mac))
+    throw new Error('encryption MAC does not match')
+  const plaintext = chacha20(keys.enc, keys.nonce, ciphertext_)
+  const unpadded = utils.v1.unpad(plaintext)
+  return unpadded
 }

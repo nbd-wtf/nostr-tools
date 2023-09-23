@@ -3,19 +3,19 @@
     {
       "sec1": "0000000000000000000000000000000000000000000000000000000000000001",
       "sec2": "0000000000000000000000000000000000000000000000000000000000000002",
-      "shared": "0135da2f8acf7b9e3090939432e47684eb888ea38c2173054d4eedffdf152ca5",
-      "nonce": "121f9d60726777642fd82286791ab4d7461c9502ebcbb6e6",
+      "shared": "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+      "salt": "0000000000000000000000000000000000000000000000000000000000000001",
       "plaintext": "a",
-      "ciphertext": "ARIfnWByZ3dkL9gihnkatNdGHJUC68u25qM=",
+      "ciphertext": "1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHTOSW6Gdkq32HWa3eYdF97ALzFK45Wcg4jeuK7zz3ye/dSEcTB08Xlr+DEgYg7J8kHQaQXZKxiarHVSMiw+vqe4lE=",
       "note": "sk1 = 1, sk2 = random, 0x02"
     },
     {
       "sec1": "0000000000000000000000000000000000000000000000000000000000000002",
       "sec2": "0000000000000000000000000000000000000000000000000000000000000001",
-      "shared": "0135da2f8acf7b9e3090939432e47684eb888ea38c2173054d4eedffdf152ca5",
+      "shared": "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+      "salt": "f00000000000000000000000000000f00000000000000000000000000000000f",
       "plaintext": "a",
-      "ciphertext": "AeCt7jJ8L+WBOTiCSfeXEGXB/C/wgsrSRek=",
-      "nonce": "e0adee327c2fe58139388249f7971065c1fc2ff082cad245",
+      "ciphertext": "18AAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAA+a0vMgbnISrKRDMofXovg8VbAAhbzq+mGWJdXk8B8ghukg530TqwmeXWMP1NxGKkgMG9biGbuZO96INKNZbNRlsc0=",
       "note": "sk1 = 1, sk2 = random, 0x02"
     }
   ],
@@ -23,28 +23,28 @@
     {
       "sec1": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364139",
       "pub2": "0000000000000000000000000000000000000000000000000000000000000002",
-      "shared": "a6d6a2f7011cdd1aeef325948f48c6efa40f0ec723ae7f5ac7e3889c43481500",
-      "nonce": "f481750e13dfa90b722b7cce0db39d80b0db2e895cc3001a",
+      "shared": "7a1ccf5ce5a08e380f590de0c02776623b85a61ae67cfb6a017317e505b7cb51",
+      "salt": "a000000000000000000000000000000000000000000000000000000000000001",
       "plaintext": "a",
-      "ciphertext": "AfSBdQ4T36kLcit8zg2znYCw2y6JXMMAGjM=",
+      "ciphertext": "1oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFNT8GMeM9D/8kVHayoPPnYyIoBXoYXUEwlvwb61OtoikfwRuTI62oZ2dsD4HE/he0eCd4aIb+4gqv+3oRQGk62SF8=",
       "note": "sec1 = n-2, pub2: random, 0x02"
     },
     {
       "sec1": "0000000000000000000000000000000000000000000000000000000000000002",
       "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdeb",
-      "shared": "4908464f77dd74e11a9b4e4a3bc2467445bd794e8abcbfafb65a6874f9e25a8f",
-      "nonce": "45c484ba2c0397853183adba6922156e09a2ad4e3e6914f2",
+      "shared": "aa971537d741089885a0b48f2730a125e15b36033d089d4537a4e1204e76b39e",
+      "salt": "b000000000000000000000000000000000000000000000000000000000000002",
       "plaintext": "A Peer-to-Peer Electronic Cash System",
-      "ciphertext": "AUXEhLosA5eFMYOtumkiFW4Joq1OPmkU8k/25+3+VDFvOU39qkUDl1aiy8Q+0ozTwbhD57VJoIYayYS++hE=",
+      "ciphertext": "1sAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALmLsOQlNZ4u0Hthr0erS1GSK4kxKWVfikA7rrb1SjPSW6H9TbmtgV1qRKRzdJLn+8OQthPl1d+Ec4HZGZ04uGRTZe7wD0+0NCcjLP+eZ+fOZyxpQIG9bz47JHlOLDbefLWiQ==",
       "note": "sec1 = 2, pub2: "
     },
     {
       "sec1": "0000000000000000000000000000000000000000000000000000000000000001",
       "pub2": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
-      "shared": "132f39a98c31baaddba6525f5d43f2954472097fa15265f45130bfdb70e51def",
-      "nonce": "d60de08405cf9bde508147e82224ac6af409c12b9e5492e1",
+      "shared": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+      "salt": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
       "plaintext": "A purely peer-to-peer version of electronic cash would allow online payments to be sent directly from one party to another without going through a financial institution. Digital signatures provide part of the solution, but the main benefits are lost if a trusted third party is still required to prevent double-spending.",
-      "ciphertext": "AdYN4IQFz5veUIFH6CIkrGr0CcErnlSS4VdvoQaP2DCB1dIFL72HSriG1aFABcTlu86hrsG0MdOO9rPdVXc3jptMMzqvIN6tJlHPC8GdwFD5Y8BT76xIIOTJR2W0IdrM7++WC/9harEJAdeWHDAC9zNJX81CpCz4fnV1FZ8GxGLC0nUF7NLeUiNYu5WFXQuO9uWMK0pC7tk3XVogk90X6rwq0MQG9ihT7e1elatDy2YGat+VgQlDrz8ZLRw/lvU+QqeXMQgjqn42sMTrimG6NdKfHJSVWkT6SKZYVsuTyU1Iu5Nk0twEV8d11/MPfsMx4i36arzTC9qxE6jftpOoG8f/jwPTSCEpHdZzrb/CHJcpc+zyOW9BZE2ZOmSxYHAE0ustC9zRNbMT3m6LqxIoHq8j+8Ysu+Cwqr4nUNLYq/Q31UMdDg1oamYS17mWIAS7uf2yF5uT5IlG",
+      "ciphertext": "1eb5mfvncu6xVoGKVzocLBwKb/NstzijZWfKBWxb4F5hXrER9RhYy3Imek+ouGzV6t+hFd+7Xod7ZF8HCzdFy6d8B+4xRfGKBepOJhDQ/Jmei5JHWx8KWX0yMWcuf6i9rrzXzKbQIrPJZ7NrbQUJdsE7atUmqV4gd5i1b/mbzGnL8ak3/qgjvwPN2ksqwMnCiGO3Lt9kFDuDDYSwqi0zwwxxuunc7bqf8HTF4bVPi/Rdyo8p6+V9EWzZ4AKgflZwfoAH63TcTqzAP1gjf7To8q02xIc8fTM3GkWVOgquuYSYkt2X18QRlpNQ0JZf7ynUY5sFw7pLoVmxgMedFGSN01hBhIEPNOJl/+9JFbfLDLe1NLuGa0QuX5pM2K8ndzR1LliVbth7bNFSDcAVKWbQSC57jSoip3+gDgy4ElnDxwi58cOlVncM+OVVoM60T3KfyAONZmVv2BwE3k6u3Wzy2JRh2Vna45w3VjokCKaiRRE3R0XyIrU8NgNQljBrmlNmzaUEMjB1rVxSV3z+3RcLZMzucHU6FiwOKziNgnznuNA0UJxlwAZwUiOuCVnw/L4P0uwVCTrJSWkdvrNQlxKZKwMNKkvg3X3RC/iQslRSHejGbxmw8V/eehJcbt2GeIrxXxRqN08AdWAxCcLsmhmhOMZ+ERO4aruNUDR3Hyj4TC7UjAFC05QSytb3RsPeE4Mhr9Ex8lRVLJBFYZAUSZf4OmDBKcUeStCzZZ+1EzX0MwD2bY2zwqmN2TlInkuLfFtxZSgA=",
       "note": "sec1 == pub2"
     }
   ],
