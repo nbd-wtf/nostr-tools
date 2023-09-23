@@ -1,10 +1,9 @@
-import {finishEvent, Kind} from './event.ts'
-import {getPublicKey} from './keys.ts'
-import {finishReactionEvent, getReactedEventPointer} from './nip25.ts'
+import { finishEvent, Kind } from './event.ts'
+import { getPublicKey } from './keys.ts'
+import { finishReactionEvent, getReactedEventPointer } from './nip25.ts'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
-  const privateKey =
-    'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+  const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
   const publicKey = getPublicKey(privateKey)
 
@@ -13,17 +12,17 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
       kind: Kind.Text,
       tags: [
         ['e', 'replied event id'],
-        ['p', 'replied event pubkey']
+        ['p', 'replied event pubkey'],
       ],
       content: 'Replied to a post',
-      created_at: 1617932115
+      created_at: 1617932115,
     },
-    privateKey
+    privateKey,
   )
 
   it('should create a signed event from a minimal template', () => {
     const template = {
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = finishReactionEvent(template, reactedEvent, privateKey)
@@ -33,7 +32,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
       ['e', 'replied event id'],
       ['p', 'replied event pubkey'],
       ['e', '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1'],
-      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f']
+      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f'],
     ])
     expect(event.content).toEqual('+')
     expect(event.created_at).toEqual(template.created_at)
@@ -51,7 +50,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
     const template = {
       tags: [['nonstandard', 'tag']],
       content: '👍',
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = finishReactionEvent(template, reactedEvent, privateKey)
@@ -62,7 +61,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
       ['e', 'replied event id'],
       ['p', 'replied event pubkey'],
       ['e', '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1'],
-      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f']
+      ['p', '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f'],
     ])
     expect(event.content).toEqual('👍')
     expect(event.created_at).toEqual(template.created_at)

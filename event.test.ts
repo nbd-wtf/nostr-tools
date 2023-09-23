@@ -7,8 +7,9 @@ import {
   verifySignature,
   getSignature,
   Kind,
+  verifiedSymbol,
 } from './event.ts'
-import {getPublicKey} from './keys.ts'
+import { getPublicKey } from './keys.ts'
 
 describe('Event', () => {
   describe('getBlankEvent', () => {
@@ -17,7 +18,7 @@ describe('Event', () => {
         kind: 255,
         content: '',
         tags: [],
-        created_at: 0
+        created_at: 0,
       })
     })
 
@@ -26,22 +27,21 @@ describe('Event', () => {
         kind: 1,
         content: '',
         tags: [],
-        created_at: 0
+        created_at: 0,
       })
     })
   })
 
   describe('finishEvent', () => {
     it('should create a signed event from a template', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const template = {
         kind: Kind.Text,
         tags: [],
         content: 'Hello, world!',
-        created_at: 1617932115
+        created_at: 1617932115,
       }
 
       const event = finishEvent(template, privateKey)
@@ -58,8 +58,7 @@ describe('Event', () => {
 
   describe('serializeEvent', () => {
     it('should serialize a valid event object', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
@@ -67,7 +66,7 @@ describe('Event', () => {
         created_at: 1617932115,
         kind: Kind.Text,
         tags: [],
-        content: 'Hello, world!'
+        content: 'Hello, world!',
       }
 
       const serializedEvent = serializeEvent(unsignedEvent)
@@ -79,21 +78,20 @@ describe('Event', () => {
           unsignedEvent.created_at,
           unsignedEvent.kind,
           unsignedEvent.tags,
-          unsignedEvent.content
-        ])
+          unsignedEvent.content,
+        ]),
       )
     })
 
     it('should throw an error for an invalid event object', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const invalidEvent = {
         kind: Kind.Text,
         tags: [],
         created_at: 1617932115,
-        pubkey: publicKey // missing content
+        pubkey: publicKey, // missing content
       }
 
       expect(() => {
@@ -105,8 +103,7 @@ describe('Event', () => {
 
   describe('getEventHash', () => {
     it('should return the correct event hash', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
@@ -114,7 +111,7 @@ describe('Event', () => {
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const eventHash = getEventHash(unsignedEvent)
@@ -126,8 +123,7 @@ describe('Event', () => {
 
   describe('validateEvent', () => {
     it('should return true for a valid event object', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
@@ -135,7 +131,7 @@ describe('Event', () => {
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const isValid = validateEvent(unsignedEvent)
@@ -155,7 +151,7 @@ describe('Event', () => {
       const invalidEvent = {
         kind: Kind.Text,
         tags: [],
-        created_at: 1617932115 // missing content and pubkey
+        created_at: 1617932115, // missing content and pubkey
       }
 
       const isValid = validateEvent(invalidEvent)
@@ -172,15 +168,14 @@ describe('Event', () => {
     })
 
     it('should return false for an object with invalid properties', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const invalidEvent = {
         kind: 1,
         tags: [],
         created_at: '1617932115', // should be a number
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const isValid = validateEvent(invalidEvent)
@@ -194,7 +189,7 @@ describe('Event', () => {
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: 'invalid_pubkey'
+        pubkey: 'invalid_pubkey',
       }
 
       const isValid = validateEvent(invalidEvent)
@@ -203,8 +198,7 @@ describe('Event', () => {
     })
 
     it('should return false for an object with invalid tags', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const invalidEvent = {
@@ -212,7 +206,7 @@ describe('Event', () => {
         tags: {}, // should be an array
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const isValid = validateEvent(invalidEvent)
@@ -223,17 +217,16 @@ describe('Event', () => {
 
   describe('verifySignature', () => {
     it('should return true for a valid event signature', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
       const event = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
           content: 'Hello, world!',
-          created_at: 1617932115
+          created_at: 1617932115,
         },
-        privateKey
+        privateKey,
       )
 
       const isValid = verifySignature(event)
@@ -242,21 +235,20 @@ describe('Event', () => {
     })
 
     it('should return false for an invalid event signature', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
           content: 'Hello, world!',
-          created_at: 1617932115
+          created_at: 1617932115,
         },
-        privateKey
+        privateKey,
       )
 
       // tamper with the signature
-      event.sig = event.sig.replace(/0/g, '1')
+      event.sig = event.sig.replace(/^.{3}/g, '666')
 
       const isValid = verifySignature(event)
 
@@ -264,28 +256,47 @@ describe('Event', () => {
     })
 
     it('should return false when verifying an event with a different private key', () => {
-      const privateKey1 =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey1 = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
-      const privateKey2 =
-        '5b4a34f4e4b23c63ad55a35e3f84a3b53d96dbf266edf521a8358f71d19cbf67'
+      const privateKey2 = '5b4a34f4e4b23c63ad55a35e3f84a3b53d96dbf266edf521a8358f71d19cbf67'
       const publicKey2 = getPublicKey(privateKey2)
 
-      const event = finishEvent(
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
           kind: Kind.Text,
           tags: [],
           content: 'Hello, world!',
-          created_at: 1617932115
+          created_at: 1617932115,
         },
-        privateKey1
+        privateKey1,
       )
 
       // verify with different private key
       const isValid = verifySignature({
         ...event,
-        pubkey: publicKey2
+        pubkey: publicKey2,
       })
+
+      expect(isValid).toEqual(false)
+    })
+
+    it('should return false for an invalid event id', () => {
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+
+      const { [verifiedSymbol]: _, ...event } = finishEvent(
+        {
+          kind: 1,
+          tags: [],
+          content: 'Hello, world!',
+          created_at: 1617932115,
+        },
+        privateKey,
+      )
+
+      // tamper with the id
+      event.id = event.id.replace(/^.{3}/g, '666')
+
+      const isValid = verifySignature(event)
 
       expect(isValid).toEqual(false)
     })
@@ -293,8 +304,7 @@ describe('Event', () => {
 
   describe('getSignature', () => {
     it('should produce the correct signature for an event object', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
@@ -302,16 +312,16 @@ describe('Event', () => {
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const sig = getSignature(unsignedEvent, privateKey)
 
       // verify the signature
-      // @ts-expect-error
       const isValid = verifySignature({
         ...unsignedEvent,
-        sig
+        id: getEventHash(unsignedEvent),
+        sig,
       })
 
       expect(typeof sig).toEqual('string')
@@ -320,19 +330,17 @@ describe('Event', () => {
     })
 
     it('should not sign an event with different private key', () => {
-      const privateKey =
-        'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+      const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
-      const wrongPrivateKey =
-        'a91e2a9d9e0f70f0877bea0dbf034e8f95d7392a27a7f07da0d14b9e9d456be7'
+      const wrongPrivateKey = 'a91e2a9d9e0f70f0877bea0dbf034e8f95d7392a27a7f07da0d14b9e9d456be7'
 
       const unsignedEvent = {
         kind: Kind.Text,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
-        pubkey: publicKey
+        pubkey: publicKey,
       }
 
       const sig = getSignature(unsignedEvent, wrongPrivateKey)
@@ -341,7 +349,7 @@ describe('Event', () => {
       // @ts-expect-error
       const isValid = verifySignature({
         ...unsignedEvent,
-        sig
+        sig,
       })
 
       expect(typeof sig).toEqual('string')

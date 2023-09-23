@@ -1,4 +1,4 @@
-import {Event, type Kind} from './event.ts'
+import { Event } from './event.ts'
 
 export type Filter<K extends number = number> = {
   ids?: string[]
@@ -11,10 +11,7 @@ export type Filter<K extends number = number> = {
   [key: `#${string}`]: string[] | undefined
 }
 
-export function matchFilter(
-  filter: Filter<number>,
-  event: Event<number>
-): boolean {
+export function matchFilter(filter: Filter<number>, event: Event<number>): boolean {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) {
     if (!filter.ids.some(prefix => event.id.startsWith(prefix))) {
       return false
@@ -31,13 +28,7 @@ export function matchFilter(
     if (f[0] === '#') {
       let tagName = f.slice(1)
       let values = filter[`#${tagName}`]
-      if (
-        values &&
-        !event.tags.find(
-          ([t, v]) => t === f.slice(1) && values!.indexOf(v) !== -1
-        )
-      )
-        return false
+      if (values && !event.tags.find(([t, v]) => t === f.slice(1) && values!.indexOf(v) !== -1)) return false
     }
   }
 
@@ -47,10 +38,7 @@ export function matchFilter(
   return true
 }
 
-export function matchFilters(
-  filters: Filter<number>[],
-  event: Event<number>
-): boolean {
+export function matchFilters(filters: Filter<number>[], event: Event<number>): boolean {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true
   }
@@ -62,12 +50,7 @@ export function mergeFilters(...filters: Filter<number>[]): Filter<number> {
   for (let i = 0; i < filters.length; i++) {
     let filter = filters[i]
     Object.entries(filter).forEach(([property, values]) => {
-      if (
-        property === 'kinds' ||
-        property === 'ids' ||
-        property === 'authors' ||
-        property[0] === '#'
-      ) {
+      if (property === 'kinds' || property === 'ids' || property === 'authors' || property[0] === '#') {
         // @ts-ignore
         result[property] = result[property] || []
         // @ts-ignore
@@ -80,12 +63,9 @@ export function mergeFilters(...filters: Filter<number>[]): Filter<number> {
       }
     })
 
-    if (filter.limit && (!result.limit || filter.limit > result.limit))
-      result.limit = filter.limit
-    if (filter.until && (!result.until || filter.until > result.until))
-      result.until = filter.until
-    if (filter.since && (!result.since || filter.since < result.since))
-      result.since = filter.since
+    if (filter.limit && (!result.limit || filter.limit > result.limit)) result.limit = filter.limit
+    if (filter.until && (!result.until || filter.until > result.until)) result.until = filter.until
+    if (filter.since && (!result.since || filter.since < result.since)) result.since = filter.since
   }
 
   return result

@@ -1,14 +1,11 @@
-import {BECH32_REGEX, decode, type DecodeResult} from './nip19.ts'
+import { BECH32_REGEX, decode, type DecodeResult } from './nip19.ts'
 
 /** Nostr URI regex, eg `nostr:npub1...` */
 export const NOSTR_URI_REGEX = new RegExp(`nostr:(${BECH32_REGEX.source})`)
 
 /** Test whether the value is a Nostr URI. */
 export function test(value: unknown): value is `nostr:${string}` {
-  return (
-    typeof value === 'string' &&
-    new RegExp(`^${NOSTR_URI_REGEX.source}$`).test(value)
-  )
+  return typeof value === 'string' && new RegExp(`^${NOSTR_URI_REGEX.source}$`).test(value)
 }
 
 /** Parsed Nostr URI data. */
@@ -28,6 +25,6 @@ export function parse(uri: string): NostrURI {
   return {
     uri: match[0] as `nostr:${string}`,
     value: match[1],
-    decoded: decode(match[1])
+    decoded: decode(match[1]),
   }
 }

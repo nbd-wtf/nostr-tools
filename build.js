@@ -6,7 +6,7 @@ const esbuild = require('esbuild')
 let common = {
   entryPoints: ['index.ts'],
   bundle: true,
-  sourcemap: 'external'
+  sourcemap: 'external',
 }
 
 esbuild
@@ -14,10 +14,10 @@ esbuild
     ...common,
     outfile: 'lib/esm/nostr.mjs',
     format: 'esm',
-    packages: 'external'
+    packages: 'external',
   })
   .then(() => {
-    const packageJson = JSON.stringify({type: 'module'})
+    const packageJson = JSON.stringify({ type: 'module' })
     fs.writeFileSync(`${__dirname}/lib/esm/package.json`, packageJson, 'utf8')
 
     console.log('esm build success.')
@@ -28,7 +28,7 @@ esbuild
     ...common,
     outfile: 'lib/nostr.cjs.js',
     format: 'cjs',
-    packages: 'external'
+    packages: 'external',
   })
   .then(() => console.log('cjs build success.'))
 
@@ -41,7 +41,7 @@ esbuild
     define: {
       window: 'self',
       global: 'self',
-      process: '{"env": {}}'
-    }
+      process: '{"env": {}}',
+    },
   })
   .then(() => console.log('standalone build success.'))

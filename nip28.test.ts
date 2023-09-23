@@ -1,5 +1,5 @@
-import {Kind} from './event.ts'
-import {getPublicKey} from './keys.ts'
+import { Kind } from './event.ts'
+import { getPublicKey } from './keys.ts'
 import {
   channelCreateEvent,
   channelMetadataEvent,
@@ -7,24 +7,23 @@ import {
   channelHideMessageEvent,
   channelMuteUserEvent,
   ChannelMetadata,
-  ChannelMessageEventTemplate
+  ChannelMessageEventTemplate,
 } from './nip28.ts'
 
-const privateKey =
-  'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 const publicKey = getPublicKey(privateKey)
 
 describe('NIP-28 Functions', () => {
   const channelMetadata: ChannelMetadata = {
     name: 'Test Channel',
     about: 'This is a test channel',
-    picture: 'https://example.com/picture.jpg'
+    picture: 'https://example.com/picture.jpg',
   }
 
   it('channelCreateEvent should create an event with given template', () => {
     const template = {
       content: channelMetadata,
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = channelCreateEvent(template, privateKey)
@@ -37,7 +36,7 @@ describe('NIP-28 Functions', () => {
     const template = {
       channel_create_event_id: 'channel creation event id',
       content: channelMetadata,
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = channelMetadataEvent(template, privateKey)
@@ -54,17 +53,12 @@ describe('NIP-28 Functions', () => {
       channel_create_event_id: 'channel creation event id',
       relay_url: 'https://relay.example.com',
       content: 'Hello, world!',
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = channelMessageEvent(template, privateKey)
     expect(event.kind).toEqual(Kind.ChannelMessage)
-    expect(event.tags[0]).toEqual([
-      'e',
-      template.channel_create_event_id,
-      template.relay_url,
-      'root'
-    ])
+    expect(event.tags[0]).toEqual(['e', template.channel_create_event_id, template.relay_url, 'root'])
     expect(event.content).toEqual(template.content)
     expect(event.pubkey).toEqual(publicKey)
     expect(typeof event.id).toEqual('string')
@@ -77,23 +71,13 @@ describe('NIP-28 Functions', () => {
       reply_to_channel_message_event_id: 'channel message event id',
       relay_url: 'https://relay.example.com',
       content: 'Hello, world!',
-      created_at: 1617932115
+      created_at: 1617932115,
     }
 
     const event = channelMessageEvent(template, privateKey)
     expect(event.kind).toEqual(Kind.ChannelMessage)
-    expect(event.tags).toContainEqual([
-      'e',
-      template.channel_create_event_id,
-      template.relay_url,
-      'root'
-    ])
-    expect(event.tags).toContainEqual([
-      'e',
-      template.reply_to_channel_message_event_id,
-      template.relay_url,
-      'reply'
-    ])
+    expect(event.tags).toContainEqual(['e', template.channel_create_event_id, template.relay_url, 'root'])
+    expect(event.tags).toContainEqual(['e', template.reply_to_channel_message_event_id, template.relay_url, 'reply'])
     expect(event.content).toEqual(template.content)
     expect(event.pubkey).toEqual(publicKey)
     expect(typeof event.id).toEqual('string')
@@ -103,8 +87,8 @@ describe('NIP-28 Functions', () => {
   it('channelHideMessageEvent should create a signed event with given template', () => {
     const template = {
       channel_message_event_id: 'channel message event id',
-      content: {reason: 'Inappropriate content'},
-      created_at: 1617932115
+      content: { reason: 'Inappropriate content' },
+      created_at: 1617932115,
     }
 
     const event = channelHideMessageEvent(template, privateKey)
@@ -118,9 +102,9 @@ describe('NIP-28 Functions', () => {
 
   it('channelMuteUserEvent should create a signed event with given template', () => {
     const template = {
-      content: {reason: 'Spamming'},
+      content: { reason: 'Spamming' },
       created_at: 1617932115,
-      pubkey_to_mute: 'pubkey to mute'
+      pubkey_to_mute: 'pubkey to mute',
     }
 
     const event = channelMuteUserEvent(template, privateKey)

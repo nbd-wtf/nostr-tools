@@ -1,17 +1,11 @@
-import {finishEvent} from './event.ts'
-import {getPublicKey, generatePrivateKey} from './keys.ts'
-import {
-  getZapEndpoint,
-  makeZapReceipt,
-  makeZapRequest,
-  useFetchImplementation,
-  validateZapRequest,
-} from './nip57.ts'
-import {buildEvent} from './test-helpers.ts'
+import { finishEvent } from './event.ts'
+import { getPublicKey, generatePrivateKey } from './keys.ts'
+import { getZapEndpoint, makeZapReceipt, makeZapRequest, useFetchImplementation, validateZapRequest } from './nip57.ts'
+import { buildEvent } from './test-helpers.ts'
 
 describe('getZapEndpoint', () => {
   test('returns null if neither lud06 nor lud16 is present', async () => {
-    const metadata = buildEvent({kind: 0, content: '{}'})
+    const metadata = buildEvent({ kind: 0, content: '{}' })
     const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
@@ -21,28 +15,22 @@ describe('getZapEndpoint', () => {
     const fetchImplementation = jest.fn(() => Promise.reject(new Error()))
     useFetchImplementation(fetchImplementation)
 
-    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
+    const metadata = buildEvent({ kind: 0, content: '{"lud16": "name@domain"}' })
     const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
-    expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://domain/.well-known/lnurlp/name'
-    )
+    expect(fetchImplementation).toHaveBeenCalledWith('https://domain/.well-known/lnurlp/name')
   })
 
   test('returns null if the response does not allow Nostr payments', async () => {
-    const fetchImplementation = jest.fn(() =>
-      Promise.resolve({json: () => ({allowsNostr: false})})
-    )
+    const fetchImplementation = jest.fn(() => Promise.resolve({ json: () => ({ allowsNostr: false }) }))
     useFetchImplementation(fetchImplementation)
 
-    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
+    const metadata = buildEvent({ kind: 0, content: '{"lud16": "name@domain"}' })
     const result = await getZapEndpoint(metadata)
 
     expect(result).toBeNull()
-    expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://domain/.well-known/lnurlp/name'
-    )
+    expect(fetchImplementation).toHaveBeenCalledWith('https://domain/.well-known/lnurlp/name')
   })
 
   test('returns the callback URL if the response allows Nostr payments', async () => {
@@ -51,19 +39,17 @@ describe('getZapEndpoint', () => {
         json: () => ({
           allowsNostr: true,
           nostrPubkey: 'pubkey',
-          callback: 'callback'
-        })
-      })
+          callback: 'callback',
+        }),
+      }),
     )
     useFetchImplementation(fetchImplementation)
 
-    const metadata = buildEvent({kind: 0, content: '{"lud16": "name@domain"}'})
+    const metadata = buildEvent({ kind: 0, content: '{"lud16": "name@domain"}' })
     const result = await getZapEndpoint(metadata)
 
     expect(result).toBe('callback')
-    expect(fetchImplementation).toHaveBeenCalledWith(
-      'https://domain/.well-known/lnurlp/name'
-    )
+    expect(fetchImplementation).toHaveBeenCalledWith('https://domain/.well-known/lnurlp/name')
   })
 })
 
@@ -75,8 +61,8 @@ describe('makeZapRequest', () => {
         profile: 'profile',
         event: null,
         relays: [],
-        comment: ''
-      })
+        comment: '',
+      }),
     ).toThrow()
   })
 
@@ -87,8 +73,8 @@ describe('makeZapRequest', () => {
         event: null,
         amount: 100,
         relays: [],
-        comment: ''
-      })
+        comment: '',
+      }),
     ).toThrow()
   })
 
@@ -98,7 +84,7 @@ describe('makeZapRequest', () => {
       event: 'event',
       amount: 100,
       relays: ['relay1', 'relay2'],
-      comment: 'comment'
+      comment: 'comment',
     })
     expect(result.kind).toBe(9734)
     expect(result.created_at).toBeCloseTo(Date.now() / 1000, 0)
@@ -107,8 +93,8 @@ describe('makeZapRequest', () => {
       expect.arrayContaining([
         ['p', 'profile'],
         ['amount', '100'],
-        ['relays', 'relay1', 'relay2']
-      ])
+        ['relays', 'relay1', 'relay2'],
+      ]),
     )
     expect(result.tags).toContainEqual(['e', 'event'])
   })
@@ -116,9 +102,7 @@ describe('makeZapRequest', () => {
 
 describe('validateZapRequest', () => {
   test('returns an error message for invalid JSON', () => {
-    expect(validateZapRequest('invalid JSON')).toBe(
-      'Invalid zap request JSON.'
-    )
+    expect(validateZapRequest('invalid JSON')).toBe('Invalid zap request JSON.')
   })
 
   test('returns an error message if the Zap request is not a valid Nostr event', () => {
@@ -129,13 +113,11 @@ describe('validateZapRequest', () => {
       tags: [
         ['p', 'profile'],
         ['amount', '100'],
-        ['relays', 'relay1', 'relay2']
-      ]
+        ['relays', 'relay1', 'relay2'],
+      ],
     }
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      'Zap request is not a valid Nostr event.'
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe('Zap request is not a valid Nostr event.')
   })
 
   test('returns an error message if the signature on the Zap request is invalid', () => {
@@ -150,13 +132,11 @@ describe('validateZapRequest', () => {
       tags: [
         ['p', publicKey],
         ['amount', '100'],
-        ['relays', 'relay1', 'relay2']
-      ]
+        ['relays', 'relay1', 'relay2'],
+      ],
     }
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      'Invalid signature on zap request.'
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe('Invalid signature on zap request.')
   })
 
   test('returns an error message if the Zap request does not have a "p" tag', () => {
@@ -169,15 +149,13 @@ describe('validateZapRequest', () => {
         content: 'content',
         tags: [
           ['amount', '100'],
-          ['relays', 'relay1', 'relay2']
-        ]
+          ['relays', 'relay1', 'relay2'],
+        ],
       },
-      privateKey
+      privateKey,
     )
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      "Zap request doesn't have a 'p' tag."
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe("Zap request doesn't have a 'p' tag.")
   })
 
   test('returns an error message if the "p" tag on the Zap request is not valid hex', () => {
@@ -191,15 +169,13 @@ describe('validateZapRequest', () => {
         tags: [
           ['p', 'invalid hex'],
           ['amount', '100'],
-          ['relays', 'relay1', 'relay2']
-        ]
+          ['relays', 'relay1', 'relay2'],
+        ],
       },
-      privateKey
+      privateKey,
     )
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      "Zap request 'p' tag is not valid hex."
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe("Zap request 'p' tag is not valid hex.")
   })
 
   test('returns an error message if the "e" tag on the Zap request is not valid hex', () => {
@@ -215,15 +191,13 @@ describe('validateZapRequest', () => {
           ['p', publicKey],
           ['e', 'invalid hex'],
           ['amount', '100'],
-          ['relays', 'relay1', 'relay2']
-        ]
+          ['relays', 'relay1', 'relay2'],
+        ],
       },
-      privateKey
+      privateKey,
     )
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      "Zap request 'e' tag is not valid hex."
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe("Zap request 'e' tag is not valid hex.")
   })
 
   test('returns an error message if the Zap request does not have a relays tag', () => {
@@ -237,15 +211,13 @@ describe('validateZapRequest', () => {
         content: 'content',
         tags: [
           ['p', publicKey],
-          ['amount', '100']
-        ]
+          ['amount', '100'],
+        ],
       },
-      privateKey
+      privateKey,
     )
 
-    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe(
-      "Zap request doesn't have a 'relays' tag."
-    )
+    expect(validateZapRequest(JSON.stringify(zapRequest))).toBe("Zap request doesn't have a 'relays' tag.")
   })
 
   test('returns null for a valid Zap request', () => {
@@ -260,10 +232,10 @@ describe('validateZapRequest', () => {
         tags: [
           ['p', publicKey],
           ['amount', '100'],
-          ['relays', 'relay1', 'relay2']
-        ]
+          ['relays', 'relay1', 'relay2'],
+        ],
       },
-      privateKey
+      privateKey,
     )
 
     expect(validateZapRequest(JSON.stringify(zapRequest))).toBeNull()
@@ -284,17 +256,17 @@ describe('makeZapReceipt', () => {
           tags: [
             ['p', publicKey],
             ['amount', '100'],
-            ['relays', 'relay1', 'relay2']
-          ]
+            ['relays', 'relay1', 'relay2'],
+          ],
         },
-        privateKey
-      )
+        privateKey,
+      ),
     )
     const preimage = 'preimage'
     const bolt11 = 'bolt11'
     const paidAt = new Date()
 
-    const result = makeZapReceipt({zapRequest, preimage, bolt11, paidAt})
+    const result = makeZapReceipt({ zapRequest, preimage, bolt11, paidAt })
 
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)
@@ -318,16 +290,16 @@ describe('makeZapReceipt', () => {
           tags: [
             ['p', publicKey],
             ['amount', '100'],
-            ['relays', 'relay1', 'relay2']
-          ]
+            ['relays', 'relay1', 'relay2'],
+          ],
         },
-        privateKey
-      )
+        privateKey,
+      ),
     )
     const bolt11 = 'bolt11'
     const paidAt = new Date()
 
-    const result = makeZapReceipt({zapRequest, bolt11, paidAt})
+    const result = makeZapReceipt({ zapRequest, bolt11, paidAt })
 
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)

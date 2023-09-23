@@ -1,13 +1,7 @@
-import {bech32} from '@scure/base'
+import { bech32 } from '@scure/base'
 
-import {
-  Kind,
-  validateEvent,
-  verifySignature,
-  type Event,
-  type EventTemplate,
-} from './event.ts'
-import {utf8Decoder} from './utils.ts'
+import { Kind, validateEvent, verifySignature, type Event, type EventTemplate } from './event.ts'
+import { utf8Decoder } from './utils.ts'
 
 var _fetch: any
 
@@ -19,14 +13,12 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function getZapEndpoint(
-  metadata: Event<Kind.Metadata>
-): Promise<null | string> {
+export async function getZapEndpoint(metadata: Event<Kind.Metadata>): Promise<null | string> {
   try {
     let lnurl: string = ''
-    let {lud06, lud16} = JSON.parse(metadata.content)
+    let { lud06, lud16 } = JSON.parse(metadata.content)
     if (lud06) {
-      let {words} = bech32.decode(lud06, 1000)
+      let { words } = bech32.decode(lud06, 1000)
       let data = bech32.fromWords(words)
       lnurl = utf8Decoder.decode(data)
     } else if (lud16) {
@@ -54,7 +46,7 @@ export function makeZapRequest({
   event,
   amount,
   relays,
-  comment = ''
+  comment = '',
 }: {
   profile: string
   event: string | null
@@ -72,8 +64,8 @@ export function makeZapRequest({
     tags: [
       ['p', profile],
       ['amount', amount.toString()],
-      ['relays', ...relays]
-    ]
+      ['relays', ...relays],
+    ],
   }
 
   if (event) {
@@ -92,19 +84,16 @@ export function validateZapRequest(zapRequestString: string): string | null {
     return 'Invalid zap request JSON.'
   }
 
-  if (!validateEvent(zapRequest))
-    return 'Zap request is not a valid Nostr event.'
+  if (!validateEvent(zapRequest)) return 'Zap request is not a valid Nostr event.'
 
   if (!verifySignature(zapRequest)) return 'Invalid signature on zap request.'
 
   let p = zapRequest.tags.find(([t, v]) => t === 'p' && v)
   if (!p) return "Zap request doesn't have a 'p' tag."
-  if (!p[1].match(/^[a-f0-9]{64}$/))
-    return "Zap request 'p' tag is not valid hex."
+  if (!p[1].match(/^[a-f0-9]{64}$/)) return "Zap request 'p' tag is not valid hex."
 
   let e = zapRequest.tags.find(([t, v]) => t === 'e' && v)
-  if (e && !e[1].match(/^[a-f0-9]{64}$/))
-    return "Zap request 'e' tag is not valid hex."
+  if (e && !e[1].match(/^[a-f0-9]{64}$/)) return "Zap request 'e' tag is not valid hex."
 
   let relays = zapRequest.tags.find(([t, v]) => t === 'relays' && v)
   if (!relays) return "Zap request doesn't have a 'relays' tag."
@@ -116,7 +105,7 @@ export function makeZapReceipt({
   zapRequest,
   preimage,
   bolt11,
-  paidAt
+  paidAt,
 }: {
   zapRequest: string
   preimage?: string
@@ -124,19 +113,13 @@ export function makeZapReceipt({
   paidAt: Date
 }): EventTemplate<Kind.Zap> {
   let zr: Event<Kind.ZapRequest> = JSON.parse(zapRequest)
-  let tagsFromZapRequest = zr.tags.filter(
-    ([t]) => t === 'e' || t === 'p' || t === 'a'
-  )
+  let tagsFromZapRequest = zr.tags.filter(([t]) => t === 'e' || t === 'p' || t === 'a')
 
   let zap: EventTemplate<Kind.Zap> = {
     kind: 9735,
     created_at: Math.round(paidAt.getTime() / 1000),
     content: '',
-    tags: [
-      ...tagsFromZapRequest,
-      ['bolt11', bolt11],
-      ['description', zapRequest]
-    ]
+    tags: [...tagsFromZapRequest, ['bolt11', bolt11], ['description', zapRequest]],
   }
 
   if (preimage) {

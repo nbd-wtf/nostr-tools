@@ -1,10 +1,9 @@
-semi: false
 arrowParens: avoid
+bracketSpacing: true
 insertPragma: false
-printWidth: 80
+printWidth: 120
 proseWrap: preserve
+semi: false
 singleQuote: true
-trailingComma: none
+trailingComma: all
 useTabs: false
-jsxBracketSameLine: false
-bracketSpacing: false
