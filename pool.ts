@@ -1,8 +1,8 @@
-import { relayInit, eventsGenerator, type Relay, type Sub, type SubscriptionOptions } from './relay.ts'
+import { eventsGenerator, relayInit, type Relay, type Sub, type SubscriptionOptions } from './relay.ts'
 import { normalizeURL } from './utils.ts'
 
 import type { Event } from './event.ts'
-import { matchFilters, type Filter } from './filter.ts'
+import { matchFilters, mergeFilters, type Filter } from './filter.ts'
 
 type BatchedRequest = {
   filters: Filter<any>[]
@@ -79,13 +79,10 @@ export class SimplePool {
     let eosesMissing = relays.length
 
     let eoseSent = false
-    let eoseTimeout = setTimeout(
-      () => {
-        eoseSent = true
-        for (let cb of eoseListeners.values()) cb()
-      },
-      opts?.eoseSubTimeout || this.eoseSubTimeout,
-    )
+    let eoseTimeout = setTimeout(() => {
+      eoseSent = true
+      for (let cb of eoseListeners.values()) cb()
+    }, opts?.eoseSubTimeout || this.eoseSubTimeout)
 
     relays
       .filter((r, i, a) => a.indexOf(r) === i)
@@ -213,7 +210,7 @@ export class SimplePool {
               relays.push(...br.relays)
             })
 
-            const sub = this.sub(relays, filters)
+            const sub = this.sub(relays, [mergeFilters(...filters)])
             sub.on('event', event => {
               batchedRequests.forEach(br => matchFilters(br.filters, event) && br.events.push(event))
             })
