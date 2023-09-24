@@ -17,6 +17,15 @@
       "plaintext": "a",
       "ciphertext": "18AAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAA+a0vMgbnISrKRDMofXovg8VbAAhbzq+mGWJdXk8B8ghukg530TqwmeXWMP1NxGKkgMG9biGbuZO96INKNZbNRlsc0=",
       "note": "sk1 = 1, sk2 = random, 0x02"
+    },
+    {
+      "sec1": "5c0c523f52a5b6fad39ed2403092df8cebc36318b39383bca6c00808626fab3a",
+      "sec2": "4b22aa260e4acb7021e32f38a6cdf4b673c6a277755bfce287e370c924dc936d",
+      "shared": "94da47d851b9c1ed33b3b72f35434f56aa608d60e573e9c295f568011f4f50a4",
+      "salt": "b635236c42db20f021bb8d1cdff5ca75dd1a0cc72ea742ad750f33010b24f73b",
+      "plaintext": "hello",
+      "ciphertext": "1tjUjbELbIPAhu40c3/XKdd0aDMcup0KtdQ8zAQsk9zuSsVmJEDFI8g3JbPGCpjtRkbN6vQUabk5VABU/+Of5YsnPnf2sWHwrqxJAQpCNrcvYURhE8N6ozQuL4YIJoYS8dg4=",
+      "note": "random keys and salt"
     }
   ],
   "valid_pub": [
