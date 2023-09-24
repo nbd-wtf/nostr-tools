@@ -26,6 +26,46 @@
       "plaintext": "hello",
       "ciphertext": "1tjUjbELbIPAhu40c3/XKdd0aDMcup0KtdQ8zAQsk9zuSsVmJEDFI8g3JbPGCpjtRkbN6vQUabk5VABU/+Of5YsnPnf2sWHwrqxJAQpCNrcvYURhE8N6ozQuL4YIJoYS8dg4=",
       "note": "random keys and salt"
+    },
+    {
+      "sec1": "8f40e50a84a7462e2b8d24c28898ef1f23359fff50d8c509e6fb7ce06e142f9c",
+      "sec2": "b9b0a1e9cc20100c5faa3bbe2777303d25950616c4c6a3fa2e3e046f936ec2ba",
+      "shared": "ab99c122d4586cdd5c813058aa543d0e7233545dbf6874fc34a3d8d9a18fbbc3",
+      "salt": "b20989adc3ddc41cd2c435952c0d59a91315d8c5218d5040573fc3749543acaf",
+      "plaintext": "ability🤝的",
+      "ciphertext": "1sgmJrcPdxBzSxDWVLA1ZqRMV2MUhjVBAVz/DdJVDrK9lMoaMWXcf/EdinErxE6UBRilzkGL9G+tzfh1KNVU/Oc1zF2viAJHDbYFpyPvDJjv6lEsU9CPT39RrwBsGQex9w+Y="
+    },
+    {
+      "sec1": "6f10f354bf01c317d8130b2240a561538ac41468e5a450faf8686eb362f04699",
+      "sec2": "1f00a68f67058d865da5bf8d97443dc905172da1f694193ae3d8f745baaf3287",
+      "shared": "22cfa4f054bbf05d0bcf27a3ecfcb6f0e59b84f6ec6a27ba153484c0160ea3e7",
+      "salt": "b19c7e24de280656ecf5c1999f1d9db9d1b4accd725c4d509d698cb58206f5a3",
+      "plaintext": "island👀привет",
+      "ciphertext": "1sZx+JN4oBlbs9cGZnx2dudG0rM1yXE1QnWmMtYIG9aMu7jiyg6elfGEBHT8vr8/kCqKDUBpEjWVd4OeOn1IoeYaK6KKhp4eBTLiSg04m9NTxCNe6wd+Km1gbKOSSu8m6lYs="
+    },
+    {
+      "sec1": "875adb475056aec0b4809bd2db9aa00cff53a649e7b59d8edcbf4e6330b0995c",
+      "sec2": "9c05781112d5b0a2a7148a222e50e0bd891d6b60c5483f03456e982185944aae",
+      "shared": "a449f2a85c6d3db0f44c64554a05d11a3c0988d645e4b4b2592072f63662f422",
+      "salt": "8d4442713eb9d4791175cb040d98d6fc5be8864d6ec2f89cf0895a2b2b72d1b1",
+      "plaintext": "pepper👀їжак",
+      "ciphertext": "1jURCcT651HkRdcsEDZjW/Fvohk1uwvic8IlaKyty0bERl5cBQxCc1p1wc1HkEBJUxQYTIxac7hLr9lD19xfyosePy2ZQamMMMpgMRlWkAxGCWDVHAcX/sB9VQW6kTGGdMmw="
+    },
+    {
+      "sec1": "eba1687cab6a3101bfc68fd70f214aa4cc059e9ec1b79fdb9ad0a0a4e259829f",
+      "sec2": "dff20d262bef9dfd94666548f556393085e6ea421c8af86e9d333fa8747e94b3",
+      "shared": "decde9938ffcb14fa7ff300105eb1bf239469af9baf376e69755b9070ae48c47",
+      "salt": "2180b52ae645fcf9f5080d81b1f0b5d6f2cd77ff3c986882bb549158462f3407",
+      "plaintext": "あいさつ👀pepper",
+      "ciphertext": "1IYC1KuZF/Pn1CA2BsfC11vLNd/88mGiCu1SRWEYvNAfIrYmhfhmnCoT/09aEF5Iv5ytpP83YRqh9O0ea3Tml47hl10objAvLHc36fKYDQG49OxHxUazqLDLBerxAN6HeU2A="
+    },
+    {
+      "sec1": "d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
+      "sec2": "b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
+      "shared": "c6f2fde7aa00208c388f506455c31c3fa07caf8b516d43bf7514ee19edcda994",
+      "salt": "99c304df39cfe5f22fb0592a0eccb4e57dd2c9e02b2394d430742c5d9b680e02",
+      "plaintext": "people💃的",
+      "ciphertext": "1mcME3znP5fIvsFkqDsy05X3SyeArI5TUMHQsXZtoDgI8WMCW+lId5/bIADuMesdcWZf5InYJCqLqZUgCr2FteJSwgQriV/3FK6ASxQqPEsxp/nR6ij6btWVzU9MPClzbyMc="
     }
   ],
   "valid_pub": [
