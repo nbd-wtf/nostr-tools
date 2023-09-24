@@ -1,7 +1,3 @@
-import { schnorr } from '@noble/curves/secp256k1'
-import { sha256 } from '@noble/hashes/sha256'
-import { bytesToHex } from '@noble/hashes/utils'
-
 import { getPublicKey } from './keys.ts'
 import { utf8Encoder } from './utils.ts'
 
@@ -72,11 +68,14 @@ export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
   }
 }
 
-export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): VerifiedEvent<K> {
+export async function finishEvent<K extends number = number>(
+  t: EventTemplate<K>,
+  privateKey: string,
+): Promise<VerifiedEvent<K>> {
   const event = t as VerifiedEvent<K>
-  event.pubkey = getPublicKey(privateKey)
-  event.id = getEventHash(event)
-  event.sig = getSignature(event, privateKey)
+  event.pubkey = await getPublicKey(privateKey)
+  event.id = await getEventHash(event)
+  event.sig = await getSignature(event, privateKey)
   event[verifiedSymbol] = true
   return event
 }
@@ -87,7 +86,12 @@ export function serializeEvent(evt: UnsignedEvent<number>): string {
   return JSON.stringify([0, evt.pubkey, evt.created_at, evt.kind, evt.tags, evt.content])
 }
 
-export function getEventHash(event: UnsignedEvent<number>): string {
+export async function getEventHash(event: UnsignedEvent<number>): Promise<string> {
+  const [{ bytesToHex }, { sha256 }] = await Promise.all([
+    import('@noble/hashes/utils'),
+    import('@noble/hashes/sha256'),
+  ])
+
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
   return bytesToHex(eventHash)
 }
@@ -115,10 +119,14 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
 }
 
 /** Verify the event's signature. This function mutates the event with a `verified` symbol, making it idempotent. */
-export function verifySignature<K extends number>(event: Event<K>): event is VerifiedEvent<K> {
+export async function verifySignature<K extends number>(event: Event<K>): Promise<boolean> {
   if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
 
-  const hash = getEventHash(event)
+  const [{ schnorr }, hash] = await Promise.all([
+    import('@noble/curves/secp256k1'),
+    getEventHash(event),
+  ])
+
   if (hash !== event.id) {
     return (event[verifiedSymbol] = false)
   }
@@ -131,7 +139,7 @@ export function verifySignature<K extends number>(event: Event<K>): event is Ver
 }
 
 /** @deprecated Use `getSignature` instead. */
-export function signEvent(event: UnsignedEvent<number>, key: string): string {
+export function signEvent(event: UnsignedEvent<number>, key: string): Promise<string> {
   console.warn(
     'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.',
   )
@@ -139,6 +147,12 @@ export function signEvent(event: UnsignedEvent<number>, key: string): string {
 }
 
 /** Calculate the signature for an event. */
-export function getSignature(event: UnsignedEvent<number>, key: string): string {
-  return bytesToHex(schnorr.sign(getEventHash(event), key))
+export async function getSignature(event: UnsignedEvent<number>, key: string): Promise<string> {
+  const [{ schnorr }, { bytesToHex }, hash] = await Promise.all([
+    import('@noble/curves/secp256k1'),
+    import('@noble/hashes/utils'),
+    getEventHash(event),
+  ])
+
+  return bytesToHex(schnorr.sign(hash, key))
 }

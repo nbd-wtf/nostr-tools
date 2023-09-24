@@ -7,7 +7,7 @@ test('identifies proof-of-work difficulty', async () => {
 })
 
 test('mines POW for an event', async () => {
-  const difficulty = 10
+  const difficulty = 20
 
   const event = minePow({
     kind: 1,

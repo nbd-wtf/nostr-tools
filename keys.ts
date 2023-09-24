@@ -1,10 +1,17 @@
-import { schnorr } from '@noble/curves/secp256k1'
-import { bytesToHex } from '@noble/hashes/utils'
+export async function generatePrivateKey(): Promise<string> {
+  const [{ schnorr }, { bytesToHex }] = await Promise.all([
+    import('@noble/curves/secp256k1'),
+    import('@noble/hashes/utils')
+  ])
 
-export function generatePrivateKey(): string {
   return bytesToHex(schnorr.utils.randomPrivateKey())
 }
 
-export function getPublicKey(privateKey: string): string {
+export async function getPublicKey(privateKey: string): Promise<string> {
+  const [{ schnorr }, { bytesToHex }] = await Promise.all([
+    import('@noble/curves/secp256k1'),
+    import('@noble/hashes/utils')
+  ])
+
   return bytesToHex(schnorr.getPublicKey(privateKey))
 }
