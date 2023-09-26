@@ -9,13 +9,16 @@ test('identifies proof-of-work difficulty', async () => {
 test('mines POW for an event', async () => {
   const difficulty = 10
 
-  const event = minePow({
-    kind: 1,
-    tags: [],
-    content: 'Hello, world!',
-    created_at: 0,
-    pubkey: '79c2cae114ea28a981e7559b4fe7854a473521a8d22a66bbab9fa248eb820ff6',
-  }, difficulty)
+  const event = minePow(
+    {
+      kind: 1,
+      tags: [],
+      content: 'Hello, world!',
+      created_at: 0,
+      pubkey: '79c2cae114ea28a981e7559b4fe7854a473521a8d22a66bbab9fa248eb820ff6',
+    },
+    difficulty,
+  )
 
   expect(getPow(event.id)).toBeGreaterThanOrEqual(difficulty)
 })
