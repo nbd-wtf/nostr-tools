@@ -1,9 +1,9 @@
-import {finishEvent} from './event.ts'
-import {encrypt} from './nip04.ts'
-import {Kind} from './event'
+import { finishEvent } from './event.ts'
+import { encrypt } from './nip04.ts'
+import { Kind } from './event'
 
 export function parseConnectionString(connectionString: string) {
-  const {pathname, searchParams} = new URL(connectionString)
+  const { pathname, searchParams } = new URL(connectionString)
   const pubkey = pathname
   const relay = searchParams.get('relay')
   const secret = searchParams.get('secret')
@@ -12,13 +12,13 @@ export function parseConnectionString(connectionString: string) {
     throw new Error('invalid connection string')
   }
 
-  return {pubkey, relay, secret}
+  return { pubkey, relay, secret }
 }
 
 export async function makeNwcRequestEvent({
   pubkey,
   secret,
-  invoice
+  invoice,
 }: {
   pubkey: string
   secret: string
@@ -27,19 +27,15 @@ export async function makeNwcRequestEvent({
   const content = {
     method: 'pay_invoice',
     params: {
-      invoice
-    }
+      invoice,
+    },
   }
-  const encryptedContent = await encrypt(
-    secret,
-    pubkey,
-    JSON.stringify(content)
-  )
+  const encryptedContent = await encrypt(secret, pubkey, JSON.stringify(content))
   const eventTemplate = {
     kind: Kind.NwcRequest,
     created_at: Math.round(Date.now() / 1000),
     content: encryptedContent,
-    tags: [['p', pubkey]]
+    tags: [['p', pubkey]],
   }
 
   return finishEvent(eventTemplate, secret)

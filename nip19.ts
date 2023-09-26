@@ -11,18 +11,17 @@ const Bech32MaxSize = 5000
  */
 export const BECH32_REGEX = /[\x21-\x7E]{1,83}1[023456789acdefghjklmnpqrstuvwxyz]{6,}/
 
-
 function integerToUint8Array(number: number) {
   // Create a Uint8Array with enough space to hold a 32-bit integer (4 bytes).
-  const uint8Array = new Uint8Array(4);
+  const uint8Array = new Uint8Array(4)
 
   // Use bitwise operations to extract the bytes.
-  uint8Array[0] = (number >> 24) & 0xFF; // Most significant byte (MSB)
-  uint8Array[1] = (number >> 16) & 0xFF;
-  uint8Array[2] = (number >> 8) & 0xFF;
-  uint8Array[3] = number & 0xFF; // Least significant byte (LSB)
+  uint8Array[0] = (number >> 24) & 0xff // Most significant byte (MSB)
+  uint8Array[1] = (number >> 16) & 0xff
+  uint8Array[2] = (number >> 8) & 0xff
+  uint8Array[3] = number & 0xff // Least significant byte (LSB)
 
-  return uint8Array;
+  return uint8Array
 }
 
 export type ProfilePointer = {
@@ -88,8 +87,7 @@ export function decode(nip19: string): DecodeResult {
       if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nevent')
       if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
       if (tlv[2] && tlv[2][0].length !== 32) throw new Error('TLV 2 should be 32 bytes')
-      if (tlv[3] &&tlv[3][0].length !== 4) throw new Error('TLV 3 should be 4 bytes')
-
+      if (tlv[3] && tlv[3][0].length !== 4) throw new Error('TLV 3 should be 4 bytes')
 
       return {
         type: 'nevent',
@@ -190,9 +188,9 @@ export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
 }
 
 export function neventEncode(event: EventPointer): `nevent1${string}` {
-  let kindArray;
+  let kindArray
   if (event.kind != undefined) {
-      kindArray = integerToUint8Array(event.kind);
+    kindArray = integerToUint8Array(event.kind)
   }
 
   let data = encodeTLV({

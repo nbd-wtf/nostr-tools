@@ -154,6 +154,7 @@ let relaysForEvent = pool.seenOn('44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67
 
 pool.close()
 ```
+
 read more details about `batchedList` on this pr: [https://github.com/nbd-wtf/nostr-tools/pull/279](https://github.com/nbd-wtf/nostr-tools/pull/279#issue-1859315757)
 
 ### Parsing references (mentions) from a content using NIP-10 and NIP-27
