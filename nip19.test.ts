@@ -6,8 +6,10 @@ import {
   npubEncode,
   nrelayEncode,
   nsecEncode,
+  neventEncode,
   type AddressPointer,
   type ProfilePointer,
+  EventPointer,
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {
@@ -70,6 +72,40 @@ test('encode and decode naddr', () => {
   expect(pointer.relays).toContain(relays[1])
   expect(pointer.kind).toEqual(30023)
   expect(pointer.identifier).toEqual('banana')
+})
+
+test('encode and decode nevent', () => {
+  let pk = getPublicKey(generatePrivateKey())
+  let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
+  let naddr = neventEncode({
+    id: pk,
+    relays,
+    kind: 30023,
+  })
+  expect(naddr).toMatch(/nevent1\w+/)
+  let { type, data } = decode(naddr)
+  expect(type).toEqual('nevent')
+  const pointer = data as EventPointer
+  expect(pointer.id).toEqual(pk)
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.kind).toEqual(30023)
+})
+
+test('encode and decode nevent with kind 0', () => {
+  let pk = getPublicKey(generatePrivateKey())
+  let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
+  let naddr = neventEncode({
+    id: pk,
+    relays,
+    kind: 0,
+  })
+  expect(naddr).toMatch(/nevent1\w+/)
+  let { type, data } = decode(naddr)
+  expect(type).toEqual('nevent')
+  const pointer = data as EventPointer
+  expect(pointer.id).toEqual(pk)
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.kind).toEqual(0)
 })
 
 test('decode naddr from habla.news', () => {
