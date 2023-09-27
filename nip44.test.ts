@@ -35,6 +35,13 @@ test('NIP44: invalid', async () => {
   }
 })
 
+test('NIP44: v1 calcPadding', () => {
+  for (const [len, shouldBePaddedTo] of vectors.padding) {
+    const actual = utils.v1.calcPadding(len);
+    expect(actual).toEqual(shouldBePaddedTo);
+  }
+})
+
 // To re-generate vectors and produce new ones:
 // Create regen.mjs with this content:
 // import {getPublicKey, nip44} from './lib/esm/nostr.mjs'
