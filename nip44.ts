@@ -31,11 +31,9 @@ export const utils = {
     calcPadding(len: number): number {
       if (!Number.isSafeInteger(len) || len < 0) throw new Error('expected positive integer')
       if (len <= 32) return 32
-      let nextpower = 1 << (Math.floor(Math.log2(len - 1)) + 1)
-      let chunk = nextpower / 8
-      if (chunk < 32) chunk = 32
-      let res = (Math.floor((len - 1) / chunk) + 1) * chunk
-      return res
+      const nextpower = 1 << (Math.floor(Math.log2(len - 1)) + 1)
+      const chunk = nextpower < 256 ? 32 : nextpower / 8
+      return chunk * (Math.floor((len - 1) / chunk) + 1)
     },
 
     pad(unpadded: string): Uint8Array {
