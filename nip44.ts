@@ -32,7 +32,7 @@ export const utils = {
       if (!Number.isSafeInteger(len) || len < 0) throw new Error('expected positive integer')
       if (len <= 32) return 32
       const nextpower = 1 << (Math.floor(Math.log2(len - 1)) + 1)
-      const chunk = nextpower < 256 ? 32 : nextpower / 8
+      const chunk = nextpower <= 256 ? 32 : nextpower / 8
       return chunk * (Math.floor((len - 1) / chunk) + 1)
     },
 
@@ -48,9 +48,12 @@ export const utils = {
     },
 
     unpad(padded: Uint8Array): string {
-      const unpaddedLength = new DataView(padded.buffer).getUint16(0)
-      const plaintextBytes = padded.subarray(2, 2 + unpaddedLength)
-      return utf8Decoder.decode(plaintextBytes)
+      const unpaddedLen = new DataView(padded.buffer).getUint16(0)
+      const plaintextB = padded.subarray(2, 2 + unpaddedLen)
+      const pbLen = plaintextB.length
+      const expectedTotalLen = 2 + utils.v1.calcPadding(pbLen)
+      if (pbLen !== unpaddedLen || padded.length !== expectedTotalLen) throw new Error('invalid padding')
+      return utf8Decoder.decode(plaintextB)
     },
   },
 }
