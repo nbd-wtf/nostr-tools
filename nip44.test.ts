@@ -36,6 +36,7 @@ test('NIP44: invalid', async () => {
 })
 
 // To re-generate vectors and produce new ones:
+// Create regen.mjs with this content:
 // import {getPublicKey, nip44} from './lib/esm/nostr.mjs'
 // import {bytesToHex, hexToBytes} from '@noble/hashes/utils'
 // import vectors from './nip44.vectors.json' assert { type: "json" };
@@ -47,6 +48,8 @@ test('NIP44: invalid', async () => {
 //     sec1: v.sec1,
 //     pub2: pub2,
 //     sharedKey: bytesToHex(sharedKey),
+//     salt: v.salt,
+//     plaintext: v.plaintext,
 //     ciphertext
 //   })
 // }
