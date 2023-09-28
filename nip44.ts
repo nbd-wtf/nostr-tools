@@ -50,9 +50,8 @@ export const utils = {
     unpad(padded: Uint8Array): string {
       const unpaddedLen = new DataView(padded.buffer).getUint16(0)
       const plaintextB = padded.subarray(2, 2 + unpaddedLen)
-      const pbLen = plaintextB.length
-      const expectedTotalLen = 2 + utils.v2.calcPadding(pbLen)
-      if (pbLen !== unpaddedLen || padded.length !== expectedTotalLen) throw new Error('invalid padding')
+      if (plaintextB.length !== unpaddedLen) throw new Error('invalid padding')
+      if (padded.length !== 2 + utils.v2.calcPadding(unpaddedLen)) throw new Error('invalid padding')
       return utf8Decoder.decode(plaintextB)
     },
   },
@@ -64,8 +63,9 @@ export function encrypt(
   options: { salt?: Uint8Array; version?: number } = {},
 ): string {
   const version = options.version ?? 2
-  const salt = options.salt ?? randomBytes(32)
   if (version !== 2) throw new Error('unknown encryption version ' + version)
+
+  const salt = options.salt ?? randomBytes(32)
   ensureBytes(salt, 32)
 
   const keys = utils.v2.getMessageKeys(key, salt)
@@ -73,14 +73,10 @@ export function encrypt(
   const ciphertext = chacha20(keys.enc, keys.nonce, padded)
   const mac = hmac(sha256, keys.auth, ciphertext)
 
-  const versionArray = new Uint8Array(1);
+  const versionArray = new Uint8Array(1)
   versionArray[0] = 2
-
-  console.log(versionArray)
-
   return base64.encode(concatBytes(versionArray, salt, ciphertext, mac))
 }
-
 
 export function decrypt(key: Uint8Array, ciphertext: string): string {
   const clen = ciphertext.length
@@ -88,10 +84,11 @@ export function decrypt(key: Uint8Array, ciphertext: string): string {
   if (clen < utils.v2.minCiphertextSize || clen >= utils.v2.maxCiphertextSize)
     throw new Error('ciphertext length is invalid')
 
+  const v = ciphertext.charAt(0)
+  if (v === '@' || v === '#') throw new Error('unknown encryption version')
   const data = base64.decode(ciphertext)
-  const version = data.subarray(0, 1)
-
-  if (version[0] !== 2) throw new Error('unknown encryption version ' + version[0])
+  const version = data.subarray(0, 1)[0]
+  if (version !== 2) throw new Error('unknown encryption version ' + version)
 
   const salt = data.subarray(1, 33)
   const ciphertext_ = data.subarray(33, -32)
@@ -99,7 +96,6 @@ export function decrypt(key: Uint8Array, ciphertext: string): string {
 
   const keys = utils.v2.getMessageKeys(key, salt)
   const calculatedMac = hmac(sha256, keys.auth, ciphertext_)
-
   if (!equalBytes(calculatedMac, mac)) throw new Error('encryption MAC does not match')
 
   const plaintext = chacha20(keys.enc, keys.nonce, ciphertext_)
