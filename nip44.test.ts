@@ -6,7 +6,7 @@ import {getPublicKey} from './keys.ts'
 test('NIP44: valid_sec', async () => {
   for (const v of vectors.valid_sec) {
     const pub2 = getPublicKey(v.sec2)
-    const key = utils.v1.getConversationKey(v.sec1, pub2)
+    const key = utils.v2.getConversationKey(v.sec1, pub2)
     expect(bytesToHex(key)).toEqual(v.shared)
     const ciphertext = encrypt(key, v.plaintext, {salt: hexToBytes(v.salt)})
     expect(ciphertext).toEqual(v.ciphertext)
@@ -17,7 +17,7 @@ test('NIP44: valid_sec', async () => {
 
 test('NIP44: valid_pub', async () => {
   for (const v of vectors.valid_pub) {
-    const key = utils.v1.getConversationKey(v.sec1, v.pub2)
+    const key = utils.v2.getConversationKey(v.sec1, v.pub2)
     expect(bytesToHex(key)).toEqual(v.shared)
     const ciphertext = encrypt(key, v.plaintext, {salt: hexToBytes(v.salt)})
     expect(ciphertext).toEqual(v.ciphertext)
@@ -29,7 +29,7 @@ test('NIP44: valid_pub', async () => {
 test('NIP44: invalid', async () => {
   for (const v of vectors.invalid) {
     expect(() => {
-      const key = utils.v1.getConversationKey(v.sec1, v.pub2)
+      const key = utils.v2.getConversationKey(v.sec1, v.pub2)
       const ciphertext = encrypt(key, v.plaintext)
     }).toThrowError()
   }
@@ -37,7 +37,7 @@ test('NIP44: invalid', async () => {
 
 test('NIP44: v1 calcPadding', () => {
   for (const [len, shouldBePaddedTo] of vectors.padding) {
-    const actual = utils.v1.calcPadding(len);
+    const actual = utils.v2.calcPadding(len);
     expect(actual).toEqual(shouldBePaddedTo);
   }
 })
@@ -49,7 +49,7 @@ test('NIP44: v1 calcPadding', () => {
 // import vectors from './nip44.vectors.json' assert { type: "json" };
 // function genVectors(v) {
 //   const pub2 = v.pub2 ?? getPublicKey(v.sec2);
-//   let sharedKey = nip44.utils.v1.getConversationKey(v.sec1, pub2)
+//   let sharedKey = nip44.utils.v2.getConversationKey(v.sec1, pub2)
 //   let ciphertext = nip44.encrypt(sharedKey, v.plaintext, { salt: hexToBytes(v.salt) })
 //   console.log({
 //     sec1: v.sec1,
