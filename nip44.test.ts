@@ -1,6 +1,6 @@
 import { encrypt, decrypt, utils } from './nip44.ts'
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
-import { default as vectors } from './nip44.vectors.json'
+import { v2 as vectors } from './nip44.vectors.json'
 import { getPublicKey } from './keys.ts'
 
 test('NIP44: valid_sec', async () => {
