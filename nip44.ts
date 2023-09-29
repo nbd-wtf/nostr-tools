@@ -73,9 +73,7 @@ export function encrypt(
   const ciphertext = chacha20(keys.enc, keys.nonce, padded)
   const mac = hmac(sha256, keys.auth, ciphertext)
 
-  const versionArray = new Uint8Array(1)
-  versionArray[0] = 2
-  return base64.encode(concatBytes(versionArray, salt, ciphertext, mac))
+  return base64.encode(concatBytes(new Uint8Array([version]), salt, ciphertext, mac))
 }
 
 export function decrypt(key: Uint8Array, ciphertext: string): string {
@@ -84,8 +82,8 @@ export function decrypt(key: Uint8Array, ciphertext: string): string {
   if (clen < utils.v2.minCiphertextSize || clen >= utils.v2.maxCiphertextSize)
     throw new Error('ciphertext length is invalid')
 
-  const v = ciphertext.charAt(0)
-  if (v === '@' || v === '#') throw new Error('unknown encryption version')
+  const v = ciphertext[0]
+  if (v === '#') throw new Error('unknown encryption version')
   const data = base64.decode(ciphertext)
   const version = data.subarray(0, 1)[0]
   if (version !== 2) throw new Error('unknown encryption version ' + version)
