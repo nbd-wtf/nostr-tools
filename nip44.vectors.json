@@ -116,13 +116,31 @@
   ],
   "invalid": [
     {
+      "sec1": "2573d1e9b9ac5de5d570f652cbb9e8d4f235e3d3d334181448e87c417f374e83",
+      "pub2": "8348c2d35549098706e5bab7966d9a9c72fbf6554e918f41c2b6cb275f79ec13",
+      "sharedKey": "8673ec68393a997bfad7eab8661461daf8b3931b7e885d78312a3fb7fe17f41a",
+      "salt": "daaea5ca345b268e5b62060ca72c870c48f713bc1e00ff3fc0ddb78e826f10db",
+      "plaintext": "n o s t r",
+      "ciphertext": "##Atqupco0WyaOW2IGDKcshwxI9xO8HgD/P8Ddt46CbxDbOsrsqIEybscEwg5rnI/Cx03mDSmeweOLKD7dw5BDZQDxXSlCwX1LIcTJEZaJPTz98Ftu0zSE0d93ED7OtdlvNeZx",
+      "note": "invalid version: flag"
+    },
+    {
       "sec1": "11063318c5cb3cd9cafcced42b4db5ea02ec976ed995962d2bc1fa1e9b52e29f",
       "pub2": "5c49873b6eac3dd363325250cc55d5dd4c7ce9a885134580405736d83506bb74",
       "sharedKey": "e2aad10de00913088e5cb0f73fa526a6a17e95763cc5b2a127022f5ea5a73445",
       "salt": "ad408d4be8616dc84bb0bf046454a2a102edac937c35209c43cd7964c5feb781",
       "plaintext": "⚠️",
-      "ciphertext": "AK1AjUvoYW3IS7C/BGRUoqEC7ayTfDUgnEPNeWTF/reBA4fZmoHrtrz5I5pCHuwWZ22qqL/Xt1VidEZGMLds0yaJ5VwUbeEifEJlPICOFt1ssZJxCUf43HvRwCVTFskbhSMh",
+      "ciphertext": "ArIJia3D3cQc0sQ1lSwNWakTFdjFIY1QQFc/w3SVQ6yvPSc+7YCIFTmGk5OLuh1nhl6TvID7sGKLFUCWRW1eRfV/0a7sT46N3nTQzD7IE67zLWrYqGnE+0DDNz6sJ4hAaFrT",
       "note": "invalid version: 0"
+    },
+    {
+      "sec1": "2573d1e9b9ac5de5d570f652cbb9e8d4f235e3d3d334181448e87c417f374e83",
+      "pub2": "8348c2d35549098706e5bab7966d9a9c72fbf6554e918f41c2b6cb275f79ec13",
+      "sharedKey": "8673ec68393a997bfad7eab8661461daf8b3931b7e885d78312a3fb7fe17f41a",
+      "salt": "daaea5ca345b268e5b62060ca72c870c48f713bc1e00ff3fc0ddb78e826f10db",
+      "plaintext": "n o s t r",
+      "ciphertext": "Atqupco0WyaOW2IGDKcshwxI9xO8HgD/P8Ddt46CbxDbOsrsqIEybscEwg5rnI/Cx03mDSmeweOLKD,7dw5BDZQDxXSlCwX1LIcTJEZaJPTz98Ftu0zSE0d93ED7OtdlvNeZx",
+      "note": "invalid base64"
     },
     {
       "sec1": "5a2f39347fed3883c9fe05868a8f6156a292c45f606bc610495fcc020ed158f7",
