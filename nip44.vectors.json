@@ -14,8 +14,8 @@
       "sec2": "0000000000000000000000000000000000000000000000000000000000000001",
       "shared": "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
       "salt": "f00000000000000000000000000000f00000000000000000000000000000000f",
-      "plaintext": "a",
-      "ciphertext": "AvAAAAAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAAAAAAAPKYctmIrQHG24WE5jBoaZHSs7OMpKsULW5F5ClOJWiy6XjSrTLNBdR4/NLxkVUpJOaYmRjHiI0T5P32OI4XRXKwVO",
+      "plaintext": "🍕🫃",
+      "ciphertext": "AvAAAAAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAAAAAAAPKY68BwdF7PIT205jBoaZHSs7OMpKsULW5F5ClOJWiy6XjZy7s2v85KugYmbBKgEC2LytbXbxkr7Jpgfk529K3/pP",
       "note": "sk1 = 1, sk2 = random, 0x02"
     },
     {
@@ -23,25 +23,17 @@
       "sec2": "4b22aa260e4acb7021e32f38a6cdf4b673c6a277755bfce287e370c924dc936d",
       "shared": "94da47d851b9c1ed33b3b72f35434f56aa608d60e573e9c295f568011f4f50a4",
       "salt": "b635236c42db20f021bb8d1cdff5ca75dd1a0cc72ea742ad750f33010b24f73b",
-      "plaintext": "hello",
-      "ciphertext": "ArY1I2xC2yDwIbuNHN/1ynXdGgzHLqdCrXUPMwELJPc7ysu7m8bzLLv3LyxbtMit2SsnmvFjnrJN9Qqoenb/M2mwWjcfA92Xeb92ZrTKcaQOi6jdXajWgRcRxO/TWJo93il3",
-      "note": "random keys and salt"
+      "plaintext": "表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀",
+      "ciphertext": "ArY1I2xC2yDwIbuNHN/1ynXdGgzHLqdCrXUPMwELJPc7yuU7XwJ8wCYUrq4aXX86HLnkMx7fPFvNeMk0uek9ma01magfEBIf+vJvZdWKiv48eUu9Cv31plAJsH6kSIsGc5TVYBYipkrQUNRxxJA15QT+uCURF96v3XuSS0k2Pf108AI=",
+      "note": "hard-unicode string"
     },
     {
       "sec1": "8f40e50a84a7462e2b8d24c28898ef1f23359fff50d8c509e6fb7ce06e142f9c",
       "sec2": "b9b0a1e9cc20100c5faa3bbe2777303d25950616c4c6a3fa2e3e046f936ec2ba",
       "shared": "ab99c122d4586cdd5c813058aa543d0e7233545dbf6874fc34a3d8d9a18fbbc3",
       "salt": "b20989adc3ddc41cd2c435952c0d59a91315d8c5218d5040573fc3749543acaf",
-      "plaintext": "ability🤝的",
-      "ciphertext": "ArIJia3D3cQc0sQ1lSwNWakTFdjFIY1QQFc/w3SVQ6yvPTo+7YCIFTmGk5OLuh1nhn5bBkhFsGKLFUCWRW1eRfV/0RzSgUfGng38Gf65Touu8AKFXqVMTuEX/4tgS6ivZnT8"
-    },
-    {
-      "sec1": "6f10f354bf01c317d8130b2240a561538ac41468e5a450faf8686eb362f04699",
-      "sec2": "1f00a68f67058d865da5bf8d97443dc905172da1f694193ae3d8f745baaf3287",
-      "shared": "22cfa4f054bbf05d0bcf27a3ecfcb6f0e59b84f6ec6a27ba153484c0160ea3e7",
-      "salt": "b19c7e24de280656ecf5c1999f1d9db9d1b4accd725c4d509d698cb58206f5a3",
-      "plaintext": "island👀привет",
-      "ciphertext": "ArGcfiTeKAZW7PXBmZ8dnbnRtKzNclxNUJ1pjLWCBvWjoY1WfJIPt55CP8LPy+O2PTnYifTql/YIbgmtxKbVqGorTk3CGY+ce2QW/YlFkXgnxzXGuHIuuFj/E0SJWlwim3mE"
+      "plaintext": "ability🤝的 ȺȾ",
+      "ciphertext": "ArIJia3D3cQc0sQ1lSwNWakTFdjFIY1QQFc/w3SVQ6yvPSc+7YCIFTmGk5OLuh1nhl6TvID7sGKLFUCWRW1eRfV/0a7sT46N3nTQzD7IE67zLWrYqGnE+0DDNz6sJ4hAaFrT"
     },
     {
       "sec1": "875adb475056aec0b4809bd2db9aa00cff53a649e7b59d8edcbf4e6330b0995c",
@@ -56,40 +48,41 @@
       "sec2": "dff20d262bef9dfd94666548f556393085e6ea421c8af86e9d333fa8747e94b3",
       "shared": "decde9938ffcb14fa7ff300105eb1bf239469af9baf376e69755b9070ae48c47",
       "salt": "2180b52ae645fcf9f5080d81b1f0b5d6f2cd77ff3c986882bb549158462f3407",
-      "plaintext": "あいさつ👀pepper",
-      "ciphertext": "AiGAtSrmRfz59QgNgbHwtdbyzXf/PJhogrtUkVhGLzQHiRjMN3R4dWsU/Nnpj6jHbQVHbCTRHE4uzc3wXXxDzFkjjBMBFrx18egwZas/mv/frbTM2T1jZHyZzRI5p3AvViWG"
+      "plaintext": "( ͡° ͜ʖ ͡°)",
+      "ciphertext": "AiGAtSrmRfz59QgNgbHwtdbyzXf/PJhogrtUkVhGLzQHiR8Hljs6Nl/XsNDAmCz6U1Z3NUGhbCtczc3wXXxDzFkjjMimxsf/74OEzu7LphUadM9iSWvVKPrNXY7lTD0B2muz"
     },
     {
       "sec1": "d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
       "sec2": "b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
       "shared": "c6f2fde7aa00208c388f506455c31c3fa07caf8b516d43bf7514ee19edcda994",
       "salt": "e4cd5f7ce4eea024bc71b17ad456a986a74ac426c2c62b0a15eb5c5c8f888b68",
-      "plaintext": "people💃的 people💃的 people💃的 people💃的 people💃的",
-      "ciphertext": "AuTNX3zk7qAkvHGxetRWqYanSsQmwsYrChXrXFyPiItohVL3Akcq8ZYHt/WiqAcU9S8sp3EEI/dxD00PyBDMybTjzlRMTuPscTw9aEhlXUB89sT8MhkoxO1PFW0QhfBIdeDTN29q9XubHsLsImIERb0zAArjuyF2EvNl7Wr0+apk0zQUmr/FI3kppiWkUtGB5XDdmWXi3YgBus2zklAeQIWrCA=="
+      "plaintext": "مُنَاقَشَةُ سُبُلِ اِسْتِخْدَامِ اللُّغَةِ فِي النُّظُمِ الْقَائِمَةِ وَفِيم يَخُصَّ التَّطْبِيقَاتُ الْحاسُوبِيَّةُ،",
+      "ciphertext": "AuTNX3zk7qAkvHGxetRWqYanSsQmwsYrChXrXFyPiItohfde4vHVRHUupr+Glh9JW4f9EY+w795hvRZbixs0EQgDZ7zwLlymVQI3NNvMqvemQzHUA1I5+9gSu8XSMwX9gDCUAjUJtntCkRt9+tjdy2Wa2ZrDYqCvgirvzbJTIC69Ve3YbKuiTQCKtVi0PA5ZLqVmnkHPIqfPqDOGj/a3dvJVzGSgeijcIpjuEgFF54uirrWvIWmTBDeTA+tlQzJHpB2wQnUndd2gLDb8+eKFUZPBifshD3WmgWxv8wRv6k3DeWuWEZQ70Z+YDpgpeOzuzHj0MDBwMAlY8Qq86Rx6pxY76PLDDfHh3rE2CHJEKl2MhDj7pGXao2o633vSRd9ueG8W"
     },
     {
       "sec1": "d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
       "sec2": "b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
       "shared": "c6f2fde7aa00208c388f506455c31c3fa07caf8b516d43bf7514ee19edcda994",
       "salt": "38d1ca0abef9e5f564e89761a86cee04574b6825d3ef2063b10ad75899e4b023",
-      "plaintext": "people💃的 people💃的 people💃的 people💃的 people💃的 people💃的",
-      "ciphertext": "AjjRygq++eX1ZOiXYahs7gRXS2gl0+8gY7EK11iZ5LAjTAkJtqZDLALx+7yR2YgyB2ZOKJ3h5LctJDoPB6g7AO1aJWKGzD0MUe86lDcnHmGj4t03b4Iq5iHcrvbdDwbQfSh8fNXCrB2pk47om0JaTpaBrqjare/IKA5I3MOhlP5uk1z68pnMMCujX76a83WYhHzytgdFy3CqOGOBRJMocrjsKw=="
+      "plaintext": "الكل في المجمو عة (5)",
+      "ciphertext": "AjjRygq++eX1ZOiXYahs7gRXS2gl0+8gY7EK11iZ5LAjTHmhdBC3meTY4A7Lv8s8B86MnmlUBJ8ebzwxFQzDyVCcdSbWFaKe0gigEBdXew7TjrjH8BCpAbtYjoa4YHa8GNjj7zH314ApVnwoByHdLHLB9Vr6VdzkxcJgA6oL4MAsRLg="
     },
     {
       "sec1": "d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
       "sec2": "b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
       "shared": "c6f2fde7aa00208c388f506455c31c3fa07caf8b516d43bf7514ee19edcda994",
       "salt": "4f1a31909f3483a9e69c8549a55bbc9af25fa5bbecf7bd32d9896f83ef2e12e0",
-      "plaintext": "people💃的 people💃的 people💃的 people💃的 people💃的 people💃的 people💃的",
-      "ciphertext": "Ak8aMZCfNIOp5pyFSaVbvJryX6W77Pe9MtmJb4PvLhLg/yDQHhmjbzCD/2pzYBRj4kzDDb8HF9st0w1eSP+yIS7cgagJWy1U8mKjwqBHCdBsuQ2kZPwUDusBY+CjKQ/Z2rNRDMI7AbeKIYZPIhLFrFaUe+an9EABWDX2muwihZYwTM/kWFEs8QRT394G1P7ymBq/uakKLasLjTCC3dHTkl5GQ7l2f6plDuPFoxv7r5yXydx8xLU2M6QL2OhWBRm1sLPN"
+      "plaintext": "𝖑𝖆𝖟𝖞 社會科學院語學研究所",
+      "ciphertext": "Ak8aMZCfNIOp5pyFSaVbvJryX6W77Pe9MtmJb4PvLhLg/25Q5uBC88jl5ghtEREXX6o4QijPzM0uwmkeQ54/6aIqUyzGNVdryWKZ0mee2lmVVWhU+26X6XGFQ5DGRn+1v0POsFUCZ/REh35+beBNHnyvjxD/rbrMfhP2Blc8X5m8Xvk="
     },
     {
       "sec1": "d5633530f5bcfebceb5584cfbbf718a30df0751b729dd9a789b9f30c0587d74e",
       "sec2": "b74e6a341fb134127272b795a08b59250e5fa45a82a2eb4095e4ce9ed5f5e214",
       "shared": "c6f2fde7aa00208c388f506455c31c3fa07caf8b516d43bf7514ee19edcda994",
       "salt": "a3e219242d85465e70adcd640b564b3feff57d2ef8745d5e7a0663b2dccceb54",
-      "plaintext": "people💃的 people💃的 people💃的 people💃的 people💃的 people💃的 people💃的 people💃的",
-      "ciphertext": "AqPiGSQthUZecK3NZAtWSz/v9X0u+HRdXnoGY7LczOtU9XuCIM5OT/7yQpY2H0EERtBz4dyDQfR9B2xQqfWjR+NTj36+UwFZlxeIP560rQizITKxN9fYICU/howxqXLLAeV8R27vH1bdPvzoSqttEMIlNMiSyaRqA7m4egA+VbKXnsWTogq1hk8Ca9eu76zPucnr8DUkPJV7f52J2/VXYV7EYxheHj/HWIOqdVqtQQ8NmxPN5jJ5vHucpVuSRbq985ih"
+      "plaintext": "🙈 🙉 🙊 0️⃣ 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟 Powerلُلُصّبُلُلصّبُررً ॣ ॣh ॣ ॣ冗",
+      "ciphertext": "AqPiGSQthUZecK3NZAtWSz/v9X0u+HRdXnoGY7LczOtU9bUC2ji2A2udRI2VCEQZ7IAmYRRgxodBtd5Yi/5htCUczf1jLHxIt9AhVAZLKuRgbWOuEMq5RBybkxPsSeAkxzXVOlWHZ1Febq5ogkjqY/6Xj8CwwmaZxfbx+d1BKKO3Wa+IFuXwuVAZa1Xo+fan+skyf+2R5QSj10QGAnGO7odAu/iZ9A28eMoSNeXsdxqy1+PRt5Zk4i019xmf7C4PDGSzgFZSvQ2EzusJN5WcsnRFmF1L5rXpX1AYo8HusOpWcGf9PjmFbO+8spUkX1W/T21GRm4o7dro1Y6ycgGOA9BsiQ==",
+      "note": "emoji and lang 7"
     }
   ],
   "valid_pub": [
@@ -98,8 +91,8 @@
       "pub2": "0000000000000000000000000000000000000000000000000000000000000002",
       "shared": "7a1ccf5ce5a08e380f590de0c02776623b85a61ae67cfb6a017317e505b7cb51",
       "salt": "a000000000000000000000000000000000000000000000000000000000000001",
-      "plaintext": "a",
-      "ciphertext": "AqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB2//lm8gqsUfIKSRED1bi4xTh0aMEUO3/evHUaO40LePeR4nBrCzoKD0ZfKUpYTCd9yVoBHKD1i/7WwTAd+3VP/Ph",
+      "plaintext": "⁰⁴⁵₀₁₂",
+      "ciphertext": "AqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB2+xmGnjIMPMqqJGmjdYAYZUDUyEEUO3/evHUaO40LePeR91VlMVZ7I+nKJPkaUiKZ3cQiQnA86Uwti2IxepmzOFN",
       "note": "sec1 = n-2, pub2: random, 0x02"
     },
     {
@@ -118,10 +111,66 @@
       "salt": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
       "plaintext": "A purely peer-to-peer version of electronic cash would allow online payments to be sent directly from one party to another without going through a financial institution. Digital signatures provide part of the solution, but the main benefits are lost if a trusted third party is still required to prevent double-spending.",
       "ciphertext": "Anm+Zn753LusVaBilc6HCwcCm/zbLc4o2VnygVsW+BeYb9wHyKevpe7ohJ6OkpceFcb0pySY8TLGwT7Q3zWNDKxc9blXanxKborEXkQH8xNaB2ViJfgxpkutbwbYd0Grix34xzaZBASufdsNm7R768t51tI6sdS0nms6kWLVJpEGu6Ke4Bldv4StJtWBLaTcgsgN+4WxDbBhC/nhwjEQiBBbbmUrPWjaVZXjl8dzzPrYtkSoeBNJs/UNvDwym4+qrmhv4ASTvVflpZgLlSe4seqeu6dWoRqn8uRHZQnPs+XhqwbdCHpeKGB3AfGBykZY0RIr0tjarWdXNasGbIhGM3GiLasioJeabAZw0plCevDkKpZYDaNfMJdzqFVJ8UXRIpvDpQad0SOm8lLum/aBzUpLqTjr3RvSlhYdbuODpd9pR5K60k4L2N8nrPtBv08wlilQg2ymwQgKVE6ipxIzzKMetn8+f0nQ9bHjWFJqxetSuMzzArTUQl9c4q/DwZmCBhI2",
-      "note": "sec1 == pub2"
+      "note": "sec1 == pub2 == salt"
     }
   ],
   "invalid": [
+    {
+      "sec1": "11063318c5cb3cd9cafcced42b4db5ea02ec976ed995962d2bc1fa1e9b52e29f",
+      "pub2": "5c49873b6eac3dd363325250cc55d5dd4c7ce9a885134580405736d83506bb74",
+      "sharedKey": "e2aad10de00913088e5cb0f73fa526a6a17e95763cc5b2a127022f5ea5a73445",
+      "salt": "ad408d4be8616dc84bb0bf046454a2a102edac937c35209c43cd7964c5feb781",
+      "plaintext": "⚠️",
+      "ciphertext": "AK1AjUvoYW3IS7C/BGRUoqEC7ayTfDUgnEPNeWTF/reBA4fZmoHrtrz5I5pCHuwWZ22qqL/Xt1VidEZGMLds0yaJ5VwUbeEifEJlPICOFt1ssZJxCUf43HvRwCVTFskbhSMh",
+      "note": "invalid version: 0"
+    },
+    {
+      "sec1": "5a2f39347fed3883c9fe05868a8f6156a292c45f606bc610495fcc020ed158f7",
+      "pub2": "775bbfeba58d07f9d1fbb862e306ac780f39e5418043dadb547c7b5900245e71",
+      "sharedKey": "2e70c0a1cde884b88392458ca86148d859b273a5695ede5bbe41f731d7d88ffd",
+      "salt": "09ff97750b084012e15ecb84614ce88180d7b8ec0d468508a86b6d70c0361a25",
+      "plaintext": "¯\\_(ツ)_/¯",
+      "ciphertext": "Agn/l3ULCEAS4V7LhGFM6IGA17jsDUaFCKhrbXDANholdUejFZPARM22IvOqp1U/UmFSkeSyTBYbbwy5ykmi+mKiER/Pr3IhMJbShCKkP4ytxzWxEndwVjRV+ZgzmeGNL7Dy",
+      "note": "invalid mac 1"
+    },
+    {
+      "sec1": "067eda13c4a36090ad28a7a183e9df611186ca01f63cb30fcdfa615ebfd6fb6d",
+      "pub2": "32c1ece2c5dd2160ad03b243f50eff12db605b86ac92da47eacc78144bf0cdd3",
+      "sharedKey": "a808915e31afc5b853d654d2519632dac7298ee2ecddc11695b8eba925935c2a",
+      "salt": "65b14b0b949aaa7d52c417eb753b390e8ad6d84b23af4bec6d9bfa3e03a08af4",
+      "plaintext": "🥎",
+      "ciphertext": "AmWxSwuUmqp9UsQX63U7OQ6K1thLI69L7G2b+j4DoIr0U0P/M1/oKm95z8qz6Kg0zQawLzwk3DskvWA2drXP4zK+t0BULZ9vhTDlmL8rsvBozBsvQwFPqd63PRRS4zrFvgwh",
+      "note": "invalid mac 2"
+    },
+    {
+      "sec1": "3e7be560fb9f8c965c48953dbd00411d48577e200cf00d7cc427e49d0e8d9c01",
+      "pub2": "e539e5fee58a337307e2a937ee9a7561b45876fb5df405c5e7be3ee564b239cc",
+      "sharedKey": "6ee3efc4255e3b8270e5dd3f7dc7f6b60878cda6218c8df34a3261cd48744931",
+      "salt": "7ab65dbb8bbc2b8e35cafb5745314e1f050325a864d11d0475ef75b3660d91c1",
+      "plaintext": "elliptic-curve cryptography",
+      "ciphertext": "Anq2XbuLvCuONcr7V0UxTh8FAyWoZNEdBHXvdbNmDZHBu7F9m36yBd58mVUBB5ktBTOJREDaQT1KAyPmZidP+IRea1lNw5YAEK7+pbnpfCw8CD0i2n8Pf2IDWlKDhLiVvatw",
+      "note": "padding invalid: u16 length is 0"
+    },
+    {
+      "sec1": "c22e1d4de967aa39dc143354d8f596cec1d7c912c3140831fff2976ce3e387c1",
+      "pub2": "4e405be192677a2da95ffc733950777213bf880cf7c3b084eeb6f3fe5bd43705",
+      "sharedKey": "1675a773dbf6fbcbef6a293004a4504b6c856978be738b10584b0269d437c8d1",
+      "salt": "7d4283e3b54c885d6afee881f48e62f0a3f5d7a9e1cb71ccab594a7882c39330",
+      "plaintext": "Peer-to-Peer",
+      "ciphertext": "An1Cg+O1TIhdav7ogfSOYvCj9dep4ctxzKtZSniCw5MwhT0hvSnF9Xjp9Lml792qtNbmAVvR6laukTe9eYEjeWPpZFxtkVpYTbbL9wDKFeplDMKsUKVa+roSeSvv0ela9seDVl2Sfso=",
+      "note": "invalid padding: 5 extra zeros"
+    },
+    {
+      "sec1": "be1edab14c5912e5c59084f197f0945242e969c363096cccb59af8898815096f",
+      "pub2": "9eaf0775d971e4941c97189232542e1daefcdb7dddafc39bcea2520217710ba2",
+      "sharedKey": "1741a44c052d5ae363c7845441f73d2b6c28d9bfb3006190012bba12eb4c774b",
+      "salt": "6f9fd72667c273acd23ca6653711a708434474dd9eb15c3edb01ce9a95743e9b",
+      "plaintext": "censorship-resistant and global social network",
+      "ciphertext": "Am+f1yZnwnOs0jymZTcRpwhDRHTdnrFcPtsBzpqVdD6bL9HUMo3Mjkz4bjQo/FJF2LWHmaCr9Byc3hU9D7we+EkNBWenBHasT1G52fZk9r3NKeOC1hLezNwBLr7XXiULh+NbMBDtJh9/aQh1uZ9EpAfeISOzbZXwYwf0P5M85g9XER8hZ2fgJDLb4qMOuQRG6CrPezhr357nS3UHwPC2qHo3uKACxhE+2td+965yDcvMTx4KYTQg1zNhd7PA5v/WPnWeq2B623yLxlevUuo/OvXplFho3QVy7s5QZVop6qV2g2/l/SIsvD0HIcv3V35sywOCBR0K4VHgduFqkx/LEF3NGgAbjONXQHX8ZKushsEeR4TxlFoRSovAyYjhWolz+Ok3KJL2Ertds3H+M/Bdl2WnZGT0IbjZjn3DS+b1Ke0R0X4Onww2ZG3+7o6ncIwTc+lh1O7YQn00V0HJ+EIp03heKV2zWdVSC615By/+Yt9KAiV56n5+02GAuNqA",
+      "note": "invalid padding: 250 extra zeros"
+    }
+  ],
+  "invalid_conversation_key": [
     {
       "sec1": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
