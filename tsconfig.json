@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "emitDeclarationOnly": true,
+    "resolveJsonModule": true,
     "outDir": "lib",
     "rootDir": ".",
     "allowImportingTsExtensions": true
