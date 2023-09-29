@@ -22,7 +22,7 @@ export const utils = {
     getMessageKeys(conversationKey: Uint8Array, salt: Uint8Array) {
       const keys = hkdf(sha256, conversationKey, salt, 'nip44-v2', 76)
       return {
-        enc: keys.subarray(0, 32),
+        encryption: keys.subarray(0, 32),
         nonce: keys.subarray(32, 44),
         auth: keys.subarray(44, 76),
       }
@@ -49,10 +49,14 @@ export const utils = {
 
     unpad(padded: Uint8Array): string {
       const unpaddedLen = new DataView(padded.buffer).getUint16(0)
-      const plaintextB = padded.subarray(2, 2 + unpaddedLen)
-      if (plaintextB.length !== unpaddedLen) throw new Error('invalid padding')
-      if (padded.length !== 2 + utils.v2.calcPadding(unpaddedLen)) throw new Error('invalid padding')
-      return utf8Decoder.decode(plaintextB)
+      const unpadded = padded.subarray(2, 2 + unpaddedLen)
+      if (
+        unpaddedLen === 0 ||
+        unpadded.length !== unpaddedLen ||
+        padded.length !== 2 + utils.v2.calcPadding(unpaddedLen)
+      )
+        throw new Error('invalid padding')
+      return utf8Decoder.decode(unpadded)
     },
   },
 }
@@ -70,7 +74,7 @@ export function encrypt(
 
   const keys = utils.v2.getMessageKeys(key, salt)
   const padded = utils.v2.pad(plaintext)
-  const ciphertext = chacha20(keys.enc, keys.nonce, padded)
+  const ciphertext = chacha20(keys.encryption, keys.nonce, padded)
   const mac = hmac(sha256, keys.auth, ciphertext)
 
   return base64.encode(concatBytes(new Uint8Array([version]), salt, ciphertext, mac))
@@ -96,6 +100,6 @@ export function decrypt(key: Uint8Array, ciphertext: string): string {
   const calculatedMac = hmac(sha256, keys.auth, ciphertext_)
   if (!equalBytes(calculatedMac, mac)) throw new Error('encryption MAC does not match')
 
-  const plaintext = chacha20(keys.enc, keys.nonce, ciphertext_)
+  const plaintext = chacha20(keys.encryption, keys.nonce, ciphertext_)
   return utils.v2.unpad(plaintext)
 }
