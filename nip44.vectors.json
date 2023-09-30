@@ -192,31 +192,26 @@
       {
         "sec1": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        "plaintext": "a",
         "note": "sec1 higher than curve.n"
       },
       {
         "sec1": "0000000000000000000000000000000000000000000000000000000000000000",
         "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        "plaintext": "a",
         "note": "sec1 is 0"
       },
       {
         "sec1": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364139",
         "pub2": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        "plaintext": "a",
         "note": "pub2 is invalid, no sqrt, all-ff"
       },
       {
         "sec1": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
         "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        "plaintext": "a",
         "note": "sec1 == curve.n"
       },
       {
         "sec1": "0000000000000000000000000000000000000000000000000000000000000002",
         "pub2": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        "plaintext": "a",
         "note": "pub2 is invalid, no sqrt"
       }
     ],
