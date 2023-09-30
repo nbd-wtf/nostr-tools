@@ -68,38 +68,40 @@ export function encrypt(
 ): string {
   const version = options.version ?? 2
   if (version !== 2) throw new Error('unknown encryption version ' + version)
-
   const salt = options.salt ?? randomBytes(32)
   ensureBytes(salt, 32)
-
   const keys = utils.v2.getMessageKeys(key, salt)
   const padded = utils.v2.pad(plaintext)
   const ciphertext = chacha20(keys.encryption, keys.nonce, padded)
   const mac = hmac(sha256, keys.auth, ciphertext)
-
   return base64.encode(concatBytes(new Uint8Array([version]), salt, ciphertext, mac))
 }
 
 export function decrypt(key: Uint8Array, ciphertext: string): string {
+  const u = utils.v2
+  ensureBytes(key, 32)
+
   const clen = ciphertext.length
+  if (clen < u.minCiphertextSize || clen >= u.maxCiphertextSize) throw new Error('invalid ciphertext length: ' + clen)
 
-  if (clen < utils.v2.minCiphertextSize || clen >= utils.v2.maxCiphertextSize)
-    throw new Error('ciphertext length is invalid')
-
-  const v = ciphertext[0]
-  if (v === '#') throw new Error('unknown encryption version')
-  const data = base64.decode(ciphertext)
-  const version = data.subarray(0, 1)[0]
-  if (version !== 2) throw new Error('unknown encryption version ' + version)
+  if (ciphertext[0] === '#') throw new Error('unknown encryption version')
+  let data: Uint8Array
+  try {
+    data = base64.decode(ciphertext)
+  } catch (error) {
+    throw new Error('invalid base64: ' + (error as any).message)
+  }
+  const vers = data.subarray(0, 1)[0]
+  if (vers !== 2) throw new Error('unknown encryption version ' + vers)
 
   const salt = data.subarray(1, 33)
   const ciphertext_ = data.subarray(33, -32)
   const mac = data.subarray(-32)
 
-  const keys = utils.v2.getMessageKeys(key, salt)
+  const keys = u.getMessageKeys(key, salt)
   const calculatedMac = hmac(sha256, keys.auth, ciphertext_)
-  if (!equalBytes(calculatedMac, mac)) throw new Error('encryption MAC does not match')
+  if (!equalBytes(calculatedMac, mac)) throw new Error('invalid MAC')
 
-  const plaintext = chacha20(keys.encryption, keys.nonce, ciphertext_)
-  return utils.v2.unpad(plaintext)
+  const padded = chacha20(keys.encryption, keys.nonce, ciphertext_)
+  return u.unpad(padded)
 }
