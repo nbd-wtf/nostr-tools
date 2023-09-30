@@ -30,8 +30,8 @@ test('NIP44: invalid', async () => {
   for (const v of vectors.invalid) {
     expect(() => {
       const key = utils.v2.getConversationKey(v.sec1, v.pub2)
-      const ciphertext = decrypt(key, v.plaintext)
-    }).toThrowError()
+      const ciphertext = decrypt(key, v.ciphertext)
+    }).toThrowError(v.note)
   }
 })
 
@@ -39,7 +39,7 @@ test('NIP44: invalid_conversation_key', async () => {
   for (const v of vectors.invalid_conversation_key) {
     expect(() => {
       const key = utils.v2.getConversationKey(v.sec1, v.pub2)
-      const ciphertext = encrypt(key, v.plaintext)
+      const ciphertext = encrypt(key, 'a')
     }).toThrowError()
   }
 })
