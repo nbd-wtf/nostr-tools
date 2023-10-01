@@ -10,6 +10,7 @@
     "esModuleInterop": true,
     "emitDeclarationOnly": true,
     "outDir": "lib/types",
+    "resolveJsonModule": true,
     "rootDir": ".",
     "allowImportingTsExtensions": true
   }
