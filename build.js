@@ -2,9 +2,17 @@
 
 const fs = require('fs')
 const esbuild = require('esbuild')
+const { join } = require('path');
+
+const entryPoints = fs.readdirSync(process.cwd())
+  .filter(
+    (file) =>
+      file.endsWith(".ts") && !file.endsWith("test.ts") &&
+      fs.statSync(join(process.cwd(), file)).isFile()
+  );
 
 let common = {
-  entryPoints: ['index.ts'],
+  entryPoints,
   bundle: true,
   sourcemap: 'external',
 }
@@ -12,7 +20,7 @@ let common = {
 esbuild
   .build({
     ...common,
-    outfile: 'lib/esm/nostr.mjs',
+    outdir: 'lib/esm',
     format: 'esm',
     packages: 'external',
   })
@@ -26,7 +34,7 @@ esbuild
 esbuild
   .build({
     ...common,
-    outfile: 'lib/nostr.cjs.js',
+    outdir: 'lib/cjs',
     format: 'cjs',
     packages: 'external',
   })
@@ -35,6 +43,7 @@ esbuild
 esbuild
   .build({
     ...common,
+    entryPoints: ['index.ts'],
     outfile: 'lib/nostr.bundle.js',
     format: 'iife',
     globalName: 'NostrTools',
