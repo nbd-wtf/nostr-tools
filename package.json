@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "1.15.0",
+  "version": "2.0.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -10,139 +10,139 @@
     "lib"
   ],
   "sideEffects": false,
-  "module": "lib/esm/index.js",
-  "main": "lib/cjs/index.js",
-  "types": "lib/types/index.d.ts",
+  "module": "./lib/esm/index.js",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "lib/esm/index.js",
-      "require": "lib/cjs/index.js",
-      "types": "lib/types/index.d.ts"
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./keys": {
-      "import": "lib/esm/keys.js",
-      "require": "lib/cjs/keys.js",
-      "types": "lib/types/keys.d.ts"
+      "import": "./lib/esm/keys.js",
+      "require": "./lib/cjs/keys.js",
+      "types": "./lib/types/keys.d.ts"
     },
     "./relay": {
-      "import": "lib/esm/relay.js",
-      "require": "lib/cjs/relay.js",
-      "types": "lib/types/relay.d.ts"
+      "import": "./lib/esm/relay.js",
+      "require": "./lib/cjs/relay.js",
+      "types": "./lib/types/relay.d.ts"
     },
     "./event": {
-      "import": "lib/esm/event.js",
-      "require": "lib/cjs/event.js",
-      "types": "lib/types/event.d.ts"
+      "import": "./lib/esm/event.js",
+      "require": "./lib/cjs/event.js",
+      "types": "./lib/types/event.d.ts"
     },
     "./filter": {
-      "import": "lib/esm/filter.js",
-      "require": "lib/cjs/filter.js",
-      "types": "lib/types/filter.d.ts"
+      "import": "./lib/esm/filter.js",
+      "require": "./lib/cjs/filter.js",
+      "types": "./lib/types/filter.d.ts"
     },
     "./pool": {
-      "import": "lib/esm/pool.js",
-      "require": "lib/cjs/pool.js",
-      "types": "lib/types/pool.d.ts"
+      "import": "./lib/esm/pool.js",
+      "require": "./lib/cjs/pool.js",
+      "types": "./lib/types/pool.d.ts"
     },
     "./references": {
-      "import": "lib/esm/references.js",
-      "require": "lib/cjs/references.js",
-      "types": "lib/types/references.d.ts"
+      "import": "./lib/esm/references.js",
+      "require": "./lib/cjs/references.js",
+      "types": "./lib/types/references.d.ts"
     },
     "./nip04": {
-      "import": "lib/esm/nip04.js",
-      "require": "lib/cjs/nip04.js",
-      "types": "lib/types/nip04.d.ts"
+      "import": "./lib/esm/nip04.js",
+      "require": "./lib/cjs/nip04.js",
+      "types": "./lib/types/nip04.d.ts"
     },
     "./nip05": {
-      "import": "lib/esm/nip05.js",
-      "require": "lib/cjs/nip05.js",
-      "types": "lib/types/nip05.d.ts"
+      "import": "./lib/esm/nip05.js",
+      "require": "./lib/cjs/nip05.js",
+      "types": "./lib/types/nip05.d.ts"
     },
     "./nip06": {
-      "import": "lib/esm/nip06.js",
-      "require": "lib/cjs/nip06.js",
-      "types": "lib/types/nip06.d.ts"
+      "import": "./lib/esm/nip06.js",
+      "require": "./lib/cjs/nip06.js",
+      "types": "./lib/types/nip06.d.ts"
     },
     "./nip10": {
-      "import": "lib/esm/nip10.js",
-      "require": "lib/cjs/nip10.js",
-      "types": "lib/types/nip10.d.ts"
+      "import": "./lib/esm/nip10.js",
+      "require": "./lib/cjs/nip10.js",
+      "types": "./lib/types/nip10.d.ts"
     },
     "./nip13": {
-      "import": "lib/esm/nip13.js",
-      "require": "lib/cjs/nip13.js",
-      "types": "lib/types/nip13.d.ts"
+      "import": "./lib/esm/nip13.js",
+      "require": "./lib/cjs/nip13.js",
+      "types": "./lib/types/nip13.d.ts"
     },
     "./nip18": {
-      "import": "lib/esm/nip18.js",
-      "require": "lib/cjs/nip18.js",
-      "types": "lib/types/nip18.d.ts"
+      "import": "./lib/esm/nip18.js",
+      "require": "./lib/cjs/nip18.js",
+      "types": "./lib/types/nip18.d.ts"
     },
     "./nip19": {
-      "import": "lib/esm/nip19.js",
-      "require": "lib/cjs/nip19.js",
-      "types": "lib/types/nip19.d.ts"
+      "import": "./lib/esm/nip19.js",
+      "require": "./lib/cjs/nip19.js",
+      "types": "./lib/types/nip19.d.ts"
     },
     "./nip21": {
-      "import": "lib/esm/nip21.js",
-      "require": "lib/cjs/nip21.js",
-      "types": "lib/types/nip21.d.ts"
+      "import": "./lib/esm/nip21.js",
+      "require": "./lib/cjs/nip21.js",
+      "types": "./lib/types/nip21.d.ts"
     },
     "./nip25": {
-      "import": "lib/esm/nip25.js",
-      "require": "lib/cjs/nip25.js",
-      "types": "lib/types/nip25.d.ts"
+      "import": "./lib/esm/nip25.js",
+      "require": "./lib/cjs/nip25.js",
+      "types": "./lib/types/nip25.d.ts"
     },
     "./nip26": {
-      "import": "lib/esm/nip26.js",
-      "require": "lib/cjs/nip26.js",
-      "types": "lib/types/nip26.d.ts"
+      "import": "./lib/esm/nip26.js",
+      "require": "./lib/cjs/nip26.js",
+      "types": "./lib/types/nip26.d.ts"
     },
     "./nip27": {
-      "import": "lib/esm/nip27.js",
-      "require": "lib/cjs/nip27.js",
-      "types": "lib/types/nip27.d.ts"
+      "import": "./lib/esm/nip27.js",
+      "require": "./lib/cjs/nip27.js",
+      "types": "./lib/types/nip27.d.ts"
     },
     "./nip28": {
-      "import": "lib/esm/nip28.js",
-      "require": "lib/cjs/nip28.js",
-      "types": "lib/types/nip28.d.ts"
+      "import": "./lib/esm/nip28.js",
+      "require": "./lib/cjs/nip28.js",
+      "types": "./lib/types/nip28.d.ts"
     },
     "./nip39": {
-      "import": "lib/esm/nip39.js",
-      "require": "lib/cjs/nip39.js",
-      "types": "lib/types/nip39.d.ts"
+      "import": "./lib/esm/nip39.js",
+      "require": "./lib/cjs/nip39.js",
+      "types": "./lib/types/nip39.d.ts"
     },
     "./nip42": {
-      "import": "lib/esm/nip42.js",
-      "require": "lib/cjs/nip42.js",
-      "types": "lib/types/nip42.d.ts"
+      "import": "./lib/esm/nip42.js",
+      "require": "./lib/cjs/nip42.js",
+      "types": "./lib/types/nip42.d.ts"
     },
     "./nip44": {
-      "import": "lib/esm/nip44.js",
-      "require": "lib/cjs/nip44.js",
-      "types": "lib/types/nip44.d.ts"
+      "import": "./lib/esm/nip44.js",
+      "require": "./lib/cjs/nip44.js",
+      "types": "./lib/types/nip44.d.ts"
     },
     "./nip57": {
-      "import": "lib/esm/nip57.js",
-      "require": "lib/cjs/nip57.js",
-      "types": "lib/types/nip57.d.ts"
+      "import": "./lib/esm/nip57.js",
+      "require": "./lib/cjs/nip57.js",
+      "types": "./lib/types/nip57.d.ts"
     },
     "./nip98": {
-      "import": "lib/esm/nip98.js",
-      "require": "lib/cjs/nip98.js",
-      "types": "lib/types/nip98.d.ts"
+      "import": "./lib/esm/nip98.js",
+      "require": "./lib/cjs/nip98.js",
+      "types": "./lib/types/nip98.d.ts"
     },
     "./fakejson": {
-      "import": "lib/esm/fakejson.js",
-      "require": "lib/cjs/fakejson.js",
-      "types": "lib/types/fakejson.d.ts"
+      "import": "./lib/esm/fakejson.js",
+      "require": "./lib/cjs/fakejson.js",
+      "types": "./lib/types/fakejson.d.ts"
     },
     "./utils": {
-      "import": "lib/esm/utils.js",
-      "require": "lib/cjs/utils.js",
-      "types": "lib/types/utils.d.ts"
+      "import": "./lib/esm/utils.js",
+      "require": "./lib/cjs/utils.js",
+      "types": "./lib/types/utils.d.ts"
     }
   },
   "license": "Unlicense",
