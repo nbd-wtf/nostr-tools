@@ -46,27 +46,41 @@ export function matchFilters(filters: Filter<number>[], event: Event<number>): b
 }
 
 export function mergeFilters(...filters: Filter<number>[]): Filter<number> {
-  let result: Filter<number> = {}
-  for (let i = 0; i < filters.length; i++) {
-    let filter = filters[i]
-    Object.entries(filter).forEach(([property, values]) => {
-      if (property === 'kinds' || property === 'ids' || property === 'authors' || property[0] === '#') {
-        // @ts-ignore
-        result[property] = result[property] || []
-        // @ts-ignore
-        for (let v = 0; v < values.length; v++) {
-          // @ts-ignore
-          let value = values[v]
-          // @ts-ignore
-          if (!result[property].includes(value)) result[property].push(value)
+  const mergedProperties: {
+    [key: string]: Set<string | number>,
+  } = {}
+  let limit, until, since
+
+  for (let filter of filters) {
+    for (let [property, values] of Object.entries(filter)) {
+      if (
+        property === 'kinds' ||
+        property === 'ids' ||
+        property === 'authors' ||
+        property[0] === '#'
+      ) {
+        mergedProperties[property] = mergedProperties[property] || new Set()
+        for (let value of values as (string | number)[]) {
+          mergedProperties[property].add(value)
         }
       }
-    })
+    }
 
-    if (filter.limit && (!result.limit || filter.limit > result.limit)) result.limit = filter.limit
-    if (filter.until && (!result.until || filter.until > result.until)) result.until = filter.until
-    if (filter.since && (!result.since || filter.since < result.since)) result.since = filter.since
+    if (filter.limit && (!limit || filter.limit > limit)) limit = filter.limit
+    if (filter.until && (!until || filter.until > until)) until = filter.until
+    if (filter.since && (!since || filter.since < since)) since = filter.since
   }
 
-  return result
+  const response: Filter<number> = Object.entries(mergedProperties).reduce((previousProperties, [currentProperty, value]) => {
+    return {
+      ...previousProperties,
+      [currentProperty]: Array.from(value) ?? []
+    }
+  }, {})
+
+  response.limit = limit
+  response.until = until
+  response.since = since
+
+  return response
 }
