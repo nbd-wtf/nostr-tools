@@ -16,11 +16,7 @@ export type ReactionEventTemplate = {
   created_at: number
 }
 
-export function finishReactionEvent(
-  t: ReactionEventTemplate,
-  reacted: Event<number>,
-  privateKey: string,
-): Event<Kind.Reaction> {
+export function finishReactionEvent(t: ReactionEventTemplate, reacted: Event<number>, privateKey: string): Event {
   const inheritedTags = reacted.tags.filter(tag => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p'))
 
   return finishEvent(

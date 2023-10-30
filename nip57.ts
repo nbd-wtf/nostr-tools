@@ -13,7 +13,7 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export async function getZapEndpoint(metadata: Event<Kind.Metadata>): Promise<null | string> {
+export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   try {
     let lnurl: string = ''
     let { lud06, lud16 } = JSON.parse(metadata.content)
@@ -53,12 +53,12 @@ export function makeZapRequest({
   amount: number
   comment: string
   relays: string[]
-}): EventTemplate<Kind.ZapRequest> {
+}): EventTemplate {
   if (!amount) throw new Error('amount not given')
   if (!profile) throw new Error('profile not given')
 
-  let zr: EventTemplate<Kind.ZapRequest> = {
-    kind: 9734,
+  let zr: EventTemplate = {
+    kind: Kind.ZapRequest,
     created_at: Math.round(Date.now() / 1000),
     content: comment,
     tags: [
@@ -111,12 +111,12 @@ export function makeZapReceipt({
   preimage?: string
   bolt11: string
   paidAt: Date
-}): EventTemplate<Kind.Zap> {
-  let zr: Event<Kind.ZapRequest> = JSON.parse(zapRequest)
+}): EventTemplate {
+  let zr: Event = JSON.parse(zapRequest)
   let tagsFromZapRequest = zr.tags.filter(([t]) => t === 'e' || t === 'p' || t === 'a')
 
-  let zap: EventTemplate<Kind.Zap> = {
-    kind: 9735,
+  let zap: EventTemplate = {
+    kind: Kind.Zap,
     created_at: Math.round(paidAt.getTime() / 1000),
     content: '',
     tags: [...tagsFromZapRequest, ['bolt11', bolt11], ['description', zapRequest]],

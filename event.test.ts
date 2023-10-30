@@ -14,7 +14,7 @@ import { getPublicKey } from './keys.ts'
 describe('Event', () => {
   describe('getBlankEvent', () => {
     it('should return a blank event object', () => {
-      expect(getBlankEvent()).toEqual({
+      expect(getBlankEvent(255)).toEqual({
         kind: 255,
         content: '',
         tags: [],

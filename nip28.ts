@@ -44,10 +44,7 @@ export interface ChannelMuteUserEventTemplate {
   tags?: string[][]
 }
 
-export const channelCreateEvent = (
-  t: ChannelCreateEventTemplate,
-  privateKey: string,
-): Event<Kind.ChannelCreation> | undefined => {
+export const channelCreateEvent = (t: ChannelCreateEventTemplate, privateKey: string): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -71,7 +68,7 @@ export const channelCreateEvent = (
 export const channelMetadataEvent = (
   t: ChannelMetadataEventTemplate,
   privateKey: string,
-): Event<Kind.ChannelMetadata> | undefined => {
+): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -92,7 +89,7 @@ export const channelMetadataEvent = (
   )
 }
 
-export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: string): Event<Kind.ChannelMessage> => {
+export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: string): Event => {
   const tags = [['e', t.channel_create_event_id, t.relay_url, 'root']]
 
   if (t.reply_to_channel_message_event_id) {
@@ -114,7 +111,7 @@ export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: 
 export const channelHideMessageEvent = (
   t: ChannelHideMessageEventTemplate,
   privateKey: string,
-): Event<Kind.ChannelHideMessage> | undefined => {
+): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -138,7 +135,7 @@ export const channelHideMessageEvent = (
 export const channelMuteUserEvent = (
   t: ChannelMuteUserEventTemplate,
   privateKey: string,
-): Event<Kind.ChannelMuteUser> | undefined => {
+): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)

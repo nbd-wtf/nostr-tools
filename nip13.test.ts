@@ -1,4 +1,5 @@
 import { getPow, minePow } from './nip13.ts'
+import { Kind } from './event.ts'
 
 test('identifies proof-of-work difficulty', async () => {
   const id = '000006d8c378af1779d2feebc7603a125d99eca0ccf1085959b307f64e5dd358'
@@ -11,7 +12,7 @@ test('mines POW for an event', async () => {
 
   const event = minePow(
     {
-      kind: 1,
+      kind: Kind.Text,
       tags: [],
       content: 'Hello, world!',
       created_at: 0,

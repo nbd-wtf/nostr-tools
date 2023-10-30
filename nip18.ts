@@ -23,7 +23,7 @@ export function finishRepostEvent(
   reposted: Event<number>,
   relayUrl: string,
   privateKey: string,
-): Event<Kind.Repost> {
+): Event {
   return finishEvent(
     {
       kind: Kind.Repost,
