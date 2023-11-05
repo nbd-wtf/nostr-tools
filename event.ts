@@ -35,7 +35,7 @@ export const Kind = {
   BadgeDefinition: 30009,
   Article: 30023,
   FileMetadata: 1063,
-}
+} as const
 
 export interface Event<K extends number = number> {
   kind: K
