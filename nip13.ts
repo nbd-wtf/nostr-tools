@@ -52,20 +52,9 @@ export function minePow<K extends number>(unsigned: UnsignedEvent<K>, difficulty
 }
 
 /** Verify POW difficulty for a NOSTR event. */
-export function verifyPow(event: Event) {
-  let count = 0
-  
-  // Get event id by hashing event to verify iterations taken
-  let hash = getEventHash(event)
-  for (let i = 0; i < hash.length; i++) {
-    const nibble = parseInt(hash[i], 16)
-    if (nibble === 0) {
-      count += 4
-    } else {
-      count += Math.clz32(nibble) - 28
-      break
-    }
-  }
+export function verifyPow(event: Event): number {
+  const hash = getEventHash(event)
+  const count = getPow(hash)
 
   // Extract the target difficulty level from the tags
   const nonceTag = event.tags.find(tag => tag[0] === 'nonce');
