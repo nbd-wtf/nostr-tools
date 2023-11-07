@@ -50,3 +50,30 @@ export function minePow<K extends number>(unsigned: UnsignedEvent<K>, difficulty
 
   return event
 }
+
+/** Verify POW difficulty for a NOSTR event. */
+export function verifyPow(event: Event) {
+  let count = 0
+  
+  // Get event id by hashing event to verify iterations taken
+  let hash = getEventHash(event)
+  for (let i = 0; i < hash.length; i++) {
+    const nibble = parseInt(hash[i], 16)
+    if (nibble === 0) {
+      count += 4
+    } else {
+      count += Math.clz32(nibble) - 28
+      break
+    }
+  }
+
+  // Extract the target difficulty level from the tags
+  const nonceTag = event.tags.find(tag => tag[0] === 'nonce');
+  if (!nonceTag || nonceTag.length < 3) {
+    return 0 // Without specifying target difficulty, there is no PROOF of work
+  }
+  const targetDifficulty = parseInt(nonceTag[2], 10);
+
+  // The proof-of-work is the minimum of actual hash result and target
+  return Math.min(count, targetDifficulty)
+}
