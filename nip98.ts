@@ -1,8 +1,15 @@
+import { bytesToHex } from '@noble/hashes/utils'
+import { sha256 } from '@noble/hashes/sha256'
 import { base64 } from '@scure/base'
 import { Event, EventTemplate, Kind, getBlankEvent, verifySignature } from './event'
 import { utf8Decoder, utf8Encoder } from './utils'
 
 const _authorizationScheme = 'Nostr '
+
+function hashPayload(payload: any): string {
+  const hash = sha256(utf8Encoder.encode(JSON.stringify(payload)))
+  return bytesToHex(hash)
+}
 
 /**
  * Generate token for NIP-98 flow.
@@ -16,6 +23,7 @@ export async function getToken(
   httpMethod: string,
   sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>> | Event<K>,
   includeAuthorizationScheme: boolean = false,
+  payload?: Record<string, any>,
 ): Promise<string> {
   if (!loginUrl || !httpMethod) throw new Error('Missing loginUrl or httpMethod')
 
@@ -25,6 +33,11 @@ export async function getToken(
     ['u', loginUrl],
     ['method', httpMethod],
   ]
+
+  if (payload) {
+    event.tags.push(['payload', bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))])
+  }
+
   event.created_at = Math.round(new Date().getTime() / 1000)
 
   const signedEvent = await sign(event)
@@ -66,7 +79,7 @@ export async function unpackEventFromToken(token: string): Promise<Event> {
   return event
 }
 
-export async function validateEvent(event: Event, url: string, method: string): Promise<boolean> {
+export async function validateEvent(event: Event, url: string, method: string, body?: any): Promise<boolean> {
   if (!event) {
     throw new Error('Invalid nostr event')
   }
@@ -94,6 +107,14 @@ export async function validateEvent(event: Event, url: string, method: string): 
   const methodTag = event.tags.find(t => t[0] === 'method')
   if (methodTag?.length !== 1 && methodTag?.[1].toLowerCase() !== method.toLowerCase()) {
     throw new Error('Invalid nostr event, method tag invalid')
+  }
+
+  if (Boolean(body) && Object.keys(body).length > 0) {
+    const payloadTag = event.tags.find(t => t[0] === 'payload')
+    const payloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(body))))
+    if (payloadTag?.[1] !== payloadHash) {
+      throw new Error('Invalid payload tag hash, does not match request body hash')
+    }
   }
 
   return true
