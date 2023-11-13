@@ -7,7 +7,6 @@ export * from './references.ts'
 
 export * as nip04 from './nip04.ts'
 export * as nip05 from './nip05.ts'
-export * as nip06 from './nip06.ts'
 export * as nip10 from './nip10.ts'
 export * as nip13 from './nip13.ts'
 export * as nip18 from './nip18.ts'
