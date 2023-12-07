@@ -1,6 +1,7 @@
 node_modules
 dist
 yarn.lock
+.yarn/
 package-lock.json
 .envrc
 lib
