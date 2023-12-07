@@ -144,6 +144,26 @@ describe('Filter', () => {
 
       expect(result).toEqual(true)
     })
+
+    it('should return true when the event delegator is in the filter', () => {
+      const filter = { author: ['abc'] }
+
+      const event = buildEvent({ pubkey: 'def', tags: [['delegation', 'abc', '', '']] })
+
+      const result = matchFilter(filter, event)
+
+      expect(result).toEqual(true)
+    })
+
+    it('should return true when the event delegator prefix is in the filter', () => {
+      const filter = { author: ['a'] }
+
+      const event = buildEvent({ pubkey: 'def', tags: [['delegation', 'abc', '', '']] })
+
+      const result = matchFilter(filter, event)
+
+      expect(result).toEqual(true)
+    })
   })
 
   describe('matchFilters', () => {
