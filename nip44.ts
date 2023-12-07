@@ -39,7 +39,8 @@ export const utils = {
     pad(unpadded: string): Uint8Array {
       const unpaddedB = utf8Encoder.encode(unpadded)
       const len = unpaddedB.length
-      if (len < 1 || len >= utils.v2.maxPlaintextSize) throw new Error('invalid plaintext length: must be between 1b and 64KB')
+      if (len < 1 || len >= utils.v2.maxPlaintextSize)
+        throw new Error('invalid plaintext length: must be between 1b and 64KB')
       const paddedLen = utils.v2.calcPadding(len)
       const zeros = new Uint8Array(paddedLen - len)
       const lenBuf = new Uint8Array(2)

@@ -189,7 +189,7 @@ export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
 
 export function neventEncode(event: EventPointer): `nevent1${string}` {
   let kindArray
-  if (event.kind != undefined) {
+  if (event.kind !== undefined) {
     kindArray = integerToUint8Array(event.kind)
   }
 

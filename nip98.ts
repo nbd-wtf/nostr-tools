@@ -6,11 +6,6 @@ import { utf8Decoder, utf8Encoder } from './utils'
 
 const _authorizationScheme = 'Nostr '
 
-function hashPayload(payload: any): string {
-  const hash = sha256(utf8Encoder.encode(JSON.stringify(payload)))
-  return bytesToHex(hash)
-}
-
 /**
  * Generate token for NIP-98 flow.
  *
