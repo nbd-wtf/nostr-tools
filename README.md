@@ -258,43 +258,6 @@ sub.on('event', async event => {
 })
 ```
 
-### Performing and checking for delegation
-
-```js
-import { nip26, getPublicKey, generatePrivateKey } from 'nostr-tools'
-
-// delegator
-let sk1 = generatePrivateKey()
-let pk1 = getPublicKey(sk1)
-
-// delegatee
-let sk2 = generatePrivateKey()
-let pk2 = getPublicKey(sk2)
-
-// generate delegation
-let delegation = nip26.createDelegation(sk1, {
-  pubkey: pk2,
-  kind: 1,
-  since: Math.round(Date.now() / 1000),
-  until: Math.round(Date.now() / 1000) + 60 * 60 * 24 * 30 /* 30 days */,
-})
-
-// the delegatee uses the delegation when building an event
-let event = {
-  pubkey: pk2,
-  kind: 1,
-  created_at: Math.round(Date.now() / 1000),
-  content: 'hello from a delegated key',
-  tags: [['delegation', delegation.from, delegation.cond, delegation.sig]],
-}
-
-// finally any receiver of this event can check for the presence of a valid delegation tag
-let delegator = nip26.getDelegator(event)
-assert(delegator === pk1) // will be null if there is no delegation tag or if it is invalid
-```
-
-Please consult the tests or [the source code](https://github.com/fiatjaf/nostr-tools) for more information that isn't available here.
-
 ### Using from the browser (if you don't want to use a bundler)
 
 ```html

@@ -94,11 +94,6 @@
       "require": "./lib/cjs/nip25.js",
       "types": "./lib/types/nip25.d.ts"
     },
-    "./nip26": {
-      "import": "./lib/esm/nip26.js",
-      "require": "./lib/cjs/nip26.js",
-      "types": "./lib/types/nip26.d.ts"
-    },
     "./nip27": {
       "import": "./lib/esm/nip27.js",
       "require": "./lib/cjs/nip27.js",
