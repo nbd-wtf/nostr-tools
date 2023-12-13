@@ -224,7 +224,7 @@ assert(data.relays.length === 2)
 ### Encrypting and decrypting direct messages
 
 ```js
-import {nip44, getPublicKey, generatePrivateKey} from 'nostr-tools'
+import { nip44, getPublicKey, generatePrivateKey } from 'nostr-tools'
 
 // sender
 let sk1 = generatePrivateKey()
