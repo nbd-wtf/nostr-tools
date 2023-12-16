@@ -1,11 +1,7 @@
-import {bytesToHex} from '@noble/hashes/utils'
-import {wordlist} from '@scure/bip39/wordlists/english.js'
-import {
-  generateMnemonic,
-  mnemonicToSeedSync,
-  validateMnemonic
-} from '@scure/bip39'
-import {HDKey} from '@scure/bip32'
+import { bytesToHex } from '@noble/hashes/utils'
+import { wordlist } from '@scure/bip39/wordlists/english'
+import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from '@scure/bip39'
+import { HDKey } from '@scure/bip32'
 
 export function privateKeyFromSeedWords(
   mnemonic: string,

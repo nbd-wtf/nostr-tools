@@ -1,4 +1,4 @@
-import type {Event} from './event.ts'
+import type { Event } from './event.ts'
 
 export const utf8Decoder = new TextDecoder('utf-8')
 export const utf8Encoder = new TextEncoder()
@@ -7,11 +7,7 @@ export function normalizeURL(url: string): string {
   let p = new URL(url)
   p.pathname = p.pathname.replace(/\/+/g, '/')
   if (p.pathname.endsWith('/')) p.pathname = p.pathname.slice(0, -1)
-  if (
-    (p.port === '80' && p.protocol === 'ws:') ||
-    (p.port === '443' && p.protocol === 'wss:')
-  )
-    p.port = ''
+  if ((p.port === '80' && p.protocol === 'ws:') || (p.port === '443' && p.protocol === 'wss:')) p.port = ''
   p.searchParams.sort()
   p.hash = ''
   return p.toString()
@@ -20,10 +16,7 @@ export function normalizeURL(url: string): string {
 //
 // fast insert-into-sorted-array functions adapted from https://github.com/terrymorse58/fast-sorted-array
 //
-export function insertEventIntoDescendingList(
-  sortedArray: Event<number>[],
-  event: Event<number>
-) {
+export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
   let start = 0
   let end = sortedArray.length - 1
   let midPoint
@@ -55,20 +48,13 @@ export function insertEventIntoDescendingList(
 
   // insert when num is NOT already in (no duplicates)
   if (sortedArray[position]?.id !== event.id) {
-    return [
-      ...sortedArray.slice(0, position),
-      event,
-      ...sortedArray.slice(position)
-    ]
+    return [...sortedArray.slice(0, position), event, ...sortedArray.slice(position)]
   }
 
   return sortedArray
 }
 
-export function insertEventIntoAscendingList(
-  sortedArray: Event<number>[],
-  event: Event<number>
-) {
+export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
   let start = 0
   let end = sortedArray.length - 1
   let midPoint
@@ -100,11 +86,7 @@ export function insertEventIntoAscendingList(
 
   // insert when num is NOT already in (no duplicates)
   if (sortedArray[position]?.id !== event.id) {
-    return [
-      ...sortedArray.slice(0, position),
-      event,
-      ...sortedArray.slice(position)
-    ]
+    return [...sortedArray.slice(0, position), event, ...sortedArray.slice(position)]
   }
 
   return sortedArray

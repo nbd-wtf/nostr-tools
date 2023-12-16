@@ -1,17 +1,15 @@
-import type {Event} from './event.ts'
-
-type EventParams<K extends number> = Partial<Event<K>>
+import type { Event } from './event.ts'
 
 /** Build an event for testing purposes. */
-export function buildEvent<K extends number = 1>(params: EventParams<K>): Event<K> {
+export function buildEvent(params: Partial<Event>): Event {
   return {
     id: '',
-    kind: 1 as K,
+    kind: 1,
     pubkey: '',
     created_at: 0,
     content: '',
     tags: [],
     sig: '',
-    ...params
+    ...params,
   }
 }
