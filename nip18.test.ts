@@ -1,5 +1,6 @@
-import { finishEvent, Kind } from './event.ts'
+import { finishEvent } from './event.ts'
 import { getPublicKey } from './keys.ts'
+import { Repost, ShortTextNote } from './kinds.ts'
 import { finishRepostEvent, getRepostedEventPointer, getRepostedEvent } from './nip18.ts'
 import { buildEvent } from './test-helpers.ts'
 
@@ -12,7 +13,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
   const repostedEvent = finishEvent(
     {
-      kind: Kind.Text,
+      kind: ShortTextNote,
       tags: [
         ['e', 'replied event id'],
         ['p', 'replied event pubkey'],
@@ -30,7 +31,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
     const event = finishRepostEvent(template, repostedEvent, relayUrl, privateKey)
 
-    expect(event.kind).toEqual(Kind.Repost)
+    expect(event.kind).toEqual(Repost)
     expect(event.tags).toEqual([
       ['e', repostedEvent.id, relayUrl],
       ['p', repostedEvent.pubkey],
@@ -61,7 +62,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
     const event = finishRepostEvent(template, repostedEvent, relayUrl, privateKey)
 
-    expect(event.kind).toEqual(Kind.Repost)
+    expect(event.kind).toEqual(Repost)
     expect(event.tags).toEqual([
       ['nonstandard', 'tag'],
       ['e', repostedEvent.id, relayUrl],
@@ -88,7 +89,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 describe('getRepostedEventPointer', () => {
   it('should parse an event with only an `e` tag', () => {
     const event = buildEvent({
-      kind: Kind.Repost,
+      kind: Repost,
       tags: [['e', 'reposted event id', relayUrl]],
     })
 

@@ -1,4 +1,5 @@
-import { Kind, type EventTemplate, type Event } from './event.ts'
+import { type EventTemplate, type Event } from './event.ts'
+import { ClientAuth } from './kinds.ts'
 import { Relay } from './relay.ts'
 
 /**
@@ -17,10 +18,10 @@ export const authenticate = async ({
 }: {
   challenge: string
   relay: Relay
-  sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>> | Event<K>
+  sign: (e: EventTemplate) => Promise<Event> | Event
 }): Promise<void> => {
-  const e: EventTemplate = {
-    kind: Kind.ClientAuth,
+  const evt: EventTemplate = {
+    kind: ClientAuth,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
       ['relay', relay.url],
@@ -28,5 +29,5 @@ export const authenticate = async ({
     ],
     content: '',
   }
-  return relay.auth(await sign(e))
+  return relay.auth(await sign(evt))
 }

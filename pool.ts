@@ -5,10 +5,10 @@ import type { Event } from './event.ts'
 import { matchFilters, mergeFilters, type Filter } from './filter.ts'
 
 type BatchedRequest = {
-  filters: Filter<any>[]
+  filters: Filter[]
   relays: string[]
-  resolve: (events: Event<any>[]) => void
-  events: Event<any>[]
+  resolve: (events: Event[]) => void
+  events: Event[]
 }
 
 export class SimplePool {
@@ -58,7 +58,7 @@ export class SimplePool {
     return relay
   }
 
-  sub<K extends number = number>(relays: string[], filters: Filter<K>[], opts?: SubscriptionOptions): Sub<K> {
+  sub(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Sub {
     let _knownIds: Set<string> = new Set()
     let modifiedOpts = { ...(opts || {}) }
     modifiedOpts.alreadyHaveEvent = (id, url) => {
@@ -118,7 +118,7 @@ export class SimplePool {
         }
       })
 
-    let greaterSub: Sub<K> = {
+    let greaterSub: Sub = {
       sub(filters, opts) {
         subs.forEach(sub => sub.sub(filters, opts))
         return greaterSub as any
@@ -146,11 +146,7 @@ export class SimplePool {
     return greaterSub
   }
 
-  get<K extends number = number>(
-    relays: string[],
-    filter: Filter<K>,
-    opts?: SubscriptionOptions,
-  ): Promise<Event<K> | null> {
+  get(relays: string[], filter: Filter, opts?: SubscriptionOptions): Promise<Event | null> {
     return new Promise(resolve => {
       let sub = this.sub(relays, [filter], opts)
       let timeout = setTimeout(() => {
@@ -165,13 +161,9 @@ export class SimplePool {
     })
   }
 
-  list<K extends number = number>(
-    relays: string[],
-    filters: Filter<K>[],
-    opts?: SubscriptionOptions,
-  ): Promise<Event<K>[]> {
+  list(relays: string[], filters: Filter[], opts?: SubscriptionOptions): Promise<Event[]> {
     return new Promise(resolve => {
-      let events: Event<K>[] = []
+      let events: Event[] = []
       let sub = this.sub(relays, filters, opts)
 
       sub.on('event', event => {
@@ -186,11 +178,7 @@ export class SimplePool {
     })
   }
 
-  batchedList<K extends number = number>(
-    batchKey: string,
-    relays: string[],
-    filters: Filter<K>[],
-  ): Promise<Event<K>[]> {
+  batchedList(batchKey: string, relays: string[], filters: Filter[]): Promise<Event[]> {
     return new Promise(resolve => {
       if (!this.batchedByKey[batchKey]) {
         this.batchedByKey[batchKey] = [
@@ -236,7 +224,7 @@ export class SimplePool {
     })
   }
 
-  publish(relays: string[], event: Event<number>): Promise<void>[] {
+  publish(relays: string[], event: Event): Promise<void>[] {
     return relays.map(async relay => {
       let r = await this.ensureRelay(relay)
       return r.publish(event)

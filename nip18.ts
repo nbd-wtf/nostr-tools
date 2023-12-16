@@ -1,4 +1,5 @@
-import { Event, finishEvent, Kind, verifySignature } from './event.ts'
+import { Event, finishEvent, verifySignature } from './event.ts'
+import { Repost } from './kinds.ts'
 import { EventPointer } from './nip19.ts'
 
 export type RepostEventTemplate = {
@@ -20,13 +21,13 @@ export type RepostEventTemplate = {
 
 export function finishRepostEvent(
   t: RepostEventTemplate,
-  reposted: Event<number>,
+  reposted: Event,
   relayUrl: string,
   privateKey: string,
-): Event<Kind.Repost> {
+): Event {
   return finishEvent(
     {
-      kind: Kind.Repost,
+      kind: Repost,
       tags: [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]],
       content: t.content === '' ? '' : JSON.stringify(reposted),
       created_at: t.created_at,
@@ -35,8 +36,8 @@ export function finishRepostEvent(
   )
 }
 
-export function getRepostedEventPointer(event: Event<number>): undefined | EventPointer {
-  if (event.kind !== Kind.Repost) {
+export function getRepostedEventPointer(event: Event): undefined | EventPointer {
+  if (event.kind !== Repost) {
     return undefined
   }
 
@@ -69,20 +70,17 @@ export type GetRepostedEventOptions = {
   skipVerification?: boolean
 }
 
-export function getRepostedEvent(
-  event: Event<number>,
-  { skipVerification }: GetRepostedEventOptions = {},
-): undefined | Event<number> {
+export function getRepostedEvent(event: Event, { skipVerification }: GetRepostedEventOptions = {}): undefined | Event {
   const pointer = getRepostedEventPointer(event)
 
   if (pointer === undefined || event.content === '') {
     return undefined
   }
 
-  let repostedEvent: undefined | Event<number>
+  let repostedEvent: undefined | Event
 
   try {
-    repostedEvent = JSON.parse(event.content) as Event<number>
+    repostedEvent = JSON.parse(event.content) as Event
   } catch (error) {
     return undefined
   }

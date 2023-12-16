@@ -8,8 +8,8 @@ import { utf8Encoder } from './utils.ts'
 /** Designates a verified event signature. */
 export const verifiedSymbol = Symbol('verified')
 
-export interface Event<K extends number = number> {
-  kind: K
+export interface Event {
+  kind: number
   tags: string[][]
   content: string
   created_at: number
@@ -19,30 +19,16 @@ export interface Event<K extends number = number> {
   [verifiedSymbol]?: boolean
 }
 
-export type EventTemplate<K extends number = number> = Pick<Event<K>, 'kind' | 'tags' | 'content' | 'created_at'>
-export type UnsignedEvent<K extends number = number> = Pick<
-  Event<K>,
-  'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'
->
+export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
+export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
 /** An event whose signature has been verified. */
-export interface VerifiedEvent<K extends number = number> extends Event<K> {
+export interface VerifiedEvent extends Event {
   [verifiedSymbol]: true
 }
 
-export function getBlankEvent(): EventTemplate<Kind.Blank>
-export function getBlankEvent<K extends number>(kind: K): EventTemplate<K>
-export function getBlankEvent<K>(kind: K | Kind.Blank = Kind.Blank) {
-  return {
-    kind,
-    content: '',
-    tags: [],
-    created_at: 0,
-  }
-}
-
-export function finishEvent<K extends number = number>(t: EventTemplate<K>, privateKey: string): VerifiedEvent<K> {
-  const event = t as VerifiedEvent<K>
+export function finishEvent(t: EventTemplate, privateKey: string): VerifiedEvent {
+  const event = t as VerifiedEvent
   event.pubkey = getPublicKey(privateKey)
   event.id = getEventHash(event)
   event.sig = getSignature(event, privateKey)
@@ -50,20 +36,20 @@ export function finishEvent<K extends number = number>(t: EventTemplate<K>, priv
   return event
 }
 
-export function serializeEvent(evt: UnsignedEvent<number>): string {
+export function serializeEvent(evt: UnsignedEvent): string {
   if (!validateEvent(evt)) throw new Error("can't serialize event with wrong or missing properties")
 
   return JSON.stringify([0, evt.pubkey, evt.created_at, evt.kind, evt.tags, evt.content])
 }
 
-export function getEventHash(event: UnsignedEvent<number>): string {
+export function getEventHash(event: UnsignedEvent): string {
   let eventHash = sha256(utf8Encoder.encode(serializeEvent(event)))
   return bytesToHex(eventHash)
 }
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
 
-export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
+export function validateEvent<T>(event: T): event is T & UnsignedEvent {
   if (!isRecord(event)) return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
@@ -84,7 +70,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent<number> {
 }
 
 /** Verify the event's signature. This function mutates the event with a `verified` symbol, making it idempotent. */
-export function verifySignature<K extends number>(event: Event<K>): event is VerifiedEvent<K> {
+export function verifySignature(event: Event): event is VerifiedEvent {
   if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
 
   const hash = getEventHash(event)
@@ -100,7 +86,7 @@ export function verifySignature<K extends number>(event: Event<K>): event is Ver
 }
 
 /** @deprecated Use `getSignature` instead. */
-export function signEvent(event: UnsignedEvent<number>, key: string): string {
+export function signEvent(event: UnsignedEvent, key: string): string {
   console.warn(
     'nostr-tools: `signEvent` is deprecated and will be removed or changed in the future. Please use `getSignature` instead.',
   )
@@ -108,6 +94,6 @@ export function signEvent(event: UnsignedEvent<number>, key: string): string {
 }
 
 /** Calculate the signature for an event. */
-export function getSignature(event: UnsignedEvent<number>, key: string): string {
+export function getSignature(event: UnsignedEvent, key: string): string {
   return bytesToHex(schnorr.sign(getEventHash(event), key))
 }

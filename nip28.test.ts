@@ -1,5 +1,5 @@
-import { Kind } from './event.ts'
 import { getPublicKey } from './keys.ts'
+import * as Kind from './kinds.ts'
 import {
   channelCreateEvent,
   channelMetadataEvent,

@@ -1,5 +1,6 @@
-import { finishEvent, Kind } from './event.ts'
+import { finishEvent } from './event.ts'
 import { getPublicKey } from './keys.ts'
+import { Reaction, ShortTextNote } from './kinds.ts'
 import { finishReactionEvent, getReactedEventPointer } from './nip25.ts'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
@@ -9,7 +10,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
   const reactedEvent = finishEvent(
     {
-      kind: Kind.Text,
+      kind: ShortTextNote,
       tags: [
         ['e', 'replied event id'],
         ['p', 'replied event pubkey'],
@@ -27,7 +28,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     const event = finishReactionEvent(template, reactedEvent, privateKey)
 
-    expect(event.kind).toEqual(Kind.Reaction)
+    expect(event.kind).toEqual(Reaction)
     expect(event.tags).toEqual([
       ['e', 'replied event id'],
       ['p', 'replied event pubkey'],
@@ -55,7 +56,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     const event = finishReactionEvent(template, reactedEvent, privateKey)
 
-    expect(event.kind).toEqual(Kind.Reaction)
+    expect(event.kind).toEqual(Reaction)
     expect(event.tags).toEqual([
       ['nonstandard', 'tag'],
       ['e', 'replied event id'],

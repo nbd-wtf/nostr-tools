@@ -16,7 +16,7 @@ export function normalizeURL(url: string): string {
 //
 // fast insert-into-sorted-array functions adapted from https://github.com/terrymorse58/fast-sorted-array
 //
-export function insertEventIntoDescendingList(sortedArray: Event<number>[], event: Event<number>) {
+export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
   let start = 0
   let end = sortedArray.length - 1
   let midPoint
@@ -54,7 +54,7 @@ export function insertEventIntoDescendingList(sortedArray: Event<number>[], even
   return sortedArray
 }
 
-export function insertEventIntoAscendingList(sortedArray: Event<number>[], event: Event<number>) {
+export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
   let start = 0
   let end = sortedArray.length - 1
   let midPoint

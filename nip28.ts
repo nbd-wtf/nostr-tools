@@ -1,4 +1,5 @@
-import { Event, finishEvent, Kind } from './event.ts'
+import { Event, finishEvent } from './event.ts'
+import { ChannelCreation, ChannelHideMessage, ChannelMessage, ChannelMetadata, ChannelMuteUser } from './kinds.ts'
 
 export interface ChannelMetadata {
   name: string
@@ -44,10 +45,7 @@ export interface ChannelMuteUserEventTemplate {
   tags?: string[][]
 }
 
-export const channelCreateEvent = (
-  t: ChannelCreateEventTemplate,
-  privateKey: string,
-): Event<Kind.ChannelCreation> | undefined => {
+export const channelCreateEvent = (t: ChannelCreateEventTemplate, privateKey: string): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -59,7 +57,7 @@ export const channelCreateEvent = (
 
   return finishEvent(
     {
-      kind: Kind.ChannelCreation,
+      kind: ChannelCreation,
       tags: [...(t.tags ?? [])],
       content: content,
       created_at: t.created_at,
@@ -68,10 +66,7 @@ export const channelCreateEvent = (
   )
 }
 
-export const channelMetadataEvent = (
-  t: ChannelMetadataEventTemplate,
-  privateKey: string,
-): Event<Kind.ChannelMetadata> | undefined => {
+export const channelMetadataEvent = (t: ChannelMetadataEventTemplate, privateKey: string): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -83,7 +78,7 @@ export const channelMetadataEvent = (
 
   return finishEvent(
     {
-      kind: Kind.ChannelMetadata,
+      kind: ChannelMetadata,
       tags: [['e', t.channel_create_event_id], ...(t.tags ?? [])],
       content: content,
       created_at: t.created_at,
@@ -92,7 +87,7 @@ export const channelMetadataEvent = (
   )
 }
 
-export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: string): Event<Kind.ChannelMessage> => {
+export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: string): Event => {
   const tags = [['e', t.channel_create_event_id, t.relay_url, 'root']]
 
   if (t.reply_to_channel_message_event_id) {
@@ -101,7 +96,7 @@ export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: 
 
   return finishEvent(
     {
-      kind: Kind.ChannelMessage,
+      kind: ChannelMessage,
       tags: [...tags, ...(t.tags ?? [])],
       content: t.content,
       created_at: t.created_at,
@@ -111,10 +106,7 @@ export const channelMessageEvent = (t: ChannelMessageEventTemplate, privateKey: 
 }
 
 /* "e" tag should be the kind 42 event to hide */
-export const channelHideMessageEvent = (
-  t: ChannelHideMessageEventTemplate,
-  privateKey: string,
-): Event<Kind.ChannelHideMessage> | undefined => {
+export const channelHideMessageEvent = (t: ChannelHideMessageEventTemplate, privateKey: string): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -126,7 +118,7 @@ export const channelHideMessageEvent = (
 
   return finishEvent(
     {
-      kind: Kind.ChannelHideMessage,
+      kind: ChannelHideMessage,
       tags: [['e', t.channel_message_event_id], ...(t.tags ?? [])],
       content: content,
       created_at: t.created_at,
@@ -135,10 +127,7 @@ export const channelHideMessageEvent = (
   )
 }
 
-export const channelMuteUserEvent = (
-  t: ChannelMuteUserEventTemplate,
-  privateKey: string,
-): Event<Kind.ChannelMuteUser> | undefined => {
+export const channelMuteUserEvent = (t: ChannelMuteUserEventTemplate, privateKey: string): Event | undefined => {
   let content: string
   if (typeof t.content === 'object') {
     content = JSON.stringify(t.content)
@@ -150,7 +139,7 @@ export const channelMuteUserEvent = (
 
   return finishEvent(
     {
-      kind: Kind.ChannelMuteUser,
+      kind: ChannelMuteUser,
       tags: [['p', t.pubkey_to_mute], ...(t.tags ?? [])],
       content: content,
       created_at: t.created_at,

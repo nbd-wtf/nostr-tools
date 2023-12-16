@@ -1,7 +1,7 @@
 import { makeNwcRequestEvent, parseConnectionString } from './nip47'
-import { Kind } from './event'
 import { decrypt } from './nip04.ts'
 import crypto from 'node:crypto'
+import { NWCWalletRequest } from './kinds.ts'
 
 // @ts-ignore
 // eslint-disable-next-line no-undef
@@ -53,7 +53,7 @@ describe('makeNwcRequestEvent', () => {
       invoice,
     })
     const timeAfter = Date.now() / 1000
-    expect(result.kind).toBe(Kind.NwcRequest)
+    expect(result.kind).toBe(NWCWalletRequest)
     expect(result.created_at).toBeGreaterThan(timeBefore)
     expect(result.created_at).toBeLessThan(timeAfter)
     expect(await decrypt(secret, pubkey, result.content)).toEqual(

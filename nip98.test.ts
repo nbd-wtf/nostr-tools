@@ -1,9 +1,10 @@
 import { getToken, unpackEventFromToken, validateEvent, validateToken } from './nip98.ts'
-import { Event, Kind, finishEvent } from './event.ts'
+import { Event, finishEvent } from './event.ts'
 import { generatePrivateKey, getPublicKey } from './keys.ts'
 import { sha256 } from '@noble/hashes/sha256'
 import { utf8Encoder } from './utils.ts'
 import { bytesToHex } from '@noble/hashes/utils'
+import { HTTPAuth } from './kinds.ts'
 
 const sk = generatePrivateKey()
 
@@ -15,7 +16,7 @@ describe('getToken', () => {
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(Kind.HttpAuth)
+    expect(decodedResult.kind).toBe(HTTPAuth)
     expect(decodedResult.pubkey).toBe(getPublicKey(sk))
     expect(decodedResult.tags).toStrictEqual([
       ['u', 'http://test.com'],
@@ -30,7 +31,7 @@ describe('getToken', () => {
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(Kind.HttpAuth)
+    expect(decodedResult.kind).toBe(HTTPAuth)
     expect(decodedResult.pubkey).toBe(getPublicKey(sk))
     expect(decodedResult.tags).toStrictEqual([
       ['u', 'http://test.com'],
@@ -49,7 +50,7 @@ describe('getToken', () => {
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(Kind.HttpAuth)
+    expect(decodedResult.kind).toBe(HTTPAuth)
     expect(decodedResult.pubkey).toBe(getPublicKey(sk))
     expect(decodedResult.tags).toStrictEqual([
       ['u', 'http://test.com'],
@@ -76,7 +77,7 @@ describe('getToken', () => {
 
     expect(decodedResult.created_at).toBeGreaterThan(0)
     expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(Kind.HttpAuth)
+    expect(decodedResult.kind).toBe(HTTPAuth)
     expect(decodedResult.pubkey).toBe(getPublicKey(sk))
     expect(decodedResult.tags).toStrictEqual([
       ['u', 'http://test.com'],

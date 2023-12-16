@@ -1,8 +1,8 @@
 import { Event } from './event.ts'
 
-export type Filter<K extends number = number> = {
+export type Filter = {
   ids?: string[]
-  kinds?: K[]
+  kinds?: number[]
   authors?: string[]
   since?: number
   until?: number
@@ -11,7 +11,7 @@ export type Filter<K extends number = number> = {
   [key: `#${string}`]: string[] | undefined
 }
 
-export function matchFilter(filter: Filter<number>, event: Event<number>): boolean {
+export function matchFilter(filter: Filter, event: Event): boolean {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) {
     if (!filter.ids.some(prefix => event.id.startsWith(prefix))) {
       return false
@@ -38,15 +38,15 @@ export function matchFilter(filter: Filter<number>, event: Event<number>): boole
   return true
 }
 
-export function matchFilters(filters: Filter<number>[], event: Event<number>): boolean {
+export function matchFilters(filters: Filter[], event: Event): boolean {
   for (let i = 0; i < filters.length; i++) {
     if (matchFilter(filters[i], event)) return true
   }
   return false
 }
 
-export function mergeFilters(...filters: Filter<number>[]): Filter<number> {
-  let result: Filter<number> = {}
+export function mergeFilters(...filters: Filter[]): Filter {
+  let result: Filter = {}
   for (let i = 0; i < filters.length; i++) {
     let filter = filters[i]
     Object.entries(filter).forEach(([property, values]) => {

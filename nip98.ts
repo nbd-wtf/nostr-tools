@@ -1,12 +1,13 @@
 import { bytesToHex } from '@noble/hashes/utils'
 import { sha256 } from '@noble/hashes/sha256'
 import { base64 } from '@scure/base'
-import { Event, EventTemplate, Kind, getBlankEvent, verifySignature } from './event'
+import { Event, EventTemplate, verifySignature } from './event'
 import { utf8Decoder, utf8Encoder } from './utils'
+import { HTTPAuth } from './kinds'
 
 const _authorizationScheme = 'Nostr '
 
-function hashPayload(payload: any): string {
+export function hashPayload(payload: any): string {
   const hash = sha256(utf8Encoder.encode(JSON.stringify(payload)))
   return bytesToHex(hash)
 }
@@ -21,28 +22,29 @@ function hashPayload(payload: any): string {
 export async function getToken(
   loginUrl: string,
   httpMethod: string,
-  sign: <K extends number = number>(e: EventTemplate<K>) => Promise<Event<K>> | Event<K>,
+  sign: (e: EventTemplate) => Promise<Event> | Event,
   includeAuthorizationScheme: boolean = false,
   payload?: Record<string, any>,
 ): Promise<string> {
   if (!loginUrl || !httpMethod) throw new Error('Missing loginUrl or httpMethod')
 
-  const event = getBlankEvent(Kind.HttpAuth)
-
-  event.tags = [
-    ['u', loginUrl],
-    ['method', httpMethod],
-  ]
+  const event: EventTemplate = {
+    kind: HTTPAuth,
+    tags: [
+      ['u', loginUrl],
+      ['method', httpMethod],
+    ],
+    created_at: Math.round(new Date().getTime() / 1000),
+    content: '',
+  }
 
   if (payload) {
     event.tags.push(['payload', bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))])
   }
 
-  event.created_at = Math.round(new Date().getTime() / 1000)
-
   const signedEvent = await sign(event)
-
   const authorizationScheme = includeAuthorizationScheme ? _authorizationScheme : ''
+
   return authorizationScheme + base64.encode(utf8Encoder.encode(JSON.stringify(signedEvent)))
 }
 
@@ -86,7 +88,7 @@ export async function validateEvent(event: Event, url: string, method: string, b
   if (!verifySignature(event)) {
     throw new Error('Invalid nostr event, signature invalid')
   }
-  if (event.kind !== Kind.HttpAuth) {
+  if (event.kind !== HTTPAuth) {
     throw new Error('Invalid nostr event, kind invalid')
   }
 

@@ -1,44 +1,23 @@
 import {
-  getBlankEvent,
   finishEvent,
   serializeEvent,
   getEventHash,
   validateEvent,
   verifySignature,
   getSignature,
-  Kind,
   verifiedSymbol,
 } from './event.ts'
 import { getPublicKey } from './keys.ts'
+import { ShortTextNote } from './kinds.ts'
 
 describe('Event', () => {
-  describe('getBlankEvent', () => {
-    it('should return a blank event object', () => {
-      expect(getBlankEvent()).toEqual({
-        kind: 255,
-        content: '',
-        tags: [],
-        created_at: 0,
-      })
-    })
-
-    it('should return a blank event object with defined kind', () => {
-      expect(getBlankEvent(Kind.Text)).toEqual({
-        kind: 1,
-        content: '',
-        tags: [],
-        created_at: 0,
-      })
-    })
-  })
-
   describe('finishEvent', () => {
     it('should create a signed event from a template', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
       const template = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
@@ -64,7 +43,7 @@ describe('Event', () => {
       const unsignedEvent = {
         pubkey: publicKey,
         created_at: 1617932115,
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
       }
@@ -88,7 +67,7 @@ describe('Event', () => {
       const publicKey = getPublicKey(privateKey)
 
       const invalidEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         created_at: 1617932115,
         pubkey: publicKey, // missing content
@@ -107,7 +86,7 @@ describe('Event', () => {
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
@@ -127,7 +106,7 @@ describe('Event', () => {
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
@@ -149,7 +128,7 @@ describe('Event', () => {
 
     it('should return false for an event object with missing properties', () => {
       const invalidEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         created_at: 1617932115, // missing content and pubkey
       }
@@ -221,7 +200,7 @@ describe('Event', () => {
 
       const event = finishEvent(
         {
-          kind: Kind.Text,
+          kind: ShortTextNote,
           tags: [],
           content: 'Hello, world!',
           created_at: 1617932115,
@@ -239,7 +218,7 @@ describe('Event', () => {
 
       const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
-          kind: Kind.Text,
+          kind: ShortTextNote,
           tags: [],
           content: 'Hello, world!',
           created_at: 1617932115,
@@ -263,7 +242,7 @@ describe('Event', () => {
 
       const { [verifiedSymbol]: _, ...event } = finishEvent(
         {
-          kind: Kind.Text,
+          kind: ShortTextNote,
           tags: [],
           content: 'Hello, world!',
           created_at: 1617932115,
@@ -308,7 +287,7 @@ describe('Event', () => {
       const publicKey = getPublicKey(privateKey)
 
       const unsignedEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,
@@ -336,7 +315,7 @@ describe('Event', () => {
       const wrongPrivateKey = 'a91e2a9d9e0f70f0877bea0dbf034e8f95d7392a27a7f07da0d14b9e9d456be7'
 
       const unsignedEvent = {
-        kind: Kind.Text,
+        kind: ShortTextNote,
         tags: [],
         content: 'Hello, world!',
         created_at: 1617932115,

@@ -23,10 +23,10 @@ export function getPow(hex: string): number {
  *
  * Adapted from Snort: https://git.v0l.io/Kieran/snort/src/commit/4df6c19248184218c4c03728d61e94dae5f2d90c/packages/system/src/pow-util.ts#L14-L36
  */
-export function minePow<K extends number>(unsigned: UnsignedEvent<K>, difficulty: number): Omit<Event<K>, 'sig'> {
+export function minePow(unsigned: UnsignedEvent, difficulty: number): Omit<Event, 'sig'> {
   let count = 0
 
-  const event = unsigned as Omit<Event<K>, 'sig'>
+  const event = unsigned as Omit<Event, 'sig'>
   const tag = ['nonce', count.toString(), difficulty.toString()]
 
   event.tags.push(tag)

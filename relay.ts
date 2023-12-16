@@ -15,8 +15,8 @@ type RelayEvent = {
 export type CountPayload = {
   count: number
 }
-export type SubEvent<K extends number> = {
-  event: (event: Event<K>) => void | Promise<void>
+export type SubEvent = {
+  event: (event: Event) => void | Promise<void>
   count: (payload: CountPayload) => void | Promise<void>
   eose: () => void | Promise<void>
 }
@@ -25,21 +25,21 @@ export type Relay = {
   status: number
   connect: () => Promise<void>
   close: () => void
-  sub: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Sub<K>
-  list: <K extends number = number>(filters: Filter<K>[], opts?: SubscriptionOptions) => Promise<Event<K>[]>
-  get: <K extends number = number>(filter: Filter<K>, opts?: SubscriptionOptions) => Promise<Event<K> | null>
+  sub: (filters: Filter[], opts?: SubscriptionOptions) => Sub
+  list: (filters: Filter[], opts?: SubscriptionOptions) => Promise<Event[]>
+  get: (filter: Filter, opts?: SubscriptionOptions) => Promise<Event | null>
   count: (filters: Filter[], opts?: SubscriptionOptions) => Promise<CountPayload | null>
-  publish: (event: Event<number>) => Promise<void>
-  auth: (event: Event<number>) => Promise<void>
+  publish: (event: Event) => Promise<void>
+  auth: (event: Event) => Promise<void>
   off: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
   on: <T extends keyof RelayEvent, U extends RelayEvent[T]>(event: T, listener: U) => void
 }
-export type Sub<K extends number = number> = {
-  sub: <K extends number = number>(filters: Filter<K>[], opts: SubscriptionOptions) => Sub<K>
+export type Sub = {
+  sub: (filters: Filter[], opts: SubscriptionOptions) => Sub
   unsub: () => void
-  on: <T extends keyof SubEvent<K>, U extends SubEvent<K>[T]>(event: T, listener: U) => void
-  off: <T extends keyof SubEvent<K>, U extends SubEvent<K>[T]>(event: T, listener: U) => void
-  events: AsyncGenerator<Event<K>, void, unknown>
+  on: <T extends keyof SubEvent, U extends SubEvent[T]>(event: T, listener: U) => void
+  off: <T extends keyof SubEvent, U extends SubEvent[T]>(event: T, listener: U) => void
+  events: AsyncGenerator<Event, void, unknown>
 }
 
 export type SubscriptionOptions = {
@@ -72,7 +72,7 @@ export function relayInit(
   var openSubs: { [id: string]: { filters: Filter[] } & SubscriptionOptions } = {}
   var listeners = newListeners()
   var subListeners: {
-    [subid: string]: { [TK in keyof SubEvent<any>]: SubEvent<any>[TK][] }
+    [subid: string]: { [TK in keyof SubEvent]: SubEvent[TK][] }
   } = {}
   var pubListeners: {
     [eventid: string]: {
@@ -223,15 +223,15 @@ export function relayInit(
     }
   }
 
-  const sub = <K extends number = number>(
-    filters: Filter<K>[],
+  const sub = (
+    filters: Filter[],
     {
       verb = 'REQ',
       skipVerification = false,
       alreadyHaveEvent = null,
       id = Math.random().toString().slice(2),
     }: SubscriptionOptions = {},
-  ): Sub<K> => {
+  ): Sub => {
     let subid = id
 
     openSubs[subid] = {
@@ -242,7 +242,7 @@ export function relayInit(
     }
     trySend([verb, subid, ...filters])
 
-    let subscription: Sub<K> = {
+    let subscription: Sub = {
       sub: (newFilters, newOpts = {}) =>
         sub(newFilters || filters, {
           skipVerification: newOpts.skipVerification || skipVerification,
@@ -275,7 +275,7 @@ export function relayInit(
     return subscription
   }
 
-  function _publishEvent(event: Event<number>, type: string) {
+  function _publishEvent(event: Event, type: string) {
     return new Promise((resolve, reject) => {
       if (!event.id) {
         reject(new Error(`event ${event} has no id`))
@@ -305,7 +305,7 @@ export function relayInit(
     list: (filters, opts?: SubscriptionOptions) =>
       new Promise(resolve => {
         let s = sub(filters, opts)
-        let events: Event<any>[] = []
+        let events: Event[] = []
         let timeout = setTimeout(() => {
           s.unsub()
           resolve(events)
@@ -366,11 +366,11 @@ export function relayInit(
   }
 }
 
-export async function* eventsGenerator<K extends number>(sub: Sub<K>): AsyncGenerator<Event<K>, void, unknown> {
-  let nextResolve: ((event: Event<K>) => void) | undefined
-  const eventQueue: Event<K>[] = []
+export async function* eventsGenerator(sub: Sub): AsyncGenerator<Event, void, unknown> {
+  let nextResolve: ((event: Event) => void) | undefined
+  const eventQueue: Event[] = []
 
-  const pushToQueue = (event: Event<K>) => {
+  const pushToQueue = (event: Event) => {
     if (nextResolve) {
       nextResolve(event)
       nextResolve = undefined
@@ -386,7 +386,7 @@ export async function* eventsGenerator<K extends number>(sub: Sub<K>): AsyncGene
       if (eventQueue.length > 0) {
         yield eventQueue.shift()!
       } else {
-        const event = await new Promise<Event<K>>(resolve => {
+        const event = await new Promise<Event>(resolve => {
           nextResolve = resolve
         })
         yield event
