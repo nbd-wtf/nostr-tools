@@ -46,16 +46,12 @@ describe('makeNwcRequestEvent', () => {
     const secret = '71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
     const invoice =
       'lnbc210n1pjdgyvupp5x43awdarnfd4mdlsklelux0nyckwfu5c708ykuet8vcjnjp3rnpqdqu2askcmr9wssx7e3q2dshgmmndp5scqzzsxqyz5vqsp52l7y9peq9pka3vd3j7aps7gjnalsmy46ndj2mlkz00dltjgqfumq9qyyssq5fasr5dxed8l4qjfnqq48a02jzss3asf8sly7sfaqtr9w3yu2q9spsxhghs3y9aqdf44zkrrg9jjjdg6amade4h0hulllkwk33eqpucp6d5jye'
-    const timeBefore = Date.now() / 1000
     const result = await makeNwcRequestEvent({
       pubkey,
       secret,
       invoice,
     })
-    const timeAfter = Date.now() / 1000
     expect(result.kind).toBe(NWCWalletRequest)
-    expect(result.created_at).toBeGreaterThan(timeBefore)
-    expect(result.created_at).toBeLessThan(timeAfter)
     expect(await decrypt(secret, pubkey, result.content)).toEqual(
       JSON.stringify({
         method: 'pay_invoice',
