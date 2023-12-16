@@ -221,43 +221,6 @@ assert(data.pubkey === pk)
 assert(data.relays.length === 2)
 ```
 
-### Encrypting and decrypting direct messages
-
-```js
-import {nip44, getPublicKey, generatePrivateKey} from 'nostr-tools'
-
-// sender
-let sk1 = generatePrivateKey()
-let pk1 = getPublicKey(sk1)
-
-// receiver
-let sk2 = generatePrivateKey()
-let pk2 = getPublicKey(sk2)
-
-// on the sender side
-let message = 'hello'
-let key = nip44.getSharedSecret(sk1, pk2)
-let ciphertext = nip44.encrypt(key, message)
-
-let event = {
-  kind: 4,
-  pubkey: pk1,
-  tags: [['p', pk2]],
-  content: ciphertext,
-  ...otherProperties,
-}
-
-sendEvent(event)
-
-// on the receiver side
-sub.on('event', async event => {
-  let sender = event.pubkey
-  // pk1 === sender
-  let _key = nip44.getSharedSecret(sk2, pk1)
-  let plaintext = nip44.decrypt(_key, event.content)
-})
-```
-
 ### Using from the browser (if you don't want to use a bundler)
 
 ```html

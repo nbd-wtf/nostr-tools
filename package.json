@@ -69,6 +69,11 @@
       "require": "./lib/cjs/nip10.js",
       "types": "./lib/types/nip10.d.ts"
     },
+    "./nip11": {
+      "import": "./lib/esm/nip11.js",
+      "require": "./lib/cjs/nip11.js",
+      "types": "./lib/types/nip11.d.ts"
+    },
     "./nip13": {
       "import": "./lib/esm/nip13.js",
       "require": "./lib/cjs/nip13.js",
@@ -104,6 +109,11 @@
       "require": "./lib/cjs/nip28.js",
       "types": "./lib/types/nip28.d.ts"
     },
+    "./nip30": {
+      "import": "./lib/esm/nip30.js",
+      "require": "./lib/cjs/nip30.js",
+      "types": "./lib/types/nip30.d.ts"
+    },
     "./nip39": {
       "import": "./lib/esm/nip39.js",
       "require": "./lib/cjs/nip39.js",
@@ -113,11 +123,6 @@
       "import": "./lib/esm/nip42.js",
       "require": "./lib/cjs/nip42.js",
       "types": "./lib/types/nip42.d.ts"
-    },
-    "./nip44": {
-      "import": "./lib/esm/nip44.js",
-      "require": "./lib/cjs/nip44.js",
-      "types": "./lib/types/nip44.d.ts"
     },
     "./nip57": {
       "import": "./lib/esm/nip57.js",
