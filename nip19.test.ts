@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { generatePrivateKey, getPublicKey } from './keys.ts'
 import {
   decode,

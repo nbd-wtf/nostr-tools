@@ -5,13 +5,13 @@ install-dependencies:
 
 build:
     rm -rf lib
-    node build.js
+    bun run build.js
 
 test:
-    jest
+    bun test
 
 test-only file:
-    jest {{file}}
+    bun test {{file}}
 
 emit-types:
     tsc # see tsconfig.json

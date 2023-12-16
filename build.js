@@ -1,15 +1,10 @@
-#!/usr/bin/env node
-
-const fs = require('fs')
+const fs = require('node:fs')
 const esbuild = require('esbuild')
-const { join } = require('path');
+const { join } = require('path')
 
-const entryPoints = fs.readdirSync(process.cwd())
-  .filter(
-    (file) =>
-      file.endsWith(".ts") && !file.endsWith("test.ts") &&
-      fs.statSync(join(process.cwd(), file)).isFile()
-  );
+const entryPoints = fs
+  .readdirSync(process.cwd())
+  .filter(file => file.endsWith('.ts') && !file.endsWith('test.ts') && fs.statSync(join(process.cwd(), file)).isFile())
 
 let common = {
   entryPoints,

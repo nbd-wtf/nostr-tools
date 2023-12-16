@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { getToken, unpackEventFromToken, validateEvent, validateToken } from './nip98.ts'
 import { Event, finishEvent } from './event.ts'
 import { generatePrivateKey, getPublicKey } from './keys.ts'
@@ -60,12 +61,12 @@ describe('getToken', () => {
 
   test('getToken missing loginUrl throws an error', async () => {
     const result = getToken('', 'get', e => finishEvent(e, sk))
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('getToken missing httpMethod throws an error', async () => {
     const result = getToken('http://test.com', '', e => finishEvent(e, sk))
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('getToken returns token with a valid payload tag when payload is present', async () => {
@@ -104,26 +105,26 @@ describe('validateToken', () => {
 
   test('validateToken throws an error for invalid token', async () => {
     const result = validateToken('fake', 'http://test.com', 'get')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateToken throws an error for missing token', async () => {
     const result = validateToken('', 'http://test.com', 'get')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateToken throws an error for a wrong url', async () => {
     const validToken = await getToken('http://test.com', 'get', e => finishEvent(e, sk))
 
     const result = validateToken(validToken, 'http://wrong-test.com', 'get')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateToken throws an error for a wrong method', async () => {
     const validToken = await getToken('http://test.com', 'get', e => finishEvent(e, sk))
 
     const result = validateToken(validToken, 'http://test.com', 'post')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateEvent returns true for valid decoded token with authorization scheme', async () => {
@@ -139,7 +140,7 @@ describe('validateToken', () => {
     const decodedResult: Event = await unpackEventFromToken(validToken)
 
     const result = validateEvent(decodedResult, 'http://wrong-test.com', 'get')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateEvent throws an error for a wrong method', async () => {
@@ -147,7 +148,7 @@ describe('validateToken', () => {
     const decodedResult: Event = await unpackEventFromToken(validToken)
 
     const result = validateEvent(decodedResult, 'http://test.com', 'post')
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 
   test('validateEvent returns true for valid payload tag hash', async () => {
@@ -163,6 +164,6 @@ describe('validateToken', () => {
     const decodedResult: Event = await unpackEventFromToken(validToken)
 
     const result = validateEvent(decodedResult, 'http://test.com', 'post', { test: 'a-different-payload' })
-    await expect(result).rejects.toThrow(Error)
+    expect(result).rejects.toThrow(Error)
   })
 })

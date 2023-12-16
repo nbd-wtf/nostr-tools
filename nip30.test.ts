@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { matchAll, replaceAll } from './nip30.ts'
 
 test('matchAll', () => {

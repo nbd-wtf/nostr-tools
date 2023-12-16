@@ -1,3 +1,4 @@
+import { describe, test, expect, mock } from 'bun:test'
 import { finishEvent } from './event.ts'
 import { getPublicKey, generatePrivateKey } from './keys.ts'
 import { getZapEndpoint, makeZapReceipt, makeZapRequest, useFetchImplementation, validateZapRequest } from './nip57.ts'
@@ -12,7 +13,7 @@ describe('getZapEndpoint', () => {
   })
 
   test('returns null if fetch fails', async () => {
-    const fetchImplementation = jest.fn(() => Promise.reject(new Error()))
+    const fetchImplementation = mock(() => Promise.reject(new Error()))
     useFetchImplementation(fetchImplementation)
 
     const metadata = buildEvent({ kind: 0, content: '{"lud16": "name@domain"}' })
@@ -23,7 +24,7 @@ describe('getZapEndpoint', () => {
   })
 
   test('returns null if the response does not allow Nostr payments', async () => {
-    const fetchImplementation = jest.fn(() => Promise.resolve({ json: () => ({ allowsNostr: false }) }))
+    const fetchImplementation = mock(() => Promise.resolve({ json: () => ({ allowsNostr: false }) }))
     useFetchImplementation(fetchImplementation)
 
     const metadata = buildEvent({ kind: 0, content: '{"lud16": "name@domain"}' })
@@ -34,7 +35,7 @@ describe('getZapEndpoint', () => {
   })
 
   test('returns the callback URL if the response allows Nostr payments', async () => {
-    const fetchImplementation = jest.fn(() =>
+    const fetchImplementation = mock(() =>
       Promise.resolve({
         json: () => ({
           allowsNostr: true,
@@ -94,9 +95,9 @@ describe('makeZapRequest', () => {
         ['p', 'profile'],
         ['amount', '100'],
         ['relays', 'relay1', 'relay2'],
+        ['e', 'event'],
       ]),
     )
-    expect(result.tags).toContainEqual(['e', 'event'])
   })
 })
 
@@ -271,10 +272,14 @@ describe('makeZapReceipt', () => {
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)
     expect(result.content).toBe('')
-    expect(result.tags).toContainEqual(['bolt11', bolt11])
-    expect(result.tags).toContainEqual(['description', zapRequest])
-    expect(result.tags).toContainEqual(['p', publicKey])
-    expect(result.tags).toContainEqual(['preimage', preimage])
+    expect(result.tags).toEqual(
+      expect.arrayContaining([
+        ['bolt11', bolt11],
+        ['description', zapRequest],
+        ['p', publicKey],
+        ['preimage', preimage],
+      ]),
+    )
   })
 
   test('returns a valid Zap receipt without a preimage', () => {
@@ -304,9 +309,13 @@ describe('makeZapReceipt', () => {
     expect(result.kind).toBe(9735)
     expect(result.created_at).toBeCloseTo(paidAt.getTime() / 1000, 0)
     expect(result.content).toBe('')
-    expect(result.tags).toContainEqual(['bolt11', bolt11])
-    expect(result.tags).toContainEqual(['description', zapRequest])
-    expect(result.tags).toContainEqual(['p', publicKey])
-    expect(result.tags).not.toContain('preimage')
+    expect(result.tags).toEqual(
+      expect.arrayContaining([
+        ['bolt11', bolt11],
+        ['description', zapRequest],
+        ['p', publicKey],
+      ]),
+    )
+    expect(JSON.stringify(result.tags)).not.toContain('preimage')
   })
 })

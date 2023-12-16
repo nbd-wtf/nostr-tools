@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import fetch from 'node-fetch'
 
 import { useFetchImplementation, queryProfile } from './nip05.ts'

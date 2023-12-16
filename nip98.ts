@@ -26,8 +26,6 @@ export async function getToken(
   includeAuthorizationScheme: boolean = false,
   payload?: Record<string, any>,
 ): Promise<string> {
-  if (!loginUrl || !httpMethod) throw new Error('Missing loginUrl or httpMethod')
-
   const event: EventTemplate = {
     kind: HTTPAuth,
     tags: [

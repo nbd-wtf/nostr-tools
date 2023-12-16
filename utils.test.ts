@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { buildEvent } from './test-helpers.ts'
 import { MessageQueue, insertEventIntoAscendingList, insertEventIntoDescendingList } from './utils.ts'
 

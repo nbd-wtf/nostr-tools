@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import 'websocket-polyfill'
 
 import { finishEvent } from './event.ts'

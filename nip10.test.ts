@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { parse } from './nip10.ts'
 
 describe('parse NIP10-referenced events', () => {

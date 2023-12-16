@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { finishEvent } from './event.ts'
 import { getPublicKey } from './keys.ts'
 import { Repost, ShortTextNote } from './kinds.ts'
@@ -24,7 +25,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
     privateKey,
   )
 
-  it('should create a signed event from a minimal template', () => {
+  test('should create a signed event from a minimal template', () => {
     const template = {
       created_at: 1617932115,
     }
@@ -53,7 +54,7 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
     expect(repostedEventFromContent).toEqual(repostedEvent)
   })
 
-  it('should create a signed event from a filled template', () => {
+  test('should create a signed event from a filled template', () => {
     const template = {
       tags: [['nonstandard', 'tag']],
       content: '' as const,
@@ -82,12 +83,12 @@ describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () =>
 
     const repostedEventFromContent = getRepostedEvent(event)
 
-    expect(repostedEventFromContent).toEqual(undefined)
+    expect(repostedEventFromContent).toBeUndefined()
   })
 })
 
 describe('getRepostedEventPointer', () => {
-  it('should parse an event with only an `e` tag', () => {
+  test('should parse an event with only an `e` tag', () => {
     const event = buildEvent({
       kind: Repost,
       tags: [['e', 'reposted event id', relayUrl]],
@@ -96,7 +97,7 @@ describe('getRepostedEventPointer', () => {
     const repostedEventPointer = getRepostedEventPointer(event)
 
     expect(repostedEventPointer!.id).toEqual('reposted event id')
-    expect(repostedEventPointer!.author).toEqual(undefined)
+    expect(repostedEventPointer!.author).toBeUndefined()
     expect(repostedEventPointer!.relays).toEqual([relayUrl])
   })
 })

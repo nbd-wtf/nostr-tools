@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { getPow, minePow } from './nip13.ts'
 
 test('identifies proof-of-work difficulty', async () => {

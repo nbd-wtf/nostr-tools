@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { privateKeyFromSeedWords } from './nip06.ts'
 
 test('generate private key from a mnemonic', async () => {

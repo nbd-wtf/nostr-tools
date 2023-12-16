@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import fetch from 'node-fetch'
 import { useFetchImplementation, fetchRelayInformation } from './nip11'
 

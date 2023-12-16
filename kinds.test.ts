@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { classifyKind } from './kinds.ts'
 
 test('kind classification', () => {

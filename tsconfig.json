@@ -12,6 +12,7 @@
     "outDir": "lib/types",
     "resolveJsonModule": true,
     "rootDir": ".",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "types": ["bun-types"]
   }
 }

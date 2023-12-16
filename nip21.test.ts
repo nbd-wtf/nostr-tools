@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { test as testRegex, parse } from './nip21.ts'
 
 test('test()', () => {

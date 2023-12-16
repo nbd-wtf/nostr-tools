@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { getPublicKey } from './keys.ts'
 import * as Kind from './kinds.ts'
 import {
@@ -20,7 +21,7 @@ describe('NIP-28 Functions', () => {
     picture: 'https://example.com/picture.jpg',
   }
 
-  it('channelCreateEvent should create an event with given template', () => {
+  test('channelCreateEvent should create an event with given template', () => {
     const template = {
       content: channelMetadata,
       created_at: 1617932115,
@@ -32,7 +33,7 @@ describe('NIP-28 Functions', () => {
     expect(event!.pubkey).toEqual(publicKey)
   })
 
-  it('channelMetadataEvent should create a signed event with given template', () => {
+  test('channelMetadataEvent should create a signed event with given template', () => {
     const template = {
       channel_create_event_id: 'channel creation event id',
       content: channelMetadata,
@@ -48,8 +49,8 @@ describe('NIP-28 Functions', () => {
     expect(typeof event!.sig).toEqual('string')
   })
 
-  it('channelMessageEvent should create a signed message event with given template', () => {
-    const template = {
+  test('channelMessageEvent should create a signed message event with given template', () => {
+    const template: ChannelMessageEventTemplate = {
       channel_create_event_id: 'channel creation event id',
       relay_url: 'https://relay.example.com',
       content: 'Hello, world!',
@@ -65,7 +66,7 @@ describe('NIP-28 Functions', () => {
     expect(typeof event.sig).toEqual('string')
   })
 
-  it('channelMessageEvent should create a signed message reply event with given template', () => {
+  test('channelMessageEvent should create a signed message reply event with given template', () => {
     const template: ChannelMessageEventTemplate = {
       channel_create_event_id: 'channel creation event id',
       reply_to_channel_message_event_id: 'channel message event id',
@@ -76,15 +77,25 @@ describe('NIP-28 Functions', () => {
 
     const event = channelMessageEvent(template, privateKey)
     expect(event.kind).toEqual(Kind.ChannelMessage)
-    expect(event.tags).toContainEqual(['e', template.channel_create_event_id, template.relay_url, 'root'])
-    expect(event.tags).toContainEqual(['e', template.reply_to_channel_message_event_id, template.relay_url, 'reply'])
+    expect(event.tags.find(tag => tag[0] === 'e' && tag[1] === template.channel_create_event_id)).toEqual([
+      'e',
+      template.channel_create_event_id,
+      template.relay_url,
+      'root',
+    ])
+    expect(event.tags.find(tag => tag[0] === 'e' && tag[1] === template.reply_to_channel_message_event_id)).toEqual([
+      'e',
+      template.reply_to_channel_message_event_id as string,
+      template.relay_url,
+      'reply',
+    ])
     expect(event.content).toEqual(template.content)
     expect(event.pubkey).toEqual(publicKey)
     expect(typeof event.id).toEqual('string')
     expect(typeof event.sig).toEqual('string')
   })
 
-  it('channelHideMessageEvent should create a signed event with given template', () => {
+  test('channelHideMessageEvent should create a signed event with given template', () => {
     const template = {
       channel_message_event_id: 'channel message event id',
       content: { reason: 'Inappropriate content' },
@@ -100,7 +111,7 @@ describe('NIP-28 Functions', () => {
     expect(typeof event!.sig).toEqual('string')
   })
 
-  it('channelMuteUserEvent should create a signed event with given template', () => {
+  test('channelMuteUserEvent should create a signed event with given template', () => {
     const template = {
       content: { reason: 'Spamming' },
       created_at: 1617932115,

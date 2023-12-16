@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { finishEvent } from './event.ts'
 import { getPublicKey } from './keys.ts'
 import { Reaction, ShortTextNote } from './kinds.ts'
@@ -21,7 +22,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
     privateKey,
   )
 
-  it('should create a signed event from a minimal template', () => {
+  test('should create a signed event from a minimal template', () => {
     const template = {
       created_at: 1617932115,
     }
@@ -47,7 +48,7 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
     expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)
   })
 
-  it('should create a signed event from a filled template', () => {
+  test('should create a signed event from a filled template', () => {
     const template = {
       tags: [['nonstandard', 'tag']],
       content: '👍',

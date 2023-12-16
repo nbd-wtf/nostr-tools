@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import 'websocket-polyfill'
 
 import { makeAuthEvent } from './nip42.ts'

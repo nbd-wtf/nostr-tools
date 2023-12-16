@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { matchEventId, matchEventKind, getSubscriptionId } from './fakejson.ts'
 
 test('match id', () => {

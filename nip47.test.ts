@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'bun:test'
 import { makeNwcRequestEvent, parseConnectionString } from './nip47'
 import { decrypt } from './nip04.ts'
 import crypto from 'node:crypto'

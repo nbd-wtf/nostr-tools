@@ -1,3 +1,5 @@
+import { describe, test, expect } from 'bun:test'
+
 import {
   finishEvent,
   serializeEvent,
@@ -12,7 +14,7 @@ import { ShortTextNote } from './kinds.ts'
 
 describe('Event', () => {
   describe('finishEvent', () => {
-    it('should create a signed event from a template', () => {
+    test('should create a signed event from a template', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -36,7 +38,7 @@ describe('Event', () => {
   })
 
   describe('serializeEvent', () => {
-    it('should serialize a valid event object', () => {
+    test('should serialize a valid event object', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -62,7 +64,7 @@ describe('Event', () => {
       )
     })
 
-    it('should throw an error for an invalid event object', () => {
+    test('should throw an error for an invalid event object', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -81,7 +83,7 @@ describe('Event', () => {
   })
 
   describe('getEventHash', () => {
-    it('should return the correct event hash', () => {
+    test('should return the correct event hash', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -101,7 +103,7 @@ describe('Event', () => {
   })
 
   describe('validateEvent', () => {
-    it('should return true for a valid event object', () => {
+    test('should return true for a valid event object', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -118,7 +120,7 @@ describe('Event', () => {
       expect(isValid).toEqual(true)
     })
 
-    it('should return false for a non object event', () => {
+    test('should return false for a non object event', () => {
       const nonObjectEvent = ''
 
       const isValid = validateEvent(nonObjectEvent)
@@ -126,7 +128,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an event object with missing properties', () => {
+    test('should return false for an event object with missing properties', () => {
       const invalidEvent = {
         kind: ShortTextNote,
         tags: [],
@@ -138,7 +140,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an empty object', () => {
+    test('should return false for an empty object', () => {
       const emptyObj = {}
 
       const isValid = validateEvent(emptyObj)
@@ -146,7 +148,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an object with invalid properties', () => {
+    test('should return false for an object with invalid properties', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -162,7 +164,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an object with an invalid public key', () => {
+    test('should return false for an object with an invalid public key', () => {
       const invalidEvent = {
         kind: 1,
         tags: [],
@@ -176,7 +178,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an object with invalid tags', () => {
+    test('should return false for an object with invalid tags', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -195,7 +197,7 @@ describe('Event', () => {
   })
 
   describe('verifySignature', () => {
-    it('should return true for a valid event signature', () => {
+    test('should return true for a valid event signature', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
       const event = finishEvent(
@@ -213,7 +215,7 @@ describe('Event', () => {
       expect(isValid).toEqual(true)
     })
 
-    it('should return false for an invalid event signature', () => {
+    test('should return false for an invalid event signature', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
       const { [verifiedSymbol]: _, ...event } = finishEvent(
@@ -234,7 +236,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false when verifying an event with a different private key', () => {
+    test('should return false when verifying an event with a different private key', () => {
       const privateKey1 = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
       const privateKey2 = '5b4a34f4e4b23c63ad55a35e3f84a3b53d96dbf266edf521a8358f71d19cbf67'
@@ -259,7 +261,7 @@ describe('Event', () => {
       expect(isValid).toEqual(false)
     })
 
-    it('should return false for an invalid event id', () => {
+    test('should return false for an invalid event id', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
 
       const { [verifiedSymbol]: _, ...event } = finishEvent(
@@ -282,7 +284,7 @@ describe('Event', () => {
   })
 
   describe('getSignature', () => {
-    it('should produce the correct signature for an event object', () => {
+    test('should produce the correct signature for an event object', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 
@@ -308,7 +310,7 @@ describe('Event', () => {
       expect(isValid).toEqual(true)
     })
 
-    it('should not sign an event with different private key', () => {
+    test('should not sign an event with different private key', () => {
       const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
       const publicKey = getPublicKey(privateKey)
 

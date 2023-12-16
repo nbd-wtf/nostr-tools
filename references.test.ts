@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import { parseReferences } from './references.ts'
 import { buildEvent } from './test-helpers.ts'
 

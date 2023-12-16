@@ -1,3 +1,4 @@
+import { test, expect } from 'bun:test'
 import crypto from 'node:crypto'
 
 import { encrypt, decrypt } from './nip04.ts'
