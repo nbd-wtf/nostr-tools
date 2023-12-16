@@ -1,39 +1,19 @@
-// #85 I created an implementation of each of the different
-// types described in the NIP11.
-import fetch from 'node-fetch'
+var _fetch: any
 
-export namespace Nip11 {
-  export interface requestRelayInfos<
-    N extends string[],
-    A extends boolean,
-    P extends boolean
-  > {
-    (relay_addr: string): Promise<RelayInfos<N, A, P>>
-  }
+try {
+  _fetch = fetch
+} catch {}
 
-  // I wanted to use an enum, but eslint is giving me
-  // problems!
+export function useFetchImplementation(fetchImplementation: any) {
+  _fetch = fetchImplementation
+}
 
-  // export enum headers_accept {
-  //   nostr_json = 'application/nostr+json'
-  // }
-
-  export const requestRelayInfos: requestRelayInfos<any, any, any> = (
-    relay_addr: string
-  ) => {
-    return new Promise(async (res, rej) => {
-      try {
-        const accept = 'application/nostr+json'
-        const init = {headers: {accept}}
-        const response = await fetch(relay_addr, init)
-        const relayInfos: RelayInfosTemplate<any> =
-          (await response.json()) as RelayInfosTemplate<any>
-        res(relayInfos)
-      } catch (error) {
-        rej(error)
-      }
+export async function fetchRelayInformation(url: string) {
+  return (await (
+    await fetch(url.replace('ws://', 'http://').replace('wss://', 'https://'), {
+      headers: { Accept: 'application/nostr+json' },
     })
-  }
+  ).json()) as RelayInformation
 }
 
 /**
@@ -60,13 +40,13 @@ export namespace Nip11 {
  * @param software identifying relay software URL
  * @param version string version identifier
  */
-export interface RelayInfosTemplate<N extends string[]> {
+export interface BasicRelayInformation {
   // string identifying relay
   name: string
   description: string
   pubkey: string
   contact: string
-  supported_nips: N
+  supported_nips: number[]
   software: string
   version: string
   // limitation?: Limitations<A, P>
@@ -124,7 +104,7 @@ export interface RelayInfosTemplate<N extends string[]> {
  * @param payment_required this relay requires payment
  * before a new connection may perform any action.
  */
-export interface Limitations<A extends boolean, P extends boolean> {
+export interface Limitations {
   max_message_length: number
   max_subscription: number
   max_filters: number
@@ -134,19 +114,16 @@ export interface Limitations<A extends boolean, P extends boolean> {
   max_event_tags: number
   max_content_length: number
   min_pow_difficulty: number
-  auth_required: A
-  payment_required: P
+  auth_required: boolean
+  payment_required: boolean
 }
 
-type range<L extends number, H extends number> = [L, H]
-type anyRange = range<any, any>
-type genericKinds = (number | anyRange)[]
-interface RetentionDetails<K extends genericKinds> {
-  kinds: K
+interface RetentionDetails {
+  kinds: (number | number[])[]
   time?: number | null
   count?: number | null
 }
-type AnyRetentionDetails = RetentionDetails<any>
+type AnyRetentionDetails = RetentionDetails
 /**
  * ### Event Retention
 
@@ -300,13 +277,9 @@ export interface Icon {
   icon: string
 }
 
-export type RelayInfos<
-  N extends string[],
-  A extends boolean,
-  P extends boolean
-> = RelayInfosTemplate<N> &
+export type RelayInformation = BasicRelayInformation &
   Partial<Retention> & {
-    limitation?: Partial<Limitations<A, P>>
+    limitation?: Partial<Limitations>
   } & Partial<ContentLimitations> &
   Partial<CommunityPreferences> &
   Partial<PayToRelay> &
