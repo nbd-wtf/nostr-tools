@@ -9,9 +9,7 @@ test('generate private key from a mnemonic', async () => {
 test('generate private key for account 1 from a mnemonic', async () => {
   const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
   const privateKey = privateKeyFromSeedWords(mnemonic, undefined, 1)
-  expect(privateKey).toEqual(
-    'b5fc7f229de3fb5c189063e3b3fc6c921d8f4366cff5bd31c6f063493665eb2b'
-  )
+  expect(privateKey).toEqual('b5fc7f229de3fb5c189063e3b3fc6c921d8f4366cff5bd31c6f063493665eb2b')
 })
 
 test('generate private key from a mnemonic and passphrase', async () => {
@@ -25,7 +23,5 @@ test('generate private key for account 1 from a mnemonic and passphrase', async 
   const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
   const passphrase = '123'
   const privateKey = privateKeyFromSeedWords(mnemonic, passphrase, 1)
-  expect(privateKey).toEqual(
-    '2e0f7bd9e3c3ebcdff1a90fb49c913477e7c055eba1a415d571b6a8c714c7135'
-  )
+  expect(privateKey).toEqual('2e0f7bd9e3c3ebcdff1a90fb49c913477e7c055eba1a415d571b6a8c714c7135')
 })

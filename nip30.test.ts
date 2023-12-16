@@ -1,4 +1,4 @@
-import {matchAll, replaceAll} from './nip30.ts'
+import { matchAll, replaceAll } from './nip30.ts'
 
 test('matchAll', () => {
   const result = matchAll('Hello :blobcat: :disputed: ::joy:joy:')
@@ -8,21 +8,21 @@ test('matchAll', () => {
       name: 'blobcat',
       shortcode: ':blobcat:',
       start: 6,
-      end: 15
+      end: 15,
     },
     {
       name: 'disputed',
       shortcode: ':disputed:',
       start: 16,
-      end: 26
-    }
+      end: 26,
+    },
   ])
 })
 
 test('replaceAll', () => {
   const content = 'Hello :blobcat: :disputed: ::joy:joy:'
 
-  const result = replaceAll(content, ({name}) => {
+  const result = replaceAll(content, ({ name }) => {
     return `<img src="https://ditto.pub/emoji/${name}.png" />`
   })
 

@@ -21,7 +21,7 @@ export interface CustomEmojiMatch extends CustomEmoji {
 }
 
 /** Find all custom emoji shortcodes. */
-export function * matchAll(content: string): Iterable<CustomEmojiMatch> {
+export function* matchAll(content: string): Iterable<CustomEmojiMatch> {
   const matches = content.matchAll(regex())
 
   for (const match of matches) {
@@ -32,7 +32,7 @@ export function * matchAll(content: string): Iterable<CustomEmojiMatch> {
         shortcode: shortcode as `:${string}:`,
         name,
         start: match.index!,
-        end: match.index! + shortcode.length
+        end: match.index! + shortcode.length,
       }
     } catch (_e) {
       // do nothing
@@ -41,10 +41,7 @@ export function * matchAll(content: string): Iterable<CustomEmojiMatch> {
 }
 
 /** Replace all emoji shortcodes in the content. */
-export function replaceAll(
-  content: string,
-  replacer: (match: CustomEmoji) => string
-): string {
+export function replaceAll(content: string, replacer: (match: CustomEmoji) => string): string {
   return content.replaceAll(regex(), (shortcode, name) => {
     return replacer({
       shortcode: shortcode as `:${string}:`,
