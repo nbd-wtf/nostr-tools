@@ -92,78 +92,44 @@ export function insertEventIntoAscendingList(sortedArray: Event[], event: Event)
   return sortedArray
 }
 
-export class MessageNode {
-  private _value: string
-  private _next: MessageNode | null
+export class QueueNode<V> {
+  public value: V
+  public next: QueueNode<V> | null
 
-  public get value(): string {
-    return this._value
-  }
-  public set value(message: string) {
-    this._value = message
-  }
-  public get next(): MessageNode | null {
-    return this._next
-  }
-  public set next(node: MessageNode | null) {
-    this._next = node
-  }
-
-  constructor(message: string) {
-    this._value = message
-    this._next = null
+  constructor(message: V) {
+    this.value = message
+    this.next = null
   }
 }
 
-export class MessageQueue {
-  private _first: MessageNode | null
-  private _last: MessageNode | null
-
-  public get first(): MessageNode | null {
-    return this._first
-  }
-  public set first(messageNode: MessageNode | null) {
-    this._first = messageNode
-  }
-  public get last(): MessageNode | null {
-    return this._last
-  }
-  public set last(messageNode: MessageNode | null) {
-    this._last = messageNode
-  }
-  private _size: number
-  public get size(): number {
-    return this._size
-  }
-  public set size(v: number) {
-    this._size = v
-  }
+export class Queue<V> {
+  public first: QueueNode<V> | null
+  public last: QueueNode<V> | null
 
   constructor() {
-    this._first = null
-    this._last = null
-    this._size = 0
+    this.first = null
+    this.last = null
   }
-  enqueue(message: string): boolean {
-    const newNode = new MessageNode(message)
-    if (this._size === 0 || !this._last) {
-      this._first = newNode
-      this._last = newNode
+
+  enqueue(value: V): boolean {
+    const newNode = new QueueNode(value)
+    if (!this.last) {
+      this.first = newNode
+      this.last = newNode
     } else {
-      this._last.next = newNode
-      this._last = newNode
+      this.last.next = newNode
+      this.last = newNode
     }
-    this._size++
     return true
   }
-  dequeue(): string | null {
-    if (this._size === 0 || !this._first) return null
 
-    let prev = this._first
-    this._first = prev.next
+  dequeue(): V | null {
+    if (!this.first) return null
+
+    let prev = this.first
+    this.first = prev.next
     prev.next = null
 
-    this._size--
     return prev.value
   }
 }

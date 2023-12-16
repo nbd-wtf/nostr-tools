@@ -49,7 +49,7 @@ export function getEventHash(event: UnsignedEvent): string {
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
 
-export function validateEvent<T>(event: T): event is T & UnsignedEvent {
+export function validateEvent(event: UnsignedEvent): boolean {
   if (!isRecord(event)) return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
@@ -70,7 +70,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
 }
 
 /** Verify the event's signature. This function mutates the event with a `verified` symbol, making it idempotent. */
-export function verifySignature(event: Event): event is VerifiedEvent {
+export function verifySignature(event: Event): boolean {
   if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
 
   const hash = getEventHash(event)
