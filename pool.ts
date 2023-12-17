@@ -11,6 +11,8 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
 
 export class SimplePool {
   private relays = new Map<string, Relay>()
+  public seenOn = new Map<string, Set<Relay>>()
+  public trackRelays: boolean = false
 
   async ensureRelay(url: string): Promise<Relay> {
     url = normalizeURL(url)
@@ -29,6 +31,17 @@ export class SimplePool {
     filters: Filter[],
     params: SubscribeManyParams,
   ): Promise<{ close: () => void }> {
+    if (this.trackRelays) {
+      params.receivedEvent = (relay: Relay, id: string) => {
+        let set = this.seenOn.get(id)
+        if (!set) {
+          set = new Set()
+          this.seenOn.set(id, set)
+        }
+        set.add(relay)
+      }
+    }
+
     const _knownIds = new Set<string>()
     params.alreadyHaveEvent = (id: string) => {
       if (params.alreadyHaveEvent?.(id)) {
@@ -146,22 +159,5 @@ export class SimplePool {
       let r = await this.ensureRelay(url)
       return r.publish(event)
     })
-  }
-}
-
-export class RelayTrackingPool extends SimplePool {
-  public seenOn = new Map<string, Set<Relay>>()
-
-  subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): Promise<{ close: () => void }> {
-    params.receivedEvent = (relay: Relay, id: string) => {
-      let set = this.seenOn.get(id)
-      if (!set) {
-        set = new Set()
-        this.seenOn.set(id, set)
-      }
-      set.add(relay)
-    }
-
-    return super.subscribeMany(relays, filters, params)
   }
 }
