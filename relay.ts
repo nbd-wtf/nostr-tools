@@ -128,8 +128,13 @@ export class Relay {
       // we do this before parsing the JSON to not have to do that for duplicate events
       //   since JSON parsing is slow
       const id = getHex64(json, 'id')
-      so.receivedEvent?.(id) // this is so the client knows this relay had this event
-      if (so.alreadyHaveEvent?.(id)) {
+      const alreadyHave = so.alreadyHaveEvent?.(id)
+
+      // notify any interested client that the relay has this event
+      // (do this after alreadyHaveEvent() because the client may rely on this to answer that)
+      so.receivedEvent?.(this, id)
+
+      if (alreadyHave) {
         // if we had already seen this event we can just stop here
         return
       }
@@ -263,7 +268,7 @@ export class Subscription {
   public eosed: boolean = false
 
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
-  public receivedEvent: ((id: string) => boolean) | undefined
+  public receivedEvent: ((relay: Relay, id: string) => void) | undefined
   public readonly filters: Filter[]
 
   public onevent: (evt: Event) => void
@@ -298,7 +303,7 @@ export type SubscriptionParams = {
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
-  receivedEvent?: (id: string) => boolean
+  receivedEvent?: (relay: Relay, id: string) => void
 }
 
 export type CountResolver = {
