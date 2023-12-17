@@ -185,7 +185,6 @@
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
     "tsd": "^0.22.0",
-    "typescript": "^5.0.4",
-    "websocket-polyfill": "^0.0.3"
+    "typescript": "^5.0.4"
   }
 }

@@ -12,68 +12,13 @@ export function relayConnect(url: string) {
   return relay
 }
 
-class Subscription {
-  public readonly relay: Relay
-  public readonly id: string
-  public closed: boolean = false
-  public eosed: boolean = false
-
-  public alreadyHaveEvent: ((id: string) => boolean) | null = null
-  public receivedEvent: ((id: string) => boolean) | null = null
-  public readonly filters: Filter[]
-
-  public onevent: (evt: Event) => void
-  public oneose: (() => void) | null = null
-  public onclose: ((reason: string) => void) | null = null
-
-  constructor(relay: Relay, filters: Filter[], params: SubscriptionParams) {
-    this.relay = relay
-    this.filters = filters
-    this.id = params.id
-    this.onevent = params.onevent
-    this.oneose = params.oneose || null
-    this.onclose = params.onclose || null
-    this.alreadyHaveEvent = params.alreadyHaveEvent || null
-    this.receivedEvent = params.receivedEvent || null
-  }
-
-  public close(reason: string) {
-    if (!this.closed) {
-      // if the connection was closed by the user calling .close() we will send a CLOSE message
-      // otherwise this._open will be already set to false so we will skip this
-      this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
-      this.closed = true
-    }
-    this.onclose?.(reason)
-  }
-}
-
-type SubscriptionParams = {
-  id: string
-  onevent: (evt: Event) => void
-  oneose?: () => void
-  onclose?: (reason: string) => void
-  alreadyHaveEvent: ((id: string) => boolean) | null
-  receivedEvent: ((id: string) => boolean) | null
-}
-
-type CountResolver = {
-  resolve: (count: number) => void
-  reject: (err: Error) => void
-}
-
-type EventPublishResolver = {
-  resolve: (reason: string) => void
-  reject: (err: Error) => void
-}
-
-class Relay {
+export class Relay {
   public readonly url: string
   private _connected: boolean = false
 
   public trusted: boolean = false
   public onclose: (() => void) | null = null
-  public onnotice: (msg: string) => void = console.log
+  public onnotice: (msg: string) => void = msg => console.log(`NOTICE from ${this.url}: ${msg}`)
 
   private connectionPromise: Promise<void> | undefined
   private openSubs = new Map<string, Subscription>()
@@ -81,7 +26,7 @@ class Relay {
   private openEventPublishes = new Map<string, EventPublishResolver>()
   private ws: WebSocket | undefined
   private incomingMessageQueue = new Queue<string>()
-  private handleNextInterval: ReturnType<typeof setInterval> | null = null
+  private queueRunning = false
   private challenge: string | undefined
   private serial: number = 0
 
@@ -112,6 +57,8 @@ class Relay {
 
   public async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise
+
+    this.challenge = undefined
     this.connectionPromise = new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url)
@@ -125,8 +72,8 @@ class Relay {
         resolve()
       }
 
-      this.ws.onerror = () => {
-        reject()
+      this.ws.onerror = ev => {
+        reject((ev as any).message)
         if (this._connected) {
           this.onclose?.()
           this.closeAllSubscriptions('relay connection errored')
@@ -143,19 +90,30 @@ class Relay {
 
       this.ws.onmessage = ev => {
         this.incomingMessageQueue.enqueue(ev.data as string)
-        if (!this.handleNextInterval) {
-          this.handleNextInterval = setInterval(this.handleNext.bind(this), 0)
+        if (!this.queueRunning) {
+          this.runQueue()
         }
       }
     })
+
+    return this.connectionPromise
   }
 
-  private handleNext() {
+  private async runQueue() {
+    this.queueRunning = true
+    while (true) {
+      if (false === this.handleNext()) {
+        break
+      }
+      await Promise.resolve()
+    }
+    this.queueRunning = false
+  }
+
+  private handleNext(): undefined | false {
     const json = this.incomingMessageQueue.dequeue()
     if (!json) {
-      clearInterval(this.handleNextInterval as ReturnType<typeof setInterval>)
-      this.handleNextInterval = null
-      return
+      return false
     }
 
     const subid = getSubscriptionId(json)
@@ -249,36 +207,106 @@ class Relay {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
     const evt = nip42.makeAuthEvent(this.url, this.challenge)
     await Promise.all([signAuthEvent(evt), this.connect()])
-    this.ws?.send('["AUTH",' + JSON.stringify(evt) + ']')
+    this.send('["AUTH",' + JSON.stringify(evt) + ']')
   }
 
-  public async publish(event: Event) {
+  public async publish(event: Event): Promise<string> {
     await this.connect()
-    const ret = new Promise((resolve, reject) => {
+    const ret = new Promise<string>((resolve, reject) => {
       this.openEventPublishes.set(event.id, { resolve, reject })
     })
-    this.ws?.send('["EVENT",' + JSON.stringify(event) + ']')
+    this.send('["EVENT",' + JSON.stringify(event) + ']')
     return ret
   }
 
-  public async count(filters: Filter[], params: { id?: string | null }) {
+  public async count(filters: Filter[], params: { id?: string | null }): Promise<number> {
     await this.connect()
     this.serial++
     const id = params?.id || 'count:' + this.serial
-    const ret = new Promise((resolve, reject) => {
+    const ret = new Promise<number>((resolve, reject) => {
       this.openCountRequests.set(id, { resolve, reject })
     })
-    this.ws?.send('["COUNT","' + id + '"' + JSON.stringify(filters) + ']')
+    this.send('["COUNT","' + id + '",' + JSON.stringify(filters) + ']')
     return ret
   }
 
-  public async subscribe(filters: Filter[], params: SubscriptionParams & { id: string | undefined }) {
+  public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>) {
     await this.connect()
     this.serial++
-    params.id = params.id || 'sub:' + this.serial
-    const subscription = new Subscription(this, filters, params)
-    this.openSubs.set(params.id, subscription)
-    this.ws?.send('["REQ","' + params.id + '"' + JSON.stringify(filters) + ']')
+    const id = params.id || 'sub:' + this.serial
+    const subscription = new Subscription(this, filters, {
+      onevent: event => {
+        console.warn(
+          `onevent() callback not defined for subscription '${id}' in relay ${this.url}. event received:`,
+          event,
+        )
+      },
+      ...params,
+      id,
+    })
+    this.openSubs.set(id, subscription)
+    this.send('["REQ","' + id + '",' + JSON.stringify(filters).substring(1))
     return subscription
   }
+
+  public close() {
+    this.closeAllSubscriptions('relay connection closed by us')
+    this._connected = false
+    this.ws?.close()
+  }
+}
+
+export class Subscription {
+  public readonly relay: Relay
+  public readonly id: string
+  public closed: boolean = false
+  public eosed: boolean = false
+
+  public alreadyHaveEvent: ((id: string) => boolean) | undefined
+  public receivedEvent: ((id: string) => boolean) | undefined
+  public readonly filters: Filter[]
+
+  public onevent: (evt: Event) => void
+  public oneose: (() => void) | undefined
+  public onclose: ((reason: string) => void) | undefined
+
+  constructor(relay: Relay, filters: Filter[], params: SubscriptionParams) {
+    this.relay = relay
+    this.filters = filters
+    this.id = params.id
+    this.onevent = params.onevent
+    this.oneose = params.oneose
+    this.onclose = params.onclose
+    this.alreadyHaveEvent = params.alreadyHaveEvent
+    this.receivedEvent = params.receivedEvent
+  }
+
+  public close(reason: string = 'closed by caller') {
+    if (!this.closed) {
+      // if the connection was closed by the user calling .close() we will send a CLOSE message
+      // otherwise this._open will be already set to false so we will skip this
+      this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
+      this.closed = true
+    }
+    this.onclose?.(reason)
+  }
+}
+
+export type SubscriptionParams = {
+  id: string
+  onevent: (evt: Event) => void
+  oneose?: () => void
+  onclose?: (reason: string) => void
+  alreadyHaveEvent?: (id: string) => boolean
+  receivedEvent?: (id: string) => boolean
+}
+
+export type CountResolver = {
+  resolve: (count: number) => void
+  reject: (err: Error) => void
+}
+
+export type EventPublishResolver = {
+  resolve: (reason: string) => void
+  reject: (err: Error) => void
 }

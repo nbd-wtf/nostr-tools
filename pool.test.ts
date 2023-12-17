@@ -1,5 +1,4 @@
 import { test, expect } from 'bun:test'
-import 'websocket-polyfill'
 
 import { finishEvent, type Event } from './event.ts'
 import { generatePrivateKey, getPublicKey } from './keys.ts'
