@@ -14,10 +14,10 @@ export function normalizeURL(url: string): string {
 }
 
 export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
-  const [idx, found] = binarySearch(sortedArray, event, (a, b) => {
-    if (a.id === b.id) return 0
-    if (a.created_at === b.created_at) return -1
-    return b.created_at - a.created_at
+  const [idx, found] = binarySearch(sortedArray, b => {
+    if (event.id === b.id) return 0
+    if (event.created_at === b.created_at) return -1
+    return b.created_at - event.created_at
   })
   if (!found) {
     sortedArray.splice(idx, 0, event)
@@ -26,10 +26,10 @@ export function insertEventIntoDescendingList(sortedArray: Event[], event: Event
 }
 
 export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
-  const [idx, found] = binarySearch(sortedArray, event, (a, b) => {
-    if (a.id === b.id) return 0
-    if (a.created_at === b.created_at) return -1
-    return a.created_at - b.created_at
+  const [idx, found] = binarySearch(sortedArray, b => {
+    if (event.id === b.id) return 0
+    if (event.created_at === b.created_at) return -1
+    return event.created_at - b.created_at
   })
   if (!found) {
     sortedArray.splice(idx, 0, event)
@@ -37,13 +37,13 @@ export function insertEventIntoAscendingList(sortedArray: Event[], event: Event)
   return sortedArray
 }
 
-export function binarySearch<T>(arr: T[], val: T, compare: (a: T, b: T) => number): [number, boolean] {
+export function binarySearch<T>(arr: T[], compare: (b: T) => number): [number, boolean] {
   let start = 0
   let end = arr.length - 1
 
   while (start <= end) {
     const mid = Math.floor((start + end) / 2)
-    const cmp = compare(val, arr[mid])
+    const cmp = compare(arr[mid])
 
     if (cmp === 0) {
       return [mid, true]

@@ -257,9 +257,9 @@ describe('enqueue a message into MessageQueue', () => {
 })
 
 test('binary search', () => {
-  expect(binarySearch(['a', 'b', 'd', 'e'], 'e', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([3, true])
-  expect(binarySearch(['a', 'b', 'd', 'e'], 'x', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([4, false])
-  expect(binarySearch(['a', 'b', 'd', 'e'], 'c', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([2, false])
-  expect(binarySearch(['a', 'b', 'd', 'e'], 'a', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([0, true])
-  expect(binarySearch(['a', 'b', 'd', 'e'], '[', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([0, false])
+  expect(binarySearch(['a', 'b', 'd', 'e'], b => ('e' < b ? -1 : 'e' === b ? 0 : 1))).toEqual([3, true])
+  expect(binarySearch(['a', 'b', 'd', 'e'], b => ('x' < b ? -1 : 'x' === b ? 0 : 1))).toEqual([4, false])
+  expect(binarySearch(['a', 'b', 'd', 'e'], b => ('c' < b ? -1 : 'c' === b ? 0 : 1))).toEqual([2, false])
+  expect(binarySearch(['a', 'b', 'd', 'e'], b => ('a' < b ? -1 : 'a' === b ? 0 : 1))).toEqual([0, true])
+  expect(binarySearch(['a', 'b', 'd', 'e'], b => ('[' < b ? -1 : '[' === b ? 0 : 1))).toEqual([0, false])
 })
