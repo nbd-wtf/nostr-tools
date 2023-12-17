@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import { buildEvent } from './test-helpers.ts'
-import { Queue, insertEventIntoAscendingList, insertEventIntoDescendingList } from './utils.ts'
+import { Queue, insertEventIntoAscendingList, insertEventIntoDescendingList, binarySearch } from './utils.ts'
 
 import type { Event } from './event.ts'
 
@@ -214,13 +214,13 @@ describe('inserting into a asc sorted list of events', () => {
   })
 })
 
-describe('enque a message into MessageQueue', () => {
-  test('enque into an empty queue', () => {
+describe('enqueue a message into MessageQueue', () => {
+  test('enqueue into an empty queue', () => {
     const queue = new Queue()
     queue.enqueue('node1')
     expect(queue.first!.value).toBe('node1')
   })
-  test('enque into a non-empty queue', () => {
+  test('enqueue into a non-empty queue', () => {
     const queue = new Queue()
     queue.enqueue('node1')
     queue.enqueue('node3')
@@ -254,4 +254,12 @@ describe('enque a message into MessageQueue', () => {
     const item3 = queue.dequeue()
     expect(item3).toBe(null)
   })
+})
+
+test('binary search', () => {
+  expect(binarySearch(['a', 'b', 'd', 'e'], 'e', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([3, true])
+  expect(binarySearch(['a', 'b', 'd', 'e'], 'x', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([4, false])
+  expect(binarySearch(['a', 'b', 'd', 'e'], 'c', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([2, false])
+  expect(binarySearch(['a', 'b', 'd', 'e'], 'a', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([0, true])
+  expect(binarySearch(['a', 'b', 'd', 'e'], '[', (a, b) => (a < b ? -1 : a === b ? 0 : 1))).toEqual([0, false])
 })

@@ -13,83 +13,50 @@ export function normalizeURL(url: string): string {
   return p.toString()
 }
 
-//
-// fast insert-into-sorted-array functions adapted from https://github.com/terrymorse58/fast-sorted-array
-//
 export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
-  let start = 0
-  let end = sortedArray.length - 1
-  let midPoint
-  let position = start
-
-  if (end < 0) {
-    position = 0
-  } else if (event.created_at < sortedArray[end].created_at) {
-    position = end + 1
-  } else if (event.created_at >= sortedArray[start].created_at) {
-    position = start
-  } else
-    while (true) {
-      if (end <= start + 1) {
-        position = end
-        break
-      }
-      midPoint = Math.floor(start + (end - start) / 2)
-      if (sortedArray[midPoint].created_at > event.created_at) {
-        start = midPoint
-      } else if (sortedArray[midPoint].created_at < event.created_at) {
-        end = midPoint
-      } else {
-        // aMidPoint === num
-        position = midPoint
-        break
-      }
-    }
-
-  // insert when num is NOT already in (no duplicates)
-  if (sortedArray[position]?.id !== event.id) {
-    return [...sortedArray.slice(0, position), event, ...sortedArray.slice(position)]
+  const [idx, found] = binarySearch(sortedArray, event, (a, b) => {
+    if (a.id === b.id) return 0
+    if (a.created_at === b.created_at) return -1
+    return b.created_at - a.created_at
+  })
+  if (!found) {
+    sortedArray.splice(idx, 0, event)
   }
-
   return sortedArray
 }
 
 export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
-  let start = 0
-  let end = sortedArray.length - 1
-  let midPoint
-  let position = start
+  const [idx, found] = binarySearch(sortedArray, event, (a, b) => {
+    if (a.id === b.id) return 0
+    if (a.created_at === b.created_at) return -1
+    return a.created_at - b.created_at
+  })
+  if (!found) {
+    sortedArray.splice(idx, 0, event)
+  }
+  return sortedArray
+}
 
-  if (end < 0) {
-    position = 0
-  } else if (event.created_at > sortedArray[end].created_at) {
-    position = end + 1
-  } else if (event.created_at <= sortedArray[start].created_at) {
-    position = start
-  } else
-    while (true) {
-      if (end <= start + 1) {
-        position = end
-        break
-      }
-      midPoint = Math.floor(start + (end - start) / 2)
-      if (sortedArray[midPoint].created_at < event.created_at) {
-        start = midPoint
-      } else if (sortedArray[midPoint].created_at > event.created_at) {
-        end = midPoint
-      } else {
-        // aMidPoint === num
-        position = midPoint
-        break
-      }
+export function binarySearch<T>(arr: T[], val: T, compare: (a: T, b: T) => number): [number, boolean] {
+  let start = 0
+  let end = arr.length - 1
+
+  while (start <= end) {
+    const mid = Math.floor((start + end) / 2)
+    const cmp = compare(val, arr[mid])
+
+    if (cmp === 0) {
+      return [mid, true]
     }
 
-  // insert when num is NOT already in (no duplicates)
-  if (sortedArray[position]?.id !== event.id) {
-    return [...sortedArray.slice(0, position), event, ...sortedArray.slice(position)]
+    if (cmp < 0) {
+      end = mid - 1
+    } else {
+      start = mid + 1
+    }
   }
 
-  return sortedArray
+  return [start, false]
 }
 
 export class QueueNode<V> {
