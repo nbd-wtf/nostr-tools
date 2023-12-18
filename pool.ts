@@ -56,7 +56,7 @@ export class SimplePool {
     const eoseTimeout = setTimeout(() => {
       handleEose = () => {}
       params.oneose?.()
-    }, params.eoseSubTimeout || 5400)
+    }, params.eoseSubTimeout || 3400)
 
     // batch all closes into a single
     const closesReceived: string[] = []
