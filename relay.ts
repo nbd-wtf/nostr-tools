@@ -235,7 +235,7 @@ export class Relay {
     return ret
   }
 
-  public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>) {
+  public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Promise<Subscription> {
     await this.connect()
     this.serial++
     const id = params.id || 'sub:' + this.serial

@@ -48,29 +48,23 @@ let veryOk = verifySignature(event)
 ### Interacting with a relay
 
 ```js
-import { relayInit, finishEvent, generatePrivateKey, getPublicKey } from 'nostr-tools'
+import { relayConnect, finishEvent, generatePrivateKey, getPublicKey } from 'nostr-tools'
 
-const relay = relayInit('wss://relay.example.com')
-relay.on('connect', () => {
-  console.log(`connected to ${relay.url}`)
-})
-relay.on('error', () => {
-  console.log(`failed to connect to ${relay.url}`)
-})
-
-await relay.connect()
+const relay = await relayConnect('wss://relay.example.com')
+console.log(`connected to ${relay.url}`)
 
 // let's query for an event that exists
-let sub = relay.sub([
+const sub = relay.subscribe([
   {
     ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
   },
-])
-sub.on('event', event => {
-  console.log('we got the event we wanted:', event)
-})
-sub.on('eose', () => {
-  sub.unsub()
+], {
+  onevent(event) {
+    console.log('we got the event we wanted:', event)
+  },
+  oneose() {
+    sub.close()
+  }
 })
 
 // let's publish a new event while simultaneously monitoring the relay for it
@@ -122,40 +116,32 @@ const pool = new SimplePool()
 
 let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
 
-let sub = pool.sub(
+let h = pool.subscribeMany(
   [...relays, 'wss://relay.example3.com'],
   [
     {
       authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
     },
   ],
+  {
+    onevent(event) {
+      // this will only be called once the first time the event is received
+      // ...
+    },
+    oneose() {
+      h.close()
+    }
+  }
 )
 
-sub.on('event', event => {
-  // this will only be called once the first time the event is received
-  // ...
-})
+await Promise.any(pool.publish(relays, newEvent))
+console.log('published to at least one relay!')
 
-let pubs = pool.publish(relays, newEvent)
-await Promise.all(pubs)
-
-let events = await pool.list(relays, [{ kinds: [0, 1] }])
+let events = await pool.querySync(relays, [{ kinds: [0, 1] }])
 let event = await pool.get(relays, {
   ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
 })
-
-let batchedEvents = await pool.batchedList('notes', relays, [{ kinds: [1] }])
-// `batchedList` will wait for other function calls with the same `batchKey`
-// (e.g. 'notes', 'authors', etc) within a fixed amount of time (default: `100ms`) before sending
-// next ws request, and batch all requests with similar `batchKey`s together in a single request.
-
-let relaysForEvent = pool.seenOn('44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245')
-// relaysForEvent will be an array of URLs from relays a given event was seen on
-
-pool.close()
 ```
-
-read more details about `batchedList` on this pr: [https://github.com/nbd-wtf/nostr-tools/pull/279](https://github.com/nbd-wtf/nostr-tools/pull/279#issue-1859315757)
 
 ### Parsing references (mentions) from a content using NIP-10 and NIP-27
 
