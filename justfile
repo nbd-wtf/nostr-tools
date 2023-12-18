@@ -1,8 +1,5 @@
 export PATH := "./node_modules/.bin:" + env_var('PATH')
 
-install-dependencies:
-    yarn --ignore-engines
-
 build:
     rm -rf lib
     bun run build.js
