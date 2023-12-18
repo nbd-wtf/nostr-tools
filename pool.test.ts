@@ -74,7 +74,7 @@ test('same with double querying', async () => {
 })
 
 test('querySync()', async () => {
-  let events = await pool.querySync([...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'], {
+  let events = await pool.querySync([...relays.slice(2), 'wss://offchain.pub', 'wss://eden.nostr.land'], {
     authors: ['3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'],
     kinds: [1],
     limit: 2,

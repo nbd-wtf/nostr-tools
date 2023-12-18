@@ -18,7 +18,11 @@ export class Relay {
 
   public trusted: boolean = false
   public onclose: (() => void) | null = null
-  public onnotice: (msg: string) => void = msg => console.log(`NOTICE from ${this.url}: ${msg}`)
+  public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
+
+  public baseEoseTimeout: number = 4400
+  public connectionTimeout: number = 8800
+  private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
   private openSubs = new Map<string, Subscription>()
@@ -60,6 +64,13 @@ export class Relay {
 
     this.challenge = undefined
     this.connectionPromise = new Promise((resolve, reject) => {
+      this.connectionTimeoutHandle = setTimeout(() => {
+        reject('connection timed out')
+        this.connectionPromise = undefined
+        this.onclose?.()
+        this.closeAllSubscriptions('relay connection timed out')
+      }, this.connectionTimeout)
+
       try {
         this.ws = new WebSocket(this.url)
       } catch (err) {
@@ -68,6 +79,7 @@ export class Relay {
       }
 
       this.ws.onopen = () => {
+        clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
         resolve()
       }
@@ -166,9 +178,8 @@ export class Relay {
         }
         case 'EOSE': {
           const so = this.openSubs.get(data[1] as string)
-          if (!so || so.eosed) return
-          so.eosed = true
-          so.oneose?.()
+          if (!so) return
+          so.receivedEose()
           return
         }
         case 'OK': {
@@ -204,7 +215,6 @@ export class Relay {
   }
 
   public async send(message: string) {
-    await this.connect()
     this.ws?.send(message)
   }
 
@@ -237,20 +247,16 @@ export class Relay {
 
   public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Promise<Subscription> {
     await this.connect()
+    const subscription = this.prepareSubscription(filters, params)
+    subscription.fire()
+    return subscription
+  }
+
+  public prepareSubscription(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
     this.serial++
     const id = params.id || 'sub:' + this.serial
-    const subscription = new Subscription(this, filters, {
-      onevent: event => {
-        console.warn(
-          `onevent() callback not defined for subscription '${id}' in relay ${this.url}. event received:`,
-          event,
-        )
-      },
-      ...params,
-      id,
-    })
+    const subscription = new Subscription(this, id, filters, params)
     this.openSubs.set(id, subscription)
-    this.send('["REQ","' + id + '",' + JSON.stringify(filters).substring(1))
     return subscription
   }
 
@@ -264,26 +270,52 @@ export class Relay {
 export class Subscription {
   public readonly relay: Relay
   public readonly id: string
+
   public closed: boolean = false
   public eosed: boolean = false
-
+  public filters: Filter[]
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
   public receivedEvent: ((relay: Relay, id: string) => void) | undefined
-  public readonly filters: Filter[]
 
   public onevent: (evt: Event) => void
   public oneose: (() => void) | undefined
   public onclose: ((reason: string) => void) | undefined
 
-  constructor(relay: Relay, filters: Filter[], params: SubscriptionParams) {
+  public eoseTimeout: number
+  private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+
+  constructor(relay: Relay, id: string, filters: Filter[], params: SubscriptionParams) {
     this.relay = relay
     this.filters = filters
-    this.id = params.id
-    this.onevent = params.onevent
-    this.oneose = params.oneose
-    this.onclose = params.onclose
+    this.id = id
     this.alreadyHaveEvent = params.alreadyHaveEvent
     this.receivedEvent = params.receivedEvent
+    this.eoseTimeout = params.eoseTimeout || relay.baseEoseTimeout
+
+    this.oneose = params.oneose
+    this.onclose = params.onclose
+    this.onevent =
+      params.onevent ||
+      (event => {
+        console.warn(
+          `onevent() callback not defined for subscription '${this.id}' in relay ${this.relay.url}. event received:`,
+          event,
+        )
+      })
+  }
+
+  public fire() {
+    this.relay.send('["REQ","' + this.id + '",' + JSON.stringify(this.filters).substring(1))
+
+    // only now we start counting the eoseTimeout
+    this.eoseTimeoutHandle = setTimeout(this.receivedEose.bind(this), this.eoseTimeout)
+  }
+
+  public receivedEose() {
+    if (this.eosed) return
+    clearTimeout(this.eoseTimeoutHandle)
+    this.eosed = true
+    this.oneose?.()
   }
 
   public close(reason: string = 'closed by caller') {
@@ -298,12 +330,12 @@ export class Subscription {
 }
 
 export type SubscriptionParams = {
-  id: string
-  onevent: (evt: Event) => void
+  onevent?: (evt: Event) => void
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
   receivedEvent?: (relay: Relay, id: string) => void
+  eoseTimeout?: number
 }
 
 export type CountResolver = {
