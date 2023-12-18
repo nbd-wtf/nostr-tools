@@ -4,9 +4,10 @@ import { normalizeURL } from './utils.ts'
 import type { Event } from './event.ts'
 import { type Filter } from './filter.ts'
 
-export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
-  eoseSubTimeout: number
+export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
+  eoseSubTimeout?: number
   onclose?: (reasons: string[]) => void
+  id?: string
 }
 
 export class SimplePool {
@@ -43,15 +44,6 @@ export class SimplePool {
     }
 
     const _knownIds = new Set<string>()
-    params.alreadyHaveEvent = (id: string) => {
-      if (params.alreadyHaveEvent?.(id)) {
-        return true
-      }
-      const have = _knownIds.has(id)
-      _knownIds.add(id)
-      return have
-    }
-
     const subs: Subscription[] = []
 
     // batch all EOSEs into a single
@@ -78,12 +70,21 @@ export class SimplePool {
       }
     }
 
+    const localAlreadyHaveEventHandler = (id: string) => {
+      if (params.alreadyHaveEvent?.(id)) {
+        return true
+      }
+      const have = _knownIds.has(id)
+      _knownIds.add(id)
+      return have
+    }
+
     // open a subscription in all given relays
     await Promise.all(
-      relays.map(normalizeURL).map(async (url, i) => {
-        if (relays.indexOf(url) !== i) {
+      relays.map(normalizeURL).map(async (url, i, arr) => {
+        if (arr.indexOf(url) !== i) {
           // duplicate
-          handleClose(i, 'duplicate')
+          handleClose(i, 'duplicate url')
           return
         }
 
@@ -99,6 +100,7 @@ export class SimplePool {
           ...params,
           oneose: handleEose,
           onclose: reason => handleClose(i, reason),
+          alreadyHaveEvent: localAlreadyHaveEventHandler,
         })
 
         subs.push(subscription)
@@ -122,38 +124,49 @@ export class SimplePool {
     const sub = await this.subscribeMany(relays, filters, {
       ...params,
       oneose() {
-        sub.close()
+        setTimeout(() => {
+          sub.close()
+        }, 0)
       },
     })
     return sub
   }
 
-  get(
+  async querySync(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'id' | 'eoseSubTimeout'>,
-  ): Promise<Event | null> {
-    return new Promise(async (resolve, reject) => {
-      const sub = await this.subscribeManyEose(relays, [filter], {
+    params?: Pick<SubscribeManyParams, 'id' | 'eoseSubTimeout'>,
+  ): Promise<Event[]> {
+    return new Promise(async resolve => {
+      const events: Event[] = []
+      await this.subscribeManyEose(relays, [filter], {
         ...params,
         onevent(event: Event) {
-          resolve(event)
-          sub.close()
+          events.push(event)
         },
-        onclose(reasons: string[]) {
-          const err = new Error('subscriptions closed')
-          err.cause = reasons
-          reject(err)
+        onclose(_: string[]) {
+          resolve(events)
         },
       })
     })
   }
 
+  async get(
+    relays: string[],
+    filter: Filter,
+    params?: Pick<SubscribeManyParams, 'id' | 'eoseSubTimeout'>,
+  ): Promise<Event | null> {
+    filter.limit = 1
+    const events = await this.querySync(relays, filter, params)
+    events.sort((a, b) => b.created_at - a.created_at)
+    return events[0] || null
+  }
+
   publish(relays: string[], event: Event): Promise<string>[] {
-    return relays.map(normalizeURL).map(async (url, i) => {
-      if (relays.indexOf(url) !== i) {
+    return relays.map(normalizeURL).map(async (url, i, arr) => {
+      if (arr.indexOf(url) !== i) {
         // duplicate
-        return Promise.reject('duplicate')
+        return Promise.reject('duplicate url')
       }
 
       let r = await this.ensureRelay(url)

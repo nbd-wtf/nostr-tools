@@ -6,31 +6,21 @@ import { SimplePool } from './pool.ts'
 
 let pool = new SimplePool()
 
-let relays = [
-  'wss://relay.damus.io/',
-  'wss://relay.nostr.bg/',
-  'wss://nostr.fmt.wiz.biz/',
-  'wss://relay.nostr.band/',
-  'wss://nos.lol/',
-]
-
-afterAll(() => {
-  pool.close([...relays, 'wss://nostr.wine', 'wss://offchain.pub', 'wss://eden.nostr.land'])
-})
+let relays = ['wss://relay.damus.io/', 'wss://relay.nostr.bg/', 'wss://nos.lol', 'wss://public.relaying.io']
 
 test('removing duplicates when querying', async () => {
   let priv = generatePrivateKey()
   let pub = getPublicKey(priv)
 
-  let sub = pool.sub(relays, [{ authors: [pub] }])
-  let received: Event[] = []
-
-  sub.on('event', event => {
-    // this should be called only once even though we're listening
-    // to multiple relays because the events will be catched and
-    // deduplicated efficiently (without even being parsed)
-    received.push(event)
+  pool.subscribeMany(relays, [{ authors: [pub] }], {
+    onevent(event: Event) {
+      // this should be called only once even though we're listening
+      // to multiple relays because the events will be catched and
+      // deduplicated efficiently (without even being parsed)
+      received.push(event)
+    },
   })
+  let received: Event[] = []
 
   let event = finishEvent(
     {
@@ -42,29 +32,30 @@ test('removing duplicates when querying', async () => {
     priv,
   )
 
-  pool.publish(relays, event)
+  await Promise.any(pool.publish(relays, event))
 
   await new Promise(resolve => setTimeout(resolve, 1500))
 
   expect(received).toHaveLength(1)
+  expect(received[0]).toEqual(event)
 })
 
 test('same with double querying', async () => {
   let priv = generatePrivateKey()
   let pub = getPublicKey(priv)
 
-  let sub1 = pool.sub(relays, [{ authors: [pub] }])
-  let sub2 = pool.sub(relays, [{ authors: [pub] }])
+  pool.subscribeMany(relays, [{ authors: [pub] }], {
+    onevent(event) {
+      received.push(event)
+    },
+  })
+  pool.subscribeMany(relays, [{ authors: [pub] }], {
+    onevent(event) {
+      received.push(event)
+    },
+  })
 
   let received: Event[] = []
-
-  sub1.on('event', event => {
-    received.push(event)
-  })
-
-  sub2.on('event', event => {
-    received.push(event)
-  })
 
   let event = finishEvent(
     {
@@ -76,51 +67,30 @@ test('same with double querying', async () => {
     priv,
   )
 
-  pool.publish(relays, event)
-
+  await Promise.any(pool.publish(relays, event))
   await new Promise(resolve => setTimeout(resolve, 1500))
 
   expect(received).toHaveLength(2)
 })
 
-test('get()', async () => {
-  let event = await pool.get(relays, {
-    ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
-  })
-
-  expect(event).toHaveProperty('id', 'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027')
-})
-
 test('list()', async () => {
-  let events = await pool.list(
-    [...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'],
-    [
-      {
-        authors: ['3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'],
-        kinds: [1],
-        limit: 2,
-      },
-    ],
-  )
+  let events = await pool.querySync([...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'], {
+    authors: ['3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'],
+    kinds: [1],
+    limit: 2,
+  })
 
   // the actual received number will be greater than 2, but there will be no duplicates
+  expect(events.length).toBeGreaterThan(2)
   const uniqueEventCount = new Set(events.map(evt => evt.id)).size
-  expect(events.length).toEqual(uniqueEventCount)
-
-  let relaysForAllEvents = events.map(event => pool.seenOn(event.id)).reduce((acc, n) => acc.concat(n), [])
-  expect(relaysForAllEvents.length).toBeGreaterThanOrEqual(events.length)
+  expect(events).toHaveLength(uniqueEventCount)
 })
 
-test('seenOnEnabled: false', async () => {
-  const poolWithoutSeenOn = new SimplePool({ seenOnEnabled: false })
-
-  const event = await poolWithoutSeenOn.get(relays, {
-    ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
+test('get()', async () => {
+  let event = await pool.get(relays, {
+    ids: ['9fa1c618fcaad6357e074417b07ed132b083ed30e13113ebb10fcda7137442fe'],
   })
 
-  expect(event).toHaveProperty('id', 'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027')
-
-  const relaysForEvent = poolWithoutSeenOn.seenOn(event!.id)
-
-  expect(relaysForEvent).toHaveLength(0)
+  expect(event).not.toBeNull()
+  expect(event).toHaveProperty('id', '9fa1c618fcaad6357e074417b07ed132b083ed30e13113ebb10fcda7137442fe')
 })
