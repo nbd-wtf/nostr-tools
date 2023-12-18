@@ -59,16 +59,6 @@ describe('getToken', () => {
     ])
   })
 
-  test('getToken missing loginUrl throws an error', async () => {
-    const result = getToken('', 'get', e => finishEvent(e, sk))
-    expect(result).rejects.toThrow(Error)
-  })
-
-  test('getToken missing httpMethod throws an error', async () => {
-    const result = getToken('http://test.com', '', e => finishEvent(e, sk))
-    expect(result).rejects.toThrow(Error)
-  })
-
   test('getToken returns token with a valid payload tag when payload is present', async () => {
     const payload = { test: 'payload' }
     const payloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))

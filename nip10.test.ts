@@ -172,10 +172,6 @@ describe('parse NIP10-referenced events', () => {
     })
   })
 
-  test.todo('recommended + a lot of events')
-  test.todo('recommended + 3 events')
-  test.todo('recommended + 2 events')
-
   test('recommended + 1 event', () => {
     let event = {
       tags: [
