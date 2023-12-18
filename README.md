@@ -1,4 +1,4 @@
-# nostr-tools
+# ![](https://img.shields.io/github/actions/workflow/status/nbd-wtf/nostr-tools/test.yml) nostr-tools
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
