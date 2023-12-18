@@ -4,6 +4,8 @@ import { normalizeURL } from './utils.ts'
 import type { Event } from './event.ts'
 import { type Filter } from './filter.ts'
 
+export type SubCloser = { close: () => void }
+
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
   eoseSubTimeout?: number
   onclose?: (reasons: string[]) => void
@@ -27,11 +29,7 @@ export class SimplePool {
     return relay
   }
 
-  async subscribeMany(
-    relays: string[],
-    filters: Filter[],
-    params: SubscribeManyParams,
-  ): Promise<{ close: () => void }> {
+  subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
     if (this.trackRelays) {
       params.receivedEvent = (relay: Relay, id: string) => {
         let set = this.seenOn.get(id)
@@ -80,7 +78,7 @@ export class SimplePool {
     }
 
     // open a subscription in all given relays
-    await Promise.all(
+    const allOpened = Promise.all(
       relays.map(normalizeURL).map(async (url, i, arr) => {
         if (arr.indexOf(url) !== i) {
           // duplicate
@@ -108,7 +106,8 @@ export class SimplePool {
     )
 
     return {
-      close() {
+      async close() {
+        await allOpened
         subs.forEach(sub => {
           sub.close()
         })
@@ -116,20 +115,18 @@ export class SimplePool {
     }
   }
 
-  async subscribeManyEose(
+  subscribeManyEose(
     relays: string[],
     filters: Filter[],
     params: Pick<SubscribeManyParams, 'id' | 'onevent' | 'onclose' | 'eoseSubTimeout'>,
-  ): Promise<{ close: () => void }> {
-    const sub = await this.subscribeMany(relays, filters, {
+  ): SubCloser {
+    const subcloser = this.subscribeMany(relays, filters, {
       ...params,
       oneose() {
-        setTimeout(() => {
-          sub.close()
-        }, 0)
+        subcloser.close()
       },
     })
-    return sub
+    return subcloser
   }
 
   async querySync(
@@ -139,7 +136,7 @@ export class SimplePool {
   ): Promise<Event[]> {
     return new Promise(async resolve => {
       const events: Event[] = []
-      await this.subscribeManyEose(relays, [filter], {
+      this.subscribeManyEose(relays, [filter], {
         ...params,
         onevent(event: Event) {
           events.push(event)
