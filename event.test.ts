@@ -122,9 +122,7 @@ describe('Event', () => {
 
     test('should return false for a non object event', () => {
       const nonObjectEvent = ''
-
       const isValid = validateEvent(nonObjectEvent)
-
       expect(isValid).toEqual(false)
     })
 

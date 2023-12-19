@@ -49,7 +49,7 @@ export function getEventHash(event: UnsignedEvent): string {
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> => obj instanceof Object
 
-export function validateEvent(event: UnsignedEvent): boolean {
+export function validateEvent<T>(event: T): event is T & UnsignedEvent {
   if (!isRecord(event)) return false
   if (typeof event.kind !== 'number') return false
   if (typeof event.content !== 'string') return false
