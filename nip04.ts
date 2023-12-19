@@ -1,4 +1,4 @@
-import { randomBytes } from '@noble/hashes/utils'
+import { bytesToHex, randomBytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { base64 } from '@scure/base'
 
@@ -10,7 +10,8 @@ if (typeof crypto !== 'undefined' && !crypto.subtle && crypto.webcrypto) {
   crypto.subtle = crypto.webcrypto.subtle
 }
 
-export async function encrypt(privkey: string, pubkey: string, text: string): Promise<string> {
+export async function encrypt(secretKey: string | Uint8Array, pubkey: string, text: string): Promise<string> {
+  const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   const normalizedKey = getNormalizedX(key)
 
@@ -24,7 +25,8 @@ export async function encrypt(privkey: string, pubkey: string, text: string): Pr
   return `${ctb64}?iv=${ivb64}`
 }
 
-export async function decrypt(privkey: string, pubkey: string, data: string): Promise<string> {
+export async function decrypt(secretKey: string | Uint8Array, pubkey: string, data: string): Promise<string> {
+  const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
   let [ctb64, ivb64] = data.split('?iv=')
   let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   let normalizedKey = getNormalizedX(key)

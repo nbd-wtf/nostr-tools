@@ -14,7 +14,7 @@ class JS implements Nostr {
   }
   finalizeEvent(t: EventTemplate, secretKey: Uint8Array): VerifiedEvent {
     const event = t as VerifiedEvent
-    event.pubkey = this.getPublicKey(secretKey)
+    event.pubkey = bytesToHex(schnorr.getPublicKey(secretKey))
     event.id = getEventHash(event)
     event.sig = bytesToHex(schnorr.sign(getEventHash(event), secretKey))
     event[verifiedSymbol] = true

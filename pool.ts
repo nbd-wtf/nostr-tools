@@ -1,7 +1,7 @@
 import { Relay, SubscriptionParams, Subscription } from './relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event } from './event.ts'
+import type { Event } from './pure.ts'
 import { type Filter } from './filter.ts'
 
 export type SubCloser = { close: () => void }
@@ -103,7 +103,7 @@ export class SimplePool {
           return
         }
 
-        let subscription = await relay.subscribe(filters, {
+        let subscription = relay.subscribe(filters, {
           ...params,
           oneose: () => handleEose(i),
           onclose: reason => handleClose(i, reason),

@@ -19,36 +19,31 @@ If using TypeScript, this package requires TypeScript >= 5.0.
 ### Generating a private key and a public key
 
 ```js
-import { generatePrivateKey, getPublicKey } from 'nostr-tools'
+import { generateSecretKey, getPublicKey } from 'nostr-tools'
 
-let sk = generatePrivateKey() // `sk` is a hex string
+let sk = generateSecretKey() // `sk` is a hex string
 let pk = getPublicKey(sk) // `pk` is a hex string
 ```
 
 ### Creating, signing and verifying events
 
 ```js
-import { validateEvent, verifySignature, getSignature, getEventHash, getPublicKey } from 'nostr-tools'
+import { finalizeEvent, verifyEvent } from 'nostr-tools'
 
-let event = {
+let event = finalizeEvent({
   kind: 1,
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
   content: 'hello',
-  pubkey: getPublicKey(privateKey),
-}
+}, privateKey)
 
-event.id = getEventHash(event)
-event.sig = getSignature(event, privateKey)
-
-let ok = validateEvent(event)
-let veryOk = verifySignature(event)
+let isGood = verifyEvent(event)
 ```
 
 ### Interacting with a relay
 
 ```js
-import { relayConnect, finishEvent, generatePrivateKey, getPublicKey } from 'nostr-tools'
+import { relayConnect, finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools'
 
 const relay = await relayConnect('wss://relay.example.com')
 console.log(`connected to ${relay.url}`)
@@ -68,7 +63,7 @@ const sub = relay.subscribe([
 })
 
 // let's publish a new event while simultaneously monitoring the relay for it
-let sk = generatePrivateKey()
+let sk = generateSecretKey()
 let pk = getPublicKey(sk)
 
 let sub = relay.sub([
@@ -90,7 +85,7 @@ let event = {
 }
 
 // this assigns the pubkey, calculates the event id and signs the event in a single step
-const signedEvent = finishEvent(event, sk)
+const signedEvent = finalizeEvent(event, sk)
 await relay.publish(signedEvent)
 
 let events = await relay.list([{ kinds: [0, 1] }])
@@ -184,21 +179,21 @@ nip05.useFetchImplementation(require('node-fetch'))
 ### Encoding and decoding NIP-19 codes
 
 ```js
-import { nip19, generatePrivateKey, getPublicKey } from 'nostr-tools'
+import { nip19, generateSecretKey, getPublicKey } from 'nostr-tools'
 
-let sk = generatePrivateKey()
+let sk = generateSecretKey()
 let nsec = nip19.nsecEncode(sk)
 let { type, data } = nip19.decode(nsec)
 assert(type === 'nsec')
 assert(data === sk)
 
-let pk = getPublicKey(generatePrivateKey())
+let pk = getPublicKey(generateSecretKey())
 let npub = nip19.npubEncode(pk)
 let { type, data } = nip19.decode(npub)
 assert(type === 'npub')
 assert(data === pk)
 
-let pk = getPublicKey(generatePrivateKey())
+let pk = getPublicKey(generateSecretKey())
 let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
 let nprofile = nip19.nprofileEncode({ pubkey: pk, relays })
 let { type, data } = nip19.decode(nprofile)
@@ -212,7 +207,7 @@ assert(data.relays.length === 2)
 ```html
 <script src="https://unpkg.com/nostr-tools/lib/nostr.bundle.js"></script>
 <script>
-  window.NostrTools.generatePrivateKey('...') // and so on
+  window.NostrTools.generateSecretKey('...') // and so on
 </script>
 ```
 

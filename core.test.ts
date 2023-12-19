@@ -11,10 +11,10 @@ import {
   generateSecretKey,
 } from './pure.ts'
 import { ShortTextNote } from './kinds.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
 
 test('private key generation', () => {
-  expect(generateSecretKey()).toMatch(/[a-f0-9]{64}/)
+  expect(bytesToHex(generateSecretKey())).toMatch(/[a-f0-9]{64}/)
 })
 
 test('public key generation', () => {
@@ -30,7 +30,7 @@ test('public key from private key deterministic', () => {
   }
 })
 
-describe('finishEvent', () => {
+describe('finalizeEvent', () => {
   test('should create a signed event from a template', () => {
     const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
     const publicKey = getPublicKey(privateKey)
@@ -211,7 +211,7 @@ describe('validateEvent', () => {
   })
 })
 
-describe('verifySignature', () => {
+describe('verifyEvent', () => {
   test('should return true for a valid event signature', () => {
     const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
     const event = finalizeEvent(

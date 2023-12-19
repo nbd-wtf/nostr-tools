@@ -1,7 +1,8 @@
+import crypto from 'node:crypto'
 import { describe, test, expect } from 'bun:test'
+import { hexToBytes } from '@noble/hashes/utils'
 import { makeNwcRequestEvent, parseConnectionString } from './nip47'
 import { decrypt } from './nip04.ts'
-import crypto from 'node:crypto'
 import { NWCWalletRequest } from './kinds.ts'
 
 // @ts-ignore
@@ -44,14 +45,10 @@ describe('parseConnectionString', () => {
 describe('makeNwcRequestEvent', () => {
   test('returns a valid NWC request event', async () => {
     const pubkey = 'b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4'
-    const secret = '71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
+    const secret = hexToBytes('71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c')
     const invoice =
       'lnbc210n1pjdgyvupp5x43awdarnfd4mdlsklelux0nyckwfu5c708ykuet8vcjnjp3rnpqdqu2askcmr9wssx7e3q2dshgmmndp5scqzzsxqyz5vqsp52l7y9peq9pka3vd3j7aps7gjnalsmy46ndj2mlkz00dltjgqfumq9qyyssq5fasr5dxed8l4qjfnqq48a02jzss3asf8sly7sfaqtr9w3yu2q9spsxhghs3y9aqdf44zkrrg9jjjdg6amade4h0hulllkwk33eqpucp6d5jye'
-    const result = await makeNwcRequestEvent({
-      pubkey,
-      secret,
-      invoice,
-    })
+    const result = await makeNwcRequestEvent(pubkey, secret, invoice)
     expect(result.kind).toBe(NWCWalletRequest)
     expect(await decrypt(secret, pubkey, result.content)).toEqual(
       JSON.stringify({

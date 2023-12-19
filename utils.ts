@@ -1,4 +1,4 @@
-import type { Event } from './event.ts'
+import type { Event } from './pure.ts'
 
 export const utf8Decoder = new TextDecoder('utf-8')
 export const utf8Encoder = new TextEncoder()

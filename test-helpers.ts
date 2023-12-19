@@ -1,4 +1,4 @@
-import type { Event } from './event.ts'
+import type { Event } from './pure.ts'
 
 /** Build an event for testing purposes. */
 export function buildEvent(params: Partial<Event>): Event {

@@ -1,9 +1,9 @@
 import { bytesToHex } from '@noble/hashes/utils'
 import { sha256 } from '@noble/hashes/sha256'
 import { base64 } from '@scure/base'
-import { Event, EventTemplate, verifySignature } from './event'
-import { utf8Decoder, utf8Encoder } from './utils'
-import { HTTPAuth } from './kinds'
+import { Event, EventTemplate, verifyEvent } from './pure.ts'
+import { utf8Decoder, utf8Encoder } from './utils.ts'
+import { HTTPAuth } from './kinds.ts'
 
 const _authorizationScheme = 'Nostr '
 
@@ -83,7 +83,7 @@ export async function validateEvent(event: Event, url: string, method: string, b
   if (!event) {
     throw new Error('Invalid nostr event')
   }
-  if (!verifySignature(event)) {
+  if (!verifyEvent(event)) {
     throw new Error('Invalid nostr event, signature invalid')
   }
   if (event.kind !== HTTPAuth) {

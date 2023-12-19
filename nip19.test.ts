@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { generatePrivateKey, getPublicKey } from './keys.ts'
+import { generateSecretKey, getPublicKey } from './pure.ts'
 import {
   decode,
   naddrEncode,
@@ -14,7 +14,7 @@ import {
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {
-  let sk = generatePrivateKey()
+  let sk = generateSecretKey()
   let nsec = nsecEncode(sk)
   expect(nsec).toMatch(/nsec1\w+/)
   let { type, data } = decode(nsec)
@@ -23,7 +23,7 @@ test('encode and decode nsec', () => {
 })
 
 test('encode and decode npub', () => {
-  let pk = getPublicKey(generatePrivateKey())
+  let pk = getPublicKey(generateSecretKey())
   let npub = npubEncode(pk)
   expect(npub).toMatch(/npub1\w+/)
   let { type, data } = decode(npub)
@@ -32,7 +32,7 @@ test('encode and decode npub', () => {
 })
 
 test('encode and decode nprofile', () => {
-  let pk = getPublicKey(generatePrivateKey())
+  let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
   let nprofile = nprofileEncode({ pubkey: pk, relays })
   expect(nprofile).toMatch(/nprofile1\w+/)
@@ -56,7 +56,7 @@ test('decode nprofile without relays', () => {
 })
 
 test('encode and decode naddr', () => {
-  let pk = getPublicKey(generatePrivateKey())
+  let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
   let naddr = naddrEncode({
     pubkey: pk,
@@ -76,7 +76,7 @@ test('encode and decode naddr', () => {
 })
 
 test('encode and decode nevent', () => {
-  let pk = getPublicKey(generatePrivateKey())
+  let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
   let naddr = neventEncode({
     id: pk,
@@ -93,7 +93,7 @@ test('encode and decode nevent', () => {
 })
 
 test('encode and decode nevent with kind 0', () => {
-  let pk = getPublicKey(generatePrivateKey())
+  let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
   let naddr = neventEncode({
     id: pk,

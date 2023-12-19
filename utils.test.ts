@@ -2,7 +2,7 @@ import { describe, test, expect } from 'bun:test'
 import { buildEvent } from './test-helpers.ts'
 import { Queue, insertEventIntoAscendingList, insertEventIntoDescendingList, binarySearch } from './utils.ts'
 
-import type { Event } from './event.ts'
+import type { Event } from './pure.ts'
 
 describe('inserting into a desc sorted list of events', () => {
   test('insert into an empty list', async () => {

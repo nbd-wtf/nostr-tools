@@ -48,7 +48,7 @@ type Prefixes = {
   nrelay: string
   nevent: EventPointer
   naddr: AddressPointer
-  nsec: string
+  nsec: Uint8Array
   npub: string
   note: string
 }
@@ -130,6 +130,8 @@ export function decode(nip19: string): DecodeResult {
     }
 
     case 'nsec':
+      return { type: prefix, data }
+
     case 'npub':
     case 'note':
       return { type: prefix, data: bytesToHex(data) }
@@ -157,16 +159,16 @@ function parseTLV(data: Uint8Array): TLV {
   return result
 }
 
-export function nsecEncode(hex: string): `nsec1${string}` {
-  return encodeBytes('nsec', hex)
+export function nsecEncode(key: Uint8Array): `nsec1${string}` {
+  return encodeBytes('nsec', key)
 }
 
 export function npubEncode(hex: string): `npub1${string}` {
-  return encodeBytes('npub', hex)
+  return encodeBytes('npub', hexToBytes(hex))
 }
 
 export function noteEncode(hex: string): `note1${string}` {
-  return encodeBytes('note', hex)
+  return encodeBytes('note', hexToBytes(hex))
 }
 
 function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): `${Prefix}1${string}` {
@@ -174,9 +176,8 @@ function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): 
   return bech32.encode(prefix, words, Bech32MaxSize) as `${Prefix}1${string}`
 }
 
-function encodeBytes<Prefix extends string>(prefix: Prefix, hex: string): `${Prefix}1${string}` {
-  let data = hexToBytes(hex)
-  return encodeBech32(prefix, data)
+function encodeBytes<Prefix extends string>(prefix: Prefix, bytes: Uint8Array): `${Prefix}1${string}` {
+  return encodeBech32(prefix, bytes)
 }
 
 export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {

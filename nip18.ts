@@ -1,4 +1,4 @@
-import { Event, finishEvent, verifySignature } from './event.ts'
+import { Event, finalizeEvent, verifyEvent } from './pure.ts'
 import { Repost } from './kinds.ts'
 import { EventPointer } from './nip19.ts'
 
@@ -23,9 +23,9 @@ export function finishRepostEvent(
   t: RepostEventTemplate,
   reposted: Event,
   relayUrl: string,
-  privateKey: string,
+  privateKey: Uint8Array,
 ): Event {
-  return finishEvent(
+  return finalizeEvent(
     {
       kind: Repost,
       tags: [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]],
@@ -89,7 +89,7 @@ export function getRepostedEvent(event: Event, { skipVerification }: GetReposted
     return undefined
   }
 
-  if (!skipVerification && !verifySignature(repostedEvent)) {
+  if (!skipVerification && !verifyEvent(repostedEvent)) {
     return undefined
   }
 

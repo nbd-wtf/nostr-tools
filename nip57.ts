@@ -1,6 +1,6 @@
 import { bech32 } from '@scure/base'
 
-import { validateEvent, verifySignature, type Event, type EventTemplate } from './event.ts'
+import { validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
 import { utf8Decoder } from './utils.ts'
 
 var _fetch: any
@@ -86,7 +86,7 @@ export function validateZapRequest(zapRequestString: string): string | null {
 
   if (!validateEvent(zapRequest)) return 'Zap request is not a valid Nostr event.'
 
-  if (!verifySignature(zapRequest)) return 'Invalid signature on zap request.'
+  if (!verifyEvent(zapRequest)) return 'Invalid signature on zap request.'
 
   let p = zapRequest.tags.find(([t, v]) => t === 'p' && v)
   if (!p) return "Zap request doesn't have a 'p' tag."

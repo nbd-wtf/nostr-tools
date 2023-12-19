@@ -1,4 +1,4 @@
-import { EventTemplate } from './event.ts'
+import { EventTemplate } from './pure.ts'
 import { ClientAuth } from './kinds.ts'
 
 /**

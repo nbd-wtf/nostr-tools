@@ -1,6 +1,6 @@
 import { describe, test, expect, mock } from 'bun:test'
-import { finishEvent } from './event.ts'
-import { getPublicKey, generatePrivateKey } from './keys.ts'
+import { finalizeEvent } from './pure.ts'
+import { getPublicKey, generateSecretKey } from './pure.ts'
 import { getZapEndpoint, makeZapReceipt, makeZapRequest, useFetchImplementation, validateZapRequest } from './nip57.ts'
 import { buildEvent } from './test-helpers.ts'
 
@@ -122,7 +122,7 @@ describe('validateZapRequest', () => {
   })
 
   test('returns an error message if the signature on the Zap request is invalid', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
     const zapRequest = {
@@ -141,9 +141,8 @@ describe('validateZapRequest', () => {
   })
 
   test('returns an error message if the Zap request does not have a "p" tag', () => {
-    const privateKey = generatePrivateKey()
-
-    const zapRequest = finishEvent(
+    const privateKey = generateSecretKey()
+    const zapRequest = finalizeEvent(
       {
         kind: 9734,
         created_at: Date.now() / 1000,
@@ -160,9 +159,8 @@ describe('validateZapRequest', () => {
   })
 
   test('returns an error message if the "p" tag on the Zap request is not valid hex', () => {
-    const privateKey = generatePrivateKey()
-
-    const zapRequest = finishEvent(
+    const privateKey = generateSecretKey()
+    const zapRequest = finalizeEvent(
       {
         kind: 9734,
         created_at: Date.now() / 1000,
@@ -180,10 +178,10 @@ describe('validateZapRequest', () => {
   })
 
   test('returns an error message if the "e" tag on the Zap request is not valid hex', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
-    const zapRequest = finishEvent(
+    const zapRequest = finalizeEvent(
       {
         kind: 9734,
         created_at: Date.now() / 1000,
@@ -202,10 +200,10 @@ describe('validateZapRequest', () => {
   })
 
   test('returns an error message if the Zap request does not have a relays tag', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
-    const zapRequest = finishEvent(
+    const zapRequest = finalizeEvent(
       {
         kind: 9734,
         created_at: Date.now() / 1000,
@@ -222,10 +220,10 @@ describe('validateZapRequest', () => {
   })
 
   test('returns null for a valid Zap request', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
-    const zapRequest = finishEvent(
+    const zapRequest = finalizeEvent(
       {
         kind: 9734,
         created_at: Date.now() / 1000,
@@ -245,11 +243,11 @@ describe('validateZapRequest', () => {
 
 describe('makeZapReceipt', () => {
   test('returns a valid Zap receipt with a preimage', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
     const zapRequest = JSON.stringify(
-      finishEvent(
+      finalizeEvent(
         {
           kind: 9734,
           created_at: Date.now() / 1000,
@@ -283,11 +281,11 @@ describe('makeZapReceipt', () => {
   })
 
   test('returns a valid Zap receipt without a preimage', () => {
-    const privateKey = generatePrivateKey()
+    const privateKey = generateSecretKey()
     const publicKey = getPublicKey(privateKey)
 
     const zapRequest = JSON.stringify(
-      finishEvent(
+      finalizeEvent(
         {
           kind: 9734,
           created_at: Date.now() / 1000,

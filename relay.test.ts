@@ -1,7 +1,7 @@
 import { test, expect, afterEach, beforeEach } from 'bun:test'
 
-import { finishEvent } from './event.ts'
-import { generatePrivateKey, getPublicKey } from './keys.ts'
+import { finalizeEvent } from './pure.ts'
+import { generateSecretKey, getPublicKey } from './pure.ts'
 import { Relay } from './relay.ts'
 
 let relay = new Relay('wss://public.relaying.io')
@@ -57,7 +57,7 @@ test('querying', async () => {
 }, 10000)
 
 test('listening and publishing and closing', async () => {
-  let sk = generatePrivateKey()
+  let sk = generateSecretKey()
   let pk = getPublicKey(sk)
   var resolve1: (_: void) => void
   var resolve2: (_: void) => void
@@ -91,7 +91,7 @@ test('listening and publishing and closing', async () => {
     },
   )
 
-  let event = finishEvent(
+  let event = finalizeEvent(
     {
       kind: 23571,
       created_at: Math.floor(Date.now() / 1000),

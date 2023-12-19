@@ -1,7 +1,7 @@
 import { test, expect, afterAll } from 'bun:test'
 
-import { finishEvent, type Event } from './event.ts'
-import { generatePrivateKey, getPublicKey } from './keys.ts'
+import { finalizeEvent, type Event } from './pure.ts'
+import { generateSecretKey, getPublicKey } from './pure.ts'
 import { SimplePool } from './pool.ts'
 
 let pool = new SimplePool()
@@ -13,7 +13,7 @@ afterAll(() => {
 })
 
 test('removing duplicates when querying', async () => {
-  let priv = generatePrivateKey()
+  let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
   pool.subscribeMany(relays, [{ authors: [pub] }], {
@@ -26,7 +26,7 @@ test('removing duplicates when querying', async () => {
   })
   let received: Event[] = []
 
-  let event = finishEvent(
+  let event = finalizeEvent(
     {
       created_at: Math.round(Date.now() / 1000),
       content: 'test',
@@ -44,7 +44,7 @@ test('removing duplicates when querying', async () => {
 })
 
 test('same with double querying', async () => {
-  let priv = generatePrivateKey()
+  let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
   pool.subscribeMany(relays, [{ authors: [pub] }], {
@@ -60,7 +60,7 @@ test('same with double querying', async () => {
 
   let received: Event[] = []
 
-  let event = finishEvent(
+  let event = finalizeEvent(
     {
       created_at: Math.round(Date.now() / 1000),
       content: 'test2',

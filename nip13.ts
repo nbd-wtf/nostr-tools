@@ -1,4 +1,4 @@
-import { type UnsignedEvent, type Event, getEventHash } from './event.ts'
+import { type UnsignedEvent, type Event, getEventHash } from './pure.ts'
 
 /** Get POW difficulty from a Nostr hex ID. */
 export function getPow(hex: string): number {

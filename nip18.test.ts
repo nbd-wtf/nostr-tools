@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
-import { finishEvent } from './event.ts'
-import { getPublicKey } from './keys.ts'
+import { hexToBytes } from '@noble/hashes/utils'
+import { finalizeEvent, getPublicKey } from './pure.ts'
 import { Repost, ShortTextNote } from './kinds.ts'
 import { finishRepostEvent, getRepostedEventPointer, getRepostedEvent } from './nip18.ts'
 import { buildEvent } from './test-helpers.ts'
@@ -8,11 +8,10 @@ import { buildEvent } from './test-helpers.ts'
 const relayUrl = 'https://relay.example.com'
 
 describe('finishRepostEvent + getRepostedEventPointer + getRepostedEvent', () => {
-  const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
-
+  const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
   const publicKey = getPublicKey(privateKey)
 
-  const repostedEvent = finishEvent(
+  const repostedEvent = finalizeEvent(
     {
       kind: ShortTextNote,
       tags: [

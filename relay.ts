@@ -1,6 +1,6 @@
 /* global WebSocket */
 
-import { verifySignature, validateEvent, type Event, EventTemplate } from './event.ts'
+import { verifyEvent, validateEvent, type Event, EventTemplate } from './pure.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
@@ -161,7 +161,7 @@ export class Relay {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as Event
-          if ((this.trusted || (validateEvent(event) && verifySignature(event))) && matchFilters(so.filters, event)) {
+          if ((this.trusted || (validateEvent(event) && verifyEvent(event))) && matchFilters(so.filters, event)) {
             so.onevent(event)
           }
           return

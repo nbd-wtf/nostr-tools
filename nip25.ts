@@ -1,4 +1,4 @@
-import { Event, finishEvent } from './event.ts'
+import { Event, finalizeEvent } from './pure.ts'
 import { Reaction } from './kinds.ts'
 
 import type { EventPointer } from './nip19.ts'
@@ -17,10 +17,10 @@ export type ReactionEventTemplate = {
   created_at: number
 }
 
-export function finishReactionEvent(t: ReactionEventTemplate, reacted: Event, privateKey: string): Event {
+export function finishReactionEvent(t: ReactionEventTemplate, reacted: Event, privateKey: Uint8Array): Event {
   const inheritedTags = reacted.tags.filter(tag => tag.length >= 2 && (tag[0] === 'e' || tag[0] === 'p'))
 
-  return finishEvent(
+  return finalizeEvent(
     {
       ...t,
       kind: Reaction,

@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'bun:test'
-import { getPublicKey } from './keys.ts'
+import { hexToBytes } from '@noble/hashes/utils'
+import { getPublicKey } from './pure.ts'
 import * as Kind from './kinds.ts'
 import {
   channelCreateEvent,
@@ -11,7 +12,7 @@ import {
   ChannelMessageEventTemplate,
 } from './nip28.ts'
 
-const privateKey = 'd217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf'
+const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
 const publicKey = getPublicKey(privateKey)
 
 describe('NIP-28 Functions', () => {
