@@ -5,7 +5,7 @@ build:
     bun run build.js
 
 test:
-    bun test
+    bun test --timeout 20000
 
 test-only file:
     bun test {{file}}

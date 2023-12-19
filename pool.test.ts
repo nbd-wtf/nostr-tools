@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test'
+import { test, expect, afterAll } from 'bun:test'
 
 import { finishEvent, type Event } from './event.ts'
 import { generatePrivateKey, getPublicKey } from './keys.ts'
@@ -7,6 +7,10 @@ import { SimplePool } from './pool.ts'
 let pool = new SimplePool()
 
 let relays = ['wss://relay.damus.io/', 'wss://relay.nostr.bg/', 'wss://nos.lol', 'wss://public.relaying.io']
+
+afterAll(() => {
+  pool.close([...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'])
+})
 
 test('removing duplicates when querying', async () => {
   let priv = generatePrivateKey()
@@ -33,7 +37,6 @@ test('removing duplicates when querying', async () => {
   )
 
   await Promise.any(pool.publish(relays, event))
-
   await new Promise(resolve => setTimeout(resolve, 1500))
 
   expect(received).toHaveLength(1)

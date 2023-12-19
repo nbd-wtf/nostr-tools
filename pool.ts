@@ -34,6 +34,12 @@ export class SimplePool {
     return relay
   }
 
+  close(relays: string[]) {
+    relays.map(normalizeURL).forEach(url => {
+      this.relays.get(url)?.close()
+    })
+  }
+
   subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
     if (this.trackRelays) {
       params.receivedEvent = (relay: Relay, id: string) => {

@@ -21,7 +21,7 @@ export class Relay {
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
 
   public baseEoseTimeout: number = 4400
-  public connectionTimeout: number = 8800
+  public connectionTimeout: number = 4400
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
@@ -215,18 +215,21 @@ export class Relay {
   }
 
   public async send(message: string) {
-    this.ws?.send(message)
+    if (!this.connectionPromise) throw new Error('sending on closed connection')
+
+    this.connectionPromise.then(() => {
+      this.ws?.send(message)
+    })
   }
 
   public async auth(signAuthEvent: (authEvent: EventTemplate) => Promise<void>) {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
     const evt = nip42.makeAuthEvent(this.url, this.challenge)
-    await Promise.all([signAuthEvent(evt), this.connect()])
+    await signAuthEvent(evt)
     this.send('["AUTH",' + JSON.stringify(evt) + ']')
   }
 
   public async publish(event: Event): Promise<string> {
-    await this.connect()
     const ret = new Promise<string>((resolve, reject) => {
       this.openEventPublishes.set(event.id, { resolve, reject })
     })
@@ -235,7 +238,6 @@ export class Relay {
   }
 
   public async count(filters: Filter[], params: { id?: string | null }): Promise<number> {
-    await this.connect()
     this.serial++
     const id = params?.id || 'count:' + this.serial
     const ret = new Promise<number>((resolve, reject) => {
@@ -246,7 +248,6 @@ export class Relay {
   }
 
   public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Promise<Subscription> {
-    await this.connect()
     const subscription = this.prepareSubscription(filters, params)
     subscription.fire()
     return subscription

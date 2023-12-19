@@ -11,8 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
+      - uses: extractions/setup-just@v1
       - run: bun i
-      - run: bun test --timeout 20000
+      - run: just test
   format:
     runs-on: ubuntu-latest
     steps:
