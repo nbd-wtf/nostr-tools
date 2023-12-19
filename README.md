@@ -35,7 +35,7 @@ let event = finalizeEvent({
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
   content: 'hello',
-}, privateKey)
+}, sk)
 
 let isGood = verifyEvent(event)
 ```
@@ -223,6 +223,7 @@ import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/ni
 import { setNostrWasm, generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/wasm'
 import { initNostrWasm } from 'nostr-wasm'
 
+// make sure this promise resolves before your app starts calling finalizeEvent or verifyEvent
 initNostrWasm().then(setNostrWasm)
 
 // or use 'nostr-wasm/gzipped' or even 'nostr-wasm/headless',
