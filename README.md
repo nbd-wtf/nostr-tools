@@ -202,6 +202,35 @@ assert(data.pubkey === pk)
 assert(data.relays.length === 2)
 ```
 
+## Import modes
+
+### Using just the packages you want
+
+Importing the entirety of `nostr-tools` may bloat your build, so you should probably import individual packages instead:
+
+```js
+import { generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure'
+import { matchFilter } from 'nostr-tools/filter'
+import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/nip19'
+// and so on and so forth
+```
+
+### Using it with `nostr-wasm`
+
+[`nostr-wasm`](https://github.com/fiatjaf/nostr-wasm) is a thin wrapper over [libsecp256k1](https://github.com/bitcoin-core/secp256k1) compiled to WASM just for hashing, signing and verifying Nostr events.
+
+```js
+import { setNostrWasm, generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/wasm'
+import { initNostrWasm } from 'nostr-wasm'
+
+initNostrWasm().then(setNostrWasm)
+
+// or use 'nostr-wasm/gzipped' or even 'nostr-wasm/headless',
+// see https://www.npmjs.com/package/nostr-wasm for options
+```
+
+This may be faster than the pure-JS [noble libraries](https://paulmillr.com/noble/) used by default and in `nostr-tools/pure`.
+
 ### Using from the browser (if you don't want to use a bundler)
 
 ```html
@@ -213,8 +242,7 @@ assert(data.relays.length === 2)
 
 ## Plumbing
 
-1. Install [`just`](https://just.systems/)
-2. `just -l`
+To develop `nostr-tools`, install [`just`](https://just.systems/) and run `just -l` to see commands available.
 
 ## License
 
