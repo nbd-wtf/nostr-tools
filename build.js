@@ -4,7 +4,13 @@ const { join } = require('path')
 
 const entryPoints = fs
   .readdirSync(process.cwd())
-  .filter(file => file.endsWith('.ts') && !file.endsWith('test.ts') && fs.statSync(join(process.cwd(), file)).isFile())
+  .filter(
+    file =>
+      file.endsWith('.ts') &&
+      file !== 'core.ts' &&
+      !file.endsWith('.test.ts') &&
+      fs.statSync(join(process.cwd(), file)).isFile(),
+  )
 
 let common = {
   entryPoints,

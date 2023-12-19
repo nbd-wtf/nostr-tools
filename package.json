@@ -19,25 +19,25 @@
       "require": "./lib/cjs/index.js",
       "types": "./lib/types/index.d.ts"
     },
-    "./keys": {
-      "import": "./lib/esm/keys.js",
-      "require": "./lib/cjs/keys.js",
-      "types": "./lib/types/keys.d.ts"
+    "./pure": {
+      "import": "./lib/esm/pure.js",
+      "require": "./lib/cjs/pure.js",
+      "types": "./lib/types/pure.d.ts"
     },
-    "./relay": {
-      "import": "./lib/esm/relay.js",
-      "require": "./lib/cjs/relay.js",
-      "types": "./lib/types/relay.d.ts"
-    },
-    "./event": {
-      "import": "./lib/esm/event.js",
-      "require": "./lib/cjs/event.js",
-      "types": "./lib/types/event.d.ts"
+    "./wasm": {
+      "import": "./lib/esm/wasm.js",
+      "require": "./lib/cjs/wasm.js",
+      "types": "./lib/types/wasm.d.ts"
     },
     "./filter": {
       "import": "./lib/esm/filter.js",
       "require": "./lib/cjs/filter.js",
       "types": "./lib/types/filter.d.ts"
+    },
+    "./relay": {
+      "import": "./lib/esm/relay.js",
+      "require": "./lib/cjs/relay.js",
+      "types": "./lib/types/relay.d.ts"
     },
     "./pool": {
       "import": "./lib/esm/pool.js",
