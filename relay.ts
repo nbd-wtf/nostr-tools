@@ -247,7 +247,7 @@ export class Relay {
     return ret
   }
 
-  public async subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Promise<Subscription> {
+  public subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Subscription {
     const subscription = this.prepareSubscription(filters, params)
     subscription.fire()
     return subscription

@@ -71,7 +71,7 @@ test('listening and publishing and closing', async () => {
     }),
   ])
 
-  let sub = await relay.subscribe(
+  let sub = relay.subscribe(
     [
       {
         kinds: [23571],
