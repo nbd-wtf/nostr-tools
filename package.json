@@ -29,6 +29,11 @@
       "require": "./lib/cjs/wasm.js",
       "types": "./lib/types/wasm.d.ts"
     },
+    "./kinds": {
+      "import": "./lib/esm/kinds.js",
+      "require": "./lib/cjs/kinds.js",
+      "types": "./lib/types/kinds.d.ts"
+    },
     "./filter": {
       "import": "./lib/esm/filter.js",
       "require": "./lib/cjs/filter.js",
