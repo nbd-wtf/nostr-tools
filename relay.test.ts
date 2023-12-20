@@ -1,14 +1,9 @@
-import { test, expect, afterEach, beforeEach } from 'bun:test'
+import { afterEach, expect, test } from 'bun:test'
 
-import { finalizeEvent } from './pure.ts'
-import { generateSecretKey, getPublicKey } from './pure.ts'
-import { Relay } from './relay.ts'
+import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
+import { Relay, relayConnect } from './relay.ts'
 
 let relay = new Relay('wss://public.relaying.io')
-
-beforeEach(() => {
-  relay.connect()
-})
 
 afterEach(() => {
   relay.close()
@@ -19,7 +14,14 @@ test('connectivity', async () => {
   expect(relay.connected).toBeTrue()
 })
 
+test('connectivity, with relayConnect()', async () => {
+  const relay = await relayConnect('wss://public.relaying.io')
+  expect(relay.connected).toBeTrue()
+})
+
 test('querying', async () => {
+  await relay.connect()
+
   let resolve1: () => void
   let resolve2: () => void
 
@@ -57,6 +59,8 @@ test('querying', async () => {
 }, 10000)
 
 test('listening and publishing and closing', async () => {
+  await relay.connect()
+
   let sk = generateSecretKey()
   let pk = getPublicKey(sk)
   var resolve1: (_: void) => void

@@ -7,9 +7,9 @@ import { Queue, normalizeURL } from './utils.ts'
 import { nip42 } from './index.ts'
 import { yieldThread } from './helpers.ts'
 
-export function relayConnect(url: string) {
+export async function relayConnect(url: string) {
   const relay = new Relay(url)
-  relay.connect()
+  await relay.connect()
   return relay
 }
 
