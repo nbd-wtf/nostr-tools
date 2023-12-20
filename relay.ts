@@ -12,6 +12,15 @@ export function relayConnect(url: string) {
   return relay
 }
 
+async function yieldThread() {
+  return new Promise((resolve) => {
+    const ch = new MessageChannel();
+    ch.port1.addEventListener('message', () => resolve());
+    ch.port2.postMessage(0);
+    ch.port1.start();
+  });
+}
+
 export class Relay {
   public readonly url: string
   private _connected: boolean = false
@@ -117,7 +126,7 @@ export class Relay {
       if (false === this.handleNext()) {
         break
       }
-      await Promise.resolve()
+      await yieldThread()
     }
     this.queueRunning = false
   }
