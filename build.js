@@ -8,6 +8,8 @@ const entryPoints = fs
     file =>
       file.endsWith('.ts') &&
       file !== 'core.ts' &&
+      file !== 'test-helpers.ts' &&
+      file !== 'helpers.ts' &&
       !file.endsWith('.test.ts') &&
       fs.statSync(join(process.cwd(), file)).isFile(),
   )

@@ -5,20 +5,12 @@ import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
 import { nip42 } from './index.ts'
+import { yieldThread } from './helpers.ts'
 
 export function relayConnect(url: string) {
   const relay = new Relay(url)
   relay.connect()
   return relay
-}
-
-async function yieldThread() {
-  return new Promise((resolve) => {
-    const ch = new MessageChannel();
-    ch.port1.addEventListener('message', () => resolve());
-    ch.port2.postMessage(0);
-    ch.port1.start();
-  });
 }
 
 export class Relay {
