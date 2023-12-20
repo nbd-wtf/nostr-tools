@@ -13,12 +13,12 @@ export function relayConnect(url: string) {
 }
 
 async function yieldThread() {
-  return new Promise((resolve) => {
-    const ch = new MessageChannel();
-    ch.port1.addEventListener('message', () => resolve());
-    ch.port2.postMessage(0);
-    ch.port1.start();
-  });
+  return new Promise(resolve => {
+    const ch = new MessageChannel()
+    ch.port1.addEventListener('message', () => resolve())
+    ch.port2.postMessage(0)
+    ch.port1.start()
+  })
 }
 
 export class Relay {
