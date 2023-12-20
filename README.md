@@ -21,7 +21,7 @@ If using TypeScript, this package requires TypeScript >= 5.0.
 ```js
 import { generateSecretKey, getPublicKey } from 'nostr-tools'
 
-let sk = generateSecretKey() // `sk` is a hex string
+let sk = generateSecretKey() // `sk` is a Uint8Array
 let pk = getPublicKey(sk) // `pk` is a hex string
 ```
 
