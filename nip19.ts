@@ -130,9 +130,11 @@ export function decode(nip19: string): DecodeResult {
     }
 
     case 'nsec':
-      return { type: prefix, data }
+      return { type: prefix, data: bytesToHex(data) }
 
     case 'npub':
+      return { type: prefix, data: bytesToHex(data) }
+
     case 'note':
       return { type: prefix, data: bytesToHex(data) }
 
