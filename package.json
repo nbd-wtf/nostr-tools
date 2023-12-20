@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -187,5 +187,8 @@
     "prettier": "^3.0.3",
     "tsd": "^0.22.0",
     "typescript": "^5.0.4"
+  },
+  "scripts": {
+    "prepublish": "just build && just emit-types"
   }
 }
