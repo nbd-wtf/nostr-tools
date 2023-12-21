@@ -1,23 +1,16 @@
 /* global WebSocket */
 
-import { verifyEvent, validateEvent, type Event, EventTemplate } from './pure.ts'
+import type { Event, EventTemplate, Nostr } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
 import { nip42 } from './index.ts'
 import { yieldThread } from './helpers.ts'
 
-export async function relayConnect(url: string) {
-  const relay = new Relay(url)
-  await relay.connect()
-  return relay
-}
-
-export class Relay {
+export default class TrustedRelay {
   public readonly url: string
   private _connected: boolean = false
 
-  public trusted: boolean = false
   public onclose: (() => void) | null = null
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
 
@@ -34,9 +27,17 @@ export class Relay {
   private queueRunning = false
   private challenge: string | undefined
   private serial: number = 0
+  private verifyEvent: Nostr['verifyEvent'] | undefined
 
-  constructor(url: string) {
+  constructor(url: string, opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
     this.url = normalizeURL(url)
+    this.verifyEvent = opts.verifyEvent
+  }
+
+  static async connect(url: string, opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
+    const relay = new TrustedRelay(url, opts)
+    await relay.connect()
+    return relay
   }
 
   private closeAllSubscriptions(reason: string) {
@@ -162,7 +163,7 @@ export class Relay {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as Event
-          if ((this.trusted || (validateEvent(event) && verifyEvent(event))) && matchFilters(so.filters, event)) {
+          if ((this.verifyEvent ? this.verifyEvent(event) : true) && matchFilters(so.filters, event)) {
             so.onevent(event)
           }
           return
@@ -270,14 +271,14 @@ export class Relay {
 }
 
 export class Subscription {
-  public readonly relay: Relay
+  public readonly relay: TrustedRelay
   public readonly id: string
 
   public closed: boolean = false
   public eosed: boolean = false
   public filters: Filter[]
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
-  public receivedEvent: ((relay: Relay, id: string) => void) | undefined
+  public receivedEvent: ((relay: TrustedRelay, id: string) => void) | undefined
 
   public onevent: (evt: Event) => void
   public oneose: (() => void) | undefined
@@ -286,7 +287,7 @@ export class Subscription {
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
-  constructor(relay: Relay, id: string, filters: Filter[], params: SubscriptionParams) {
+  constructor(relay: TrustedRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     this.relay = relay
     this.filters = filters
     this.id = id
@@ -336,7 +337,7 @@ export type SubscriptionParams = {
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
-  receivedEvent?: (relay: Relay, id: string) => void
+  receivedEvent?: (relay: TrustedRelay, id: string) => void
   eoseTimeout?: number
 }
 

@@ -43,9 +43,9 @@ let isGood = verifyEvent(event)
 ### Interacting with a relay
 
 ```js
-import { relayConnect, finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools'
+import { Relay, finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools'
 
-const relay = await relayConnect('wss://relay.example.com')
+const relay = await Relay.connect('wss://relay.example.com')
 console.log(`connected to ${relay.url}`)
 
 // let's query for an event that exists
@@ -210,6 +210,8 @@ Importing the entirety of `nostr-tools` may bloat your build, so you should prob
 
 ```js
 import { generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure'
+import SimplePool from 'nostr-tools/pool-pure'
+import Relay, { Subscription } from 'nostr-tools/relay-pure'
 import { matchFilter } from 'nostr-tools/filter'
 import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/nip19'
 // and so on and so forth
@@ -228,6 +230,13 @@ initNostrWasm().then(setNostrWasm)
 
 // or use 'nostr-wasm/gzipped' or even 'nostr-wasm/headless',
 // see https://www.npmjs.com/package/nostr-wasm for options
+```
+
+If you're going to use `Relay` and `SimplePool` you must also import `nostr-tools/relay-wasm` and/or `nostr-tools/pool-wasm` instead of the defaults:
+
+```js
+import Relay, { Subscription } from 'nostr-tools/relay-wasm'
+import SimplePool from 'nostr-tools/pool-wasm'
 ```
 
 This may be faster than the pure-JS [noble libraries](https://paulmillr.com/noble/) used by default and in `nostr-tools/pure`.

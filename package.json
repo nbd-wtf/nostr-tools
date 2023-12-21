@@ -1,6 +1,6 @@
 {
   "name": "nostr-tools",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -39,15 +39,35 @@
       "require": "./lib/cjs/filter.js",
       "types": "./lib/types/filter.d.ts"
     },
-    "./relay": {
-      "import": "./lib/esm/relay.js",
-      "require": "./lib/cjs/relay.js",
-      "types": "./lib/types/relay.d.ts"
+    "./trusted-relay": {
+      "import": "./lib/esm/trusted-relay.js",
+      "require": "./lib/cjs/trusted-relay.js",
+      "types": "./lib/types/trusted-relay.d.ts"
     },
-    "./pool": {
-      "import": "./lib/esm/pool.js",
-      "require": "./lib/cjs/pool.js",
-      "types": "./lib/types/pool.d.ts"
+    "./relay-wasm": {
+      "import": "./lib/esm/relay-wasm.js",
+      "require": "./lib/cjs/relay-wasm.js",
+      "types": "./lib/types/relay-wasm.d.ts"
+    },
+    "./relay-pure": {
+      "import": "./lib/esm/relay-pure.js",
+      "require": "./lib/cjs/relay-pure.js",
+      "types": "./lib/types/relay-pure.d.ts"
+    },
+    "./trusted-pool": {
+      "import": "./lib/esm/trusted-pool.js",
+      "require": "./lib/cjs/trusted-pool.js",
+      "types": "./lib/types/trusted-pool.d.ts"
+    },
+    "./pool-wasm": {
+      "import": "./lib/esm/pool-wasm.js",
+      "require": "./lib/cjs/pool-wasm.js",
+      "types": "./lib/types/pool-wasm.d.ts"
+    },
+    "./pool-pure": {
+      "import": "./lib/esm/pool-pure.js",
+      "require": "./lib/cjs/pool-pure.js",
+      "types": "./lib/types/pool-pure.d.ts"
     },
     "./references": {
       "import": "./lib/esm/references.js",

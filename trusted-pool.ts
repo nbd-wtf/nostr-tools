@@ -1,7 +1,7 @@
-import { Relay, SubscriptionParams, Subscription } from './relay.ts'
+import Relay, { SubscriptionParams, Subscription } from './trusted-relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event } from './core.ts'
+import type { Event, Nostr } from './core.ts'
 import { type Filter } from './filter.ts'
 
 export type SubCloser = { close: () => void }
@@ -12,21 +12,27 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
   id?: string
 }
 
-export class SimplePool {
+export default class TrustedSimplePool {
   private relays = new Map<string, Relay>()
   public seenOn = new Map<string, Set<Relay>>()
   public trackRelays: boolean = false
 
+  public verifyEvent: Nostr['verifyEvent'] | undefined
   public trustedRelayURLs = new Set<string>()
+
+  constructor(opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
+    this.verifyEvent = opts.verifyEvent
+  }
 
   async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<Relay> {
     url = normalizeURL(url)
 
     let relay = this.relays.get(url)
     if (!relay) {
-      relay = new Relay(url)
+      relay = new Relay(url, {
+        verifyEvent: this.trustedRelayURLs.has(url) ? undefined : this.verifyEvent,
+      })
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
-      if (this.trustedRelayURLs.has(relay.url)) relay.trusted = true
       this.relays.set(url, relay)
     }
     await relay.connect()

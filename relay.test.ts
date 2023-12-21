@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test'
 
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
-import { Relay, relayConnect } from './relay.ts'
+import Relay from './relay-pure.ts'
 
 let relay = new Relay('wss://public.relaying.io')
 
@@ -14,8 +14,8 @@ test('connectivity', async () => {
   expect(relay.connected).toBeTrue()
 })
 
-test('connectivity, with relayConnect()', async () => {
-  const relay = await relayConnect('wss://public.relaying.io')
+test('connectivity, with Relay.connect()', async () => {
+  const relay = await Relay.connect('wss://public.relaying.io')
   expect(relay.connected).toBeTrue()
 })
 
