@@ -28,8 +28,8 @@ export class SimplePool {
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       if (this.trustedRelayURLs.has(relay.url)) relay.trusted = true
       this.relays.set(url, relay)
-      await relay.connect()
     }
+    await relay.connect()
 
     return relay
   }
