@@ -1,25 +1,25 @@
 export PATH := "./node_modules/.bin:" + env_var('PATH')
 
 build:
-    rm -rf lib
-    bun run build.js
+  rm -rf lib
+  bun run build.js
 
 test:
-    bun test --timeout 20000
+  bun test --timeout 20000
 
 test-only file:
-    bun test {{file}}
+  bun test {{file}}
 
 emit-types:
-    tsc # see tsconfig.json
+  tsc # see tsconfig.json
 
 publish: build emit-types
-    npm publish
+  npm publish
 
 format:
-    eslint --ext .ts --fix *.ts
-    prettier --write *.ts
+  eslint --ext .ts --fix *.ts
+  prettier --write *.ts
 
 lint:
-    eslint --ext .ts *.ts
-    prettier --check *.ts
+  eslint --ext .ts *.ts
+  prettier --check *.ts
