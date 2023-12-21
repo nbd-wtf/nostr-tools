@@ -6,20 +6,20 @@ import { AbstractRelay } from './abstract-relay.ts'
 import { Relay as PureRelay } from './relay.ts'
 import { alwaysTrue } from './helpers.ts'
 
-const RUNS = 400
+const EVENTS = 1000
 
 let messages: string[] = []
 let baseContent = ''
-for (let i = 0; i < RUNS; i++) {
+for (let i = 0; i < EVENTS; i++) {
   baseContent += 'a'
 }
 const secretKey = generateSecretKey()
-for (let i = 0; i < RUNS / 100; i++) {
+for (let i = 0; i < EVENTS / 200; i++) {
   const tags = []
   for (let t = 0; t < i; t++) {
     tags.push(['t', 'nada'])
   }
-  const event = { created_at: Math.round(Date.now()) / 1000, kind: 1, content: baseContent.slice(0, RUNS - i), tags }
+  const event = { created_at: Math.round(Date.now()) / 1000, kind: 1, content: baseContent.slice(0, EVENTS - i), tags }
   const signed = finalizeEvent(event, secretKey)
   messages.push(JSON.stringify(['EVENT', '_', signed]))
 }
@@ -56,7 +56,7 @@ const benchmarks: Record<string, { test: () => Promise<void>; runs: number[] }> 
   wasm: { test: run(wasmRelay), runs: [] },
 }
 
-for (let b = 0; b < 50; b++) {
+for (let b = 0; b < 20; b++) {
   for (let name in benchmarks) {
     const { test, runs } = benchmarks[name]
     const before = performance.now()

@@ -23,3 +23,10 @@ format:
 lint:
   eslint --ext .ts *.ts
   prettier --check *.ts
+
+benchmark:
+  bun build --target=node --outfile=bench.js benchmark.ts
+  bun run benchmark.ts
+  timeout 2s deno run bench.js || true
+  timeout 2s node bench.js || true
+  rm bench.js
