@@ -1,7 +1,7 @@
 import { verifyEvent } from './wasm.ts'
-import TrustedSimplePool from './trusted-pool.ts'
+import { TrustedSimplePool } from './trusted-pool.ts'
 
-export default class WasmSimplePool extends TrustedSimplePool {
+export class SimplePool extends TrustedSimplePool {
   constructor() {
     super({ verifyEvent })
   }

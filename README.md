@@ -210,8 +210,8 @@ Importing the entirety of `nostr-tools` may bloat your build, so you should prob
 
 ```js
 import { generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure'
-import SimplePool from 'nostr-tools/pool-pure'
-import Relay, { Subscription } from 'nostr-tools/relay-pure'
+import { SimplePool } from 'nostr-tools/pool-pure'
+import { Relay, Subscription } from 'nostr-tools/relay'
 import { matchFilter } from 'nostr-tools/filter'
 import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/nip19'
 // and so on and so forth
@@ -232,11 +232,18 @@ initNostrWasm().then(setNostrWasm)
 // see https://www.npmjs.com/package/nostr-wasm for options
 ```
 
-If you're going to use `Relay` and `SimplePool` you must also import `nostr-tools/relay-wasm` and/or `nostr-tools/pool-wasm` instead of the defaults:
+If you're going to use `Relay` and `SimplePool` you must also import `nostr-tools/abstract-relay` and/or `nostr-tools/abstract-pool` instead of the defaults and then instantiate them by passing the `verifyEvent`:
 
 ```js
-import Relay, { Subscription } from 'nostr-tools/relay-wasm'
-import SimplePool from 'nostr-tools/pool-wasm'
+import { setNostrWasm, verifyEvent } from 'nostr-tools/wasm'
+import { AbstractRelay } from 'nostr-tools/abstract-relay'
+import { AbstractSimplePool } from 'nostr-tools/abstract-pool'
+import { initNostrWasm } from 'nostr-wasm'
+
+initNostrWasm().then(setNostrWasm)
+
+const relay = AbstractRelay.connect('wss://relayable.org', { verifyEvent })
+const pool = new AbstractSimplePool({ verifyEvent })
 ```
 
 This may be faster than the pure-JS [noble libraries](https://paulmillr.com/noble/) used by default and in `nostr-tools/pure`.

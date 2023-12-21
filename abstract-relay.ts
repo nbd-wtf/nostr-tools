@@ -4,10 +4,10 @@ import type { Event, EventTemplate, Nostr } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
-import { nip42 } from './index.ts'
+import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
-export default class TrustedRelay {
+export class AbstractRelay {
   public readonly url: string
   private _connected: boolean = false
 
@@ -16,10 +16,10 @@ export default class TrustedRelay {
 
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
+  public openSubs = new Map<string, Subscription>()
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
-  private openSubs = new Map<string, Subscription>()
   private openCountRequests = new Map<string, CountResolver>()
   private openEventPublishes = new Map<string, EventPublishResolver>()
   private ws: WebSocket | undefined
@@ -27,15 +27,15 @@ export default class TrustedRelay {
   private queueRunning = false
   private challenge: string | undefined
   private serial: number = 0
-  private verifyEvent: Nostr['verifyEvent'] | undefined
+  private verifyEvent: Nostr['verifyEvent']
 
-  constructor(url: string, opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
+  constructor(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
   }
 
-  static async connect(url: string, opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
-    const relay = new TrustedRelay(url, opts)
+  static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
+    const relay = new AbstractRelay(url, opts)
     await relay.connect()
     return relay
   }
@@ -163,7 +163,7 @@ export default class TrustedRelay {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as Event
-          if ((this.verifyEvent ? this.verifyEvent(event) : true) && matchFilters(so.filters, event)) {
+          if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
           }
           return
@@ -200,7 +200,6 @@ export default class TrustedRelay {
           if (!so) return
           so.closed = true
           so.close(data[2] as string)
-          this.openSubs.delete(id)
           return
         }
         case 'NOTICE':
@@ -226,7 +225,7 @@ export default class TrustedRelay {
 
   public async auth(signAuthEvent: (authEvent: EventTemplate) => Promise<void>) {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
-    const evt = nip42.makeAuthEvent(this.url, this.challenge)
+    const evt = makeAuthEvent(this.url, this.challenge)
     await signAuthEvent(evt)
     this.send('["AUTH",' + JSON.stringify(evt) + ']')
   }
@@ -268,17 +267,25 @@ export default class TrustedRelay {
     this._connected = false
     this.ws?.close()
   }
+
+  // this method simulates receiving a message from the websocket
+  public _push(msg: string) {
+    this.incomingMessageQueue.enqueue(msg)
+    if (!this.queueRunning) {
+      this.runQueue()
+    }
+  }
 }
 
 export class Subscription {
-  public readonly relay: TrustedRelay
+  public readonly relay: AbstractRelay
   public readonly id: string
 
   public closed: boolean = false
   public eosed: boolean = false
   public filters: Filter[]
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
-  public receivedEvent: ((relay: TrustedRelay, id: string) => void) | undefined
+  public receivedEvent: ((relay: AbstractRelay, id: string) => void) | undefined
 
   public onevent: (evt: Event) => void
   public oneose: (() => void) | undefined
@@ -287,7 +294,7 @@ export class Subscription {
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
-  constructor(relay: TrustedRelay, id: string, filters: Filter[], params: SubscriptionParams) {
+  constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     this.relay = relay
     this.filters = filters
     this.id = id
@@ -328,6 +335,7 @@ export class Subscription {
       this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
       this.closed = true
     }
+    this.relay.openSubs.delete(this.id)
     this.onclose?.(reason)
   }
 }
@@ -337,7 +345,7 @@ export type SubscriptionParams = {
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
-  receivedEvent?: (relay: TrustedRelay, id: string) => void
+  receivedEvent?: (relay: AbstractRelay, id: string) => void
   eoseTimeout?: number
 }
 

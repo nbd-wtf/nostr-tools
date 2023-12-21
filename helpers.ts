@@ -1,3 +1,5 @@
+import { verifiedSymbol, type Event, type Nostr } from './core.ts'
+
 export async function yieldThread() {
   return new Promise(resolve => {
     const ch = new MessageChannel()
@@ -6,4 +8,9 @@ export async function yieldThread() {
     ch.port2.postMessage(0)
     ch.port1.start()
   })
+}
+
+export const alwaysTrue: Nostr['verifyEvent'] = (t: Event) => {
+  t[verifiedSymbol] = true
+  return t[verifiedSymbol]
 }

@@ -19,6 +19,7 @@ export interface Event {
   [verifiedSymbol]?: boolean
 }
 
+export type NostrEvent = Event
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 

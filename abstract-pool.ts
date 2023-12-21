@@ -1,8 +1,9 @@
-import Relay, { SubscriptionParams, Subscription } from './trusted-relay.ts'
+import { AbstractRelay as AbstractRelay, SubscriptionParams, Subscription } from './abstract-relay.ts'
 import { normalizeURL } from './utils.ts'
 
 import type { Event, Nostr } from './core.ts'
 import { type Filter } from './filter.ts'
+import { alwaysTrue } from './helpers.ts'
 
 export type SubCloser = { close: () => void }
 
@@ -12,25 +13,25 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
   id?: string
 }
 
-export default class TrustedSimplePool {
-  private relays = new Map<string, Relay>()
-  public seenOn = new Map<string, Set<Relay>>()
+export class AbstractSimplePool {
+  private relays = new Map<string, AbstractRelay>()
+  public seenOn = new Map<string, Set<AbstractRelay>>()
   public trackRelays: boolean = false
 
-  public verifyEvent: Nostr['verifyEvent'] | undefined
+  public verifyEvent: Nostr['verifyEvent']
   public trustedRelayURLs = new Set<string>()
 
-  constructor(opts: { verifyEvent?: Nostr['verifyEvent'] } = {}) {
+  constructor(opts: { verifyEvent: Nostr['verifyEvent'] }) {
     this.verifyEvent = opts.verifyEvent
   }
 
-  async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<Relay> {
+  async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<AbstractRelay> {
     url = normalizeURL(url)
 
     let relay = this.relays.get(url)
     if (!relay) {
-      relay = new Relay(url, {
-        verifyEvent: this.trustedRelayURLs.has(url) ? undefined : this.verifyEvent,
+      relay = new AbstractRelay(url, {
+        verifyEvent: this.trustedRelayURLs.has(url) ? alwaysTrue : this.verifyEvent,
       })
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)
@@ -48,7 +49,7 @@ export default class TrustedSimplePool {
 
   subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
     if (this.trackRelays) {
-      params.receivedEvent = (relay: Relay, id: string) => {
+      params.receivedEvent = (relay: AbstractRelay, id: string) => {
         let set = this.seenOn.get(id)
         if (!set) {
           set = new Set()
@@ -99,7 +100,7 @@ export default class TrustedSimplePool {
           return
         }
 
-        let relay: Relay
+        let relay: AbstractRelay
         try {
           relay = await this.ensureRelay(url, {
             connectionTimeout: params.maxWait ? Math.max(params.maxWait * 0.8, params.maxWait - 1000) : undefined,
