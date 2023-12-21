@@ -1,7 +1,7 @@
 import { Relay, SubscriptionParams, Subscription } from './relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event } from './pure.ts'
+import type { Event } from './core.ts'
 import { type Filter } from './filter.ts'
 
 export type SubCloser = { close: () => void }

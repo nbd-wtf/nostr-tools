@@ -1,4 +1,4 @@
-import type { Event } from './pure.ts'
+import type { Event } from './core.ts'
 import type { EventPointer, ProfilePointer } from './nip19.ts'
 
 export type NIP10Result = {

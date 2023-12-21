@@ -1,4 +1,4 @@
-import { Event } from './pure.ts'
+import { Event } from './core.ts'
 
 export type Filter = {
   ids?: string[]
