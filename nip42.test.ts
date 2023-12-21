@@ -3,8 +3,8 @@ import { test, expect } from 'bun:test'
 import { makeAuthEvent } from './nip42.ts'
 import { relayConnect } from './relay.ts'
 
-test('auth flow', () => {
-  const relay = relayConnect('wss://nostr.wine')
+test('auth flow', async () => {
+  const relay = await relayConnect('wss://nostr.wine')
 
   const auth = makeAuthEvent(relay.url, 'chachacha')
   expect(auth.tags).toHaveLength(2)
