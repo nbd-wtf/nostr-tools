@@ -8,16 +8,16 @@ import { Relay as PureRelay } from './relay.ts'
 import { alwaysTrue } from './helpers.ts'
 
 // benchmarking relay reads with verifyEvent
-const EVENTS = 100
+const EVENTS = 200
 let messages: string[] = []
 let baseContent = ''
-for (let i = 0; i < EVENTS / 100; i++) {
+for (let i = 0; i < EVENTS; i++) {
   baseContent += 'a'
 }
 const secretKey = generateSecretKey()
 for (let i = 0; i < EVENTS; i++) {
   const tags = []
-  for (let t = 0; t < i / 100; t++) {
+  for (let t = 0; t < i; t++) {
     tags.push(['t', 'nada'])
   }
   const event = { created_at: Math.round(Date.now()) / 1000, kind: 1, content: baseContent.slice(0, EVENTS - i), tags }
@@ -51,7 +51,7 @@ const runWith = (relay: AbstractRelay) => async () => {
   })
 }
 
-group('relay read message and verify event (many events)', () => {
+group(`relay read ${EVENTS} messages and verify its events`, () => {
   baseline('wasm', runWith(wasmRelay))
   bench('pure js', runWith(pureRelay))
   bench('trusted', runWith(trustedRelay))
