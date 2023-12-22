@@ -25,8 +25,8 @@ lint:
   prettier --check *.ts
 
 benchmark:
-  bun build --target=node --outfile=bench.js benchmark.ts
+  bun build --target=node --outfile=bench.js benchmarks.ts
   timeout 60s deno run --allow-read bench.js || true
   timeout 60s node bench.js || true
-  timeout 60s bun run benchmark.ts || true
+  timeout 60s bun run benchmarks.ts || true
   rm bench.js
