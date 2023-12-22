@@ -7,8 +7,8 @@ import { AbstractRelay } from './abstract-relay.ts'
 import { Relay as PureRelay } from './relay.ts'
 import { alwaysTrue } from './helpers.ts'
 
+// benchmarking relay reads with verifyEvent
 const EVENTS = 100
-
 let messages: string[] = []
 let baseContent = ''
 for (let i = 0; i < EVENTS / 100; i++) {
@@ -57,4 +57,5 @@ group('relay read message and verify event (many events)', () => {
   bench('trusted', runWith(trustedRelay))
 })
 
+// actually running the thing
 await run()
