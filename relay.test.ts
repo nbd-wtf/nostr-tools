@@ -23,40 +23,37 @@ test('connectivity, with Relay.connect()', async () => {
 test('querying', async () => {
   await relay.connect()
 
-  let resolve1: () => void
-  let resolve2: () => void
+  let resolveEvent: () => void
+  let resolveEose: () => void
 
-  let waiting = Promise.all([
-    new Promise<void>(resolve => {
-      resolve1 = resolve
-    }),
-    new Promise<void>(resolve => {
-      resolve2 = resolve
-    }),
-  ])
+  const evented = new Promise<void>(resolve => {
+    resolveEvent = resolve
+  })
+  const eosed = new Promise<void>(resolve => {
+    resolveEose = resolve
+  })
 
   relay.subscribe(
     [
       {
-        ids: ['3abc6cbb215af0412ab2c9c8895d96a084297890fd0b4018f8427453350ca2e4'],
+        authors: ['9bbe185a20f50607b6e021c68a2c7275649770d3f8277c120d2b801a2b9a64fc'],
+        kinds: [0],
       },
     ],
     {
       onevent(event) {
-        expect(event).toHaveProperty('id', '3abc6cbb215af0412ab2c9c8895d96a084297890fd0b4018f8427453350ca2e4')
-        expect(event).toHaveProperty('content', '+')
-        expect(event).toHaveProperty('kind', 7)
-        resolve1()
+        expect(event).toHaveProperty('pubkey', '9bbe185a20f50607b6e021c68a2c7275649770d3f8277c120d2b801a2b9a64fc')
+        expect(event).toHaveProperty('kind', 0)
+        resolveEvent()
       },
       oneose() {
-        resolve2()
+        resolveEose()
       },
     },
   )
 
-  let [t1, t2] = await waiting
-  expect(t1).toBeUndefined()
-  expect(t2).toBeUndefined()
+  await eosed
+  await evented
 }, 10000)
 
 test('listening and publishing and closing', async () => {
