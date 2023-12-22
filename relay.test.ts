@@ -17,6 +17,7 @@ test('connectivity', async () => {
 test('connectivity, with Relay.connect()', async () => {
   const relay = await Relay.connect('wss://public.relaying.io')
   expect(relay.connected).toBeTrue()
+  relay.close()
 })
 
 test('querying', async () => {

@@ -210,7 +210,7 @@ Importing the entirety of `nostr-tools` may bloat your build, so you should prob
 
 ```js
 import { generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure'
-import { SimplePool } from 'nostr-tools/pool-pure'
+import { SimplePool } from 'nostr-tools/pool'
 import { Relay, Subscription } from 'nostr-tools/relay'
 import { matchFilter } from 'nostr-tools/filter'
 import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/nip19'

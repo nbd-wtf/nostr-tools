@@ -2,7 +2,7 @@ import { test, expect, afterAll } from 'bun:test'
 
 import { finalizeEvent, type Event } from './pure.ts'
 import { generateSecretKey, getPublicKey } from './pure.ts'
-import SimplePool from './pool-pure.ts'
+import { SimplePool } from './pool.ts'
 
 let pool = new SimplePool()
 
