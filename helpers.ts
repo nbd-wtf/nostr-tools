@@ -1,4 +1,4 @@
-import { verifiedSymbol, type Event, type Nostr } from './core.ts'
+import { verifiedSymbol, type Event, type Nostr, VerifiedEvent } from './core.ts'
 
 export async function yieldThread() {
   return new Promise(resolve => {
@@ -10,7 +10,7 @@ export async function yieldThread() {
   })
 }
 
-export const alwaysTrue: Nostr['verifyEvent'] = (t: Event) => {
+export const alwaysTrue: Nostr['verifyEvent'] = (t: Event): t is VerifiedEvent => {
   t[verifiedSymbol] = true
-  return t[verifiedSymbol]
+  return true
 }

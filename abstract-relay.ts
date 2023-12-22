@@ -269,6 +269,7 @@ export class AbstractRelay {
   }
 
   // this method simulates receiving a message from the websocket
+  // for testing purposes only
   public _push(msg: string) {
     this.incomingMessageQueue.enqueue(msg)
     if (!this.queueRunning) {

@@ -26,7 +26,7 @@ lint:
 
 benchmark:
   bun build --target=node --outfile=bench.js benchmark.ts
-  bun run benchmark.ts
-  timeout 2s deno run bench.js || true
-  timeout 2s node bench.js || true
+  timeout 25s deno run --allow-read bench.js || true
+  timeout 25s node bench.js || true
+  timeout 25s bun run benchmark.ts || true
   rm bench.js

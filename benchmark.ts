@@ -1,3 +1,4 @@
+import { run, bench, group, baseline } from 'mitata'
 import { initNostrWasm } from 'nostr-wasm'
 import { NostrEvent } from './core'
 import { finalizeEvent, generateSecretKey } from './pure'
@@ -6,17 +7,17 @@ import { AbstractRelay } from './abstract-relay.ts'
 import { Relay as PureRelay } from './relay.ts'
 import { alwaysTrue } from './helpers.ts'
 
-const EVENTS = 1000
+const EVENTS = 100
 
 let messages: string[] = []
 let baseContent = ''
-for (let i = 0; i < EVENTS; i++) {
+for (let i = 0; i < EVENTS / 100; i++) {
   baseContent += 'a'
 }
 const secretKey = generateSecretKey()
-for (let i = 0; i < EVENTS / 200; i++) {
+for (let i = 0; i < EVENTS; i++) {
   const tags = []
-  for (let t = 0; t < i; t++) {
+  for (let t = 0; t < i / 100; t++) {
     tags.push(['t', 'nada'])
   }
   const event = { created_at: Math.round(Date.now()) / 1000, kind: 1, content: baseContent.slice(0, EVENTS - i), tags }
@@ -30,10 +31,11 @@ const pureRelay = new PureRelay('wss://pure.com/')
 const trustedRelay = new AbstractRelay('wss://trusted.com/', { verifyEvent: alwaysTrue })
 const wasmRelay = new AbstractRelay('wss://wasm.com/', { verifyEvent })
 
-const run = (relay: AbstractRelay) => async () => {
+const runWith = (relay: AbstractRelay) => async () => {
   return new Promise<void>(resolve => {
     let received = 0
     let sub = relay.prepareSubscription([{}], {
+      id: '_',
       onevent(_: NostrEvent) {
         received++
         if (received === messages.length - 1) {
@@ -42,7 +44,6 @@ const run = (relay: AbstractRelay) => async () => {
           sub.close()
         }
       },
-      id: '_',
     })
     for (let e = 0; e < messages.length; e++) {
       relay._push(messages[e])
@@ -50,22 +51,10 @@ const run = (relay: AbstractRelay) => async () => {
   })
 }
 
-const benchmarks: Record<string, { test: () => Promise<void>; runs: number[] }> = {
-  trusted: { test: run(trustedRelay), runs: [] },
-  pure: { test: run(pureRelay), runs: [] },
-  wasm: { test: run(wasmRelay), runs: [] },
-}
+group('relay read message and verify event', () => {
+  baseline('wasm', runWith(wasmRelay))
+  bench('pure js', runWith(pureRelay))
+  bench('trusted', runWith(trustedRelay))
+})
 
-for (let b = 0; b < 20; b++) {
-  for (let name in benchmarks) {
-    const { test, runs } = benchmarks[name]
-    const before = performance.now()
-    await test()
-    runs.push(performance.now() - before)
-  }
-}
-
-for (let name in benchmarks) {
-  const { runs } = benchmarks[name]
-  console.log(name, runs.reduce((a, b) => a + b, 0) / runs.length)
-}
+await run()
