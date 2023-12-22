@@ -51,7 +51,7 @@ const runWith = (relay: AbstractRelay) => async () => {
   })
 }
 
-group('relay read message and verify event', () => {
+group('relay read message and verify event (many events)', () => {
   baseline('wasm', runWith(wasmRelay))
   bench('pure js', runWith(pureRelay))
   bench('trusted', runWith(trustedRelay))

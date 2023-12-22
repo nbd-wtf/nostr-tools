@@ -246,7 +246,22 @@ const relay = AbstractRelay.connect('wss://relayable.org', { verifyEvent })
 const pool = new AbstractSimplePool({ verifyEvent })
 ```
 
-This may be faster than the pure-JS [noble libraries](https://paulmillr.com/noble/) used by default and in `nostr-tools/pure`.
+This may be faster than the pure-JS [noble libraries](https://paulmillr.com/noble/) used by default and in `nostr-tools/pure`. Benchmarks:
+
+```
+benchmark      time (avg)             (min … max)       p75       p99      p995
+------------------------------------------------- -----------------------------
+• relay read message and verify event (many events)
+------------------------------------------------- -----------------------------
+wasm        34.94 ms/iter   (34.61 ms … 35.73 ms)  35.07 ms  35.73 ms  35.73 ms
+pure js     239.7 ms/iter (235.41 ms … 243.69 ms) 240.51 ms 243.69 ms 243.69 ms
+trusted    402.71 µs/iter   (344.57 µs … 2.98 ms) 407.39 µs 745.62 µs 812.59 µs
+
+summary for relay read message and verify event
+  wasm
+   86.77x slower than trusted
+   6.86x faster than pure js
+```
 
 ### Using from the browser (if you don't want to use a bundler)
 
