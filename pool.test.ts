@@ -12,7 +12,7 @@ afterAll(() => {
   pool.close([...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'])
 })
 
-test('removing duplicates when querying', async () => {
+test('removing duplicates when subscribing', async () => {
   let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
@@ -43,7 +43,7 @@ test('removing duplicates when querying', async () => {
   expect(received[0]).toEqual(event)
 })
 
-test('same with double querying', async () => {
+test('same with double subs', async () => {
   let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
@@ -74,6 +74,23 @@ test('same with double querying', async () => {
   await new Promise(resolve => setTimeout(resolve, 1500))
 
   expect(received).toHaveLength(2)
+})
+
+test('query a bunch of events and cancel on eose', async () => {
+  let events = new Set<string>()
+  await new Promise<void>(resolve => {
+    pool.subscribeManyEose(
+      [...relays, 'wss://relayable.org', 'wss://relay.noswhere.com', 'wss://nothing.com'],
+      [{ kinds: [0, 1], limit: 40 }],
+      {
+        onevent(event) {
+          events.add(event.id)
+        },
+        onclose: resolve as any,
+      },
+    )
+  })
+  expect(events.size).toBeGreaterThan(50)
 })
 
 test('querySync()', async () => {
