@@ -1,7 +1,7 @@
 import { test, expect } from 'bun:test'
 
 import { makeAuthEvent } from './nip42.ts'
-import Relay from './relay-pure.ts'
+import { Relay } from './relay.ts'
 
 test('auth flow', async () => {
   const relay = await Relay.connect('wss://nostr.wine')

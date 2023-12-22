@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test'
 
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
-import Relay from './relay-pure.ts'
+import { Relay } from './relay.ts'
 
 let relay = new Relay('wss://public.relaying.io')
 
