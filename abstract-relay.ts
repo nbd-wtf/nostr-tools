@@ -102,7 +102,7 @@ export class AbstractRelay {
         this._connected = false
       }
 
-      this.ws.onmessage = this._onmessage
+      this.ws.onmessage = this._onmessage.bind(this)
     })
 
     return this.connectionPromise

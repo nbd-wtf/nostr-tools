@@ -1,9 +1,9 @@
 import { afterEach, expect, test } from 'bun:test'
 
-import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
+import { NostrEvent, finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { Relay } from './relay.ts'
 
-let relay = new Relay('wss://public.relaying.io')
+let relay = new Relay('wss://relay.nostr.bg')
 
 afterEach(() => {
   relay.close()
@@ -64,17 +64,20 @@ test('listening and publishing and closing', async () => {
 
   let sk = generateSecretKey()
   let pk = getPublicKey(sk)
-  var resolve1: (_: void) => void
-  var resolve2: (_: void) => void
+  let resolveEose: (_: void) => void
+  let resolveEvent: (_: void) => void
+  let resolveClose: (_: void) => void
+  let eventReceived: NostrEvent | undefined
 
-  let waiting = Promise.all([
-    new Promise(resolve => {
-      resolve1 = resolve
-    }),
-    new Promise(resolve => {
-      resolve2 = resolve
-    }),
-  ])
+  const eosed = new Promise(resolve => {
+    resolveEose = resolve
+  })
+  const evented = new Promise(resolve => {
+    resolveEvent = resolve
+  })
+  const closed = new Promise(resolve => {
+    resolveClose = resolve
+  })
 
   let sub = relay.subscribe(
     [
@@ -85,16 +88,19 @@ test('listening and publishing and closing', async () => {
     ],
     {
       onevent(event) {
-        expect(event).toHaveProperty('pubkey', pk)
-        expect(event).toHaveProperty('kind', 23571)
-        expect(event).toHaveProperty('content', 'nostr-tools test suite')
-        resolve1()
+        eventReceived = event
+        resolveEvent()
+      },
+      oneose() {
+        resolveEose()
       },
       onclose() {
-        resolve2()
+        resolveClose()
       },
     },
   )
+
+  await eosed
 
   let event = finalizeEvent(
     {
@@ -107,9 +113,12 @@ test('listening and publishing and closing', async () => {
   )
 
   await relay.publish(event)
+  await evented
   sub.close()
+  await closed
 
-  let [t1, t2] = await waiting
-  expect(t1).toBeUndefined()
-  expect(t2).toBeUndefined()
+  expect(eventReceived).toBeDefined()
+  expect(eventReceived).toHaveProperty('pubkey', pk)
+  expect(eventReceived).toHaveProperty('kind', 23571)
+  expect(eventReceived).toHaveProperty('content', 'nostr-tools test suite')
 })
