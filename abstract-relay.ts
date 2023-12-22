@@ -102,12 +102,7 @@ export class AbstractRelay {
         this._connected = false
       }
 
-      this.ws.onmessage = ev => {
-        this.incomingMessageQueue.enqueue(ev.data as string)
-        if (!this.queueRunning) {
-          this.runQueue()
-        }
-      }
+      this.ws.onmessage = this._onmessage
     })
 
     return this.connectionPromise
@@ -268,10 +263,10 @@ export class AbstractRelay {
     this.ws?.close()
   }
 
-  // this method simulates receiving a message from the websocket
-  // for testing purposes only
-  public _push(msg: string) {
-    this.incomingMessageQueue.enqueue(msg)
+  // this is the function assigned to this.ws.onmessage
+  // it's exposed for testing and debugging purposes
+  public _onmessage(ev: MessageEvent<any>) {
+    this.incomingMessageQueue.enqueue(ev.data as string)
     if (!this.queueRunning) {
       this.runQueue()
     }

@@ -46,7 +46,7 @@ const runWith = (relay: AbstractRelay) => async () => {
       },
     })
     for (let e = 0; e < messages.length; e++) {
-      relay._push(messages[e])
+      relay._onmessage({ data: messages[e] } as any)
     }
   })
 }
