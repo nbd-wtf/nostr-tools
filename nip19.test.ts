@@ -109,6 +109,25 @@ test('encode and decode nevent with kind 0', () => {
   expect(pointer.kind).toEqual(0)
 })
 
+test('encode and decode naddr with empty "d"', () => {
+  let pk = getPublicKey(generateSecretKey())
+  let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
+  let naddr = naddrEncode({
+    identifier: '',
+    pubkey: pk,
+    relays,
+    kind: 3,
+  })
+  expect(naddr).toMatch(/naddr\w+/)
+  let { type, data } = decode(naddr)
+  expect(type).toEqual('naddr')
+  const pointer = data as AddressPointer
+  expect(pointer.identifier).toEqual('')
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.kind).toEqual(3)
+  expect(pointer.pubkey).toEqual(pk)
+})
+
 test('decode naddr from habla.news', () => {
   let { type, data } = decode(
     'naddr1qq98yetxv4ex2mnrv4esygrl54h466tz4v0re4pyuavvxqptsejl0vxcmnhfl60z3rth2xkpjspsgqqqw4rsf34vl5',
