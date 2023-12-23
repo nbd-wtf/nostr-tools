@@ -27,12 +27,7 @@ esbuild
     format: 'esm',
     packages: 'external',
   })
-  .then(() => {
-    const packageJson = JSON.stringify({ type: 'module' })
-    fs.writeFileSync(`${__dirname}/lib/esm/package.json`, packageJson, 'utf8')
-
-    console.log('esm build success.')
-  })
+  .then(() => console.log('esm build success.'))
 
 esbuild
   .build({
@@ -41,7 +36,12 @@ esbuild
     format: 'cjs',
     packages: 'external',
   })
-  .then(() => console.log('cjs build success.'))
+  .then(() => {
+    const packageJson = JSON.stringify({ type: 'commonjs' })
+    fs.writeFileSync(`${__dirname}/lib/cjs/package.json`, packageJson, 'utf8')
+
+    console.log('cjs build success.')
+  })
 
 esbuild
   .build({
