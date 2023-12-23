@@ -78,13 +78,13 @@ test('encode and decode naddr', () => {
 test('encode and decode nevent', () => {
   let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
-  let naddr = neventEncode({
+  let nevent = neventEncode({
     id: pk,
     relays,
     kind: 30023,
   })
-  expect(naddr).toMatch(/nevent1\w+/)
-  let { type, data } = decode(naddr)
+  expect(nevent).toMatch(/nevent1\w+/)
+  let { type, data } = decode(nevent)
   expect(type).toEqual('nevent')
   const pointer = data as EventPointer
   expect(pointer.id).toEqual(pk)
@@ -95,13 +95,13 @@ test('encode and decode nevent', () => {
 test('encode and decode nevent with kind 0', () => {
   let pk = getPublicKey(generateSecretKey())
   let relays = ['wss://relay.nostr.example.mydomain.example.com', 'wss://nostr.banana.com']
-  let naddr = neventEncode({
+  let nevent = neventEncode({
     id: pk,
     relays,
     kind: 0,
   })
-  expect(naddr).toMatch(/nevent1\w+/)
-  let { type, data } = decode(naddr)
+  expect(nevent).toMatch(/nevent1\w+/)
+  let { type, data } = decode(nevent)
   expect(type).toEqual('nevent')
   const pointer = data as EventPointer
   expect(pointer.id).toEqual(pk)

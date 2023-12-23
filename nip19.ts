@@ -227,15 +227,17 @@ export function nrelayEncode(url: string): `nrelay1${string}` {
 function encodeTLV(tlv: TLV): Uint8Array {
   let entries: Uint8Array[] = []
 
-  Object.entries(tlv).forEach(([t, vs]) => {
-    vs.forEach(v => {
-      let entry = new Uint8Array(v.length + 2)
-      entry.set([parseInt(t)], 0)
-      entry.set([v.length], 1)
-      entry.set(v, 2)
-      entries.push(entry)
+  Object.entries(tlv)
+    .reverse()
+    .forEach(([t, vs]) => {
+      vs.forEach(v => {
+        let entry = new Uint8Array(v.length + 2)
+        entry.set([parseInt(t)], 0)
+        entry.set([v.length], 1)
+        entry.set(v, 2)
+        entries.push(entry)
+      })
     })
-  })
 
   return concatBytes(...entries)
 }
