@@ -1,6 +1,6 @@
 /* global WebSocket */
 
-import type { Event, EventTemplate, Nostr } from './core.ts'
+import type { Event, EventTemplate, VerifiedEvent, Nostr } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
@@ -218,11 +218,14 @@ export class AbstractRelay {
     })
   }
 
-  public async auth(signAuthEvent: (authEvent: EventTemplate) => Promise<void>) {
+  public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>) {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
-    const evt = makeAuthEvent(this.url, this.challenge)
-    await signAuthEvent(evt)
+    const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
+    const ret = new Promise<string>((resolve, reject) => {
+      this.openEventPublishes.set(evt.id, { resolve, reject })
+    })
     this.send('["AUTH",' + JSON.stringify(evt) + ']')
+    return ret
   }
 
   public async publish(event: Event): Promise<string> {
