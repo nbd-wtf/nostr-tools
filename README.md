@@ -66,18 +66,18 @@ const sub = relay.subscribe([
 let sk = generateSecretKey()
 let pk = getPublicKey(sk)
 
-let sub = relay.sub([
+relay.sub([
   {
     kinds: [1],
     authors: [pk],
   },
-])
-
-sub.on('event', event => {
-  console.log('got event:', event)
+], {
+  onevent(event) {
+    console.log('got event:', event)
+  }
 })
 
-let event = {
+let eventTemplate = {
   kind: 1,
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
@@ -85,13 +85,8 @@ let event = {
 }
 
 // this assigns the pubkey, calculates the event id and signs the event in a single step
-const signedEvent = finalizeEvent(event, sk)
+const signedEvent = finalizeEvent(eventTemplate, sk)
 await relay.publish(signedEvent)
-
-let events = await relay.list([{ kinds: [0, 1] }])
-let event = await relay.get({
-  ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
-})
 
 relay.close()
 ```
