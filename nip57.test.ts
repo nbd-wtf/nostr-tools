@@ -242,10 +242,11 @@ describe('validateZapRequest', () => {
 })
 
 describe('makeZapReceipt', () => {
-  test('returns a valid Zap receipt with a preimage', () => {
-    const privateKey = generateSecretKey()
-    const publicKey = getPublicKey(privateKey)
+  const privateKey = generateSecretKey()
+  const publicKey = getPublicKey(privateKey)
+  const target = 'efeb5d6e74ce6ffea6cae4094a9f29c26b5c56d7b44fae9f490f3410fd708c45'
 
+  test('returns a valid Zap receipt with a preimage', () => {
     const zapRequest = JSON.stringify(
       finalizeEvent(
         {
@@ -253,7 +254,7 @@ describe('makeZapReceipt', () => {
           created_at: Date.now() / 1000,
           content: 'content',
           tags: [
-            ['p', publicKey],
+            ['p', target],
             ['amount', '100'],
             ['relays', 'relay1', 'relay2'],
           ],
@@ -274,16 +275,14 @@ describe('makeZapReceipt', () => {
       expect.arrayContaining([
         ['bolt11', bolt11],
         ['description', zapRequest],
-        ['p', publicKey],
+        ['p', target],
+        ['P', publicKey],
         ['preimage', preimage],
       ]),
     )
   })
 
   test('returns a valid Zap receipt without a preimage', () => {
-    const privateKey = generateSecretKey()
-    const publicKey = getPublicKey(privateKey)
-
     const zapRequest = JSON.stringify(
       finalizeEvent(
         {
@@ -291,7 +290,7 @@ describe('makeZapReceipt', () => {
           created_at: Date.now() / 1000,
           content: 'content',
           tags: [
-            ['p', publicKey],
+            ['p', target],
             ['amount', '100'],
             ['relays', 'relay1', 'relay2'],
           ],
@@ -311,7 +310,8 @@ describe('makeZapReceipt', () => {
       expect.arrayContaining([
         ['bolt11', bolt11],
         ['description', zapRequest],
-        ['p', publicKey],
+        ['p', target],
+        ['P', publicKey],
       ]),
     )
     expect(JSON.stringify(result.tags)).not.toContain('preimage')

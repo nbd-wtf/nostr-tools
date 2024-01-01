@@ -119,7 +119,7 @@ export function makeZapReceipt({
     kind: 9735,
     created_at: Math.round(paidAt.getTime() / 1000),
     content: '',
-    tags: [...tagsFromZapRequest, ['bolt11', bolt11], ['description', zapRequest]],
+    tags: [...tagsFromZapRequest, ['P', zr.pubkey], ['bolt11', bolt11], ['description', zapRequest]],
   }
 
   if (preimage) {
