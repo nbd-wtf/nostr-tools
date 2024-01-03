@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { matchFilter, matchFilters, mergeFilters } from './filter.ts'
+import { getFilterLimit, matchFilter, matchFilters, mergeFilters } from './filter.ts'
 import { buildEvent } from './test-helpers.ts'
 
 describe('Filter', () => {
@@ -239,6 +239,29 @@ describe('Filter', () => {
       expect(
         mergeFilters({ kinds: [1], since: 15, until: 30 }, { since: 10, kinds: [7], until: 15 }, { kinds: [9, 10] }),
       ).toEqual({ kinds: [1, 7, 9, 10], since: 10, until: 30 })
+    })
+  })
+
+  describe('getFilterLimit', () => {
+    test('should handle ids', () => {
+      expect(getFilterLimit({ ids: ['123'] })).toEqual(1)
+      expect(getFilterLimit({ ids: ['123'], limit: 2 })).toEqual(1)
+      expect(getFilterLimit({ ids: ['123'], limit: 0 })).toEqual(0)
+      expect(getFilterLimit({ ids: ['123'], limit: -1 })).toEqual(0)
+    })
+
+    test('should count the authors times replaceable kinds', () => {
+      expect(getFilterLimit({ kinds: [0], authors: ['alex'] })).toEqual(1)
+      expect(getFilterLimit({ kinds: [0, 3], authors: ['alex'] })).toEqual(2)
+      expect(getFilterLimit({ kinds: [0, 3], authors: ['alex', 'fiatjaf'] })).toEqual(4)
+    })
+
+    test('should return Infinity for authors with regular kinds', () => {
+      expect(getFilterLimit({ kinds: [1], authors: ['alex'] })).toEqual(Infinity)
+    })
+
+    test('should return Infinity for empty filters', () => {
+      expect(getFilterLimit({})).toEqual(Infinity)
     })
   })
 })

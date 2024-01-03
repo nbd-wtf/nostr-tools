@@ -1,4 +1,5 @@
 import { Event } from './core.ts'
+import { isReplaceableKind } from './kinds.ts'
 
 export type Filter = {
   ids?: string[]
@@ -69,4 +70,20 @@ export function mergeFilters(...filters: Filter[]): Filter {
   }
 
   return result
+}
+
+/** Calculate the intrinsic limit of a filter. This function may return `Infinity`. */
+export function getFilterLimit(filter: Filter): number {
+  if (filter.ids && !filter.ids.length) return 0
+  if (filter.kinds && !filter.kinds.length) return 0
+  if (filter.authors && !filter.authors.length) return 0
+
+  return Math.min(
+    Math.max(0, filter.limit ?? Infinity),
+    filter.ids?.length ?? Infinity,
+    filter.authors?.length &&
+      filter.kinds?.every((kind) => isReplaceableKind(kind))
+      ? filter.authors.length * filter.kinds.length
+      : Infinity,
+  )
 }
