@@ -10,9 +10,19 @@ import { NWCWalletRequest } from './kinds.ts'
 globalThis.crypto = crypto
 
 describe('parseConnectionString', () => {
-  test('returns pubkey, relay, and secret if connection string is valid', () => {
+  test('returns pubkey, relay, and secret if connection string is valid and complies with spec', () => {
     const connectionString =
       'nostr+walletconnect:b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4?relay=wss%3A%2F%2Frelay.damus.io&secret=71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
+    const { pubkey, relay, secret } = parseConnectionString(connectionString)
+
+    expect(pubkey).toBe('b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4')
+    expect(relay).toBe('wss://relay.damus.io')
+    expect(secret).toBe('71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c')
+  })
+
+  test('returns pubkey, relay, and secret if connection string is valid, but uses authority instead of pathname', () => {
+    const connectionString =
+      'nostr+walletconnect://b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4?relay=wss%3A%2F%2Frelay.damus.io&secret=71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
     const { pubkey, relay, secret } = parseConnectionString(connectionString)
 
     expect(pubkey).toBe('b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4')

@@ -3,8 +3,8 @@ import { NWCWalletRequest } from './kinds.ts'
 import { encrypt } from './nip04.ts'
 
 export function parseConnectionString(connectionString: string) {
-  const { pathname, searchParams } = new URL(connectionString)
-  const pubkey = pathname
+  const { pathname, host, searchParams } = new URL(connectionString)
+  const pubkey = connectionString.indexOf('//') === -1 ? pathname : host
   const relay = searchParams.get('relay')
   const secret = searchParams.get('secret')
 
