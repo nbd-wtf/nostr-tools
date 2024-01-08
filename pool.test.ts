@@ -19,7 +19,7 @@ test('removing duplicates when subscribing', async () => {
   pool.subscribeMany(relays, [{ authors: [pub] }], {
     onevent(event: Event) {
       // this should be called only once even though we're listening
-      // to multiple relays because the events will be catched and
+      // to multiple relays because the events will be caught and
       // deduplicated efficiently (without even being parsed)
       received.push(event)
     },
