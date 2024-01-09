@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -173,8 +173,9 @@
     "@noble/hashes": "1.3.1",
     "@scure/base": "1.1.1",
     "@scure/bip32": "1.3.1",
-    "@scure/bip39": "1.2.1",
-    "mitata": "^0.1.6",
+    "@scure/bip39": "1.2.1"
+  },
+  "optionalDependencies": {
     "nostr-wasm": "v0.1.0"
   },
   "peerDependencies": {
@@ -205,6 +206,7 @@
     "eslint-plugin-babel": "^5.3.1",
     "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
+    "mitata": "^0.1.6",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
     "tsd": "^0.22.0",
