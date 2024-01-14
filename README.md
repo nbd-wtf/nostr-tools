@@ -163,6 +163,17 @@ console.log(profile.pubkey)
 // prints: 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245
 console.log(profile.relays)
 // prints: [wss://relay.damus.io]
+
+// or alternative for nodejs
+import 'websocket-polyfill'
+import fetch from 'node-fetch';
+import { nip05 } from 'nostr-tools'
+
+nip05.useFetchImplementation(fetch);
+
+let profile = await nip05.queryProfile('jb55.com')
+
+console.log(profile)
 ```
 
 To use this on Node.js < v18, you first must install `node-fetch@2` and call something like this:
