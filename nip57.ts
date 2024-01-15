@@ -23,7 +23,7 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
       lnurl = utf8Decoder.decode(data)
     } else if (lud16) {
       let [name, domain] = lud16.split('@')
-      lnurl = `https://${domain}/.well-known/lnurlp/${name}`
+      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
     } else {
       return null
     }
