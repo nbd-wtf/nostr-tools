@@ -1,76 +1,83 @@
-import { describe, test, expect } from 'bun:test'
-import { getToken, unpackEventFromToken, validateEvent, validateToken } from './nip98.ts'
-import { Event, finalizeEvent } from './pure.ts'
-import { generateSecretKey, getPublicKey } from './pure.ts'
 import { sha256 } from '@noble/hashes/sha256'
-import { utf8Encoder } from './utils.ts'
 import { bytesToHex } from '@noble/hashes/utils'
-import { HTTPAuth } from './kinds.ts'
+import { describe, expect, test } from 'bun:test'
 
-const sk = generateSecretKey()
+import { HTTPAuth } from './kinds.ts'
+import {
+  getToken,
+  hashPayload,
+  unpackEventFromToken,
+  validateEvent,
+  validateEventKind,
+  validateEventMethodTag,
+  validateEventPayloadTag,
+  validateEventTimestamp,
+  validateEventUrlTag,
+  validateToken,
+} from './nip98.ts'
+import { Event, finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
+import { utf8Encoder } from './utils.ts'
 
 describe('getToken', () => {
-  test('getToken GET returns without authorization scheme', async () => {
-    let result = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+  test('returns without authorization scheme for GET', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+    const unpackedEvent: Event = await unpackEventFromToken(token)
 
-    const decodedResult: Event = await unpackEventFromToken(result)
-
-    expect(decodedResult.created_at).toBeGreaterThan(0)
-    expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(HTTPAuth)
-    expect(decodedResult.pubkey).toBe(getPublicKey(sk))
-    expect(decodedResult.tags).toStrictEqual([
+    expect(unpackedEvent.created_at).toBeGreaterThan(0)
+    expect(unpackedEvent.content).toBe('')
+    expect(unpackedEvent.kind).toBe(HTTPAuth)
+    expect(unpackedEvent.pubkey).toBe(getPublicKey(sk))
+    expect(unpackedEvent.tags).toStrictEqual([
       ['u', 'http://test.com'],
       ['method', 'get'],
     ])
   })
 
-  test('getToken POST returns token without authorization scheme', async () => {
-    let result = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk))
+  test('returns token without authorization scheme for POST', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk))
+    const unpackedEvent: Event = await unpackEventFromToken(token)
 
-    const decodedResult: Event = await unpackEventFromToken(result)
-
-    expect(decodedResult.created_at).toBeGreaterThan(0)
-    expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(HTTPAuth)
-    expect(decodedResult.pubkey).toBe(getPublicKey(sk))
-    expect(decodedResult.tags).toStrictEqual([
+    expect(unpackedEvent.created_at).toBeGreaterThan(0)
+    expect(unpackedEvent.content).toBe('')
+    expect(unpackedEvent.kind).toBe(HTTPAuth)
+    expect(unpackedEvent.pubkey).toBe(getPublicKey(sk))
+    expect(unpackedEvent.tags).toStrictEqual([
       ['u', 'http://test.com'],
       ['method', 'post'],
     ])
   })
 
-  test('getToken GET returns token WITH authorization scheme', async () => {
+  test('returns token WITH authorization scheme for POST', async () => {
     const authorizationScheme = 'Nostr '
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
 
-    let result = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true)
-
-    expect(result.startsWith(authorizationScheme)).toBe(true)
-
-    const decodedResult: Event = await unpackEventFromToken(result)
-
-    expect(decodedResult.created_at).toBeGreaterThan(0)
-    expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(HTTPAuth)
-    expect(decodedResult.pubkey).toBe(getPublicKey(sk))
-    expect(decodedResult.tags).toStrictEqual([
+    expect(token.startsWith(authorizationScheme)).toBe(true)
+    expect(unpackedEvent.created_at).toBeGreaterThan(0)
+    expect(unpackedEvent.content).toBe('')
+    expect(unpackedEvent.kind).toBe(HTTPAuth)
+    expect(unpackedEvent.pubkey).toBe(getPublicKey(sk))
+    expect(unpackedEvent.tags).toStrictEqual([
       ['u', 'http://test.com'],
       ['method', 'post'],
     ])
   })
 
-  test('getToken returns token with a valid payload tag when payload is present', async () => {
+  test('returns token with a valid payload tag when payload is present', async () => {
+    const sk = generateSecretKey()
     const payload = { test: 'payload' }
-    const payloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))
-    let result = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, payload)
+    const payloadHash = hashPayload(payload)
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, payload)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
 
-    const decodedResult: Event = await unpackEventFromToken(result)
-
-    expect(decodedResult.created_at).toBeGreaterThan(0)
-    expect(decodedResult.content).toBe('')
-    expect(decodedResult.kind).toBe(HTTPAuth)
-    expect(decodedResult.pubkey).toBe(getPublicKey(sk))
-    expect(decodedResult.tags).toStrictEqual([
+    expect(unpackedEvent.created_at).toBeGreaterThan(0)
+    expect(unpackedEvent.content).toBe('')
+    expect(unpackedEvent.kind).toBe(HTTPAuth)
+    expect(unpackedEvent.pubkey).toBe(getPublicKey(sk))
+    expect(unpackedEvent.tags).toStrictEqual([
       ['u', 'http://test.com'],
       ['method', 'post'],
       ['payload', payloadHash],
@@ -79,81 +86,265 @@ describe('getToken', () => {
 })
 
 describe('validateToken', () => {
-  test('validateToken returns true for valid token without authorization scheme', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+  test('returns true for valid token without authorization scheme', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
 
-    const result = await validateToken(validToken, 'http://test.com', 'get')
-    expect(result).toBe(true)
+    const isTokenValid = await validateToken(token, 'http://test.com', 'get')
+    expect(isTokenValid).toBe(true)
   })
 
-  test('validateToken returns true for valid token with authorization scheme', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+  test('returns true for valid token with authorization scheme', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const isTokenValid = await validateToken(token, 'http://test.com', 'get')
 
-    const result = await validateToken(validToken, 'http://test.com', 'get')
-    expect(result).toBe(true)
+    expect(isTokenValid).toBe(true)
   })
 
-  test('validateToken throws an error for invalid token', async () => {
-    const result = validateToken('fake', 'http://test.com', 'get')
-    expect(result).rejects.toThrow(Error)
+  test('throws an error for invalid token', async () => {
+    const isTokenValid = validateToken('fake', 'http://test.com', 'get')
+
+    expect(isTokenValid).rejects.toThrow(Error)
   })
 
-  test('validateToken throws an error for missing token', async () => {
-    const result = validateToken('', 'http://test.com', 'get')
-    expect(result).rejects.toThrow(Error)
+  test('throws an error for missing token', async () => {
+    const isTokenValid = validateToken('', 'http://test.com', 'get')
+
+    expect(isTokenValid).rejects.toThrow(Error)
   })
 
-  test('validateToken throws an error for a wrong url', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+  test('throws an error for invalid event kind', async () => {
+    const sk = generateSecretKey()
+    const invalidToken = await getToken('http://test.com', 'get', e => {
+      e.kind = 0
+      return finalizeEvent(e, sk)
+    })
+    const isTokenValid = validateToken(invalidToken, 'http://test.com', 'get')
 
-    const result = validateToken(validToken, 'http://wrong-test.com', 'get')
-    expect(result).rejects.toThrow(Error)
+    expect(isTokenValid).rejects.toThrow(Error)
   })
 
-  test('validateToken throws an error for a wrong method', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+  test('throws an error for invalid event timestamp', async () => {
+    const sk = generateSecretKey()
+    const invalidToken = await getToken('http://test.com', 'get', e => {
+      e.created_at = 0
+      return finalizeEvent(e, sk)
+    })
+    const isTokenValid = validateToken(invalidToken, 'http://test.com', 'get')
 
-    const result = validateToken(validToken, 'http://test.com', 'post')
-    expect(result).rejects.toThrow(Error)
+    expect(isTokenValid).rejects.toThrow(Error)
   })
 
-  test('validateEvent returns true for valid decoded token with authorization scheme', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
-    const decodedResult: Event = await unpackEventFromToken(validToken)
+  test('throws an error for invalid url', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+    const isTokenValid = validateToken(token, 'http://wrong-test.com', 'get')
 
-    const result = await validateEvent(decodedResult, 'http://test.com', 'get')
-    expect(result).toBe(true)
+    expect(isTokenValid).rejects.toThrow(Error)
   })
 
-  test('validateEvent throws an error for a wrong url', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
-    const decodedResult: Event = await unpackEventFromToken(validToken)
+  test('throws an error for invalid method', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
+    const isTokenValid = validateToken(token, 'http://test.com', 'post')
 
-    const result = validateEvent(decodedResult, 'http://wrong-test.com', 'get')
-    expect(result).rejects.toThrow(Error)
+    expect(isTokenValid).rejects.toThrow(Error)
+  })
+})
+
+describe('validateEvent', () => {
+  test('returns true for valid decoded token with authorization scheme', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventValid = await validateEvent(unpackedEvent, 'http://test.com', 'get')
+
+    expect(isEventValid).toBe(true)
   })
 
-  test('validateEvent throws an error for a wrong method', async () => {
-    const validToken = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
-    const decodedResult: Event = await unpackEventFromToken(validToken)
+  test('throws an error for invalid event kind', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    unpackedEvent.kind = 0
+    const isEventValid = validateEvent(unpackedEvent, 'http://test.com', 'get')
 
-    const result = validateEvent(decodedResult, 'http://test.com', 'post')
-    expect(result).rejects.toThrow(Error)
+    expect(isEventValid).rejects.toThrow(Error)
   })
 
-  test('validateEvent returns true for valid payload tag hash', async () => {
-    const validToken = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'payload' })
-    const decodedResult: Event = await unpackEventFromToken(validToken)
+  test('throws an error for invalid event timestamp', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    unpackedEvent.created_at = 0
+    const isEventValid = validateEvent(unpackedEvent, 'http://test.com', 'get')
 
-    const result = await validateEvent(decodedResult, 'http://test.com', 'post', { test: 'payload' })
-    expect(result).toBe(true)
+    expect(isEventValid).rejects.toThrow(Error)
   })
 
-  test('validateEvent returns false for invalid payload tag hash', async () => {
-    const validToken = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'a-payload' })
-    const decodedResult: Event = await unpackEventFromToken(validToken)
+  test('throws an error for invalid url tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventValid = validateEvent(unpackedEvent, 'http://wrong-test.com', 'get')
 
-    const result = validateEvent(decodedResult, 'http://test.com', 'post', { test: 'a-different-payload' })
-    expect(result).rejects.toThrow(Error)
+    expect(isEventValid).rejects.toThrow(Error)
+  })
+
+  test('throws an error for invalid method tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventValid = validateEvent(unpackedEvent, 'http://test.com', 'post')
+
+    expect(isEventValid).rejects.toThrow(Error)
+  })
+
+  test('returns true for valid payload tag hash', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'payload' })
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventValid = await validateEvent(unpackedEvent, 'http://test.com', 'post', { test: 'payload' })
+
+    expect(isEventValid).toBe(true)
+  })
+
+  test('returns false for invalid payload tag hash', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'a-payload' })
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventValid = validateEvent(unpackedEvent, 'http://test.com', 'post', { test: 'a-different-payload' })
+
+    expect(isEventValid).rejects.toThrow(Error)
+  })
+})
+
+describe('validateEventTimestamp', () => {
+  test('returns true for valid timestamp', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventTimestampValid = validateEventTimestamp(unpackedEvent)
+
+    expect(isEventTimestampValid).toBe(true)
+  })
+
+  test('returns false for invalid timestamp', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    unpackedEvent.created_at = 0
+    const isEventTimestampValid = validateEventTimestamp(unpackedEvent)
+
+    expect(isEventTimestampValid).toBe(false)
+  })
+})
+
+describe('validateEventKind', () => {
+  test('returns true for valid kind', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventKindValid = validateEventKind(unpackedEvent)
+
+    expect(isEventKindValid).toBe(true)
+  })
+
+  test('returns false for invalid kind', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    unpackedEvent.kind = 0
+    const isEventKindValid = validateEventKind(unpackedEvent)
+
+    expect(isEventKindValid).toBe(false)
+  })
+})
+
+describe('validateEventUrlTag', () => {
+  test('returns true for valid url tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventUrlTagValid = validateEventUrlTag(unpackedEvent, 'http://test.com')
+
+    expect(isEventUrlTagValid).toBe(true)
+  })
+
+  test('returns false for invalid url tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventUrlTagValid = validateEventUrlTag(unpackedEvent, 'http://wrong-test.com')
+
+    expect(isEventUrlTagValid).toBe(false)
+  })
+})
+
+describe('validateEventMethodTag', () => {
+  test('returns true for valid method tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventMethodTagValid = validateEventMethodTag(unpackedEvent, 'get')
+
+    expect(isEventMethodTagValid).toBe(true)
+  })
+
+  test('returns false for invalid method tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventMethodTagValid = validateEventMethodTag(unpackedEvent, 'post')
+
+    expect(isEventMethodTagValid).toBe(false)
+  })
+})
+
+describe('validateEventPayloadTag', () => {
+  test('returns true for valid payload tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'payload' })
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventPayloadTagValid = validateEventPayloadTag(unpackedEvent, { test: 'payload' })
+
+    expect(isEventPayloadTagValid).toBe(true)
+  })
+
+  test('returns false for invalid payload tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'a-payload' })
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventPayloadTagValid = validateEventPayloadTag(unpackedEvent, { test: 'a-different-payload' })
+
+    expect(isEventPayloadTagValid).toBe(false)
+  })
+
+  test('returns false for missing payload tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, { test: 'payload' })
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    const isEventPayloadTagValid = validateEventPayloadTag(unpackedEvent, {})
+
+    expect(isEventPayloadTagValid).toBe(false)
+  })
+})
+
+describe('hashPayload', () => {
+  test('returns hash for valid payload', async () => {
+    const payload = { test: 'payload' }
+    const computedPayloadHash = hashPayload(payload)
+    const expectedPayloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))
+
+    expect(computedPayloadHash).toBe(expectedPayloadHash)
+  })
+
+  test('returns hash for empty payload', async () => {
+    const payload = {}
+    const computedPayloadHash = hashPayload(payload)
+    const expectedPayloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))
+
+    expect(computedPayloadHash).toBe(expectedPayloadHash)
   })
 })
