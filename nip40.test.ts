@@ -38,7 +38,7 @@ describe('onExpire', () => {
     const event = buildEvent({ tags: [['expiration', '123']] })
     const callback = jest.fn()
     onExpire(event, callback)
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await new Promise(resolve => setTimeout(resolve, 200))
     expect(callback).toHaveBeenCalled()
   })
 })
