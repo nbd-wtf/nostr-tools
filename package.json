@@ -207,6 +207,7 @@
     "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
     "mitata": "^0.1.6",
+    "mock-socket": "^9.3.1",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
     "tsd": "^0.22.0",
