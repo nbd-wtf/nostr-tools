@@ -3,7 +3,7 @@ import { afterEach, expect, test } from 'bun:test'
 import { NostrEvent, finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { Relay } from './relay.ts'
 
-let relay = new Relay('wss://relay.nostr.bg')
+let relay = new Relay('wss://nos.lol')
 
 afterEach(() => {
   relay.close()
@@ -15,7 +15,7 @@ test('connectivity', async () => {
 })
 
 test('connectivity, with Relay.connect()', async () => {
-  const relay = await Relay.connect('wss://public.relaying.io')
+  const relay = await Relay.connect('wss://nos.lol')
   expect(relay.connected).toBeTrue()
   relay.close()
 })
