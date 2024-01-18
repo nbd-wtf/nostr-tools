@@ -1,121 +1,146 @@
-import { afterEach, expect, test } from 'bun:test'
+import { expect, test } from 'bun:test'
+import { Server } from 'mock-socket'
 
-import { NostrEvent, finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
+import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { Relay } from './relay.ts'
 
-let relay = new Relay('wss://relay.nostr.bg')
-
-afterEach(() => {
-  relay.close()
-})
-
 test('connectivity', async () => {
+  const mockRelayURL = 'wss://mock.relay.url'
+  const mockRelay = new Server(mockRelayURL)
+
+  const relay = new Relay(mockRelayURL)
   await relay.connect()
+
   expect(relay.connected).toBeTrue()
+
+  relay.close()
+  mockRelay.stop()
 })
 
 test('connectivity, with Relay.connect()', async () => {
-  const relay = await Relay.connect('wss://public.relaying.io')
+  const mockRelayURL = 'wss://mock.relay.url'
+  const mockRelay = new Server(mockRelayURL)
+
+  const relay = await Relay.connect(mockRelayURL)
+
   expect(relay.connected).toBeTrue()
+
   relay.close()
+  mockRelay.stop()
 })
 
-test('querying', async () => {
+test('querying', async done => {
+  const sk = generateSecretKey()
+  const pk = getPublicKey(sk)
+  const kind = 0
+
+  const mockRelayURL = 'wss://mock.relay.url'
+  const mockRelay = new Server(mockRelayURL)
+
+  mockRelay.on('connection', socket => {
+    socket.on('message', message => {
+      const data = JSON.parse(message as string)
+
+      const event = finalizeEvent(
+        {
+          kind,
+          content: '',
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [],
+        },
+        sk,
+      )
+
+      socket.send(JSON.stringify(['EVENT', data[1], event]))
+    })
+  })
+
+  const relay = new Relay(mockRelayURL)
   await relay.connect()
-
-  let resolveEvent: () => void
-  let resolveEose: () => void
-
-  const evented = new Promise<void>(resolve => {
-    resolveEvent = resolve
-  })
-  const eosed = new Promise<void>(resolve => {
-    resolveEose = resolve
-  })
 
   relay.subscribe(
     [
       {
-        authors: ['9bbe185a20f50607b6e021c68a2c7275649770d3f8277c120d2b801a2b9a64fc'],
-        kinds: [0],
+        authors: [pk],
+        kinds: [kind],
       },
     ],
     {
       onevent(event) {
-        expect(event).toHaveProperty('pubkey', '9bbe185a20f50607b6e021c68a2c7275649770d3f8277c120d2b801a2b9a64fc')
-        expect(event).toHaveProperty('kind', 0)
-        resolveEvent()
-      },
-      oneose() {
-        resolveEose()
+        expect(event).toHaveProperty('pubkey', pk)
+        expect(event).toHaveProperty('kind', kind)
+
+        relay.close()
+        mockRelay.stop()
+
+        done()
       },
     },
   )
+})
 
-  await eosed
-  await evented
-}, 10000)
+test('listening and publishing and closing', async done => {
+  const sk = generateSecretKey()
+  const pk = getPublicKey(sk)
+  const kind = 23571
 
-test('listening and publishing and closing', async () => {
+  const mockRelayURL = 'wss://mock.relay.url'
+  const mockRelay = new Server(mockRelayURL)
+
+  mockRelay.on('connection', socket => {
+    let subId: string | null = null
+
+    socket.on('message', message => {
+      const data = JSON.parse(message as string)
+
+      if (data[0] === 'REQ') {
+        subId = data[1]
+        socket.send(JSON.stringify(['EOSE', data[1]]))
+      } else if (data[0] === 'EVENT') {
+        socket.send(JSON.stringify(['OK', data[1].id, 'true']))
+
+        socket.send(JSON.stringify(['EVENT', subId, data[1]]))
+      }
+    })
+  })
+
+  const relay = new Relay(mockRelayURL)
   await relay.connect()
-
-  let sk = generateSecretKey()
-  let pk = getPublicKey(sk)
-  let resolveEose: (_: void) => void
-  let resolveEvent: (_: void) => void
-  let resolveClose: (_: void) => void
-  let eventReceived: NostrEvent | undefined
-
-  const eosed = new Promise(resolve => {
-    resolveEose = resolve
-  })
-  const evented = new Promise(resolve => {
-    resolveEvent = resolve
-  })
-  const closed = new Promise(resolve => {
-    resolveClose = resolve
-  })
 
   let sub = relay.subscribe(
     [
       {
-        kinds: [23571],
+        kinds: [kind],
         authors: [pk],
       },
     ],
     {
       onevent(event) {
-        eventReceived = event
-        resolveEvent()
+        expect(event).toHaveProperty('pubkey', pk)
+        expect(event).toHaveProperty('kind', kind)
+        expect(event).toHaveProperty('content', 'content')
+
+        sub.close()
       },
-      oneose() {
-        resolveEose()
-      },
+      oneose() {},
       onclose() {
-        resolveClose()
+        relay.close()
+        mockRelay.stop()
+
+        done()
       },
     },
   )
 
-  await eosed
-
-  let event = finalizeEvent(
-    {
-      kind: 23571,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: [],
-      content: 'nostr-tools test suite',
-    },
-    sk,
+  relay.publish(
+    finalizeEvent(
+      {
+        kind,
+        content: 'content',
+        created_at: 0,
+        tags: [],
+      },
+      sk,
+    ),
   )
-
-  await relay.publish(event)
-  await evented
-  sub.close()
-  await closed
-
-  expect(eventReceived).toBeDefined()
-  expect(eventReceived).toHaveProperty('pubkey', pk)
-  expect(eventReceived).toHaveProperty('kind', 23571)
-  expect(eventReceived).toHaveProperty('content', 'nostr-tools test suite')
 })
