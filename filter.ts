@@ -81,8 +81,7 @@ export function getFilterLimit(filter: Filter): number {
   return Math.min(
     Math.max(0, filter.limit ?? Infinity),
     filter.ids?.length ?? Infinity,
-    filter.authors?.length &&
-      filter.kinds?.every((kind) => isReplaceableKind(kind))
+    filter.authors?.length && filter.kinds?.every(kind => isReplaceableKind(kind))
       ? filter.authors.length * filter.kinds.length
       : Infinity,
   )

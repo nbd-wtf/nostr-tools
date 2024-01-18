@@ -43,7 +43,7 @@ function onExpire(event: Event, callback: (event: Event) => void): void {
 
 /** Resolves when the given number of milliseconds have elapsed. */
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export { getExpiration, isEventExpired, waitForExpire, onExpire }
