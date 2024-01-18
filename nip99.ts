@@ -1,6 +1,5 @@
 import { Event, EventTemplate } from './core.ts'
 import { ClassifiedListing, DraftClassifiedListing } from './kinds.ts'
-import { finalizeEvent, generateSecretKey } from './pure.ts'
 
 /**
  * Represents the details of a price.
