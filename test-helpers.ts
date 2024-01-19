@@ -18,12 +18,23 @@ export function buildEvent(params: Partial<Event>): Event {
 
 let serial = 0
 
-// the mock relay will always return 3 events before eose and then do ok with everything
-export function newMockRelay(): { url: string; authors: string[] } {
+// the mock relay will always return some events before eose and then be ok with everything
+export function newMockRelay(): { url: string; authors: string[]; ids: string[] } {
   serial++
   const url = `wss://mock.relay.url/${serial}`
   const relay = new Server(url)
   const secretKeys = [generateSecretKey(), generateSecretKey(), generateSecretKey(), generateSecretKey()]
+  const preloadedEvents = secretKeys.map(sk =>
+    finalizeEvent(
+      {
+        kind: 1,
+        content: '',
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [],
+      },
+      sk,
+    ),
+  )
 
   relay.on('connection', (conn: any) => {
     let subs: { [subId: string]: { conn: any; filters: Filter[] } } = {}
@@ -35,6 +46,11 @@ export function newMockRelay(): { url: string; authors: string[] } {
           let subId = data[1]
           let filters = data.slice(2)
           subs[subId] = { conn, filters }
+
+          preloadedEvents.forEach(event => {
+            conn.send(JSON.stringify(['EVENT', subId, event]))
+          })
+
           filters.forEach((filter: Filter) => {
             const kinds = filter.kinds?.length ? filter.kinds : [1]
             kinds.forEach(kind => {
@@ -75,5 +91,5 @@ export function newMockRelay(): { url: string; authors: string[] } {
     })
   })
 
-  return { url, authors: secretKeys.map(getPublicKey) }
+  return { url, authors: secretKeys.map(getPublicKey), ids: preloadedEvents.map(evt => evt.id) }
 }

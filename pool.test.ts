@@ -3,13 +3,17 @@ import { test, expect, afterAll } from 'bun:test'
 import { finalizeEvent, type Event } from './pure.ts'
 import { generateSecretKey, getPublicKey } from './pure.ts'
 import { SimplePool } from './pool.ts'
+import { newMockRelay } from './test-helpers.ts'
 
 let pool = new SimplePool()
 
-let relays = ['wss://relay.damus.io/', 'wss://relay.nostr.bg/', 'wss://nos.lol', 'wss://public.relaying.io']
+let mockRelays = [newMockRelay(), newMockRelay(), newMockRelay(), newMockRelay()]
+let relays = mockRelays.map(mr => mr.url)
+let authors = mockRelays.flatMap(mr => mr.authors)
+let ids = mockRelays.flatMap(mr => mr.ids)
 
 afterAll(() => {
-  pool.close([...relays, 'wss://offchain.pub', 'wss://eden.nostr.land'])
+  pool.close(relays)
 })
 
 test('removing duplicates when subscribing', async () => {
@@ -80,8 +84,8 @@ test('query a bunch of events and cancel on eose', async () => {
   let events = new Set<string>()
   await new Promise<void>(resolve => {
     pool.subscribeManyEose(
-      [...relays, 'wss://relayable.org', 'wss://relay.noswhere.com', 'wss://nothing.com'],
-      [{ kinds: [0, 1], limit: 40 }],
+      [...relays, ...relays, 'wss://relayable.org', 'wss://relay.noswhere.com', 'wss://nothing.com'],
+      [{ kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 }],
       {
         onevent(event) {
           events.add(event.id)
@@ -94,11 +98,14 @@ test('query a bunch of events and cancel on eose', async () => {
 })
 
 test('querySync()', async () => {
-  let events = await pool.querySync([...relays.slice(2), 'wss://offchain.pub', 'wss://eden.nostr.land'], {
-    authors: ['3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'],
-    kinds: [1],
-    limit: 2,
-  })
+  let events = await pool.querySync(
+    [...relays.slice(0, 2), ...relays.slice(0, 2), 'wss://offchain.pub', 'wss://eden.nostr.land'],
+    {
+      authors: authors.slice(0, 2),
+      kinds: [1],
+      limit: 2,
+    },
+  )
 
   // the actual received number will be greater than 2, but there will be no duplicates
   expect(events.length).toBeGreaterThan(2)
@@ -108,9 +115,9 @@ test('querySync()', async () => {
 
 test('get()', async () => {
   let event = await pool.get(relays, {
-    ids: ['9fa1c618fcaad6357e074417b07ed132b083ed30e13113ebb10fcda7137442fe'],
+    ids: [ids[0]],
   })
 
   expect(event).not.toBeNull()
-  expect(event).toHaveProperty('id', '9fa1c618fcaad6357e074417b07ed132b083ed30e13113ebb10fcda7137442fe')
+  expect(event).toHaveProperty('id', ids[0])
 })
