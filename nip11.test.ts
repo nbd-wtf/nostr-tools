@@ -2,6 +2,7 @@ import { describe, test, expect } from 'bun:test'
 import fetch from 'node-fetch'
 import { useFetchImplementation, fetchRelayInformation } from './nip11'
 
+// TODO: replace with a mock
 describe('requesting relay as for NIP11', () => {
   useFetchImplementation(fetch)
 

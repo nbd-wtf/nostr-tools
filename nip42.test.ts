@@ -1,14 +1,16 @@
-import { test, expect } from 'bun:test'
+import { expect, test } from 'bun:test'
 
 import { makeAuthEvent } from './nip42.ts'
 import { Relay } from './relay.ts'
+import { MockRelay } from './test-helpers.ts'
 
 test('auth flow', async () => {
-  const relay = await Relay.connect('wss://nostr.wine')
-
+  const mockRelay = new MockRelay()
+  const relay = await Relay.connect(mockRelay.getUrl())
   const auth = makeAuthEvent(relay.url, 'chachacha')
+
   expect(auth.tags).toHaveLength(2)
-  expect(auth.tags[0]).toEqual(['relay', 'wss://nostr.wine/'])
+  expect(auth.tags[0]).toEqual(['relay', mockRelay.getUrl()])
   expect(auth.tags[1]).toEqual(['challenge', 'chachacha'])
   expect(auth.kind).toEqual(22242)
 })
