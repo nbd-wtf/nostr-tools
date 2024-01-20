@@ -2,40 +2,40 @@ import type { Event } from './pure'
 
 export type Group = {
   id: string
+  relay: string
   name?: string
   picture?: string
   about?: string
-  relay?: string
   public?: boolean
   open?: boolean
 }
 
-export function parseGroup(event: Event): Group {
-  const chan: Partial<Group> = {}
+export function parseGroup(event: Event, relay: string): Group {
+  const group: Partial<Group> = { relay }
   for (let i = 0; i < event.tags.length; i++) {
     const tag = event.tags[i]
     switch (tag[0]) {
       case 'd':
-        chan.id = tag[1] || ''
+        group.id = tag[1] || ''
         break
       case 'name':
-        chan.name = tag[1] || ''
+        group.name = tag[1] || ''
         break
       case 'about':
-        chan.about = tag[1] || ''
+        group.about = tag[1] || ''
         break
       case 'picture':
-        chan.picture = tag[1] || ''
+        group.picture = tag[1] || ''
         break
       case 'open':
-        chan.open = true
+        group.open = true
         break
       case 'public':
-        chan.public = true
+        group.public = true
         break
     }
   }
-  return chan as Group
+  return group as Group
 }
 
 export type Member = {
