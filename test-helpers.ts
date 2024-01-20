@@ -35,8 +35,8 @@ export class MockRelay {
   private _secretKeys: Uint8Array[]
   private _preloadedEvents: Event[]
 
-  constructor() {
-    this._url = `wss://mock.relay.url/`
+  constructor(url?: string | undefined) {
+    this._url = url ?? `wss://random.mock.relay/${Math.floor(Math.random() * 100)}`
     this._server = new Server(this._url)
     this._secretKeys = [generateSecretKey(), generateSecretKey(), generateSecretKey(), generateSecretKey()]
     this._preloadedEvents = this._secretKeys.map(sk =>
