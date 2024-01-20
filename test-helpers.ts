@@ -16,30 +16,20 @@ export function buildEvent(params: Partial<Event>): Event {
   }
 }
 
-/**
- * A mock Relay class for testing purposes.
- * This mock relay returns some events before eose and then will be ok with everything.
- * @class
- * @example
- * const mockRelay = new MockRelay()
- * const relay = new Relay(mockRelay.getUrl())
- * await relay.connect()
- * // Do some testing
- * relay.close()
- * mockRelay.close()
- * mockRelay.stop()
- */
+let serial = 0
+
 export class MockRelay {
-  private _url: string
   private _server: Server
-  private _secretKeys: Uint8Array[]
-  private _preloadedEvents: Event[]
+
+  public url: string
+  public secretKeys: Uint8Array[]
+  public preloadedEvents: Event[]
 
   constructor(url?: string | undefined) {
-    this._url = url ?? `wss://random.mock.relay/${Math.floor(Math.random() * 10000)}`
-    this._server = new Server(this._url)
-    this._secretKeys = [generateSecretKey(), generateSecretKey(), generateSecretKey(), generateSecretKey()]
-    this._preloadedEvents = this._secretKeys.map(sk =>
+    serial++
+    this.url = url ?? `wss://random.mock.relay/${serial}`
+    this.secretKeys = [generateSecretKey(), generateSecretKey(), generateSecretKey(), generateSecretKey()]
+    this.preloadedEvents = this.secretKeys.map(sk =>
       finalizeEvent(
         {
           kind: 1,
@@ -51,6 +41,7 @@ export class MockRelay {
       ),
     )
 
+    this._server = new Server(this.url)
     this._server.on('connection', (conn: any) => {
       let subs: { [subId: string]: { conn: any; filters: Filter[] } } = {}
 
@@ -63,7 +54,7 @@ export class MockRelay {
             let filters = data.slice(2)
             subs[subId] = { conn, filters }
 
-            this._preloadedEvents.forEach(event => {
+            this.preloadedEvents.forEach(event => {
               conn.send(JSON.stringify(['EVENT', subId, event]))
             })
 
@@ -71,7 +62,7 @@ export class MockRelay {
               const kinds = filter.kinds?.length ? filter.kinds : [1]
 
               kinds.forEach(kind => {
-                this._secretKeys.forEach(sk => {
+                this.secretKeys.forEach(sk => {
                   const event = finalizeEvent(
                     {
                       kind,
@@ -117,41 +108,11 @@ export class MockRelay {
     })
   }
 
-  /**
-   * Get the URL of the mock relay.
-   * @returns The URL of the mock relay.
-   */
-  getUrl() {
-    return this._url
+  get authors() {
+    return this.secretKeys.map(getPublicKey)
   }
 
-  /**
-   * Get the public keys of the authors of the events.
-   * @returns An array of public keys.
-   */
-  getAuthors() {
-    return this._secretKeys.map(getPublicKey)
-  }
-
-  /**
-   * Get the IDs of the events.
-   * @returns An array of event IDs.
-   */
-  getEventsIds() {
-    return this._preloadedEvents.map(evt => evt.id)
-  }
-
-  /**
-   * Close the mock relay server.
-   */
-  close() {
-    this._server.close()
-  }
-
-  /**
-   * Stop the mock relay server.
-   */
-  stop() {
-    this._server.stop()
+  get ids() {
+    return this.preloadedEvents.map(evt => evt.id)
   }
 }

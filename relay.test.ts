@@ -7,52 +7,39 @@ import { MockRelay } from './test-helpers.ts'
 test('connectivity', async () => {
   const mockRelay = new MockRelay()
 
-  const relay = new Relay(mockRelay.getUrl())
+  const relay = new Relay(mockRelay.url)
   await relay.connect()
 
   expect(relay.connected).toBeTrue()
 
   relay.close()
-  mockRelay.close()
-  mockRelay.stop()
 })
 
 test('connectivity, with Relay.connect()', async () => {
   const mockRelay = new MockRelay()
-
-  const relay = await Relay.connect(mockRelay.getUrl())
-
+  const relay = await Relay.connect(mockRelay.url)
   expect(relay.connected).toBeTrue()
-
   relay.close()
-  mockRelay.close()
-  mockRelay.stop()
 })
 
 test('querying', async done => {
   const mockRelay = new MockRelay()
-
   const kind = 0
-
-  const relay = new Relay(mockRelay.getUrl())
+  const relay = new Relay(mockRelay.url)
   await relay.connect()
-
   relay.subscribe(
     [
       {
-        authors: mockRelay.getAuthors(),
+        authors: mockRelay.authors,
         kinds: [kind],
       },
     ],
     {
       onevent(event) {
-        expect(mockRelay.getAuthors()).toContain(event.pubkey)
+        expect(mockRelay.authors).toContain(event.pubkey)
         expect(event).toHaveProperty('kind', kind)
 
         relay.close()
-        mockRelay.close()
-        mockRelay.stop()
-
         done()
       },
     },
@@ -66,7 +53,7 @@ test('listening and publishing and closing', async done => {
   const pk = getPublicKey(sk)
   const kind = 23571
 
-  const relay = new Relay(mockRelay.getUrl())
+  const relay = new Relay(mockRelay.url)
   await relay.connect()
 
   let sub = relay.subscribe(
@@ -86,10 +73,6 @@ test('listening and publishing and closing', async done => {
       },
       onclose() {
         relay.close()
-
-        mockRelay.close()
-        mockRelay.stop()
-
         done()
       },
     },

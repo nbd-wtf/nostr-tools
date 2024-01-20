@@ -11,16 +11,11 @@ let relayURLs: string[]
 beforeEach(() => {
   pool = new SimplePool()
   mockRelays = Array.from({ length: 10 }, () => new MockRelay())
-  relayURLs = mockRelays.map(mr => mr.getUrl())
+  relayURLs = mockRelays.map(mr => mr.url)
 })
 
 afterEach(() => {
   pool.close(relayURLs)
-
-  for (let mr of mockRelays) {
-    mr.close()
-    mr.stop()
-  }
 })
 
 test('removing duplicates when subscribing', async () => {
@@ -102,7 +97,7 @@ test('query a bunch of events and cancel on eose', async () => {
 })
 
 test('querySync()', async () => {
-  let authors = mockRelays.flatMap(mr => mr.getAuthors())
+  let authors = mockRelays.flatMap(mr => mr.authors)
 
   let events = await pool.querySync(relayURLs, {
     authors: authors,
@@ -118,7 +113,7 @@ test('querySync()', async () => {
 })
 
 test('get()', async () => {
-  let ids = mockRelays.flatMap(mr => mr.getEventsIds())
+  let ids = mockRelays.flatMap(mr => mr.ids)
 
   let event = await pool.get(relayURLs, {
     ids: [ids[0]],
