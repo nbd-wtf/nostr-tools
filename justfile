@@ -3,6 +3,7 @@ export PATH := "./node_modules/.bin:" + env_var('PATH')
 build:
   rm -rf lib
   bun run build.js
+  tsc
 
 test:
   bun test --timeout 20000
@@ -10,10 +11,7 @@ test:
 test-only file:
   bun test {{file}}
 
-emit-types:
-  tsc # see tsconfig.json
-
-publish: build emit-types
+publish: build
   npm publish
 
 format:
