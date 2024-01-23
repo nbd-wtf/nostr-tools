@@ -274,3 +274,7 @@ To develop `nostr-tools`, install [`just`](https://just.systems/) and run `just 
 ## License
 
 This is free and unencumbered software released into the public domain. By submitting patches to this project, you agree to dedicate any and all copyright interest in this software to the public domain.
+
+## Contributing to this repository
+
+Use NIP-34 to send your patches to `naddr1qq9kummnw3ez6ar0dak8xqg5waehxw309aex2mrp0yhxummnw3ezucn8qyt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgq3q80cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsxpqqqpmejdv00jq`.
