@@ -220,6 +220,6 @@
     "typescript": "^5.0.4"
   },
   "scripts": {
-    "prepublish": "just build && just emit-types"
+    "prepublish": "just build"
   }
 }

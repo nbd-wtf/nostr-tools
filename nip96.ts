@@ -242,7 +242,7 @@ export async function readServerConfig(serverUrl: string): Promise<ServerConfigu
       throw new Error(`Error fetching ${fetchUrl}: ${response.statusText}`)
     }
 
-    const data = await response.json()
+    const data: any = await response.json()
 
     if (!data) {
       throw new Error('No data')
