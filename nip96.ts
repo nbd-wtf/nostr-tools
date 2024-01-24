@@ -235,28 +235,27 @@ export async function readServerConfig(serverUrl: string): Promise<ServerConfigu
     throw new Error('Invalid URL')
   }
 
-  return fetch(fetchUrl)
-    .then(response => response.json())
-    .then(data => {
-      if (!data) {
-        throw new Error('No data')
-      }
+  try {
+    const response = await fetch(fetchUrl)
 
-      try {
-        const parsedData = JSON.parse(data)
+    if (!response.ok) {
+      throw new Error(`Error fetching ${fetchUrl}: ${response.statusText}`)
+    }
 
-        if (!validateServerConfiguration(parsedData)) {
-          throw new Error('Invalid configuration data')
-        }
+    const data = await response.json()
 
-        return parsedData
-      } catch (_) {
-        throw new Error('Error parsing JSON data')
-      }
-    })
-    .catch(error => {
-      throw new Error(`Error fetching ${fetchUrl}: ${error.message}`)
-    })
+    if (!data) {
+      throw new Error('No data')
+    }
+
+    if (!validateServerConfiguration(data)) {
+      throw new Error('Invalid configuration data')
+    }
+
+    return data
+  } catch (_) {
+    throw new Error(`Error fetching.`)
+  }
 }
 
 /**
