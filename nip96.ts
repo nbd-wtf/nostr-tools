@@ -384,15 +384,17 @@ export async function uploadFile(
     }
   }
 
-  // Parse the response
-  const parsedResponse = await response.json()
+  try {
+    const parsedResponse = await response.json()
 
-  // Validate the response
-  if (!validateFileUploadResponse(parsedResponse)) {
-    throw new Error('Invalid response from the server!')
+    if (!validateFileUploadResponse(parsedResponse)) {
+      throw new Error('Invalid response from the server!')
+    }
+
+    return parsedResponse
+  } catch (error) {
+    throw new Error('Error parsing JSON response!')
   }
-
-  return parsedResponse
 }
 
 /**
