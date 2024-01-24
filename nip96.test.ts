@@ -87,6 +87,22 @@ describe('readServerConfig', () => {
     server.close()
   })
 
+  it('should throw an error if response is not proper json', async () => {
+    // setup mock server
+    const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
+    const handler = http.get(`http://example.com${HTTPROUTE}`, () => {
+      return HttpResponse.json(null)
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    expect(readServerConfig('http://example.com/')).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
   it('should throw an error if response status is not 200', async () => {
     // setup mock server
     const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
@@ -153,10 +169,33 @@ describe('validateFileUploadResponse', () => {
     expect(result).toBe(false)
   })
 
+  it('should return false if "message" is not a string', () => {
+    const mockResponse = {
+      status: 'error',
+      message: 123,
+    }
+
+    const result = validateFileUploadResponse(mockResponse)
+
+    expect(result).toBe(false)
+  })
+
   it('should return false if status is "processing" and "processing_url" is undefined', () => {
     const mockResponse = {
       status: 'processing',
       message: 'message',
+    }
+
+    const result = validateFileUploadResponse(mockResponse)
+
+    expect(result).toBe(false)
+  })
+
+  it('should return false if status is "processing" and "processing_url" is not a string', () => {
+    const mockResponse = {
+      status: 'processing',
+      message: 'message',
+      processing_url: 123,
     }
 
     const result = validateFileUploadResponse(mockResponse)
