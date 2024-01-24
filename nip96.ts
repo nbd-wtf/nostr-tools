@@ -431,8 +431,13 @@ export async function deleteFile(
   serverApiUrl: string,
   nip98AuthorizationHeader: string,
 ): Promise<any> {
+  // make sure the serverApiUrl ends with a slash
+  if (!serverApiUrl.endsWith('/')) {
+    serverApiUrl += '/'
+  }
+
   // Construct the URL for the delete request
-  const deleteUrl = `${serverApiUrl}/${fileHash}`
+  const deleteUrl = `${serverApiUrl}${fileHash}`
 
   // Send the DELETE request
   const response = await fetch(deleteUrl, {
