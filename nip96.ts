@@ -224,7 +224,7 @@ export function validateServerConfiguration(config: ServerConfiguration): boolea
  * @param serverUrl The URL of the server.
  * @returns The server configuration, or an error if the configuration could not be fetched or parsed.
  */
-export async function readServerConfig(serverUrl: string): Promise<ServerConfiguration | Error> {
+export async function readServerConfig(serverUrl: string): Promise<ServerConfiguration> {
   const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
   let fetchUrl = ''
 
@@ -232,7 +232,7 @@ export async function readServerConfig(serverUrl: string): Promise<ServerConfigu
     const { origin } = new URL(serverUrl)
     fetchUrl = origin + HTTPROUTE
   } catch (error) {
-    return new Error('Invalid URL')
+    throw new Error('Invalid URL')
   }
 
   return fetch(fetchUrl)
@@ -254,7 +254,9 @@ export async function readServerConfig(serverUrl: string): Promise<ServerConfigu
         throw new Error('Error parsing JSON data')
       }
     })
-    .catch(error => new Error(`Error fetching ${fetchUrl}: ${error.message}`))
+    .catch(error => {
+      throw new Error(`Error fetching ${fetchUrl}: ${error.message}`)
+    })
 }
 
 /**
