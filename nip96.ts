@@ -86,66 +86,9 @@ export type ServerConfiguration = {
 }
 
 /**
- * Validates the server configuration.
- *
- * @param config - The server configuration object.
- * @returns True if the configuration is valid, false otherwise.
- */
-export function validateServerConfiguration(config: ServerConfiguration): boolean {
-  if (Boolean(config.api_url) == false) {
-    return false
-  }
-
-  if (Boolean(config.delegated_to_url) && Boolean(config.api_url)) {
-    return false
-  }
-
-  return true
-}
-
-/**
- * Fetches, parses, and validates the server configuration from the given URL.
- *
- * @param serverUrl The URL of the server.
- * @returns The server configuration, or an error if the configuration could not be fetched or parsed.
- */
-export async function readServerConfig(serverUrl: string): Promise<ServerConfiguration | Error> {
-  const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
-  let fetchUrl = ''
-
-  try {
-    const { origin } = new URL(serverUrl)
-    fetchUrl = origin + HTTPROUTE
-  } catch (error) {
-    return new Error('Invalid URL')
-  }
-
-  return fetch(fetchUrl)
-    .then(response => response.json())
-    .then(data => {
-      if (!data) {
-        throw new Error('No data')
-      }
-
-      try {
-        const parsedData = JSON.parse(data)
-
-        if (!validateServerConfiguration(parsedData)) {
-          throw new Error('Invalid configuration data')
-        }
-
-        return parsedData
-      } catch (_) {
-        throw new Error('Error parsing JSON data')
-      }
-    })
-    .catch(error => new Error(`Error fetching ${fetchUrl}: ${error.message}`))
-}
-
-/**
  * Represents the optional form data fields for file upload in accordance with NIP-96.
  */
-type OptionalFormDataFields = {
+export type OptionalFormDataFields = {
   /**
    * Specifies the desired expiration time of the file on the server.
    * It should be a string representing a UNIX timestamp in seconds.
@@ -233,6 +176,85 @@ export type FileUploadResponse = {
      */
     content: string
   }
+}
+
+/**
+ * Type representing the response from a NIP-96 compliant server after a delayed processing request.
+ */
+export type DelayedProcessingResponse = {
+  /**
+   * The status of the delayed processing request.
+   * - 'processing': Indicates the file is still being processed.
+   * - 'error': Indicates there was an error in the processing.
+   */
+  status: 'processing' | 'error'
+
+  /**
+   * A message provided by the server, which could be a success message or error description.
+   */
+  message: string
+
+  /**
+   * The percentage of the file that has been processed. This is a number between 0 and 100.
+   */
+  percentage: number
+}
+
+/**
+ * Validates the server configuration.
+ *
+ * @param config - The server configuration object.
+ * @returns True if the configuration is valid, false otherwise.
+ */
+export function validateServerConfiguration(config: ServerConfiguration): boolean {
+  if (Boolean(config.api_url) == false) {
+    return false
+  }
+
+  if (Boolean(config.delegated_to_url) && Boolean(config.api_url)) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * Fetches, parses, and validates the server configuration from the given URL.
+ *
+ * @param serverUrl The URL of the server.
+ * @returns The server configuration, or an error if the configuration could not be fetched or parsed.
+ */
+export async function readServerConfig(serverUrl: string): Promise<ServerConfiguration | Error> {
+  const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
+  let fetchUrl = ''
+
+  try {
+    const { origin } = new URL(serverUrl)
+    fetchUrl = origin + HTTPROUTE
+  } catch (error) {
+    return new Error('Invalid URL')
+  }
+
+  return fetch(fetchUrl)
+    .then(response => response.json())
+    .then(data => {
+      if (!data) {
+        throw new Error('No data')
+      }
+
+      try {
+        const parsedData = JSON.parse(data)
+
+        if (!validateServerConfiguration(parsedData)) {
+          throw new Error('Invalid configuration data')
+        }
+
+        return parsedData
+      } catch (_) {
+        throw new Error('Error parsing JSON data')
+      }
+    })
+    .catch(error => new Error(`Error fetching ${fetchUrl}: ${error.message}`))
 }
 
 /**
@@ -429,28 +451,6 @@ export async function deleteFile(
   } catch (error) {
     throw new Error('Error parsing JSON response!')
   }
-}
-
-/**
- * Type representing the response from a NIP-96 compliant server after a delayed processing request.
- */
-export type DelayedProcessingResponse = {
-  /**
-   * The status of the delayed processing request.
-   * - 'processing': Indicates the file is still being processed.
-   * - 'error': Indicates there was an error in the processing.
-   */
-  status: 'processing' | 'error'
-
-  /**
-   * A message provided by the server, which could be a success message or error description.
-   */
-  message: string
-
-  /**
-   * The percentage of the file that has been processed. This is a number between 0 and 100.
-   */
-  percentage: number
 }
 
 /**
