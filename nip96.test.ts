@@ -1,17 +1,12 @@
-import {
-  // afterAll, afterEach, beforeAll,
-  describe,
-  expect,
-  it,
-} from 'bun:test'
-// import { setupServer } from 'msw/node'
-// import { http, HttpResponse } from 'msw'
+import { describe, expect, it } from 'bun:test'
+import { HttpResponse, http } from 'msw'
+import { setupServer } from 'msw/node'
 
 import { FileServerPreference } from './kinds.ts'
 import {
   calculateFileHash,
   // checkFileProcessingStatus,
-  // deleteFile,
+  deleteFile,
   generateDownloadUrl,
   generateFSPEventTemplate,
   // readServerConfig,
@@ -23,12 +18,6 @@ import {
   type FileUploadResponse,
   type ServerConfiguration,
 } from './nip96.ts'
-
-// const server = setupServer()
-
-// beforeAll(() => server.listen())
-// afterEach(() => server.resetHandlers())
-// afterAll(() => server.close())
 
 // OK
 describe('validateServerConfiguration', () => {
@@ -203,7 +192,48 @@ describe('generateDownloadUrl', () => {
   })
 })
 
-///////////// deleteFile
+// OK
+describe('deleteFile', () => {
+  it('should return a basic json response for successful delete', async () => {
+    // setup mock server
+    const handler = http.delete('http://example.com/delete/abc123', () => {
+      return HttpResponse.json({ status: 'success', message: 'File deleted.' }, { status: 200 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const fileHash = 'abc123'
+    const serverDeleteUrl = 'http://example.com/delete'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    const result = await deleteFile(fileHash, serverDeleteUrl, nip98AuthorizationHeader)
+
+    expect(result).toEqual({ status: 'success', message: 'File deleted.' })
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error for unsuccessful delete', async () => {
+    // setup mock server
+    const handler = http.delete('http://example.com/delete/abc123', () => {
+      return new HttpResponse(null, { status: 400 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const fileHash = 'abc123'
+    const serverDeleteUrl = 'http://example.com/delete'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(deleteFile(fileHash, serverDeleteUrl, nip98AuthorizationHeader)).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+})
 
 // OK
 describe('validateDelayedProcessingResponse', () => {
