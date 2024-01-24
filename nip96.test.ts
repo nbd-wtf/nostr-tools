@@ -5,12 +5,12 @@ import { setupServer } from 'msw/node'
 import { FileServerPreference } from './kinds.ts'
 import {
   calculateFileHash,
-  // checkFileProcessingStatus,
+  checkFileProcessingStatus,
   deleteFile,
   generateDownloadUrl,
   generateFSPEventTemplate,
-  // readServerConfig,
-  // uploadFile,
+  readServerConfig,
+  uploadFile,
   validateDelayedProcessingResponse,
   validateFileUploadResponse,
   validateServerConfiguration,
@@ -19,7 +19,6 @@ import {
   type ServerConfiguration,
 } from './nip96.ts'
 
-// OK
 describe('validateServerConfiguration', () => {
   it("should return true if 'api_url' is valid URL", () => {
     const config: ServerConfiguration = {
@@ -47,9 +46,68 @@ describe('validateServerConfiguration', () => {
   })
 })
 
-///////////// readServerConfig
+describe('readServerConfig', () => {
+  it('should return a valid ServerConfiguration object', async () => {
+    // setup mock server
+    const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
+    const validConfig: ServerConfiguration = {
+      api_url: 'http://example.com',
+    }
+    const handler = http.get(`http://example.com${HTTPROUTE}`, () => {
+      return HttpResponse.json(validConfig)
+    })
+    const server = setupServer(handler)
+    server.listen()
 
-// OK
+    const result = await readServerConfig('http://example.com/')
+
+    expect(result).toEqual(validConfig)
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error if response is not valid', async () => {
+    // setup mock server
+    const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
+    const invalidConfig = {
+      // missing api_url
+    }
+    const handler = http.get(`http://example.com${HTTPROUTE}`, () => {
+      return HttpResponse.json(invalidConfig)
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    expect(readServerConfig('http://example.com/')).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error if response status is not 200', async () => {
+    // setup mock server
+    const HTTPROUTE = '/.well-known/nostr/nip96.json' as const
+    const handler = http.get(`http://example.com${HTTPROUTE}`, () => {
+      return new HttpResponse(null, { status: 400 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    expect(readServerConfig('http://example.com/')).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error if input url is not valid', async () => {
+    expect(readServerConfig('invalid-url')).rejects.toThrow()
+  })
+})
+
 describe('validateFileUploadResponse', () => {
   it('should return true if response is valid', () => {
     const mockResponse: FileUploadResponse = {
@@ -166,9 +224,59 @@ describe('validateFileUploadResponse', () => {
   })
 })
 
-///////////// uploadFile
+describe('uploadFile', () => {
+  it('should return a valid FileUploadResponse object', async () => {
+    // setup mock server
+    const validFileUploadResponse: FileUploadResponse = {
+      status: 'success',
+      message: 'message',
+      nip94_event: {
+        content: '',
+        tags: [
+          ['url', 'http://example.com'],
+          ['ox', '719171db19525d9d08dd69cb716a18158a249b7b3b3ec4bbdec5698dca104b7b'],
+        ],
+      },
+    }
+    const handler = http.post('http://example.com/upload', () => {
+      return HttpResponse.json(validFileUploadResponse, { status: 200 })
+    })
+    const server = setupServer(handler)
+    server.listen()
 
-// OK
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    const result = await uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)
+
+    expect(result).toEqual(validFileUploadResponse)
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error if response status is not ok', async () => {
+    // setup mock server
+    const handler = http.post('http://example.com/upload', () => {
+      return new HttpResponse(null, { status: 400 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+})
+
 describe('generateDownloadUrl', () => {
   it('should generate a download URL without file extension', () => {
     const fileHash = 'abc123'
@@ -192,7 +300,6 @@ describe('generateDownloadUrl', () => {
   })
 })
 
-// OK
 describe('deleteFile', () => {
   it('should return a basic json response for successful delete', async () => {
     // setup mock server
@@ -235,7 +342,6 @@ describe('deleteFile', () => {
   })
 })
 
-// OK
 describe('validateDelayedProcessingResponse', () => {
   it('should return false for non-object input', () => {
     expect(validateDelayedProcessingResponse('not an object')).toBe(false)
@@ -288,9 +394,96 @@ describe('validateDelayedProcessingResponse', () => {
   })
 })
 
-///////////// checkFileProcessingStatus
+describe('checkFileProcessingStatus', () => {
+  it('should throw an error if response is not ok', async () => {
+    // setup mock server
+    const handler = http.get('http://example.com/status/abc123', () => {
+      return new HttpResponse(null, { status: 400 })
+    })
+    const server = setupServer(handler)
+    server.listen()
 
-// OK
+    const processingUrl = 'http://example.com/status/abc123'
+
+    expect(checkFileProcessingStatus(processingUrl)).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw an error if response is not a valid json', async () => {
+    // setup mock server
+    const handler = http.get('http://example.com/status/abc123', () => {
+      return HttpResponse.text('not a json', { status: 200 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const processingUrl = 'http://example.com/status/abc123'
+
+    expect(checkFileProcessingStatus(processingUrl)).rejects.toThrow()
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should return a valid DelayedProcessingResponse object if response status is 200', async () => {
+    // setup mock server
+    const validDelayedProcessingResponse: DelayedProcessingResponse = {
+      status: 'processing',
+      message: 'test',
+      percentage: 50,
+    }
+    const handler = http.get('http://example.com/status/abc123', () => {
+      return HttpResponse.json(validDelayedProcessingResponse, { status: 200 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const processingUrl = 'http://example.com/status/abc123'
+
+    const result = await checkFileProcessingStatus(processingUrl)
+
+    expect(result).toEqual(validDelayedProcessingResponse)
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should return a valid FileUploadResponse object if response status is 201', async () => {
+    // setup mock server
+    const validFileUploadResponse: FileUploadResponse = {
+      status: 'success',
+      message: 'message',
+      nip94_event: {
+        content: '',
+        tags: [
+          ['url', 'http://example.com'],
+          ['ox', '719171db19525d9d08dd69cb716a18158a249b7b3b3ec4bbdec5698dca104b7b'],
+        ],
+      },
+    }
+    const handler = http.get('http://example.com/status/abc123', () => {
+      return HttpResponse.json(validFileUploadResponse, { status: 201 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const processingUrl = 'http://example.com/status/abc123'
+
+    const result = await checkFileProcessingStatus(processingUrl)
+
+    expect(result).toEqual(validFileUploadResponse)
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+})
+
 describe('generateFSPEventTemplate', () => {
   it('should generate FSP event template', () => {
     const serverUrls = ['http://example.com', 'https://example.org']
@@ -323,7 +516,6 @@ describe('generateFSPEventTemplate', () => {
   })
 })
 
-// OK
 describe('calculateFileHash', () => {
   it('should calculate file hash', async () => {
     const file = new File(['hello world'], 'hello.txt')
