@@ -71,6 +71,7 @@ export const BlockedRelaysList = 10006
 export const SearchRelaysList = 10007
 export const InterestsList = 10015
 export const UserEmojiList = 10030
+export const FileServerPreference = 10096
 export const NWCWalletInfo = 13194
 export const LightningPubRPC = 21000
 export const ClientAuth = 22242
