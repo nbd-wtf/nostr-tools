@@ -3,7 +3,7 @@ import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
 
-const Bech32MaxSize = 5000
+export const Bech32MaxSize = 5000
 
 /**
  * Bech32 regex.
@@ -175,7 +175,7 @@ function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): 
   return bech32.encode(prefix, words, Bech32MaxSize) as `${Prefix}1${string}`
 }
 
-function encodeBytes<Prefix extends string>(prefix: Prefix, bytes: Uint8Array): `${Prefix}1${string}` {
+export function encodeBytes<Prefix extends string>(prefix: Prefix, bytes: Uint8Array): `${Prefix}1${string}` {
   return encodeBech32(prefix, bytes)
 }
 
