@@ -70,11 +70,6 @@
       "require": "./lib/cjs/nip04.js",
       "types": "./lib/types/nip04.d.ts"
     },
-    "./nip44": {
-      "import": "./lib/esm/nip44.js",
-      "require": "./lib/cjs/nip44.js",
-      "types": "./lib/types/nip44.d.ts"
-    },
     "./nip05": {
       "import": "./lib/esm/nip05.js",
       "require": "./lib/cjs/nip05.js",
@@ -150,15 +145,35 @@
       "require": "./lib/cjs/nip42.js",
       "types": "./lib/types/nip42.d.ts"
     },
+    "./nip44": {
+      "import": "./lib/esm/nip44.js",
+      "require": "./lib/cjs/nip44.js",
+      "types": "./lib/types/nip44.d.ts"
+    },
     "./nip57": {
       "import": "./lib/esm/nip57.js",
       "require": "./lib/cjs/nip57.js",
       "types": "./lib/types/nip57.d.ts"
     },
+    "./nip94": {
+      "import": "./lib/esm/nip94.js",
+      "require": "./lib/cjs/nip94.js",
+      "types": "./lib/types/nip94.d.ts"
+    },
+    "./nip96": {
+      "import": "./lib/esm/nip96.js",
+      "require": "./lib/cjs/nip96.js",
+      "types": "./lib/types/nip96.d.ts"
+    },
     "./nip98": {
       "import": "./lib/esm/nip98.js",
       "require": "./lib/cjs/nip98.js",
       "types": "./lib/types/nip98.d.ts"
+    },
+    "./nip99": {
+      "import": "./lib/esm/nip99.js",
+      "require": "./lib/cjs/nip99.js",
+      "types": "./lib/types/nip99.d.ts"
     },
     "./fakejson": {
       "import": "./lib/esm/fakejson.js",
