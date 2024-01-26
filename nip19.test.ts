@@ -11,6 +11,8 @@ import {
   type AddressPointer,
   type ProfilePointer,
   EventPointer,
+  nconnectEncode,
+  type ConnectPointer,
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {
@@ -160,4 +162,19 @@ test('encode and decode nrelay', () => {
   let { type, data } = decode(nrelay)
   expect(type).toEqual('nrelay')
   expect(data).toEqual(url)
+})
+
+test('encode and decode nconnect', () => {
+  let clientPubkey = getPublicKey(generateSecretKey())
+  let signerPubkey = getPublicKey(generateSecretKey())
+  let relays = ['wss://nostr.banana.com']
+  let nconnect = nconnectEncode({ clientPubkey, signerPubkey, relays, secret: 'yolo!' })
+  expect(nconnect).toMatch(/nconnect1\w+/)
+  let { type, data } = decode(nconnect)
+  expect(type).toEqual('nconnect')
+  const pointer = data as ConnectPointer
+  expect(pointer.clientPubkey).toEqual(clientPubkey)
+  expect(pointer.signerPubkey).toEqual(signerPubkey)
+  expect(pointer.relays).toContain(relays[0])
+  expect(pointer.secret).toEqual('yolo!')
 })

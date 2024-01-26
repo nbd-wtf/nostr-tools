@@ -43,6 +43,13 @@ export type AddressPointer = {
   relays?: string[]
 }
 
+export type ConnectPointer = {
+  clientPubkey: string
+  signerPubkey: string
+  relays: string[]
+  secret?: string
+}
+
 type Prefixes = {
   nprofile: ProfilePointer
   nrelay: string
@@ -51,6 +58,7 @@ type Prefixes = {
   nsec: Uint8Array
   npub: string
   note: string
+  nconnect: ConnectPointer
 }
 
 type DecodeValue<Prefix extends keyof Prefixes> = {
@@ -115,6 +123,25 @@ export function decode(nip19: string): DecodeResult {
           pubkey: bytesToHex(tlv[2][0]),
           kind: parseInt(bytesToHex(tlv[3][0]), 16),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
+        },
+      }
+    }
+
+    case 'nconnect': {
+      let tlv = parseTLV(data)
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nconnect')
+      if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for nconnect')
+      if (!tlv[2]?.[0]) throw new Error('missing TLV 2 for nconnect')
+      if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
+      if (tlv[1][0].length !== 32) throw new Error('TLV 1 should be 32 bytes')
+
+      return {
+        type: 'nconnect',
+        data: {
+          signerPubkey: bytesToHex(tlv[0][0]),
+          clientPubkey: bytesToHex(tlv[1][0]),
+          relays: tlv[2].map(d => utf8Decoder.decode(d)),
+          secret: tlv[3]?.[0] ? utf8Decoder.decode(tlv[3][0]) : undefined,
         },
       }
     }
@@ -221,6 +248,16 @@ export function nrelayEncode(url: string): `nrelay1${string}` {
     0: [utf8Encoder.encode(url)],
   })
   return encodeBech32('nrelay', data)
+}
+
+export function nconnectEncode(connect: ConnectPointer): `nconnect1${string}` {
+  let data = encodeTLV({
+    0: [hexToBytes(connect.signerPubkey)],
+    1: [hexToBytes(connect.clientPubkey)],
+    2: connect.relays.map(url => utf8Encoder.encode(url)),
+    3: connect.secret ? [utf8Encoder.encode(connect.secret)] : [],
+  })
+  return encodeBech32('nconnect', data)
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {
