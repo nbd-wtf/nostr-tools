@@ -296,7 +296,26 @@ describe('uploadFile', () => {
     server.close()
   })
 
-  it('should throw an error if response status is not ok', async () => {
+  it('should throw a proper error if response status is 413', async () => {
+    // setup mock server
+    const handler = http.post('http://example.com/upload', () => {
+      return new HttpResponse(null, { status: 413 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow('File too large!')
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw a proper error if response status is 400', async () => {
     // setup mock server
     const handler = http.post('http://example.com/upload', () => {
       return new HttpResponse(null, { status: 400 })
@@ -308,7 +327,70 @@ describe('uploadFile', () => {
     const serverUploadUrl = 'http://example.com/upload'
     const nip98AuthorizationHeader = 'Nostr abcabc'
 
-    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow()
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow(
+      'Bad request! Some fields are missing or invalid!',
+    )
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw a proper error if response status is 403', async () => {
+    // setup mock server
+    const handler = http.post('http://example.com/upload', () => {
+      return new HttpResponse(null, { status: 403 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow(
+      'Forbidden! Payload tag does not match the requested file!',
+    )
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw a proper error if response status is 402', async () => {
+    // setup mock server
+    const handler = http.post('http://example.com/upload', () => {
+      return new HttpResponse(null, { status: 402 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow('Payment required!')
+
+    // cleanup mock server
+    server.resetHandlers()
+    server.close()
+  })
+
+  it('should throw a proper error if response status is not 200, 400, 402, 403, 413', async () => {
+    // setup mock server
+    const handler = http.post('http://example.com/upload', () => {
+      return new HttpResponse(null, { status: 500 })
+    })
+    const server = setupServer(handler)
+    server.listen()
+
+    const file = new File(['hello world'], 'hello.txt')
+    const serverUploadUrl = 'http://example.com/upload'
+    const nip98AuthorizationHeader = 'Nostr abcabc'
+
+    expect(uploadFile(file, serverUploadUrl, nip98AuthorizationHeader)).rejects.toThrow(
+      'Unknown error in uploading file!',
+    )
 
     // cleanup mock server
     server.resetHandlers()

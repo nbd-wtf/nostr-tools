@@ -382,6 +382,9 @@ export async function uploadFile(
     if (response.status === 402) {
       throw new Error('Payment required!')
     }
+
+    // unknown error
+    throw new Error('Unknown error in uploading file!')
   }
 
   try {
