@@ -1,6 +1,6 @@
 import { schnorr } from '@noble/curves/secp256k1'
 import { bytesToHex } from '@noble/hashes/utils'
-import { Nostr, Event, EventTemplate, UnsignedEvent, VerifiedEvent, verifiedSymbol, validateEvent } from './core'
+import { Nostr, Event, EventTemplate, UnsignedEvent, VerifiedEvent, verifiedSymbol, validateEvent } from './core.ts'
 import { sha256 } from '@noble/hashes/sha256'
 
 import { utf8Encoder } from './utils.ts'
