@@ -236,7 +236,6 @@
     "msw": "^2.1.4",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
-    "tsd": "^0.22.0",
     "typescript": "^5.0.4"
   },
   "scripts": {
