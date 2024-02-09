@@ -21,9 +21,10 @@ export function useFetchImplementation(fetchImplementation: any) {
 
 export async function searchDomain(domain: string, query = ''): Promise<{ [name: string]: string }> {
   try {
-    let res = await (await _fetch(`https://${domain}/.well-known/nostr.json?name=${query}`)).json()
-
-    return res.names
+    const url = `https://${domain}/.well-known/nostr.json?name=${query}`
+    const res = await _fetch(url, { redirect: 'error' })
+    const json = await res.json()
+    return json.names
   } catch (_) {
     return {}
   }
@@ -36,7 +37,8 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   const [_, name = '_', domain] = match
 
   try {
-    const res = await _fetch(`https://${domain}/.well-known/nostr.json?name=${name}`)
+    const url = `https://${domain}/.well-known/nostr.json?name=${name}`
+    const res = await _fetch(url, { redirect: 'error' })
     const { names, relays } = parseNIP05Result(await res.json())
 
     const pubkey = names[name]
