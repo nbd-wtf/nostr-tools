@@ -38,46 +38,16 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
 
   try {
     const url = `https://${domain}/.well-known/nostr.json?name=${name}`
-    const res = await _fetch(url, { redirect: 'error' })
-    const { names, relays } = parseNIP05Result(await res.json())
+    const res = await (await _fetch(url, { redirect: 'error' })).json()
 
-    const pubkey = names[name]
-    return pubkey ? { pubkey, relays: relays?.[pubkey] } : null
+    let pubkey = res.names[name]
+    return pubkey ? { pubkey, relays: res.relays?.[pubkey] } : null
   } catch (_e) {
     return null
   }
 }
 
-/** nostr.json result. */
-export interface NIP05Result {
-  names: {
-    [name: string]: string
-  }
-  relays?: {
-    [pubkey: string]: string[]
-  }
-}
-
-/** Parse the nostr.json and throw if it's not valid. */
-function parseNIP05Result(json: any): NIP05Result {
-  const result: NIP05Result = {
-    names: {},
-  }
-
-  for (const [name, pubkey] of Object.entries(json.names)) {
-    if (typeof name === 'string' && typeof pubkey === 'string') {
-      result.names[name] = pubkey
-    }
-  }
-
-  if (json.relays) {
-    result.relays = {}
-    for (const [pubkey, relays] of Object.entries(json.relays)) {
-      if (typeof pubkey === 'string' && Array.isArray(relays)) {
-        result.relays[pubkey] = relays.filter((relay: unknown) => typeof relay === 'string')
-      }
-    }
-  }
-
-  return result
+export async function isValid(pubkey: string, nip05: string): Promise<boolean> {
+  let res = await queryProfile(nip05)
+  return res ? res.pubkey === pubkey : false
 }
