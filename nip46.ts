@@ -87,8 +87,15 @@ export class BunkerSigner {
    * @param remotePubkey - An optional remote public key. This is the key you want to sign as.
    * @param secretKey - An optional key pair.
    */
-  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer, params: { onauth?: (url: string) => void } = {}) {
-    this.pool = new SimplePool()
+  public constructor(
+    clientSecretKey: Uint8Array,
+    bp: BunkerPointer,
+    params: {
+      pool?: AbstractSimplePool
+      onauth?: (url: string) => void
+    } = {},
+  ) {
+    this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
     this.relays = bp.relays
     this.remotePubkey = bp.pubkey
@@ -183,7 +190,6 @@ export class BunkerSigner {
    *
    * @param remotePubkey - Optional the remote public key to connect to.
    * @param secret - Optional secret for additional authentication.
-   * @throws {Error} If no keys are found or no remote public key is found.
    * @returns "ack" if successful. The promise will reject if the response is not "ack".
    */
   async connect(): Promise<void> {
@@ -193,7 +199,6 @@ export class BunkerSigner {
   /**
    * Signs an event using the remote private key.
    * @param event - The event to sign.
-   * @throws {Error} If no keys are found or no remote public key is found.
    * @returns A Promise that resolves to the signed event.
    */
   async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
@@ -213,7 +218,7 @@ export class BunkerSigner {
  * @param username - The username for the account.
  * @param domain - The domain for the account.
  * @param email - The optional email for the account.
- * @throws Error if no keys are found, no remote public key is found, or the email is present but invalid.
+ * @throws Error if the email is present but invalid.
  * @returns A Promise that resolves to the auth_url that the client should follow to create an account.
  */
 export async function createAccount(
