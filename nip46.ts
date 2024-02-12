@@ -115,12 +115,16 @@ export class BunkerSigner {
       [{ kinds: [NostrConnect, NostrConnectAdmin], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
-          const decryptedContent = await decrypt(clientSecretKey, event.pubkey, event.content)
-          const parsedContent = JSON.parse(decryptedContent)
-          const { id, result, error } = parsedContent
+          const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
 
           if (result === 'auth_url') {
-            params.onauth?.(error)
+            if (params.onauth) {
+              params.onauth(error)
+            } else {
+              console.warn(
+                `nostr-tools/nip46: remote signer ${bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
+              )
+            }
             return
           }
 
@@ -207,10 +211,10 @@ export class BunkerSigner {
   async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
-    if (signed.pubkey === getPublicKey(this.secretKey) && verifyEvent(signed)) {
+    if (signed.pubkey === this.remotePubkey && verifyEvent(signed)) {
       return signed
     } else {
-      throw new Error(`event returned from bunker is improperly signed: ${signed}`)
+      throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
     }
   }
 }
