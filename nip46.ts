@@ -16,7 +16,7 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export const BUNKER_REGEX = /^bunker:\/\/[0-9a-f]{64}\??[?\/\w:.=&%]*$/
+export const BUNKER_REGEX = /^bunker:\/\/([0-9a-f]{64})\??([?\/\w:.=&%]*)$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export type BunkerPointer = {
@@ -31,11 +31,12 @@ export async function parseBunkerInput(input: string): Promise<BunkerPointer | n
   let match = input.match(BUNKER_REGEX)
   if (match) {
     try {
-      const bunkerURL = new URL(input)
+      const pubkey = match[1]
+      const qs = new URLSearchParams(match[2])
       return {
-        pubkey: bunkerURL.host,
-        relays: bunkerURL.searchParams.getAll('relay'),
-        secret: bunkerURL.searchParams.get('secret'),
+        pubkey,
+        relays: qs.getAll('relay'),
+        secret: qs.get('secret'),
       }
     } catch (_err) {
       /* just move to the next case */
