@@ -78,6 +78,7 @@ export const ClientAuth = 22242
 export const NWCWalletRequest = 23194
 export const NWCWalletResponse = 23195
 export const NostrConnect = 24133
+export const NostrConnectAdmin = 24134
 export const HTTPAuth = 27235
 export const Followsets = 30000
 export const Genericlists = 30001

@@ -4,7 +4,7 @@ import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 import { decrypt, encrypt } from './nip04.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
-import { Handlerinformation, NostrConnect } from './kinds.ts'
+import { Handlerinformation, NostrConnect, NostrConnectAdmin } from './kinds.ts'
 
 var _fetch: any
 
@@ -87,7 +87,7 @@ export class BunkerSigner {
    * @param remotePubkey - An optional remote public key. This is the key you want to sign as.
    * @param secretKey - An optional key pair.
    */
-  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer) {
+  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer, params: { onauth?: (url: string) => void } = {}) {
     this.pool = new SimplePool()
     this.secretKey = clientSecretKey
     this.relays = bp.relays
@@ -102,12 +102,17 @@ export class BunkerSigner {
 
     this.subCloser = this.pool.subscribeMany(
       this.relays,
-      [{ kinds: [NostrConnect, 24134], '#p': [getPublicKey(this.secretKey)] }],
+      [{ kinds: [NostrConnect, NostrConnectAdmin], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
           const decryptedContent = await decrypt(clientSecretKey, event.pubkey, event.content)
           const parsedContent = JSON.parse(decryptedContent)
           const { id, result, error } = parsedContent
+
+          if (result === 'auth_url') {
+            params.onauth?.(error)
+            return
+          }
 
           let handler = listeners[id]
           if (handler) {
@@ -143,7 +148,7 @@ export class BunkerSigner {
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(
           {
-            kind: method === 'create_account' ? 24134 : NostrConnect,
+            kind: method === 'create_account' ? NostrConnectAdmin : NostrConnect,
             tags: [['p', this.remotePubkey]],
             content: encryptedContent,
             created_at: Math.floor(Date.now() / 1000),
@@ -153,15 +158,6 @@ export class BunkerSigner {
 
         // setup callback listener
         this.listeners[id] = { resolve, reject }
-
-        // Build auth_url handler
-        // const authHandler = (response: Response) => {
-        //   if (response.result) {
-        //     this.emit('authChallengeSuccess', response)
-        //   } else {
-        //     this.emit('authChallengeError', response.error)
-        //   }
-        // }
 
         // publish the event
         await Promise.any(this.pool.publish(this.relays, verifiedEvent))
