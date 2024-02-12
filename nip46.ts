@@ -64,6 +64,11 @@ async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> 
   }
 }
 
+export type BunkerSignerParams = {
+  pool?: AbstractSimplePool
+  onauth?: (url: string) => void
+}
+
 export class BunkerSigner {
   private pool: AbstractSimplePool
   private subCloser: SubCloser
@@ -87,14 +92,7 @@ export class BunkerSigner {
    * @param remotePubkey - An optional remote public key. This is the key you want to sign as.
    * @param secretKey - An optional key pair.
    */
-  public constructor(
-    clientSecretKey: Uint8Array,
-    bp: BunkerPointer,
-    params: {
-      pool?: AbstractSimplePool
-      onauth?: (url: string) => void
-    } = {},
-  ) {
+  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer, params: BunkerSignerParams = {}) {
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
     this.relays = bp.relays
@@ -223,6 +221,7 @@ export class BunkerSigner {
  */
 export async function createAccount(
   bunker: BunkerProfile,
+  params: BunkerSignerParams,
   username: string,
   domain: string,
   email?: string,
@@ -230,7 +229,7 @@ export async function createAccount(
   if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
 
   let sk = generateSecretKey()
-  let rpc = new BunkerSigner(sk, bunker.bunkerPointer)
+  let rpc = new BunkerSigner(sk, bunker.bunkerPointer, params)
 
   let pubkey = await rpc.sendRequest('create_account', [username, domain, email || ''])
 
