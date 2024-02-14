@@ -285,7 +285,7 @@ export async function createAccount(
  * Fetches info on available providers that announce themselves using NIP-89 events.
  * @returns A promise that resolves to an array of available bunker objects.
  */
-export async function fetchCustodialbunkers(pool: AbstractSimplePool, relays: string[]): Promise<BunkerProfile[]> {
+export async function fetchCustodialBunkers(pool: AbstractSimplePool, relays: string[]): Promise<BunkerProfile[]> {
   const events = await pool.querySync(relays, {
     kinds: [Handlerinformation],
     '#k': [NostrConnect.toString()],
