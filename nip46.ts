@@ -5,6 +5,7 @@ import { decrypt, encrypt } from './nip04.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect, NostrConnectAdmin } from './kinds.ts'
+import { hexToBytes } from '@noble/hashes/utils'
 
 var _fetch: any
 
@@ -182,9 +183,8 @@ export class BunkerSigner {
   }
 
   /**
-   * Sends a ping request to the remote server.
-   * Requires permission/access rights to bunker.
-   * @returns "Pong" if successful. The promise will reject if the response is not "pong".
+   * Calls the "connect" method on the bunker.
+   * The promise will be rejected if the response is not "pong".
    */
   async ping(): Promise<void> {
     let resp = await this.sendRequest('ping', [])
@@ -192,15 +192,25 @@ export class BunkerSigner {
   }
 
   /**
-   * Connects to a remote server using the provided keys and remote public key.
-   * Optionally, a secret can be provided for additional authentication.
-   *
-   * @param remotePubkey - Optional the remote public key to connect to.
-   * @param secret - Optional secret for additional authentication.
-   * @returns "ack" if successful. The promise will reject if the response is not "ack".
+   * Calls the "connect" method on the bunker.
    */
   async connect(): Promise<void> {
     await this.sendRequest('connect', [getPublicKey(this.secretKey), this.connectionSecret])
+  }
+
+  /**
+   * This was supposed to call the "get_public_key" method on the bunker,
+   * but instead we just returns the public key we already know.
+   */
+  async getPublicKey(): Promise<string> {
+    return this.remotePubkey
+  }
+
+  /**
+   * Calls the "get_relays" method on the bunker.
+   */
+  async getRelays(): Promise<{ [relay: string]: { read: boolean; write: boolean } }> {
+    return JSON.parse(await this.sendRequest('get_relays', []))
   }
 
   /**
@@ -216,6 +226,27 @@ export class BunkerSigner {
     } else {
       throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
     }
+  }
+
+  async nip04Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string> {
+    return await this.sendRequest('nip04_encrypt', [thirdPartyPubkey, plaintext])
+  }
+
+  async nip04Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
+    return await this.sendRequest('nip04_decrypt', [thirdPartyPubkey, ciphertext])
+  }
+
+  async nip44GetKey(thirdPartyPubkey: string): Promise<Uint8Array> {
+    let resp = await this.sendRequest('nip44_get_key', [thirdPartyPubkey])
+    return hexToBytes(resp)
+  }
+
+  async nip44Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string> {
+    return await this.sendRequest('nip44_encrypt', [thirdPartyPubkey, plaintext])
+  }
+
+  async nip44Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
+    return await this.sendRequest('nip44_encrypt', [thirdPartyPubkey, ciphertext])
   }
 }
 
