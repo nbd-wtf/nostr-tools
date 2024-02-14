@@ -2,7 +2,10 @@ import { afterEach, beforeEach, expect, test } from 'bun:test'
 
 import { SimplePool } from './pool.ts'
 import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
-import { MockRelay } from './test-helpers.ts'
+import { useWebSocketImplementation } from './relay.ts'
+import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
+
+useWebSocketImplementation(MockWebSocketClient)
 
 let pool: SimplePool
 let mockRelays: MockRelay[]

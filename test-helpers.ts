@@ -1,7 +1,9 @@
-import { Server } from 'mock-socket'
+import { Server, WebSocket } from 'mock-socket'
 
 import { finalizeEvent, type Event, getPublicKey, generateSecretKey } from './pure.ts'
 import { matchFilters, type Filter } from './filter.ts'
+
+export const MockWebSocketClient = WebSocket
 
 export function buildEvent(params: Partial<Event>): Event {
   return {

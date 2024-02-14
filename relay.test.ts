@@ -1,8 +1,10 @@
 import { expect, test } from 'bun:test'
 
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
-import { Relay } from './relay.ts'
-import { MockRelay } from './test-helpers.ts'
+import { Relay, useWebSocketImplementation } from './relay.ts'
+import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
+
+useWebSocketImplementation(MockWebSocketClient)
 
 test('connectivity', async () => {
   const mockRelay = new MockRelay()
