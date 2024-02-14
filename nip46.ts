@@ -74,7 +74,6 @@ export type BunkerSignerParams = {
 export class BunkerSigner {
   private pool: AbstractSimplePool
   private subCloser: SubCloser
-  private relays: string[]
   private isOpen: boolean
   private serial: number
   private idPrefix: string
@@ -85,8 +84,7 @@ export class BunkerSigner {
     }
   }
   private secretKey: Uint8Array
-  private connectionSecret: string
-  public remotePubkey: string
+  public bp: BunkerPointer
 
   /**
    * Creates a new instance of the Nip46 class.
@@ -101,9 +99,7 @@ export class BunkerSigner {
 
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
-    this.relays = bp.relays
-    this.remotePubkey = bp.pubkey
-    this.connectionSecret = bp.secret || ''
+    this.bp = bp
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
     this.serial = 0
@@ -112,7 +108,7 @@ export class BunkerSigner {
     const listeners = this.listeners
 
     this.subCloser = this.pool.subscribeMany(
-      this.relays,
+      this.bp.relays,
       [{ kinds: [NostrConnect, NostrConnectAdmin], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
@@ -154,17 +150,13 @@ export class BunkerSigner {
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 
-        const encryptedContent = await encrypt(
-          this.secretKey,
-          this.remotePubkey,
-          JSON.stringify({ id, method, params }),
-        )
+        const encryptedContent = await encrypt(this.secretKey, this.bp.pubkey, JSON.stringify({ id, method, params }))
 
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(
           {
             kind: method === 'create_account' ? NostrConnectAdmin : NostrConnect,
-            tags: [['p', this.remotePubkey]],
+            tags: [['p', this.bp.pubkey]],
             content: encryptedContent,
             created_at: Math.floor(Date.now() / 1000),
           },
@@ -175,7 +167,7 @@ export class BunkerSigner {
         this.listeners[id] = { resolve, reject }
 
         // publish the event
-        await Promise.any(this.pool.publish(this.relays, verifiedEvent))
+        await Promise.any(this.pool.publish(this.bp.relays, verifiedEvent))
       } catch (err) {
         reject(err)
       }
@@ -195,7 +187,7 @@ export class BunkerSigner {
    * Calls the "connect" method on the bunker.
    */
   async connect(): Promise<void> {
-    await this.sendRequest('connect', [getPublicKey(this.secretKey), this.connectionSecret])
+    await this.sendRequest('connect', [getPublicKey(this.secretKey), this.bp.secret || ''])
   }
 
   /**
@@ -203,7 +195,7 @@ export class BunkerSigner {
    * but instead we just returns the public key we already know.
    */
   async getPublicKey(): Promise<string> {
-    return this.remotePubkey
+    return this.bp.pubkey
   }
 
   /**
@@ -221,7 +213,7 @@ export class BunkerSigner {
   async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
-    if (signed.pubkey === this.remotePubkey && verifyEvent(signed)) {
+    if (signed.pubkey === this.bp.pubkey && verifyEvent(signed)) {
       return signed
     } else {
       throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
@@ -275,7 +267,7 @@ export async function createAccount(
 
   // once we get the newly created pubkey back, we hijack this signer instance
   // and turn it into the main instance for this newly created pubkey
-  rpc.remotePubkey = pubkey
+  rpc.bp.pubkey = pubkey
   await rpc.connect()
 
   return rpc
