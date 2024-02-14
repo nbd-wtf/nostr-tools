@@ -170,6 +170,11 @@
       "require": "./lib/cjs/nip57.js",
       "types": "./lib/types/nip57.d.ts"
     },
+    "./nip75": {
+      "import": "./lib/esm/nip75.js",
+      "require": "./lib/cjs/nip75.js",
+      "types": "./lib/types/nip75.d.ts"
+    },
     "./nip94": {
       "import": "./lib/esm/nip94.js",
       "require": "./lib/cjs/nip94.js",
