@@ -92,10 +92,11 @@ await relay.publish(signedEvent)
 relay.close()
 ```
 
-To use this on Node.js you first must install `websocket-polyfill` and import it:
+To use this on Node.js you first must install `ws` and call something like this:
 
 ```js
-import 'websocket-polyfill'
+import { useWebSocketImplementation } from 'nostr-tools/relay'
+useWebSocketImplementation(require('ws'))
 ```
 
 ### Interacting with multiple relays

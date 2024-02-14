@@ -7,6 +7,16 @@ import { Queue, normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
+var _WebSocket: typeof WebSocket
+
+try {
+  _WebSocket = WebSocket
+} catch {}
+
+export function useWebSocketImplementation(websocketImplementation: any) {
+  _WebSocket = websocketImplementation
+}
+
 export class AbstractRelay {
   public readonly url: string
   private _connected: boolean = false
@@ -74,7 +84,7 @@ export class AbstractRelay {
       }, this.connectionTimeout)
 
       try {
-        this.ws = new WebSocket(this.url)
+        this.ws = new _WebSocket(this.url)
       } catch (err) {
         reject(err)
         return
