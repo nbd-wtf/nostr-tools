@@ -19,7 +19,7 @@ If using TypeScript, this package requires TypeScript >= 5.0.
 ### Generating a private key and a public key
 
 ```js
-import { generateSecretKey, getPublicKey } from 'nostr-tools'
+import { generateSecretKey, getPublicKey } from 'nostr-tools/pure'
 
 let sk = generateSecretKey() // `sk` is a Uint8Array
 let pk = getPublicKey(sk) // `pk` is a hex string
@@ -28,7 +28,7 @@ let pk = getPublicKey(sk) // `pk` is a hex string
 ### Creating, signing and verifying events
 
 ```js
-import { finalizeEvent, verifyEvent } from 'nostr-tools'
+import { finalizeEvent, verifyEvent } from 'nostr-tools/pure'
 
 let event = finalizeEvent({
   kind: 1,
@@ -43,7 +43,8 @@ let isGood = verifyEvent(event)
 ### Interacting with a relay
 
 ```js
-import { Relay, finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools'
+import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools/pure'
+import { Relay } from 'nostr-tools/relay'
 
 const relay = await Relay.connect('wss://relay.example.com')
 console.log(`connected to ${relay.url}`)
@@ -100,7 +101,7 @@ import 'websocket-polyfill'
 ### Interacting with multiple relays
 
 ```js
-import { SimplePool } from 'nostr-tools'
+import { SimplePool } from 'nostr-tools/pool'
 
 const pool = new SimplePool()
 
@@ -136,7 +137,7 @@ let event = await pool.get(relays, {
 ### Parsing references (mentions) from a content using NIP-10 and NIP-27
 
 ```js
-import { parseReferences } from 'nostr-tools'
+import { parseReferences } from 'nostr-tools/references'
 
 let references = parseReferences(event)
 let simpleAugmentedContent = event.content
@@ -156,9 +157,9 @@ for (let i = 0; i < references.length; i++) {
 ### Querying profile data from a NIP-05 address
 
 ```js
-import { nip05 } from 'nostr-tools'
+import { queryProfile } from 'nostr-tools/nip05'
 
-let profile = await nip05.queryProfile('jb55.com')
+let profile = await queryProfile('jb55.com')
 console.log(profile.pubkey)
 // prints: 32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245
 console.log(profile.relays)
@@ -168,13 +169,15 @@ console.log(profile.relays)
 To use this on Node.js < v18, you first must install `node-fetch@2` and call something like this:
 
 ```js
-nip05.useFetchImplementation(require('node-fetch'))
+import { useFetchImplementation } from 'nostr-tools/nip05'
+useFetchImplementation(require('node-fetch'))
 ```
 
 ### Encoding and decoding NIP-19 codes
 
 ```js
-import { nip19, generateSecretKey, getPublicKey } from 'nostr-tools'
+import { generateSecretKey, getPublicKey } from 'nostr-tools/pure'
+import * as nip19 from 'nostr-tools/nip19'
 
 let sk = generateSecretKey()
 let nsec = nip19.nsecEncode(sk)
@@ -195,21 +198,6 @@ let { type, data } = nip19.decode(nprofile)
 assert(type === 'nprofile')
 assert(data.pubkey === pk)
 assert(data.relays.length === 2)
-```
-
-## Import modes
-
-### Using just the packages you want
-
-Importing the entirety of `nostr-tools` may bloat your build, so you should probably import individual packages instead:
-
-```js
-import { generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/pure'
-import { SimplePool } from 'nostr-tools/pool'
-import { Relay, Subscription } from 'nostr-tools/relay'
-import { matchFilter } from 'nostr-tools/filter'
-import { decode, nprofileEncode, neventEncode, npubEncode } from 'nostr-tools/nip19'
-// and so on and so forth
 ```
 
 ### Using it with `nostr-wasm`
