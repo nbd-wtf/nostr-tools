@@ -83,6 +83,7 @@ export class BunkerSigner {
       reject: (_: string) => void
     }
   }
+  private waitingForAuth: { [id: string]: boolean }
   private secretKey: Uint8Array
   public bp: BunkerPointer
 
@@ -104,8 +105,10 @@ export class BunkerSigner {
     this.idPrefix = Math.random().toString(36).substring(7)
     this.serial = 0
     this.listeners = {}
+    this.waitingForAuth = {}
 
     const listeners = this.listeners
+    const waitingForAuth = this.waitingForAuth
 
     this.subCloser = this.pool.subscribeMany(
       this.bp.relays,
@@ -114,7 +117,9 @@ export class BunkerSigner {
         async onevent(event: NostrEvent) {
           const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
 
-          if (result === 'auth_url') {
+          if (result === 'auth_url' && waitingForAuth[id]) {
+            delete listeners[id]
+
             if (params.onauth) {
               params.onauth(error)
             } else {
@@ -165,6 +170,7 @@ export class BunkerSigner {
 
         // setup callback listener
         this.listeners[id] = { resolve, reject }
+        this.waitingForAuth[id] = true
 
         // publish the event
         await Promise.any(this.pool.publish(this.bp.relays, verifiedEvent))
