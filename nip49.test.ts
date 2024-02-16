@@ -79,10 +79,17 @@ const vectors: [string, string, number, 0x00 | 0x01 | 0x02, string][] = [
     'ncryptsec1qgqnx59n7duv6ec3hhrvn33q25u2qfd7m69vv6plsg7spnw6d4r9hq0ayjsnlw99eghqqzj8ps7vfwx40nqp9gpw7yzyy09jmwkq3a3z8q0ph5jahs2hap5k6h2wfrme7w2nuek4jnwpzfht4q3u79ra',
   ],
   [
-    '',
+    'ÅΩẛ̣',
     '11b25a101667dd9208db93c0827c6bdad66729a5b521156a7e9d3b22b3ae8944',
     9,
     0x01,
-    'ncryptsec1qgylzyeunu2j85au05ae0g0sly03xu54tgnjemr6g9w0eqwuuczya7k0f4juqve64vzsrlxqxmcekzrpvg2a8qu4q6wtjxe0dvy3xkjh5smmz4uy59jg0jay9vnf28e3rc6jq2kd26h6g3fejyw6cype',
+    'ncryptsec1qgy5kwr5v8p206vwaflp4g6r083kwts6q5sh8m4d0q56edpxwhrly78ema2z7jpdeldsz7u5wpxpyhs6m0405skdsep9n37uncw7xlc8q8meyw6d6ky47vcl0guhqpt5dx8ejxc8hvzf6y2gwsl5s0nw',
+  ],
+  [
+    'ÅΩṩ',
+    '11b25a101667dd9208db93c0827c6bdad66729a5b521156a7e9d3b22b3ae8944',
+    9,
+    0x01,
+    'ncryptsec1qgy5f4lcx873yarkfpngaudarxfj4wj939xn4azmd66j6jrwcml6av87d6vnelzn70kszgkg4lj9rsdjlqz0wn7m7456sr2q5yjpy72ykgkdwckevl857hpcfnwzswj9lajxtln0tsr9h7xdwqm6pqzf',
   ],
 ]
