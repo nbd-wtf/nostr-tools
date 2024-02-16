@@ -4,7 +4,7 @@ import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 import { decrypt, encrypt } from './nip04.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
-import { Handlerinformation, NostrConnect, NostrConnectAdmin } from './kinds.ts'
+import { Handlerinformation, NostrConnect } from './kinds.ts'
 import { hexToBytes } from '@noble/hashes/utils'
 
 var _fetch: any
@@ -109,7 +109,7 @@ export class BunkerSigner {
 
     this.subCloser = this.pool.subscribeMany(
       this.bp.relays,
-      [{ kinds: [NostrConnect, NostrConnectAdmin], '#p': [getPublicKey(this.secretKey)] }],
+      [{ kinds: [NostrConnect], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
           const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
@@ -155,7 +155,7 @@ export class BunkerSigner {
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(
           {
-            kind: method === 'create_account' ? NostrConnectAdmin : NostrConnect,
+            kind: NostrConnect,
             tags: [['p', this.bp.pubkey]],
             content: encryptedContent,
             created_at: Math.floor(Date.now() / 1000),
