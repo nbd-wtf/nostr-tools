@@ -1,17 +1,8 @@
 import { test, expect } from 'bun:test'
-import crypto from 'node:crypto'
 
 import { encrypt, decrypt } from './nip04.ts'
 import { getPublicKey, generateSecretKey } from './pure.ts'
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
-
-try {
-  // @ts-ignore
-  // eslint-disable-next-line no-undef
-  globalThis.crypto = crypto
-} catch (err) {
-  /***/
-}
 
 test('encrypt and decrypt message', async () => {
   let sk1 = generateSecretKey()

@@ -1,14 +1,9 @@
 import { bytesToHex, randomBytes } from '@noble/hashes/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
+import { cbc } from '@noble/ciphers/aes'
 import { base64 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
-
-// @ts-ignore
-if (typeof crypto !== 'undefined' && !crypto.subtle && crypto.webcrypto) {
-  // @ts-ignore
-  crypto.subtle = crypto.webcrypto.subtle
-}
 
 export async function encrypt(secretKey: string | Uint8Array, pubkey: string, text: string): Promise<string> {
   const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
@@ -17,8 +12,9 @@ export async function encrypt(secretKey: string | Uint8Array, pubkey: string, te
 
   let iv = Uint8Array.from(randomBytes(16))
   let plaintext = utf8Encoder.encode(text)
-  let cryptoKey = await crypto.subtle.importKey('raw', normalizedKey, { name: 'AES-CBC' }, false, ['encrypt'])
-  let ciphertext = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, cryptoKey, plaintext)
+
+  let ciphertext = cbc(normalizedKey, iv).encrypt(plaintext)
+
   let ctb64 = base64.encode(new Uint8Array(ciphertext))
   let ivb64 = base64.encode(new Uint8Array(iv.buffer))
 
@@ -31,14 +27,12 @@ export async function decrypt(secretKey: string | Uint8Array, pubkey: string, da
   let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   let normalizedKey = getNormalizedX(key)
 
-  let cryptoKey = await crypto.subtle.importKey('raw', normalizedKey, { name: 'AES-CBC' }, false, ['decrypt'])
-  let ciphertext = base64.decode(ctb64)
   let iv = base64.decode(ivb64)
+  let ciphertext = base64.decode(ctb64)
 
-  let plaintext = await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, cryptoKey, ciphertext)
+  let plaintext = cbc(normalizedKey, iv).decrypt(ciphertext)
 
-  let text = utf8Decoder.decode(plaintext)
-  return text
+  return utf8Decoder.decode(plaintext)
 }
 
 function getNormalizedX(key: Uint8Array): Uint8Array {
