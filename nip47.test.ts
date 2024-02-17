@@ -1,13 +1,8 @@
-import crypto from 'node:crypto'
 import { describe, test, expect } from 'bun:test'
 import { hexToBytes } from '@noble/hashes/utils'
 import { makeNwcRequestEvent, parseConnectionString } from './nip47'
 import { decrypt } from './nip04.ts'
 import { NWCWalletRequest } from './kinds.ts'
-
-// @ts-ignore
-// eslint-disable-next-line no-undef
-globalThis.crypto = crypto
 
 describe('parseConnectionString', () => {
   test('returns pubkey, relay, and secret if connection string is valid', () => {

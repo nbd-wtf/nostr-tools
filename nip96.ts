@@ -1,5 +1,7 @@
+import { sha256 } from '@noble/hashes/sha256'
 import { EventTemplate } from './core'
 import { FileServerPreference } from './kinds'
+import { bytesToHex } from '@noble/hashes/utils'
 
 /**
  * Represents the configuration for a server compliant with NIP-96.
@@ -576,15 +578,5 @@ export function generateFSPEventTemplate(serverUrls: string[]): EventTemplate {
  * @returns A promise that resolves to the SHA-256 hash of the file.
  */
 export async function calculateFileHash(file: Blob): Promise<string> {
-  // Read the file as an ArrayBuffer
-  const buffer = await file.arrayBuffer()
-
-  // Calculate the SHA-256 hash of the file
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
-
-  // Convert the hash to a hexadecimal string
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-
-  return hashHex
+  return bytesToHex(sha256(new Uint8Array(await file.arrayBuffer())))
 }
