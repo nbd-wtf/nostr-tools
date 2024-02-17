@@ -1,5 +1,5 @@
 import { chacha20 } from '@noble/ciphers/chacha'
-import { ensureBytes, equalBytes } from '@noble/ciphers/utils'
+import { equalBytes } from '@noble/ciphers/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { extract as hkdf_extract, expand as hkdf_expand } from '@noble/hashes/hkdf'
 import { hmac } from '@noble/hashes/hmac'
@@ -23,8 +23,6 @@ const u = {
   },
 
   getMessageKeys(conversationKey: Uint8Array, nonce: Uint8Array) {
-    ensureBytes(conversationKey, 32)
-    ensureBytes(nonce, 32)
     const keys = hkdf_expand(sha256, conversationKey, nonce, 76)
     return {
       chacha_key: keys.subarray(0, 32),
