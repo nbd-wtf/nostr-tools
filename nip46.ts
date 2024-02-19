@@ -118,7 +118,7 @@ export class BunkerSigner {
           const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
 
           if (result === 'auth_url' && waitingForAuth[id]) {
-            delete listeners[id]
+            delete waitingForAuth[id]
 
             if (params.onauth) {
               params.onauth(error)
