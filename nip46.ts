@@ -279,22 +279,35 @@ export async function createAccount(
   return rpc
 }
 
+// @deprecated use fetchBunkerProviders instead
+export const fetchCustodialBunkers = fetchBunkerProviders
+
 /**
  * Fetches info on available providers that announce themselves using NIP-89 events.
  * @returns A promise that resolves to an array of available bunker objects.
  */
-export async function fetchCustodialBunkers(pool: AbstractSimplePool, relays: string[]): Promise<BunkerProfile[]> {
+export async function fetchBunkerProviders(pool: AbstractSimplePool, relays: string[]): Promise<BunkerProfile[]> {
   const events = await pool.querySync(relays, {
     kinds: [Handlerinformation],
     '#k': [NostrConnect.toString()],
   })
 
+  events.sort((a, b) => b.created_at - a.created_at)
+
   // validate bunkers by checking their NIP-05 and pubkey
   // map to a more useful object
   const validatedBunkers = await Promise.all(
-    events.map(async event => {
+    events.map(async (event, i) => {
       try {
         const content = JSON.parse(event.content)
+
+        // skip duplicates
+        try {
+          if (events.findIndex(ev => JSON.parse(ev.content).nip05 === content.nip05) !== i) return undefined
+        } catch (err) {
+          /***/
+        }
+
         const bp = await queryBunkerProfile(content.nip05)
         if (bp && bp.pubkey === event.pubkey && bp.relays.length) {
           return {
