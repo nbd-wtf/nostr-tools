@@ -1,8 +1,14 @@
-import { finalizeEvent } from './pure.ts'
+import { type VerifiedEvent, finalizeEvent } from './pure.ts'
 import { NWCWalletRequest } from './kinds.ts'
 import { encrypt } from './nip04.ts'
 
-export function parseConnectionString(connectionString: string) {
+interface NWCConnection {
+  pubkey: string
+  relay: string
+  secret: string
+}
+
+export function parseConnectionString(connectionString: string): NWCConnection {
   const { pathname, searchParams } = new URL(connectionString)
   const pubkey = pathname
   const relay = searchParams.get('relay')
@@ -15,7 +21,11 @@ export function parseConnectionString(connectionString: string) {
   return { pubkey, relay, secret }
 }
 
-export async function makeNwcRequestEvent(pubkey: string, secretKey: Uint8Array, invoice: string) {
+export async function makeNwcRequestEvent(
+  pubkey: string,
+  secretKey: Uint8Array,
+  invoice: string,
+): Promise<VerifiedEvent> {
   const content = {
     method: 'pay_invoice',
     params: {

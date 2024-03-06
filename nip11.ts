@@ -4,11 +4,11 @@ try {
   _fetch = fetch
 } catch {}
 
-export function useFetchImplementation(fetchImplementation: any) {
+export function useFetchImplementation(fetchImplementation: any): void {
   _fetch = fetchImplementation
 }
 
-export async function fetchRelayInformation(url: string) {
+export async function fetchRelayInformation(url: string): Promise<RelayInformation> {
   return (await (
     await fetch(url.replace('ws://', 'http://').replace('wss://', 'https://'), {
       headers: { Accept: 'application/nostr+json' },

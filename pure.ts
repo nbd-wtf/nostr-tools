@@ -50,7 +50,7 @@ export function getEventHash(event: UnsignedEvent): string {
   return bytesToHex(eventHash)
 }
 
-const i = new JS()
+const i: JS = new JS()
 
 export const generateSecretKey = i.generateSecretKey
 export const getPublicKey = i.getPublicKey

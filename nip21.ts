@@ -1,7 +1,7 @@
 import { BECH32_REGEX, decode, type DecodeResult } from './nip19.ts'
 
 /** Nostr URI regex, eg `nostr:npub1...` */
-export const NOSTR_URI_REGEX = new RegExp(`nostr:(${BECH32_REGEX.source})`)
+export const NOSTR_URI_REGEX: RegExp = new RegExp(`nostr:(${BECH32_REGEX.source})`)
 
 /** Test whether the value is a Nostr URI. */
 export function test(value: unknown): value is `nostr:${string}` {

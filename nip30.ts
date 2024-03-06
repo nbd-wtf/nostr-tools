@@ -2,7 +2,7 @@
 export const EMOJI_SHORTCODE_REGEX = /:(\w+):/
 
 /** Regex to find emoji shortcodes in content. */
-export const regex = () => new RegExp(`\\B${EMOJI_SHORTCODE_REGEX.source}\\B`, 'g')
+export const regex = (): RegExp => new RegExp(`\\B${EMOJI_SHORTCODE_REGEX.source}\\B`, 'g')
 
 /** Represents a Nostr custom emoji. */
 export interface CustomEmoji {
