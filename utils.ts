@@ -1,7 +1,7 @@
 import type { Event } from './core.ts'
 
-export const utf8Decoder = new TextDecoder('utf-8')
-export const utf8Encoder = new TextEncoder()
+export const utf8Decoder: TextDecoder = new TextDecoder('utf-8')
+export const utf8Encoder: TextEncoder = new TextEncoder()
 
 export function normalizeURL(url: string): string {
   if (url.indexOf('://') === -1) url = 'wss://' + url
@@ -14,7 +14,7 @@ export function normalizeURL(url: string): string {
   return p.toString()
 }
 
-export function insertEventIntoDescendingList(sortedArray: Event[], event: Event) {
+export function insertEventIntoDescendingList(sortedArray: Event[], event: Event): Event[] {
   const [idx, found] = binarySearch(sortedArray, b => {
     if (event.id === b.id) return 0
     if (event.created_at === b.created_at) return -1
@@ -26,7 +26,7 @@ export function insertEventIntoDescendingList(sortedArray: Event[], event: Event
   return sortedArray
 }
 
-export function insertEventIntoAscendingList(sortedArray: Event[], event: Event) {
+export function insertEventIntoAscendingList(sortedArray: Event[], event: Event): Event[] {
   const [idx, found] = binarySearch(sortedArray, b => {
     if (event.id === b.id) return 0
     if (event.created_at === b.created_at) return -1

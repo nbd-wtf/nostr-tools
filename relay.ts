@@ -13,7 +13,7 @@ export class Relay extends AbstractRelay {
     super(url, { verifyEvent })
   }
 
-  static async connect(url: string) {
+  static async connect(url: string): Promise<Relay> {
     const relay = new Relay(url)
     await relay.connect()
     return relay

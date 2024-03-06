@@ -26,7 +26,7 @@ export class AbstractRelay {
 
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
-  public openSubs = new Map<string, Subscription>()
+  public openSubs: Map<string, Subscription> = new Map()
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
@@ -44,7 +44,7 @@ export class AbstractRelay {
     this.verifyEvent = opts.verifyEvent
   }
 
-  static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
+  static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }): Promise<AbstractRelay> {
     const relay = new AbstractRelay(url, opts)
     await relay.connect()
     return relay
@@ -228,7 +228,7 @@ export class AbstractRelay {
     })
   }
 
-  public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>) {
+  public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
     const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
     const ret = new Promise<string>((resolve, reject) => {

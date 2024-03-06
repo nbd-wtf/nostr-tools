@@ -13,7 +13,7 @@ const u = {
   maxPlaintextSize: 0xffff, // 65535 (64kb-1) => padded to 64kb
 
   utf8Encode: utf8ToBytes,
-  utf8Decode(bytes: Uint8Array) {
+  utf8Decode(bytes: Uint8Array): string {
     return decoder.decode(bytes)
   },
 
@@ -39,7 +39,7 @@ const u = {
     return chunk * (Math.floor((len - 1) / chunk) + 1)
   },
 
-  writeU16BE(num: number) {
+  writeU16BE(num: number): Uint8Array {
     if (!Number.isSafeInteger(num) || num < u.minPlaintextSize || num > u.maxPlaintextSize)
       throw new Error('invalid plaintext size: must be between 1 and 65535 bytes')
     const arr = new Uint8Array(2)
@@ -68,7 +68,7 @@ const u = {
     return u.utf8Decode(unpadded)
   },
 
-  hmacAad(key: Uint8Array, message: Uint8Array, aad: Uint8Array) {
+  hmacAad(key: Uint8Array, message: Uint8Array, aad: Uint8Array): Uint8Array {
     if (aad.length !== 32) throw new Error('AAD associated data must be 32 bytes')
     const combined = concatBytes(aad, message)
     return hmac(sha256, key, combined)
@@ -80,7 +80,7 @@ const u = {
   // ciphertext: 32b+2 to 0xffff+2
   // raw payload: 99 (65+32+2) to 65603 (65+0xffff+2)
   // compressed payload (base64): 132b to 87472b
-  decodePayload(payload: string) {
+  decodePayload(payload: string): { nonce: Uint8Array; ciphertext: Uint8Array; mac: Uint8Array } {
     if (typeof payload !== 'string') throw new Error('payload must be a valid string')
     const plen = payload.length
     if (plen < 132 || plen > 87472) throw new Error('invalid payload length: ' + plen)
@@ -103,7 +103,7 @@ const u = {
   },
 }
 
-function encrypt(plaintext: string, conversationKey: Uint8Array, nonce = randomBytes(32)): string {
+function encrypt(plaintext: string, conversationKey: Uint8Array, nonce: Uint8Array = randomBytes(32)): string {
   const { chacha_key, chacha_nonce, hmac_key } = u.getMessageKeys(conversationKey, nonce)
   const padded = u.pad(plaintext)
   const ciphertext = chacha20(chacha_key, chacha_nonce, padded)

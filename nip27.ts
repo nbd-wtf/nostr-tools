@@ -2,7 +2,7 @@ import { decode } from './nip19.ts'
 import { NOSTR_URI_REGEX, type NostrURI } from './nip21.ts'
 
 /** Regex to find NIP-21 URIs inside event content. */
-export const regex = () => new RegExp(`\\b${NOSTR_URI_REGEX.source}\\b`, 'g')
+export const regex = (): RegExp => new RegExp(`\\b${NOSTR_URI_REGEX.source}\\b`, 'g')
 
 /** Match result for a Nostr URI in event content. */
 export interface NostrURIMatch extends NostrURI {

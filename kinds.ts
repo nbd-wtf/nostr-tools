@@ -1,20 +1,20 @@
 /** Events are **regular**, which means they're all expected to be stored by relays. */
-export function isRegularKind(kind: number) {
+export function isRegularKind(kind: number): boolean {
   return (1000 <= kind && kind < 10000) || [1, 2, 4, 5, 6, 7, 8, 16, 40, 41, 42, 43, 44].includes(kind)
 }
 
 /** Events are **replaceable**, which means that, for each combination of `pubkey` and `kind`, only the latest event is expected to (SHOULD) be stored by relays, older versions are expected to be discarded. */
-export function isReplaceableKind(kind: number) {
+export function isReplaceableKind(kind: number): boolean {
   return [0, 3].includes(kind) || (10000 <= kind && kind < 20000)
 }
 
 /** Events are **ephemeral**, which means they are not expected to be stored by relays. */
-export function isEphemeralKind(kind: number) {
+export function isEphemeralKind(kind: number): boolean {
   return 20000 <= kind && kind < 30000
 }
 
 /** Events are **parameterized replaceable**, which means that, for each combination of `pubkey`, `kind` and the `d` tag, only the latest event is expected to be stored by relays, older versions are expected to be discarded. */
-export function isParameterizedReplaceableKind(kind: number) {
+export function isParameterizedReplaceableKind(kind: number): boolean {
   return 30000 <= kind && kind < 40000
 }
 

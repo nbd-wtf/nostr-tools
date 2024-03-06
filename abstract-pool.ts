@@ -15,11 +15,11 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
 
 export class AbstractSimplePool {
   private relays = new Map<string, AbstractRelay>()
-  public seenOn = new Map<string, Set<AbstractRelay>>()
+  public seenOn: Map<string, Set<AbstractRelay>> = new Map()
   public trackRelays: boolean = false
 
   public verifyEvent: Nostr['verifyEvent']
-  public trustedRelayURLs = new Set<string>()
+  public trustedRelayURLs: Set<string> = new Set()
 
   constructor(opts: { verifyEvent: Nostr['verifyEvent'] }) {
     this.verifyEvent = opts.verifyEvent
