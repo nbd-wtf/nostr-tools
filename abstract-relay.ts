@@ -78,9 +78,9 @@ export class AbstractRelay {
     this.connectionPromise = new Promise((resolve, reject) => {
       this.connectionTimeoutHandle = setTimeout(() => {
         reject('connection timed out')
-        this.connectionPromise = undefined
         this.onclose?.()
         this.closeAllSubscriptions('relay connection timed out')
+        this.connectionPromise = undefined
       }, this.connectionTimeout)
 
       try {
@@ -106,9 +106,9 @@ export class AbstractRelay {
       }
 
       this.ws.onclose = async () => {
-        this.connectionPromise = undefined
         this.onclose?.()
         this.closeAllSubscriptions('relay connection closed')
+        this.connectionPromise = undefined
         this._connected = false
       }
 
