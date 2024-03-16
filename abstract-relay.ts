@@ -99,17 +99,20 @@ export class AbstractRelay {
       this.ws.onerror = ev => {
         reject((ev as any).message)
         if (this._connected) {
+          this._connected = false
+          this.connectionPromise = undefined
           this.onclose?.()
           this.closeAllSubscriptions('relay connection errored')
-          this._connected = false
         }
       }
 
       this.ws.onclose = async () => {
-        this.connectionPromise = undefined
-        this.onclose?.()
-        this.closeAllSubscriptions('relay connection closed')
-        this._connected = false
+        if (this._connected) {
+          this._connected = false
+          this.connectionPromise = undefined
+          this.onclose?.()
+          this.closeAllSubscriptions('relay connection closed')
+        }
       }
 
       this.ws.onmessage = this._onmessage.bind(this)
@@ -338,7 +341,7 @@ export class Subscription {
   }
 
   public close(reason: string = 'closed by caller') {
-    if (!this.closed) {
+    if (!this.closed && this.relay.connected) {
       // if the connection was closed by the user calling .close() we will send a CLOSE message
       // otherwise this._open will be already set to false so we will skip this
       this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
