@@ -15,4 +15,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: bun i
-      - run: bunx jsr publish --allow-slow-types --allow-dirty
+      - run: npm install -g jsr
+      - run: jsr publish --allow-slow-types --allow-dirty
