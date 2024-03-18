@@ -30,7 +30,7 @@ class Wasm implements Nostr {
   }
 }
 
-const i = new Wasm()
+const i: Wasm = new Wasm()
 export const generateSecretKey = i.generateSecretKey
 export const getPublicKey = i.getPublicKey
 export const finalizeEvent = i.finalizeEvent
