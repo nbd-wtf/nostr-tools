@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { decrypt, encrypt } from './nip49'
+import { decrypt, encrypt } from './nip49.ts'
 import { hexToBytes } from '@noble/hashes/utils'
 
 test('encrypt and decrypt', () => {

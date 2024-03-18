@@ -1,10 +1,10 @@
-import { AbstractSimplePool } from './abstract-pool'
-import { Subscription } from './abstract-relay'
-import { decode } from './nip19'
-import type { Event } from './core'
-import { fetchRelayInformation } from './nip11'
-import { normalizeURL } from './utils'
-import { AddressPointer } from './nip19'
+import { AbstractSimplePool } from './abstract-pool.ts'
+import { Subscription } from './abstract-relay.ts'
+import { decode } from './nip19.ts'
+import type { Event } from './core.ts'
+import { fetchRelayInformation } from './nip11.ts'
+import { normalizeURL } from './utils.ts'
+import { AddressPointer } from './nip19.ts'
 
 export function subscribeRelayGroups(
   pool: AbstractSimplePool,

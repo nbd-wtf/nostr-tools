@@ -1,9 +1,9 @@
-import { Event, EventTemplate } from './core'
+import { Event, EventTemplate } from './core.ts'
 import {
   BadgeAward as BadgeAwardKind,
   BadgeDefinition as BadgeDefinitionKind,
   ProfileBadges as ProfileBadgesKind,
-} from './kinds'
+} from './kinds.ts'
 
 /**
  * Represents the structure for defining a badge within the Nostr network.

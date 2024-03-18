@@ -1,4 +1,4 @@
-import { Event, EventTemplate } from './core'
+import { Event, EventTemplate } from './core.ts'
 import { FileMetadata as FileMetadataKind } from './kinds.ts'
 
 /**

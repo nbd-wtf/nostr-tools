@@ -1,5 +1,5 @@
-import { Event, EventTemplate } from './core'
-import { ZapGoal } from './kinds'
+import { Event, EventTemplate } from './core.ts'
+import { ZapGoal } from './kinds.ts'
 
 /**
  * Represents a fundraising goal in the Nostr network as defined by NIP-75.

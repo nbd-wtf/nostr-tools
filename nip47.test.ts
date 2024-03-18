@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import { hexToBytes } from '@noble/hashes/utils'
-import { makeNwcRequestEvent, parseConnectionString } from './nip47'
+import { makeNwcRequestEvent, parseConnectionString } from './nip47.ts'
 import { decrypt } from './nip04.ts'
 import { NWCWalletRequest } from './kinds.ts'
 

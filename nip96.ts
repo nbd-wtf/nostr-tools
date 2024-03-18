@@ -1,6 +1,6 @@
 import { sha256 } from '@noble/hashes/sha256'
-import { EventTemplate } from './core'
-import { FileServerPreference } from './kinds'
+import { EventTemplate } from './core.ts'
+import { FileServerPreference } from './kinds.ts'
 import { bytesToHex } from '@noble/hashes/utils'
 
 /**
