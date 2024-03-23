@@ -25,6 +25,15 @@ let sk = generateSecretKey() // `sk` is a Uint8Array
 let pk = getPublicKey(sk) // `pk` is a hex string
 ```
 
+To get the secret key in hex format, use
+
+```js
+import { bytestohex, hexToBytes } from '@noble/hashes/utils' // already an installed dependency
+
+let skHex = bytestohex(sk) 
+let backToBytes = hexToBytes(skHex)
+```
+
 ### Creating, signing and verifying events
 
 ```js
