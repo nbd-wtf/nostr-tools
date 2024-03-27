@@ -193,7 +193,7 @@ export class BunkerSigner {
    * Calls the "connect" method on the bunker.
    */
   async connect(): Promise<void> {
-    await this.sendRequest('connect', [getPublicKey(this.secretKey), this.bp.secret || ''])
+    await this.sendRequest('connect', [this.bp.pubkey, this.bp.secret || ''])
   }
 
   /**
