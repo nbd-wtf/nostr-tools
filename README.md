@@ -138,7 +138,7 @@ let h = pool.subscribeMany(
 await Promise.any(pool.publish(relays, newEvent))
 console.log('published to at least one relay!')
 
-let events = await pool.querySync(relays, [{ kinds: [0, 1] }])
+let events = await pool.querySync(relays, { kinds: [0, 1] })
 let event = await pool.get(relays, {
   ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
 })
