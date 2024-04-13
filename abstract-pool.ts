@@ -48,6 +48,10 @@ export class AbstractSimplePool {
   }
 
   subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
+    return this.subscribeManyMap(Object.fromEntries(relays.map(url => [url, filters])), params)
+  }
+
+  subscribeManyMap(requests: { [relay: string]: Filter[] }, params: SubscribeManyParams): SubCloser {
     if (this.trackRelays) {
       params.receivedEvent = (relay: AbstractRelay, id: string) => {
         let set = this.seenOn.get(id)
@@ -61,12 +65,13 @@ export class AbstractSimplePool {
 
     const _knownIds = new Set<string>()
     const subs: Subscription[] = []
+    const relaysLength = Object.keys(requests).length
 
     // batch all EOSEs into a single
     const eosesReceived: boolean[] = []
     let handleEose = (i: number) => {
       eosesReceived[i] = true
-      if (eosesReceived.filter(a => a).length === relays.length) {
+      if (eosesReceived.filter(a => a).length === relaysLength) {
         params.oneose?.()
         handleEose = () => {}
       }
@@ -76,7 +81,7 @@ export class AbstractSimplePool {
     let handleClose = (i: number, reason: string) => {
       handleEose(i)
       closesReceived[i] = reason
-      if (closesReceived.filter(a => a).length === relays.length) {
+      if (closesReceived.filter(a => a).length === relaysLength) {
         params.onclose?.(closesReceived)
         handleClose = () => {}
       }
@@ -93,12 +98,15 @@ export class AbstractSimplePool {
 
     // open a subscription in all given relays
     const allOpened = Promise.all(
-      relays.map(normalizeURL).map(async (url, i, arr) => {
-        if (arr.indexOf(url) !== i) {
+      Object.entries(requests).map(async (req, i, arr) => {
+        if (arr.indexOf(req) !== i) {
           // duplicate
           handleClose(i, 'duplicate url')
           return
         }
+
+        let [url, filters] = req
+        url = normalizeURL(url)
 
         let relay: AbstractRelay
         try {

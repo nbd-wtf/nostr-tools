@@ -4,6 +4,7 @@ import { SimplePool } from './pool.ts'
 import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
 import { useWebSocketImplementation } from './relay.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
+import { hexToBytes } from '@noble/hashes/utils'
 
 useWebSocketImplementation(MockWebSocketClient)
 
@@ -82,6 +83,86 @@ test('same with double subs', async () => {
   await new Promise(resolve => setTimeout(resolve, 200)) // wait for the new published event to be received
 
   expect(received).toHaveLength(2)
+})
+
+test('subscribe many map', async () => {
+  let priv = hexToBytes('8ea002840d413ccdd5be98df5dd89d799eaa566355ede83ca0bbdbb4b145e0d3')
+  let pub = getPublicKey(priv)
+
+  let received: Event[] = []
+  let event1 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test1',
+      kind: 20001,
+      tags: [],
+    },
+    priv,
+  )
+  let event2 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test2',
+      kind: 20002,
+      tags: [['t', 'biloba']],
+    },
+    priv,
+  )
+  let event3 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test3',
+      kind: 20003,
+      tags: [['t', 'biloba']],
+    },
+    priv,
+  )
+
+  const [relayA, relayB, relayC] = relayURLs
+
+  pool.subscribeManyMap(
+    {
+      [relayA]: [{ authors: [pub], kinds: [20001] }],
+      [relayB]: [{ authors: [pub], kinds: [20002] }],
+      [relayC]: [{ kinds: [20003], '#t': ['biloba'] }],
+    },
+    {
+      onevent(event: Event) {
+        received.push(event)
+      },
+    },
+  )
+
+  // publish the first
+  await Promise.all(pool.publish([relayA, relayB], event1))
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(1)
+  expect(received[0]).toEqual(event1)
+
+  // publish the second
+  await pool.publish([relayB], event2)[0]
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(2)
+  expect(received[1]).toEqual(event2)
+
+  // publish a events that shouldn't match our filters
+  await Promise.all([
+    ...pool.publish([relayA, relayB], event3),
+    ...pool.publish([relayA, relayB, relayC], event1),
+    pool.publish([relayA, relayB, relayC], event2),
+  ])
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(2)
+
+  // publsih the third
+  await pool.publish([relayC], event3)[0]
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(3)
+  expect(received[2]).toEqual(event3)
 })
 
 test('query a bunch of events and cancel on eose', async () => {

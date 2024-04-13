@@ -41,7 +41,9 @@ export function matchFilter(filter: Filter, event: Event): boolean {
 
 export function matchFilters(filters: Filter[], event: Event): boolean {
   for (let i = 0; i < filters.length; i++) {
-    if (matchFilter(filters[i], event)) return true
+    if (matchFilter(filters[i], event)) {
+      return true
+    }
   }
   return false
 }
