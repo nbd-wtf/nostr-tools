@@ -17,7 +17,7 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export const BUNKER_REGEX = /^bunker:\/\/([0-9a-f]{64})\??([?\/\w:.=&%]*)$/
+export const BUNKER_REGEX = /^bunker:\/\/([0-9a-f]{64})\??([?\/\w:.=&%-]*)$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export type BunkerPointer = {
