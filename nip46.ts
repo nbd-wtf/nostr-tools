@@ -254,6 +254,8 @@ export class BunkerSigner {
  * @param username - The username for the account.
  * @param domain - The domain for the account.
  * @param email - The optional email for the account.
+ * @param localSecretKey - Optionally pass a local secret key that will be used to communicate with the bunker,
+                           this will default to generating a random key.
  * @throws Error if the email is present but invalid.
  * @returns A Promise that resolves to the auth_url that the client should follow to create an account.
  */
@@ -263,11 +265,11 @@ export async function createAccount(
   username: string,
   domain: string,
   email?: string,
+  localSecretKey: Uint8Array = generateSecretKey()
 ): Promise<BunkerSigner> {
   if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
 
-  let sk = generateSecretKey()
-  let rpc = new BunkerSigner(sk, bunker.bunkerPointer, params)
+  let rpc = new BunkerSigner(localSecretKey, bunker.bunkerPointer, params)
 
   let pubkey = await rpc.sendRequest('create_account', [username, domain, email || ''])
 
