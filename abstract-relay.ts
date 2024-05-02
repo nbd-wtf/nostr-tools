@@ -259,7 +259,7 @@ export class AbstractRelay {
     const ret = new Promise<number>((resolve, reject) => {
       this.openCountRequests.set(id, { resolve, reject })
     })
-    this.send('["COUNT","' + id + '",' + JSON.stringify(filters) + ']')
+    this.send('["COUNT","' + id + '",' + JSON.stringify(filters).substring(1))
     return ret
   }
 
