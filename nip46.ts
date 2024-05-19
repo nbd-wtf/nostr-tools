@@ -2,6 +2,7 @@ import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 import { decrypt, encrypt } from './nip04.ts'
+import { getConversationKey, decrypt as nip44decrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
@@ -109,13 +110,21 @@ export class BunkerSigner {
 
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
+    const skBytes = this.secretKey
 
     this.subCloser = this.pool.subscribeMany(
       this.bp.relays,
       [{ kinds: [NostrConnect], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
-          const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
+          let o
+          try {
+            o = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
+          } catch (err) {
+            o = JSON.parse(nip44decrypt(event.content, getConversationKey(skBytes, event.pubkey)))
+          }
+
+          const { id, result, error } = o
 
           if (result === 'auth_url' && waitingForAuth[id]) {
             delete waitingForAuth[id]
@@ -265,7 +274,7 @@ export async function createAccount(
   username: string,
   domain: string,
   email?: string,
-  localSecretKey: Uint8Array = generateSecretKey()
+  localSecretKey: Uint8Array = generateSecretKey(),
 ): Promise<BunkerSigner> {
   if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
 
