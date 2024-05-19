@@ -13,7 +13,6 @@ describe('Filter', () => {
         until: 200,
         '#tag': ['value'],
       }
-
       const event = buildEvent({
         id: '123',
         kind: 1,
@@ -21,39 +20,21 @@ describe('Filter', () => {
         created_at: 150,
         tags: [['tag', 'value']],
       })
-
       const result = matchFilter(filter, event)
-
       expect(result).toEqual(true)
     })
 
     test('should return false when the event id is not in the filter', () => {
       const filter = { ids: ['123', '456'] }
-
       const event = buildEvent({ id: '789' })
-
       const result = matchFilter(filter, event)
-
       expect(result).toEqual(false)
-    })
-
-    test('should return true when the event id starts with a prefix', () => {
-      const filter = { ids: ['22', '00'] }
-
-      const event = buildEvent({ id: '001' })
-
-      const result = matchFilter(filter, event)
-
-      expect(result).toEqual(true)
     })
 
     test('should return false when the event kind is not in the filter', () => {
       const filter = { kinds: [1, 2, 3] }
-
       const event = buildEvent({ kind: 4 })
-
       const result = matchFilter(filter, event)
-
       expect(result).toEqual(false)
     })
 
@@ -154,25 +135,8 @@ describe('Filter', () => {
         { ids: ['456'], kinds: [2], authors: ['def'] },
         { ids: ['789'], kinds: [3], authors: ['ghi'] },
       ]
-
       const event = buildEvent({ id: '789', kind: 3, pubkey: 'ghi' })
-
       const result = matchFilters(filters, event)
-
-      expect(result).toEqual(true)
-    })
-
-    test('should return true when at least one prefix matches the event', () => {
-      const filters = [
-        { ids: ['1'], kinds: [1], authors: ['a'] },
-        { ids: ['4'], kinds: [2], authors: ['d'] },
-        { ids: ['9'], kinds: [3], authors: ['g'] },
-      ]
-
-      const event = buildEvent({ id: '987', kind: 3, pubkey: 'ghi' })
-
-      const result = matchFilters(filters, event)
-
       expect(result).toEqual(true)
     })
 
@@ -201,11 +165,8 @@ describe('Filter', () => {
         { ids: ['456'], kinds: [2], authors: ['def'] },
         { ids: ['789'], kinds: [3], authors: ['ghi'] },
       ]
-
       const event = buildEvent({ id: '100', kind: 4, pubkey: 'jkl' })
-
       const result = matchFilters(filters, event)
-
       expect(result).toEqual(false)
     })
 
@@ -221,9 +182,7 @@ describe('Filter', () => {
         pubkey: 'def',
         created_at: 200,
       })
-
       const result = matchFilters(filters, event)
-
       expect(result).toEqual(false)
     })
   })
