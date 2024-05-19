@@ -7,7 +7,7 @@ const v2vec = vec.v2
 
 test('get_conversation_key', () => {
   for (const v of v2vec.valid.get_conversation_key) {
-    const key = v2.utils.getConversationKey(v.sec1, v.pub2)
+    const key = v2.utils.getConversationKey(hexToBytes(v.sec1), v.pub2)
     expect(bytesToHex(key)).toEqual(v.conversation_key)
   }
 })
@@ -15,7 +15,7 @@ test('get_conversation_key', () => {
 test('encrypt_decrypt', () => {
   for (const v of v2vec.valid.encrypt_decrypt) {
     const pub2 = bytesToHex(schnorr.getPublicKey(v.sec2))
-    const key = v2.utils.getConversationKey(v.sec1, pub2)
+    const key = v2.utils.getConversationKey(hexToBytes(v.sec1), pub2)
     expect(bytesToHex(key)).toEqual(v.conversation_key)
     const ciphertext = v2.encrypt(v.plaintext, key, hexToBytes(v.nonce))
     expect(ciphertext).toEqual(v.payload)
@@ -39,6 +39,8 @@ test('decrypt', async () => {
 
 test('get_conversation_key', async () => {
   for (const v of v2vec.invalid.get_conversation_key) {
-    expect(() => v2.utils.getConversationKey(v.sec1, v.pub2)).toThrow(/(Point is not on curve|Cannot find square root)/)
+    expect(() => v2.utils.getConversationKey(hexToBytes(v.sec1), v.pub2)).toThrow(
+      /(Point is not on curve|Cannot find square root)/,
+    )
   }
 })
