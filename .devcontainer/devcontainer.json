@@ -1,0 +1,19 @@
+{
+  "name": "Nostr Tools",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "nostr-tools-dev",
+  "workspaceFolder": "/nostr-tools",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "eamodio.gitlens",
+        "dbaeumer.vscode-eslint",
+        "manishsencha.readme-preview",
+        "wix.vscode-import-cost"
+      ]
+    }
+  }
+}

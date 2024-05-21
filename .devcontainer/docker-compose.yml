@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  nostr-tools-dev:
+    image: nostr-tools-dev
+    container_name: nostr-tools-dev
+    build:
+      context: ../.
+      dockerfile: ./.devcontainer/Dockerfile
+    working_dir: /nostr-tools
+    volumes:
+      - ..:/nostr-tools:cached
+    tty: true
