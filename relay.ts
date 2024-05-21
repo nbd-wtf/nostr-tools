@@ -20,6 +20,6 @@ export class Relay extends AbstractRelay {
   }
 }
 
-export type RelayMap = { [relay: string]: { read: boolean; write: boolean } };
+export type RelayRecord = Record<string, { read: boolean; write: boolean }>;
 
 export * from './abstract-relay.ts'
