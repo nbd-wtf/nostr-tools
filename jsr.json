@@ -16,6 +16,7 @@
     "./nip04": "./nip04.ts",
     "./nip05": "./nip05.ts",
     "./nip06": "./nip06.ts",
+    "./nip07": "./nip07.ts",
     "./nip10": "./nip10.ts",
     "./nip11": "./nip11.ts",
     "./nip13": "./nip13.ts",
