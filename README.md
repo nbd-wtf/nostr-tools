@@ -185,7 +185,7 @@ useFetchImplementation(require('node-fetch'))
 
 ### Including NIP-07 types
 ```js
-import { Nip07 } from 'nostr-tools'
+import { Nip07 } from 'nostr-tools/nip07'
 
 declare global {
   interface Window {
