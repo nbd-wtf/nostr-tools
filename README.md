@@ -30,7 +30,7 @@ To get the secret key in hex format, use
 ```js
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils' // already an installed dependency
 
-let skHex = bytesToHex(sk) 
+let skHex = bytesToHex(sk)
 let backToBytes = hexToBytes(skHex)
 ```
 
@@ -185,11 +185,11 @@ useFetchImplementation(require('node-fetch'))
 
 ### Including NIP-07 types
 ```js
-import { Nip07 } from 'nostr-tools/nip07'
+import type { WindowNostr } from 'nostr-tools/nip07'
 
 declare global {
   interface Window {
-    nostr?: Nip07;
+    nostr?: WindowNostr;
   }
 }
 ```

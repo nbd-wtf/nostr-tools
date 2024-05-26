@@ -1,7 +1,7 @@
 import { EventTemplate, NostrEvent } from './core.ts'
 import { RelayRecord } from './index.ts'
 
-export interface Nip07 {
+export interface WindowNostr {
   getPublicKey(): Promise<string>
   signEvent(event: EventTemplate): Promise<NostrEvent>
   getRelays(): Promise<RelayRecord>
