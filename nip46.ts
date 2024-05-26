@@ -7,6 +7,7 @@ import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
 import { hexToBytes } from '@noble/hashes/utils'
+import { RelayRecord } from './index.ts'
 
 var _fetch: any
 
@@ -216,7 +217,7 @@ export class BunkerSigner {
   /**
    * Calls the "get_relays" method on the bunker.
    */
-  async getRelays(): Promise<{ [relay: string]: { read: boolean; write: boolean } }> {
+  async getRelays(): Promise<RelayRecord> {
     return JSON.parse(await this.sendRequest('get_relays', []))
   }
 

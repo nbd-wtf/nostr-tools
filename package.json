@@ -85,6 +85,9 @@
       "require": "./lib/cjs/nip06.js",
       "types": "./lib/types/nip06.d.ts"
     },
+    "./nip07": {
+      "types": "./lib/types/nip07.d.ts"
+    },
     "./nip10": {
       "import": "./lib/esm/nip10.js",
       "require": "./lib/cjs/nip10.js",
