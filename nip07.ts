@@ -1,5 +1,5 @@
 import { EventTemplate, NostrEvent } from './core.ts'
-import { RelayRecord } from './index.ts'
+import { RelayRecord } from './relay.ts'
 
 export interface WindowNostr {
   getPublicKey(): Promise<string>

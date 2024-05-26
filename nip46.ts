@@ -1,3 +1,4 @@
+import { hexToBytes } from '@noble/hashes/utils'
 import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
@@ -6,8 +7,7 @@ import { getConversationKey, decrypt as nip44decrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
-import { hexToBytes } from '@noble/hashes/utils'
-import { RelayRecord } from './index.ts'
+import type { RelayRecord } from './relay.ts'
 
 var _fetch: any
 
