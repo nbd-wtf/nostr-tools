@@ -1,9 +1,9 @@
-import { EventTemplate, VerifiedEvent } from './core.ts'
+import { EventTemplate, NostrEvent } from './core.ts'
 import { RelayRecord } from './index.ts'
 
 export interface Nip07 {
   getPublicKey(): Promise<string>
-  signEvent(event: EventTemplate): Promise<VerifiedEvent>
+  signEvent(event: EventTemplate): Promise<NostrEvent>
   getRelays(): Promise<RelayRecord>
   nip04?: {
     encrypt(pubkey: string, plaintext: string): Promise<string>
