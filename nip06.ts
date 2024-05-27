@@ -50,9 +50,9 @@ export function accountFromExtendedKey(base58key: string, accountIndex = 0): {
   if (version === 'xprv') {
     let privateKey = bytesToHex(child.privateKey!)
     if (!privateKey) throw new Error('could not derive private key')
-    return { privateKey, publicKey } 
+    return { privateKey, publicKey }
   }
-  return { publicKey } 
+  return { publicKey }
 }
 
 export function generateSeedWords(): string {
