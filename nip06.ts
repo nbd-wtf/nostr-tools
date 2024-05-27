@@ -12,9 +12,13 @@ export function privateKeyFromSeedWords(mnemonic: string, passphrase?: string, a
   return bytesToHex(privateKey)
 }
 
-export function accountFromSeedWords(mnemonic: string, passphrase?: string, accountIndex = 0): {
-  privateKey: string,
-  publicKey: string,
+export function accountFromSeedWords(
+  mnemonic: string,
+  passphrase?: string,
+  accountIndex = 0,
+): {
+  privateKey: string
+  publicKey: string
 } {
   const root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
   const seed = root.derive(`${DERIVATION_PATH}/${accountIndex}'/0/0`)
@@ -26,8 +30,12 @@ export function accountFromSeedWords(mnemonic: string, passphrase?: string, acco
   return { privateKey, publicKey }
 }
 
-export function extendedKeysFromSeedWords(mnemonic: string, passphrase?: string, extendedAccountIndex = 0): {
-  privateExtendedKey: string,
+export function extendedKeysFromSeedWords(
+  mnemonic: string,
+  passphrase?: string,
+  extendedAccountIndex = 0,
+): {
+  privateExtendedKey: string
   publicExtendedKey: string
 } {
   let root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
@@ -38,8 +46,11 @@ export function extendedKeysFromSeedWords(mnemonic: string, passphrase?: string,
   return { privateExtendedKey, publicExtendedKey }
 }
 
-export function accountFromExtendedKey(base58key: string, accountIndex = 0): {
-  privateKey?: string,
+export function accountFromExtendedKey(
+  base58key: string,
+  accountIndex = 0,
+): {
+  privateKey?: string
   publicKey: string
 } {
   let extendedKey = HDKey.fromExtendedKey(base58key)
