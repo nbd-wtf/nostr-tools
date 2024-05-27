@@ -194,6 +194,32 @@ declare global {
 }
 ```
 
+
+### Generating NIP-06 keys
+```js
+import { 
+  privateKeyFromSeedWords,
+  accountFromSeedWords,
+  extendedKeysFromSeedWords,
+  accountFromExtendedKey
+} from 'nostr-tools/nip06'
+
+const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
+const passphrase = '123' // optional
+const accountIndex = 0
+const sk0 = privateKeyFromSeedWords(mnemonic, passphrase, accountIndex)
+
+const { privateKey: sk1, publicKey: pk1 } = accountFromSeedWords(mnemonic, passphrase, accountIndex)
+
+const extendedAccountIndex = 0
+
+const { privateExtendedKey, publicExtendedKey } = extendedKeysFromSeedWords(mnemonic, passphrase, extendedAccountIndex)
+
+const { privateKey: sk2, publicKey: pk2 } = accountFromExtendedKey(privateExtendedKey)
+
+const { publicKey: pk3 } = accountFromExtendedKey(publicExtendedKey)
+```
+
 ### Encoding and decoding NIP-19 codes
 
 ```js
