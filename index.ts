@@ -1,7 +1,7 @@
 export * from './pure.ts'
-export * from './relay.ts'
+export { Relay } from './relay.ts'
 export * from './filter.ts'
-export * from './pool.ts'
+export { SimplePool } from './pool.ts'
 export * from './references.ts'
 
 export * as nip04 from './nip04.ts'

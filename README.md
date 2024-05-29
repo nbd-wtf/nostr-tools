@@ -104,8 +104,11 @@ relay.close()
 To use this on Node.js you first must install `ws` and call something like this:
 
 ```js
-import { useWebSocketImplementation } from 'nostr-tools/relay'
-useWebSocketImplementation(require('ws'))
+import { useWebSocketImplementation } from 'nostr-tools/pool'
+// or import { useWebSocketImplementation } from 'nostr-tools/relay' if you're using the Relay directly
+
+import WebSocket from 'ws'
+useWebSocketImplementation(WebSocket)
 ```
 
 ### Interacting with multiple relays
@@ -197,7 +200,7 @@ declare global {
 
 ### Generating NIP-06 keys
 ```js
-import { 
+import {
   privateKeyFromSeedWords,
   accountFromSeedWords,
   extendedKeysFromSeedWords,

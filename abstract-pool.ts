@@ -1,4 +1,11 @@
-import { AbstractRelay as AbstractRelay, SubscriptionParams, Subscription } from './abstract-relay.ts'
+/* global WebSocket */
+
+import {
+  AbstractRelay as AbstractRelay,
+  SubscriptionParams,
+  Subscription,
+  type AbstractRelayConstructorOptions,
+} from './abstract-relay.ts'
 import { normalizeURL } from './utils.ts'
 
 import type { Event, Nostr } from './core.ts'
@@ -6,6 +13,8 @@ import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
 
 export type SubCloser = { close: () => void }
+
+export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {}
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
   maxWait?: number
@@ -21,8 +30,11 @@ export class AbstractSimplePool {
   public verifyEvent: Nostr['verifyEvent']
   public trustedRelayURLs: Set<string> = new Set()
 
-  constructor(opts: { verifyEvent: Nostr['verifyEvent'] }) {
+  private _WebSocket?: typeof WebSocket
+
+  constructor(opts: AbstractPoolConstructorOptions) {
     this.verifyEvent = opts.verifyEvent
+    this._WebSocket = opts.websocketImplementation
   }
 
   async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<AbstractRelay> {
@@ -32,6 +44,7 @@ export class AbstractSimplePool {
     if (!relay) {
       relay = new AbstractRelay(url, {
         verifyEvent: this.trustedRelayURLs.has(url) ? alwaysTrue : this.verifyEvent,
+        websocketImplementation: this._WebSocket,
       })
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)

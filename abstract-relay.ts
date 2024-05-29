@@ -7,14 +7,9 @@ import { Queue, normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
-var _WebSocket: typeof WebSocket
-
-try {
-  _WebSocket = WebSocket
-} catch {}
-
-export function useWebSocketImplementation(websocketImplementation: any) {
-  _WebSocket = websocketImplementation
+export type AbstractRelayConstructorOptions = {
+  verifyEvent: Nostr['verifyEvent']
+  websocketImplementation?: typeof WebSocket
 }
 
 export class AbstractRelay {
@@ -42,12 +37,15 @@ export class AbstractRelay {
   private serial: number = 0
   private verifyEvent: Nostr['verifyEvent']
 
-  constructor(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
+  private _WebSocket: typeof WebSocket
+
+  constructor(url: string, opts: AbstractRelayConstructorOptions) {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
+    this._WebSocket = opts.websocketImplementation || WebSocket
   }
 
-  static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }): Promise<AbstractRelay> {
+  static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
     const relay = new AbstractRelay(url, opts)
     await relay.connect()
     return relay
@@ -87,7 +85,7 @@ export class AbstractRelay {
       }, this.connectionTimeout)
 
       try {
-        this.ws = new _WebSocket(this.url)
+        this.ws = new this._WebSocket(this.url)
       } catch (err) {
         reject(err)
         return
