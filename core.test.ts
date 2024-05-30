@@ -48,19 +48,25 @@ test('NostrTypeGuard isNRelay with invalid nrelay', () => {
 })
 
 test('NostrTypeGuard isNRelay with invalid nrelay', () => {
-  const is = NostrTypeGuard.isNRelay('nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9')
+  const is = NostrTypeGuard.isNRelay(
+    'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+  )
 
   expect(is).toBeFalse()
 })
 
 test('NostrTypeGuard isNEvent', () => {
-  const is = NostrTypeGuard.isNEvent('nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9')
+  const is = NostrTypeGuard.isNEvent(
+    'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+  )
 
   expect(is).toBeTrue()
 })
 
 test('NostrTypeGuard isNEvent with invalid nevent', () => {
-  const is = NostrTypeGuard.isNEvent('nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8ãrnc9')
+  const is = NostrTypeGuard.isNEvent(
+    'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8ãrnc9',
+  )
 
   expect(is).toBeFalse()
 })
@@ -72,7 +78,9 @@ test('NostrTypeGuard isNEvent with invalid nevent', () => {
 })
 
 test('NostrTypeGuard isNAddress', () => {
-  const is = NostrTypeGuard.isNAddress('naddr1qqxnzdesxqmnxvpexqunzvpcqyt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueqzypve7elhmamff3sr5mgxxms4a0rppkmhmn7504h96pfcdkpplvl2jqcyqqq823cnmhuld')
+  const is = NostrTypeGuard.isNAddress(
+    'naddr1qqxnzdesxqmnxvpexqunzvpcqyt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueqzypve7elhmamff3sr5mgxxms4a0rppkmhmn7504h96pfcdkpplvl2jqcyqqq823cnmhuld',
+  )
 
   expect(is).toBeTrue()
 })

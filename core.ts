@@ -39,7 +39,7 @@ export const NostrTypeGuard = {
   isNAddress: (value?: string): value is NAddress => /^naddr1[a-z\d]+$/.test(value || ''),
   isNSecret: (value?: string): value is NSecret => /^nsec1[a-z\d]{58}$/.test(value || ''),
   isNPublic: (value?: string): value is NPublic => /^npub1[a-z\d]{58}$/.test(value || ''),
-  isNote: (value?: string): value is Note => /^note1[a-z\d]+$/.test(value || '')
+  isNote: (value?: string): value is Note => /^note1[a-z\d]+$/.test(value || ''),
 }
 
 /** An event whose signature has been verified. */

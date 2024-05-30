@@ -54,7 +54,6 @@ type Prefixes = {
   note: string
 }
 
-
 type DecodeValue<Prefix extends keyof Prefixes> = {
   type: Prefix
   data: Prefixes[Prefix]
