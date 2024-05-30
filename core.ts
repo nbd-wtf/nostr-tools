@@ -30,6 +30,7 @@ export type NAddress = `naddr1${string}`
 export type NSecret = `nsec1${string}`
 export type NPublic = `npub1${string}`
 export type Note = `note1${string}`
+export type Ncryptsec = `ncryptsec1${string}`;
 export type Nip05 = `${string}@${string}`
 
 export const NostrTypeGuard = {
@@ -40,6 +41,7 @@ export const NostrTypeGuard = {
   isNSecret: (value?: string | null): value is NSecret => /^nsec1[a-z\d]{58}$/.test(value || ''),
   isNPublic: (value?: string | null): value is NPublic => /^npub1[a-z\d]{58}$/.test(value || ''),
   isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
+  isNcryptsec: (value?: string | null): value is Note => /^ncryptsec1[a-z\d]+$/.test(value || ''),
 }
 
 /** An event whose signature has been verified. */

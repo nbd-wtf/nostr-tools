@@ -144,3 +144,21 @@ test('NostrTypeGuard isNote with invalid note', () => {
 
   expect(is).toBeFalse()
 })
+
+test('NostrTypeGuard isNcryptsec', () => {
+  const is = NostrTypeGuard.isNcryptsec('ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsl8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p')
+
+  expect(is).toBeTrue()
+})
+
+test('NostrTypeGuard isNcryptsec with invalid ncrytpsec', () => {
+  const is = NostrTypeGuard.isNcryptsec('ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsã8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p')
+
+  expect(is).toBeFalse()
+})
+
+test('NostrTypeGuard isNcryptsec with invalid ncrytpsec', () => {
+  const is = NostrTypeGuard.isNcryptsec('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
+
+  expect(is).toBeFalse()
+})
