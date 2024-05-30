@@ -78,6 +78,10 @@ export function getFilterLimit(filter: Filter): number {
   if (filter.kinds && !filter.kinds.length) return 0
   if (filter.authors && !filter.authors.length) return 0
 
+  for (const [key, value] of Object.entries(filter)) {
+    if (key[0] === '#' && Array.isArray(value) && !value.length) return 0
+  }
+
   return Math.min(
     Math.max(0, filter.limit ?? Infinity),
     filter.ids?.length ?? Infinity,
