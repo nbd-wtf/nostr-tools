@@ -30,7 +30,7 @@ export type NAddress = `naddr1${string}`
 export type NSecret = `nsec1${string}`
 export type NPublic = `npub1${string}`
 export type Note = `note1${string}`
-export type Ncryptsec = `ncryptsec1${string}`;
+export type Ncryptsec = `ncryptsec1${string}`
 export type Nip05 = `${string}@${string}`
 
 export const NostrTypeGuard = {
