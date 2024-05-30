@@ -23,13 +23,13 @@ export type NostrEvent = Event
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
-export type NProfile = `nprofile${string}`
-export type NRelay = `nrelay${string}`
-export type NEvent = `nevent${string}`
-export type NAddress = `naddr${string}`
-export type NSecret = `nsec${string}`
-export type NPublic = `npub${string}`
-export type Note = `note${string}`
+export type NProfile = `nprofile1${string}`
+export type NRelay = `nrelay1${string}`
+export type NEvent = `nevent1${string}`
+export type NAddress = `naddr1${string}`
+export type NSecret = `nsec1${string}`
+export type NPublic = `npub1${string}`
+export type Note = `note1${string}`
 export type Nip05 = `${string}@${string}`
 
 export const NostrTypeGuard = {
