@@ -118,3 +118,21 @@ test('NostrTypeGuard isNPublic with invalid npub', () => {
 
   expect(is).toBeFalse()
 })
+
+test('NostrTypeGuard isNote', () => {
+  const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky')
+
+  expect(is).toBeTrue()
+})
+
+test('NostrTypeGuard isNote with invalid note', () => {
+  const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
+
+  expect(is).toBeFalse()
+})
+
+test('NostrTypeGuard isNote with invalid note', () => {
+  const is = NostrTypeGuard.isNote('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzasv8xeh5q92fv33sjgqy4pats')
+
+  expect(is).toBeFalse()
+})
