@@ -2,6 +2,7 @@ import { bytesToHex, concatBytes, hexToBytes } from '@noble/hashes/utils'
 import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
+import { NAddress, NEvent, Note, NProfile, NPublic, NRelay, NSecret } from './core.ts'
 
 export const Bech32MaxSize = 5000
 
@@ -52,6 +53,7 @@ type Prefixes = {
   npub: string
   note: string
 }
+
 
 type DecodeValue<Prefix extends keyof Prefixes> = {
   type: Prefix
@@ -158,15 +160,15 @@ function parseTLV(data: Uint8Array): TLV {
   return result
 }
 
-export function nsecEncode(key: Uint8Array): `nsec1${string}` {
+export function nsecEncode(key: Uint8Array): NSecret {
   return encodeBytes('nsec', key)
 }
 
-export function npubEncode(hex: string): `npub1${string}` {
+export function npubEncode(hex: string): NPublic {
   return encodeBytes('npub', hexToBytes(hex))
 }
 
-export function noteEncode(hex: string): `note1${string}` {
+export function noteEncode(hex: string): Note {
   return encodeBytes('note', hexToBytes(hex))
 }
 
@@ -179,7 +181,7 @@ export function encodeBytes<Prefix extends string>(prefix: Prefix, bytes: Uint8A
   return encodeBech32(prefix, bytes)
 }
 
-export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
+export function nprofileEncode(profile: ProfilePointer): NProfile {
   let data = encodeTLV({
     0: [hexToBytes(profile.pubkey)],
     1: (profile.relays || []).map(url => utf8Encoder.encode(url)),
@@ -187,7 +189,7 @@ export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
   return encodeBech32('nprofile', data)
 }
 
-export function neventEncode(event: EventPointer): `nevent1${string}` {
+export function neventEncode(event: EventPointer): NEvent {
   let kindArray
   if (event.kind !== undefined) {
     kindArray = integerToUint8Array(event.kind)
@@ -203,7 +205,7 @@ export function neventEncode(event: EventPointer): `nevent1${string}` {
   return encodeBech32('nevent', data)
 }
 
-export function naddrEncode(addr: AddressPointer): `naddr1${string}` {
+export function naddrEncode(addr: AddressPointer): NAddress {
   let kind = new ArrayBuffer(4)
   new DataView(kind).setUint32(0, addr.kind, false)
 
@@ -216,7 +218,7 @@ export function naddrEncode(addr: AddressPointer): `naddr1${string}` {
   return encodeBech32('naddr', data)
 }
 
-export function nrelayEncode(url: string): `nrelay1${string}` {
+export function nrelayEncode(url: string): NRelay {
   let data = encodeTLV({
     0: [utf8Encoder.encode(url)],
   })
