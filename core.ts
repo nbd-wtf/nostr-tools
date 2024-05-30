@@ -33,13 +33,13 @@ export type Note = `note${string}`
 export type Nip05 = `${string}@${string}`
 
 export const NostrTypeGuard = {
-  isNProfile: (value?: string): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
-  isNRelay: (value?: string): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
-  isNEvent: (value?: string): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
-  isNAddress: (value?: string): value is NAddress => /^naddr1[a-z\d]+$/.test(value || ''),
-  isNSecret: (value?: string): value is NSecret => /^nsec1[a-z\d]{58}$/.test(value || ''),
-  isNPublic: (value?: string): value is NPublic => /^npub1[a-z\d]{58}$/.test(value || ''),
-  isNote: (value?: string): value is Note => /^note1[a-z\d]+$/.test(value || ''),
+  isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
+  isNRelay: (value?: string | null): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
+  isNEvent: (value?: string | null): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
+  isNAddress: (value?: string | null): value is NAddress => /^naddr1[a-z\d]+$/.test(value || ''),
+  isNSecret: (value?: string | null): value is NSecret => /^nsec1[a-z\d]{58}$/.test(value || ''),
+  isNPublic: (value?: string | null): value is NPublic => /^npub1[a-z\d]{58}$/.test(value || ''),
+  isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
 }
 
 /** An event whose signature has been verified. */
