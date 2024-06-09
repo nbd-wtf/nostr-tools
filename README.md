@@ -2,7 +2,7 @@
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
-Only depends on _@scure_ and _@noble_ packages.
+Only depends on _@scure_ and _@noble_ packages and the _light-bolt11-decoder_(that only relies on the _@scure/base_ package).
 
 This package is only providing lower-level functionality. If you want an easy-to-use fully-fledged solution that abstracts the hard parts of Nostr and makes decisions on your behalf, take a look at [NDK](https://github.com/nostr-dev-kit/ndk) and [@snort/system](https://www.npmjs.com/package/@snort/system).
 

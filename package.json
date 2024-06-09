@@ -221,7 +221,8 @@
     "@noble/hashes": "1.3.1",
     "@scure/base": "1.1.1",
     "@scure/bip32": "1.3.1",
-    "@scure/bip39": "1.2.1"
+    "@scure/bip39": "1.2.1",
+    "light-bolt11-decoder": "^3.1.1"
   },
   "optionalDependencies": {
     "nostr-wasm": "v0.1.0"
