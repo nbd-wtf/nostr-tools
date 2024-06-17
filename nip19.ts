@@ -2,7 +2,7 @@ import { bytesToHex, concatBytes, hexToBytes } from '@noble/hashes/utils'
 import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
-import { NAddress, NEvent, Note, NProfile, NPublic, NRelay, NSecret } from './core.ts'
+import { NAddr, NEvent, Note, NProfile, NPub, NRelay, NSec } from './core.ts'
 
 export const Bech32MaxSize = 5000
 
@@ -159,11 +159,11 @@ function parseTLV(data: Uint8Array): TLV {
   return result
 }
 
-export function nsecEncode(key: Uint8Array): NSecret {
+export function nsecEncode(key: Uint8Array): NSec {
   return encodeBytes('nsec', key)
 }
 
-export function npubEncode(hex: string): NPublic {
+export function npubEncode(hex: string): NPub {
   return encodeBytes('npub', hexToBytes(hex))
 }
 
@@ -204,7 +204,7 @@ export function neventEncode(event: EventPointer): NEvent {
   return encodeBech32('nevent', data)
 }
 
-export function naddrEncode(addr: AddressPointer): NAddress {
+export function naddrEncode(addr: AddressPointer): NAddr {
   let kind = new ArrayBuffer(4)
   new DataView(kind).setUint32(0, addr.kind, false)
 
