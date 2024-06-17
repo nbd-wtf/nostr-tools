@@ -77,7 +77,7 @@ test('NostrTypeGuard isNEvent with invalid nevent', () => {
   expect(is).toBeFalse()
 })
 
-test('NostrTypeGuard isNAddress', () => {
+test('NostrTypeGuard isNAddr', () => {
   const is = NostrTypeGuard.isNAddr(
     'naddr1qqxnzdesxqmnxvpexqunzvpcqyt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueqzypve7elhmamff3sr5mgxxms4a0rppkmhmn7504h96pfcdkpplvl2jqcyqqq823cnmhuld',
   )
@@ -85,43 +85,43 @@ test('NostrTypeGuard isNAddress', () => {
   expect(is).toBeTrue()
 })
 
-test('NostrTypeGuard isNAddress with invalid nadress', () => {
+test('NostrTypeGuard isNAddr with invalid nadress', () => {
   const is = NostrTypeGuard.isNAddr('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
 
   expect(is).toBeFalse()
 })
 
-test('NostrTypeGuard isNSecret', () => {
+test('NostrTypeGuard isNSec', () => {
   const is = NostrTypeGuard.isNSec('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
 
   expect(is).toBeTrue()
 })
 
-test('NostrTypeGuard isNSecret with invalid nsec', () => {
+test('NostrTypeGuard isNSec with invalid nsec', () => {
   const is = NostrTypeGuard.isNSec('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juã')
 
   expect(is).toBeFalse()
 })
 
-test('NostrTypeGuard isNSecret with invalid nsec', () => {
+test('NostrTypeGuard isNSec with invalid nsec', () => {
   const is = NostrTypeGuard.isNSec('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg')
 
   expect(is).toBeFalse()
 })
 
-test('NostrTypeGuard isNPublic', () => {
+test('NostrTypeGuard isNPub', () => {
   const is = NostrTypeGuard.isNPub('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzasv8xeh5q92fv33sjgqy4pats')
 
   expect(is).toBeTrue()
 })
 
-test('NostrTypeGuard isNPublic with invalid npub', () => {
+test('NostrTypeGuard isNPub with invalid npub', () => {
   const is = NostrTypeGuard.isNPub('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzãsv8xeh5q92fv33sjgqy4pats')
 
   expect(is).toBeFalse()
 })
 
-test('NostrTypeGuard isNPublic with invalid npub', () => {
+test('NostrTypeGuard isNPub with invalid npub', () => {
   const is = NostrTypeGuard.isNPub('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
 
   expect(is).toBeFalse()
