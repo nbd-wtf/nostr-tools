@@ -359,7 +359,6 @@ export async function uploadFile(
     method: 'POST',
     headers: {
       Authorization: nip98AuthorizationHeader,
-      'Content-Type': 'multipart/form-data',
     },
     body: formData,
   })
