@@ -21,6 +21,7 @@ describe('generateEventTemplate', () => {
       image: 'https://example.com/image.jpg',
       summary: 'Lorem ipsum',
       alt: 'Image alt text',
+      fallback: ['https://fallback1.example.com/image.jpg', 'https://fallback2.example.com/image.jpg'],
     }
 
     const expectedEventTemplate: EventTemplate = {
@@ -40,6 +41,8 @@ describe('generateEventTemplate', () => {
         ['image', 'https://example.com/image.jpg'],
         ['summary', 'Lorem ipsum'],
         ['alt', 'Image alt text'],
+        ['fallback', 'https://fallback1.example.com/image.jpg'],
+        ['fallback', 'https://fallback2.example.com/image.jpg'],
       ],
     }
 
@@ -71,6 +74,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -100,6 +104,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -129,6 +134,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -158,6 +164,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -181,6 +188,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -204,6 +212,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -227,6 +236,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -259,6 +269,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -288,6 +299,7 @@ describe('validateEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
@@ -319,6 +331,8 @@ describe('parseEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback1.example.com/image.jpg'],
+          ['fallback', 'https://fallback2.example.com/image.jpg'],
         ],
       },
       sk,
@@ -340,6 +354,7 @@ describe('parseEvent', () => {
       image: 'https://example.com/image.jpg',
       summary: 'Lorem ipsum',
       alt: 'Image alt text',
+      fallback: ['https://fallback1.example.com/image.jpg', 'https://fallback2.example.com/image.jpg'],
     })
   })
 
@@ -364,6 +379,7 @@ describe('parseEvent', () => {
           ['image', 'https://example.com/image.jpg'],
           ['summary', 'Lorem ipsum'],
           ['alt', 'Image alt text'],
+          ['fallback', 'https://fallback.example.com/image.jpg'],
         ],
       },
       sk,
