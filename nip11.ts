@@ -68,7 +68,7 @@ export interface BasicRelayInformation {
  * from `[` to `]` and is after UTF-8 serialization (so some
  * unicode characters will cost 2-3 bytes). It is equal to
  * the maximum size of the WebSocket message frame.
- * @param max_subscription total number of subscriptions
+ * @param max_subscriptions total number of subscriptions
  * that may be active on a single websocket connection to
  * this relay. It's possible that authenticated clients with
  * a (paid) relationship to the relay may have higher limits.
@@ -101,12 +101,17 @@ export interface BasicRelayInformation {
  * authentication to happen before a new connection may
  * perform any other action. Even if set to False,
  * authentication may be required for specific actions.
+ * @param restricted_writes: this relay requires some kind
+ * of condition to be fulfilled in order to accept events
+ * (not necessarily, but including
  * @param payment_required this relay requires payment
  * before a new connection may perform any action.
+ * @param created_at_lower_limit: 'created_at' lower limit
+ * @param created_at_upper_limit: 'created_at' upper limit
  */
 export interface Limitations {
   max_message_length: number
-  max_subscription: number
+  max_subscriptions: number
   max_filters: number
   max_limit: number
   max_subid_length: number
@@ -116,6 +121,9 @@ export interface Limitations {
   min_pow_difficulty: number
   auth_required: boolean
   payment_required: boolean
+  created_at_lower_limit: number
+  created_at_upper_limit: number
+  restricted_writes: boolean
 }
 
 interface RetentionDetails {
