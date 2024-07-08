@@ -23,7 +23,7 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
 }
 
 export class AbstractSimplePool {
-  private relays = new Map<string, AbstractRelay>()
+  protected relays = new Map<string, AbstractRelay>()
   public seenOn: Map<string, Set<AbstractRelay>> = new Map()
   public trackRelays: boolean = false
 
