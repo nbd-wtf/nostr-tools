@@ -1,5 +1,5 @@
 export * from './pure.ts'
-export { Relay } from './relay.ts'
+export { Relay, useWebSocketImplementation } from './relay.ts'
 export * from './filter.ts'
 export { SimplePool } from './pool.ts'
 export * from './references.ts'
