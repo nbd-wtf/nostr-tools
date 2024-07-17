@@ -211,8 +211,7 @@ export class AbstractSimplePool {
 
   listConnectionStatus(): Map<string, boolean> {
     const map = new Map<string, boolean>()
-    this.relays
-      .forEach((relay, url) => map.set(url, relay.connected))
+    this.relays.forEach((relay, url) => map.set(url, relay.connected))
 
     return map
   }
