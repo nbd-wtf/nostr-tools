@@ -5,7 +5,12 @@ import { Bech32MaxSize, encodeBytes } from './nip19.ts'
 import { bech32 } from '@scure/base'
 import { Ncryptsec } from './core.ts'
 
-export function encrypt(sec: Uint8Array, password: string, logn: number = 16, ksb: 0x00 | 0x01 | 0x02 = 0x02): Ncryptsec {
+export function encrypt(
+  sec: Uint8Array,
+  password: string,
+  logn: number = 16,
+  ksb: 0x00 | 0x01 | 0x02 = 0x02,
+): Ncryptsec {
   let salt = randomBytes(16)
   let n = 2 ** logn
   let key = scrypt(password.normalize('NFKC'), salt, { N: n, r: 8, p: 1, dkLen: 32 })
