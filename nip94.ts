@@ -75,6 +75,11 @@ export type FileMetadataObject = {
    * Optional: A description for accessibility, providing context or a brief description of the file.
    */
   alt?: string
+
+  /**
+   * Optional: fallback URLs in case url fails.
+   */
+  fallback?: string[]
 }
 
 /**
@@ -104,6 +109,7 @@ export function generateEventTemplate(fileMetadata: FileMetadataObject): EventTe
   if (fileMetadata.image) eventTemplate.tags.push(['image', fileMetadata.image])
   if (fileMetadata.summary) eventTemplate.tags.push(['summary', fileMetadata.summary])
   if (fileMetadata.alt) eventTemplate.tags.push(['alt', fileMetadata.alt])
+  if (fileMetadata.fallback) fileMetadata.fallback.forEach(url => eventTemplate.tags.push(['fallback', url]))
 
   return eventTemplate
 }
@@ -193,6 +199,10 @@ export function parseEvent(event: Event): FileMetadataObject {
         break
       case 'alt':
         fileMetadata.alt = value
+        break
+      case 'fallback':
+        fileMetadata.fallback ??= []
+        fileMetadata.fallback.push(value)
         break
     }
   }

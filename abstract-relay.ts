@@ -98,7 +98,7 @@ export class AbstractRelay {
       }
 
       this.ws.onerror = ev => {
-        reject((ev as any).message)
+        reject((ev as any).message || 'websocket error')
         if (this._connected) {
           this._connected = false
           this.connectionPromise = undefined

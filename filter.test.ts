@@ -222,5 +222,9 @@ describe('Filter', () => {
     test('should return Infinity for empty filters', () => {
       expect(getFilterLimit({})).toEqual(Infinity)
     })
+
+    test('empty tags return 0', () => {
+      expect(getFilterLimit({ '#p': [] })).toEqual(0)
+    })
   })
 })
