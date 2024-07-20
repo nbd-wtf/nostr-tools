@@ -1,5 +1,5 @@
 import { Event } from './core.ts'
-import { isReplaceableKind } from './kinds.ts'
+import { isParameterizedReplaceableKind, isReplaceableKind } from './kinds.ts'
 
 export type Filter = {
   ids?: string[]
@@ -72,7 +72,10 @@ export function mergeFilters(...filters: Filter[]): Filter {
   return result
 }
 
-/** Calculate the intrinsic limit of a filter. This function may return `Infinity`. */
+/**
+ * Calculate the intrinsic limit of a filter.
+ * This function returns a positive integer, or `Infinity` if there is no intrinsic limit.
+ */
 export function getFilterLimit(filter: Filter): number {
   if (filter.ids && !filter.ids.length) return 0
   if (filter.kinds && !filter.kinds.length) return 0
@@ -83,10 +86,20 @@ export function getFilterLimit(filter: Filter): number {
   }
 
   return Math.min(
+    // The `limit` property creates an artificial limit.
     Math.max(0, filter.limit ?? Infinity),
+
+    // There can only be one event per `id`.
     filter.ids?.length ?? Infinity,
+
+    // Replaceable events are limited by the number of authors and kinds.
     filter.authors?.length && filter.kinds?.every(kind => isReplaceableKind(kind))
       ? filter.authors.length * filter.kinds.length
+      : Infinity,
+
+    // Parameterized replaceable events are limited by the number of authors, kinds, and "d" tags.
+    filter.authors?.length && filter.kinds?.every(kind => isParameterizedReplaceableKind(kind)) && filter['#d']?.length
+      ? filter.authors.length * filter.kinds.length * filter['#d'].length
       : Infinity,
   )
 }
