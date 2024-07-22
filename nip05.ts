@@ -1,3 +1,4 @@
+import { Nip05 } from './core.ts'
 import { ProfilePointer } from './nip19.ts'
 
 /**
@@ -8,6 +9,7 @@ import { ProfilePointer } from './nip19.ts'
  * - 2: domain
  */
 export const NIP05_REGEX = /^(?:([\w.+-]+)@)?([\w_-]+(\.[\w_-]+)+)$/
+export const isNip05 = (value?: string | null): value is Nip05 => NIP05_REGEX.test(value || '')
 
 var _fetch: any
 
@@ -47,7 +49,7 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   }
 }
 
-export async function isValid(pubkey: string, nip05: string): Promise<boolean> {
+export async function isValid(pubkey: string, nip05: Nip05): Promise<boolean> {
   let res = await queryProfile(nip05)
   return res ? res.pubkey === pubkey : false
 }
