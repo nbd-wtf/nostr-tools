@@ -76,7 +76,7 @@ const sub = relay.subscribe([
 let sk = generateSecretKey()
 let pk = getPublicKey(sk)
 
-relay.sub([
+relay.subscribe([
   {
     kinds: [1],
     authors: [pk],
