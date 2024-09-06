@@ -144,7 +144,7 @@ export function validateGroupAdminsEvent(event: Event): boolean {
   }
 
   // validate permissions
-  for (const [tag, value, label, ...permissions] of event.tags) {
+  for (const [tag, _value, _label, ...permissions] of event.tags) {
     if (tag !== 'p') continue
 
     for (let i = 0; i < permissions.length; i += 1) {
