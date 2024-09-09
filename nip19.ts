@@ -20,7 +20,7 @@ export const NostrTypeGuard = {
   isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
   isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
   isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
-  isNcryptsec: (value?: string | null): value is Note => /^ncryptsec1[a-z\d]+$/.test(value || ''),
+  isNcryptsec: (value?: string | null): value is Ncryptsec => /^ncryptsec1[a-z\d]+$/.test(value || ''),
 }
 
 export const Bech32MaxSize = 5000
