@@ -1,9 +1,8 @@
 import { scrypt } from '@noble/hashes/scrypt'
 import { xchacha20poly1305 } from '@noble/ciphers/chacha'
 import { concatBytes, randomBytes } from '@noble/hashes/utils'
-import { Bech32MaxSize, encodeBytes } from './nip19.ts'
+import { Bech32MaxSize, Ncryptsec, encodeBytes } from './nip19.ts'
 import { bech32 } from '@scure/base'
-import { Ncryptsec } from './core.ts'
 
 export function encrypt(
   sec: Uint8Array,

@@ -23,26 +23,7 @@ export type NostrEvent = Event
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
-export type NProfile = `nprofile1${string}`
-export type NRelay = `nrelay1${string}`
-export type NEvent = `nevent1${string}`
-export type NAddr = `naddr1${string}`
-export type NSec = `nsec1${string}`
-export type NPub = `npub1${string}`
-export type Note = `note1${string}`
-export type Ncryptsec = `ncryptsec1${string}`
 export type Nip05 = `${string}@${string}`
-
-export const NostrTypeGuard = {
-  isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
-  isNRelay: (value?: string | null): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
-  isNEvent: (value?: string | null): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
-  isNAddr: (value?: string | null): value is NAddr => /^naddr1[a-z\d]+$/.test(value || ''),
-  isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
-  isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
-  isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
-  isNcryptsec: (value?: string | null): value is Note => /^ncryptsec1[a-z\d]+$/.test(value || ''),
-}
 
 /** An event whose signature has been verified. */
 export interface VerifiedEvent extends Event {

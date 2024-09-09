@@ -35,7 +35,6 @@ export const ShortTextNote = 1
 export const RecommendRelay = 2
 export const Contacts = 3
 export const EncryptedDirectMessage = 4
-export const EncryptedDirectMessages = 4
 export const EventDeletion = 5
 export const Repost = 6
 export const Reaction = 7

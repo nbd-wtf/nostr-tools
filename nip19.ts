@@ -2,7 +2,26 @@ import { bytesToHex, concatBytes, hexToBytes } from '@noble/hashes/utils'
 import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
-import { NAddr, NEvent, Note, NProfile, NPub, NRelay, NSec } from './core.ts'
+
+export type NProfile = `nprofile1${string}`
+export type NRelay = `nrelay1${string}`
+export type NEvent = `nevent1${string}`
+export type NAddr = `naddr1${string}`
+export type NSec = `nsec1${string}`
+export type NPub = `npub1${string}`
+export type Note = `note1${string}`
+export type Ncryptsec = `ncryptsec1${string}`
+
+export const NostrTypeGuard = {
+  isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
+  isNRelay: (value?: string | null): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
+  isNEvent: (value?: string | null): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
+  isNAddr: (value?: string | null): value is NAddr => /^naddr1[a-z\d]+$/.test(value || ''),
+  isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
+  isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
+  isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
+  isNcryptsec: (value?: string | null): value is Note => /^ncryptsec1[a-z\d]+$/.test(value || ''),
+}
 
 export const Bech32MaxSize = 5000
 
@@ -46,7 +65,6 @@ export type AddressPointer = {
 
 type Prefixes = {
   nprofile: ProfilePointer
-  nrelay: string
   nevent: EventPointer
   naddr: AddressPointer
   nsec: Uint8Array
@@ -117,16 +135,6 @@ export function decode(nip19: string): DecodeResult {
           kind: parseInt(bytesToHex(tlv[3][0]), 16),
           relays: tlv[1] ? tlv[1].map(d => utf8Decoder.decode(d)) : [],
         },
-      }
-    }
-
-    case 'nrelay': {
-      let tlv = parseTLV(data)
-      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nrelay')
-
-      return {
-        type: 'nrelay',
-        data: utf8Decoder.decode(tlv[0][0]),
       }
     }
 
@@ -215,13 +223,6 @@ export function naddrEncode(addr: AddressPointer): NAddr {
     3: [new Uint8Array(kind)],
   })
   return encodeBech32('naddr', data)
-}
-
-export function nrelayEncode(url: string): NRelay {
-  let data = encodeTLV({
-    0: [utf8Encoder.encode(url)],
-  })
-  return encodeBech32('nrelay', data)
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {
