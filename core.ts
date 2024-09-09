@@ -23,8 +23,6 @@ export type NostrEvent = Event
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
-export type Nip05 = `${string}@${string}`
-
 /** An event whose signature has been verified. */
 export interface VerifiedEvent extends Event {
   [verifiedSymbol]: true

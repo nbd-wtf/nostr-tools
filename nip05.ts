@@ -1,5 +1,6 @@
-import { Nip05 } from './core.ts'
 import { ProfilePointer } from './nip19.ts'
+
+export type Nip05 = `${string}@${string}`
 
 /**
  * NIP-05 regex. The localpart is optional, and should be assumed to be `_` otherwise.
