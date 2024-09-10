@@ -11,6 +11,7 @@ export type NSec = `nsec1${string}`
 export type NPub = `npub1${string}`
 export type Note = `note1${string}`
 export type Ncryptsec = `ncryptsec1${string}`
+export type Noffer = `noffer1${string}`
 
 export const NostrTypeGuard = {
   isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
@@ -21,6 +22,7 @@ export const NostrTypeGuard = {
   isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
   isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
   isNcryptsec: (value?: string | null): value is Ncryptsec => /^ncryptsec1[a-z\d]+$/.test(value || ''),
+  isNoffer: (value?: string | null): value is Noffer => /^noffer1[a-z\d]+$/.test(value || ''),
 }
 
 export const Bech32MaxSize = 5000
@@ -63,6 +65,19 @@ export type AddressPointer = {
   relays?: string[]
 }
 
+export type OfferPointer = {
+  pubkey: string,
+  relay: string,
+  offer: string
+  priceType: OfferPriceType,
+  price?: number
+}
+export enum OfferPriceType {
+  Fixed = 0,
+  Variable = 1,
+  Spontaneous = 2,
+}
+
 type Prefixes = {
   nprofile: ProfilePointer
   nevent: EventPointer
@@ -70,6 +85,7 @@ type Prefixes = {
   nsec: Uint8Array
   npub: string
   note: string
+  noffer: OfferPointer
 }
 
 type DecodeValue<Prefix extends keyof Prefixes> = {
@@ -144,6 +160,23 @@ export function decode(nip19: string): DecodeResult {
     case 'npub':
     case 'note':
       return { type: prefix, data: bytesToHex(data) }
+    case 'noffer':
+      let tlv = parseTLV(data);
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for noffer')
+      if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
+      if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for noffer')
+      if (!tlv[2]?.[0]) throw new Error('missing TLV 2 for noffer')
+      if (!tlv[3]?.[0]) throw new Error('missing TLV 3 for noffer')
+      return {
+        type: 'noffer',
+        data: {
+          pubkey: bytesToHex(tlv[0][0]),
+          relay: utf8Decoder.decode(tlv[1][0]),
+          offer: utf8Decoder.decode(tlv[2][0]),
+          priceType: tlv[3][0][0],
+          price: tlv[4] ? parseInt(bytesToHex(tlv[4][0]), 16) : undefined
+        }
+      }
 
     default:
       throw new Error(`unknown prefix ${prefix}`)
@@ -223,6 +256,21 @@ export function naddrEncode(addr: AddressPointer): NAddr {
     3: [new Uint8Array(kind)],
   })
   return encodeBech32('naddr', data)
+}
+
+export const nofferEncode = (offer: OfferPointer): string => {
+  const o: TLV = {
+    0: [hexToBytes(offer.pubkey)],
+    1: [utf8Encoder.encode(offer.relay)],
+    2: [utf8Encoder.encode(offer.offer)],
+    3: [new Uint8Array([Number(offer.priceType)])],
+  }
+  if (offer.price) {
+    o[4] = [integerToUint8Array(offer.price)]
+  }
+  const data = encodeTLV(o);
+  const words = bech32.toWords(data)
+  return bech32.encode("noffer", words, 5000);
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {
