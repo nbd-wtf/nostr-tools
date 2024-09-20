@@ -340,9 +340,6 @@ export async function uploadFile(
   // Create FormData object
   const formData = new FormData()
 
-  // Append the authorization header to HTML Form Data
-  formData.append('Authorization', nip98AuthorizationHeader)
-
   // Append optional fields to FormData
   optionalFormDataFields &&
     Object.entries(optionalFormDataFields).forEach(([key, value]) => {
@@ -359,7 +356,6 @@ export async function uploadFile(
     method: 'POST',
     headers: {
       Authorization: nip98AuthorizationHeader,
-      'Content-Type': 'multipart/form-data',
     },
     body: formData,
   })

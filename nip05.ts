@@ -1,5 +1,7 @@
 import { ProfilePointer } from './nip19.ts'
 
+export type Nip05 = `${string}@${string}`
+
 /**
  * NIP-05 regex. The localpart is optional, and should be assumed to be `_` otherwise.
  *
@@ -8,6 +10,7 @@ import { ProfilePointer } from './nip19.ts'
  * - 2: domain
  */
 export const NIP05_REGEX = /^(?:([\w.+-]+)@)?([\w_-]+(\.[\w_-]+)+)$/
+export const isNip05 = (value?: string | null): value is Nip05 => NIP05_REGEX.test(value || '')
 
 var _fetch: any
 
@@ -47,7 +50,7 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   }
 }
 
-export async function isValid(pubkey: string, nip05: string): Promise<boolean> {
+export async function isValid(pubkey: string, nip05: Nip05): Promise<boolean> {
   let res = await queryProfile(nip05)
   return res ? res.pubkey === pubkey : false
 }

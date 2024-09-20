@@ -3,6 +3,26 @@ import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
 
+export type NProfile = `nprofile1${string}`
+export type NRelay = `nrelay1${string}`
+export type NEvent = `nevent1${string}`
+export type NAddr = `naddr1${string}`
+export type NSec = `nsec1${string}`
+export type NPub = `npub1${string}`
+export type Note = `note1${string}`
+export type Ncryptsec = `ncryptsec1${string}`
+
+export const NostrTypeGuard = {
+  isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
+  isNRelay: (value?: string | null): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
+  isNEvent: (value?: string | null): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
+  isNAddr: (value?: string | null): value is NAddr => /^naddr1[a-z\d]+$/.test(value || ''),
+  isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
+  isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
+  isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
+  isNcryptsec: (value?: string | null): value is Ncryptsec => /^ncryptsec1[a-z\d]+$/.test(value || ''),
+}
+
 export const Bech32MaxSize = 5000
 
 /**
@@ -45,7 +65,6 @@ export type AddressPointer = {
 
 type Prefixes = {
   nprofile: ProfilePointer
-  nrelay: string
   nevent: EventPointer
   naddr: AddressPointer
   nsec: Uint8Array
@@ -119,16 +138,6 @@ export function decode(nip19: string): DecodeResult {
       }
     }
 
-    case 'nrelay': {
-      let tlv = parseTLV(data)
-      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for nrelay')
-
-      return {
-        type: 'nrelay',
-        data: utf8Decoder.decode(tlv[0][0]),
-      }
-    }
-
     case 'nsec':
       return { type: prefix, data }
 
@@ -158,15 +167,15 @@ function parseTLV(data: Uint8Array): TLV {
   return result
 }
 
-export function nsecEncode(key: Uint8Array): `nsec1${string}` {
+export function nsecEncode(key: Uint8Array): NSec {
   return encodeBytes('nsec', key)
 }
 
-export function npubEncode(hex: string): `npub1${string}` {
+export function npubEncode(hex: string): NPub {
   return encodeBytes('npub', hexToBytes(hex))
 }
 
-export function noteEncode(hex: string): `note1${string}` {
+export function noteEncode(hex: string): Note {
   return encodeBytes('note', hexToBytes(hex))
 }
 
@@ -179,7 +188,7 @@ export function encodeBytes<Prefix extends string>(prefix: Prefix, bytes: Uint8A
   return encodeBech32(prefix, bytes)
 }
 
-export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
+export function nprofileEncode(profile: ProfilePointer): NProfile {
   let data = encodeTLV({
     0: [hexToBytes(profile.pubkey)],
     1: (profile.relays || []).map(url => utf8Encoder.encode(url)),
@@ -187,7 +196,7 @@ export function nprofileEncode(profile: ProfilePointer): `nprofile1${string}` {
   return encodeBech32('nprofile', data)
 }
 
-export function neventEncode(event: EventPointer): `nevent1${string}` {
+export function neventEncode(event: EventPointer): NEvent {
   let kindArray
   if (event.kind !== undefined) {
     kindArray = integerToUint8Array(event.kind)
@@ -203,7 +212,7 @@ export function neventEncode(event: EventPointer): `nevent1${string}` {
   return encodeBech32('nevent', data)
 }
 
-export function naddrEncode(addr: AddressPointer): `naddr1${string}` {
+export function naddrEncode(addr: AddressPointer): NAddr {
   let kind = new ArrayBuffer(4)
   new DataView(kind).setUint32(0, addr.kind, false)
 
@@ -214,13 +223,6 @@ export function naddrEncode(addr: AddressPointer): `naddr1${string}` {
     3: [new Uint8Array(kind)],
   })
   return encodeBech32('naddr', data)
-}
-
-export function nrelayEncode(url: string): `nrelay1${string}` {
-  let data = encodeTLV({
-    0: [utf8Encoder.encode(url)],
-  })
-  return encodeBech32('nrelay', data)
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {

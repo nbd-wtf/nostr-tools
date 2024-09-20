@@ -23,7 +23,7 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
 }
 
 export class AbstractSimplePool {
-  private relays = new Map<string, AbstractRelay>()
+  protected relays = new Map<string, AbstractRelay>()
   public seenOn: Map<string, Set<AbstractRelay>> = new Map()
   public trackRelays: boolean = false
 
@@ -207,5 +207,17 @@ export class AbstractSimplePool {
       let r = await this.ensureRelay(url)
       return r.publish(event)
     })
+  }
+
+  listConnectionStatus(): Map<string, boolean> {
+    const map = new Map<string, boolean>()
+    this.relays.forEach((relay, url) => map.set(url, relay.connected))
+
+    return map
+  }
+
+  destroy(): void {
+    this.relays.forEach(conn => conn.close())
+    this.relays = new Map()
   }
 }

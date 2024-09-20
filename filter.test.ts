@@ -215,6 +215,16 @@ describe('Filter', () => {
       expect(getFilterLimit({ kinds: [0, 3], authors: ['alex', 'fiatjaf'] })).toEqual(4)
     })
 
+    test('should handle parameterized replaceable events', () => {
+      expect(getFilterLimit({ kinds: [30078], authors: ['alex'] })).toEqual(Infinity)
+      expect(getFilterLimit({ kinds: [30078], authors: ['alex'], '#d': ['ditto'] })).toEqual(1)
+      expect(getFilterLimit({ kinds: [30078], authors: ['alex'], '#d': ['ditto', 'soapbox'] })).toEqual(2)
+      expect(getFilterLimit({ kinds: [30078], authors: ['alex', 'fiatjaf'], '#d': ['ditto', 'soapbox'] })).toEqual(4)
+      expect(
+        getFilterLimit({ kinds: [30000, 30078], authors: ['alex', 'fiatjaf'], '#d': ['ditto', 'soapbox'] }),
+      ).toEqual(8)
+    })
+
     test('should return Infinity for authors with regular kinds', () => {
       expect(getFilterLimit({ kinds: [1], authors: ['alex'] })).toEqual(Infinity)
     })

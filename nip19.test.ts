@@ -5,7 +5,6 @@ import {
   naddrEncode,
   nprofileEncode,
   npubEncode,
-  nrelayEncode,
   nsecEncode,
   neventEncode,
   type AddressPointer,
@@ -151,13 +150,4 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
   expect(pointer.relays).toContain('wss://nostr.banana.com')
   expect(pointer.kind).toEqual(30023)
   expect(pointer.identifier).toEqual('banana')
-})
-
-test('encode and decode nrelay', () => {
-  let url = 'wss://relay.nostr.example'
-  let nrelay = nrelayEncode(url)
-  expect(nrelay).toMatch(/nrelay1\w+/)
-  let { type, data } = decode(nrelay)
-  expect(type).toEqual('nrelay')
-  expect(data).toEqual(url)
 })
