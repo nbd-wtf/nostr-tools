@@ -78,6 +78,12 @@ export enum OfferPriceType {
   Spontaneous = 2,
 }
 
+export type DebitPointer = {
+  pubkey: string,
+  relay: string,
+  pointerId?: string,
+}
+
 type Prefixes = {
   nprofile: ProfilePointer
   nevent: EventPointer
@@ -86,6 +92,7 @@ type Prefixes = {
   npub: string
   note: string
   noffer: OfferPointer
+  ndebit: DebitPointer
 }
 
 type DecodeValue<Prefix extends keyof Prefixes> = {
@@ -160,8 +167,8 @@ export function decode(nip19: string): DecodeResult {
     case 'npub':
     case 'note':
       return { type: prefix, data: bytesToHex(data) }
-    case 'noffer':
-      let tlv = parseTLV(data);
+    case 'noffer': {
+      const tlv = parseTLV(data);
       if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for noffer')
       if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
       if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for noffer')
@@ -177,7 +184,21 @@ export function decode(nip19: string): DecodeResult {
           price: tlv[4] ? parseInt(bytesToHex(tlv[4][0]), 16) : undefined
         }
       }
-
+    }
+    case 'ndebit': {
+      const tlv = parseTLV(data);
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for noffer')
+      if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
+      if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for noffer')
+      return {
+        type: 'ndebit',
+        data: {
+          pubkey: bytesToHex(tlv[0][0]),
+          relay: utf8Decoder.decode(tlv[1][0]),
+          pointerId: tlv[2] ? utf8Decoder.decode(tlv[2][0]) : undefined
+        }
+      }
+    }
     default:
       throw new Error(`unknown prefix ${prefix}`)
   }
@@ -271,6 +292,19 @@ export const nofferEncode = (offer: OfferPointer): string => {
   const data = encodeTLV(o);
   const words = bech32.toWords(data)
   return bech32.encode("noffer", words, 5000);
+}
+
+export const ndebitEncode = (debit: DebitPointer): string => {
+  const o: TLV = {
+    0: [hexToBytes(debit.pubkey)],
+    1: [utf8Encoder.encode(debit.relay)],
+  }
+  if (debit.pointerId) {
+    o[2] = [utf8Encoder.encode(debit.pointerId)]
+  }
+  const data = encodeTLV(o);
+  const words = bech32.toWords(data)
+  return bech32.encode("ndebit", words, 5000);
 }
 
 function encodeTLV(tlv: TLV): Uint8Array {

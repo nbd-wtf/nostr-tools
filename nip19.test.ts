@@ -10,6 +10,11 @@ import {
   type AddressPointer,
   type ProfilePointer,
   EventPointer,
+  nofferEncode,
+  OfferPriceType,
+  OfferPointer,
+  ndebitEncode,
+  DebitPointer,
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {
@@ -150,4 +155,36 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
   expect(pointer.relays).toContain('wss://nostr.banana.com')
   expect(pointer.kind).toEqual(30023)
   expect(pointer.identifier).toEqual('banana')
+})
+
+test('encode and decode noffer', () => {
+  const noffer = nofferEncode({
+    relay: "wss://strfry.shock.network",
+    offer: "a4ed09f594098685b1b7b40b6ec31de641baac450f7b30fe6e96f0f937801000",
+    priceType: OfferPriceType.Spontaneous,
+    pubkey: "76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e",
+  })
+
+  const { type, data } = decode(noffer)
+  expect(type).toEqual('noffer')
+  const pointer = data as OfferPointer
+  expect(pointer.relay).toEqual('wss://strfry.shock.network')
+  expect(pointer.offer).toEqual('a4ed09f594098685b1b7b40b6ec31de641baac450f7b30fe6e96f0f937801000')
+  expect(pointer.priceType).toEqual(OfferPriceType.Spontaneous)
+  expect(pointer.pubkey).toEqual('76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e')
+  expect(pointer.price).toBeUndefined()
+})
+
+test('encode and decode ndebit', () => {
+  const ndebit = ndebitEncode({
+    relay: "wss://strfry.shock.network",
+    pubkey: "76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e",
+  })
+
+  const { type, data } = decode(ndebit)
+  expect(type).toEqual('ndebit')
+  const pointer = data as DebitPointer
+  expect(pointer.relay).toEqual('wss://strfry.shock.network')
+  expect(pointer.pubkey).toEqual('76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e')
+  expect(pointer.pointerId).toBeUndefined()
 })
