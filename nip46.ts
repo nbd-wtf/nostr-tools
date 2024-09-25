@@ -254,7 +254,7 @@ export class BunkerSigner {
   }
 
   async nip44Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
-    return await this.sendRequest('nip44_encrypt', [thirdPartyPubkey, ciphertext])
+    return await this.sendRequest('nip44_decrypt', [thirdPartyPubkey, ciphertext])
   }
 }
 
