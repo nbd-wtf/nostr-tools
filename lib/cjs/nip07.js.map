@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../nip07.ts"],
+  "sourcesContent": ["import { EventTemplate, NostrEvent } from './core.ts'\nimport { RelayRecord } from './relay.ts'\n\nexport interface WindowNostr {\n  getPublicKey(): Promise<string>\n  signEvent(event: EventTemplate): Promise<NostrEvent>\n  getRelays(): Promise<RelayRecord>\n  nip04?: {\n    encrypt(pubkey: string, plaintext: string): Promise<string>\n    decrypt(pubkey: string, ciphertext: string): Promise<string>\n  }\n  nip44?: {\n    encrypt(pubkey: string, plaintext: string): Promise<string>\n    decrypt(pubkey: string, ciphertext: string): Promise<string>\n  }\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;AAAA;AAAA;",
+  "names": []
+}

@@ -12,6 +12,7 @@ export type NPub = `npub1${string}`
 export type Note = `note1${string}`
 export type Ncryptsec = `ncryptsec1${string}`
 export type Noffer = `noffer1${string}`
+export type Ndebit = `ndebit1${string}`
 
 export const NostrTypeGuard = {
   isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
@@ -23,6 +24,7 @@ export const NostrTypeGuard = {
   isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
   isNcryptsec: (value?: string | null): value is Ncryptsec => /^ncryptsec1[a-z\d]+$/.test(value || ''),
   isNoffer: (value?: string | null): value is Noffer => /^noffer1[a-z\d]+$/.test(value || ''),
+  isNdebit: (value?: string | null): value is Ndebit => /^ndebit1[a-z\d]+$/.test(value || ''),
 }
 
 export const Bech32MaxSize = 5000
@@ -187,9 +189,9 @@ export function decode(nip19: string): DecodeResult {
     }
     case 'ndebit': {
       const tlv = parseTLV(data);
-      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for noffer')
+      if (!tlv[0]?.[0]) throw new Error('missing TLV 0 for ndebit')
       if (tlv[0][0].length !== 32) throw new Error('TLV 0 should be 32 bytes')
-      if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for noffer')
+      if (!tlv[1]?.[0]) throw new Error('missing TLV 1 for ndebit')
       return {
         type: 'ndebit',
         data: {

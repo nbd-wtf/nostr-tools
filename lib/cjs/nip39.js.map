@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../nip39.ts"],
+  "sourcesContent": ["var _fetch: any\n\ntry {\n  _fetch = fetch\n} catch {}\n\nexport function useFetchImplementation(fetchImplementation: any) {\n  _fetch = fetchImplementation\n}\n\nexport async function validateGithub(pubkey: string, username: string, proof: string): Promise<boolean> {\n  try {\n    let res = await (await _fetch(`https://gist.github.com/${username}/${proof}/raw`)).text()\n    return res === `Verifying that I control the following Nostr public key: ${pubkey}`\n  } catch (_) {\n    return false\n  }\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA,IAAI;AAEJ,IAAI;AACF,WAAS;AACX,QAAE;AAAO;AAEF,SAAS,uBAAuB,qBAA0B;AAC/D,WAAS;AACX;AAEA,eAAsB,eAAe,QAAgB,UAAkB,OAAiC;AACtG,MAAI;AACF,QAAI,MAAM,OAAO,MAAM,OAAO,2BAA2B,YAAY,WAAW,GAAG,KAAK;AACxF,WAAO,QAAQ,4DAA4D;AAAA,EAC7E,SAAS,GAAP;AACA,WAAO;AAAA,EACT;AACF;",
+  "names": []
+}
