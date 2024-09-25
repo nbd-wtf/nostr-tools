@@ -10,18 +10,17 @@ export type NdebitSuccessPayment = { res: 'ok', preimage: string }
 export type NdebitFailure = { res: 'GFY', error: string, code: number }
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure
 
-export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: string, relays: string[], pubKey: string, data: NdebitData): Promise<Nip68Response> => {
-    const privateBytes = hexToBytes(privateKey)
-    const publicKey = getPublicKey(privateBytes)
-    const content = encrypt(JSON.stringify(data), getConversationKey(privateBytes, pubKey))
+export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData): Promise<Nip68Response> => {
+    const publicKey = getPublicKey(privateKey)
+    const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, pubKey))
     const event = newNip68Event(content, publicKey, pubKey)
-    const signed = finalizeEvent(event, privateBytes)
+    const signed = finalizeEvent(event, privateKey)
     pool.publish(relays, signed)
     const res = await pool.get(relays, newNip68Filter(pubKey, signed.id), { maxWait: 30 * 1000 })
     if (!res) {
         throw new Error("failed to get nip68 response in time")
     }
-    decrypt(res.content, getConversationKey(privateBytes, pubKey))
+    decrypt(res.content, getConversationKey(privateKey, pubKey))
     return JSON.parse(res.content) as Nip68Response
 }
 

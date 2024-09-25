@@ -15,4 +15,4 @@ export type Nip69Error = {
     };
 };
 export type Nip69Response = Nip69Success | Nip69Error;
-export declare const SendNofferRequest: (pool: AbstractSimplePool, privateKey: string, relays: string[], pubKey: string, data: NofferData) => Promise<Nip69Response>;
+export declare const SendNofferRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NofferData) => Promise<Nip69Response>;

@@ -26,5 +26,5 @@ export type NdebitFailure = {
     code: number;
 };
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure;
-export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: string, relays: string[], pubKey: string, data: NdebitData) => Promise<Nip68Response>;
+export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData) => Promise<Nip68Response>;
 export {};
