@@ -1,5 +1,6 @@
 import { test, expect } from 'bun:test'
-import { NostrTypeGuard, sortEvents } from './core.ts'
+import { sortEvents } from './core.ts'
+import { NostrTypeGuard } from './nip19.ts'
 
 test('sortEvents', () => {
   const events = [
