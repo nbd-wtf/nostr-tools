@@ -20,6 +20,8 @@ export * as nip42 from './nip42.ts';
 export * as nip44 from './nip44.ts';
 export * as nip47 from './nip47.ts';
 export * as nip57 from './nip57.ts';
+export * as nip68 from './nip68.ts';
+export * as nip69 from './nip69.ts';
 export * as nip98 from './nip98.ts';
 export * as kinds from './kinds.ts';
 export * as fj from './fakejson.ts';
