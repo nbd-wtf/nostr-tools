@@ -2,8 +2,8 @@ import { hexToBytes } from "@noble/hashes/utils"
 import { decrypt, encrypt, getConversationKey } from "./nip44.ts"
 import { finalizeEvent, getPublicKey } from "./pure.ts"
 import { AbstractSimplePool } from "./abstract-pool.ts"
-type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
-type RecurringDebit = { frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
+export type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
+export type RecurringDebit = { frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
 export type NdebitData = { pointer?: string, amount_sats: number } & (RecurringDebit | { bolt11: string })
 export type NdebitSuccess = { res: 'ok' }
 export type NdebitSuccessPayment = { res: 'ok', preimage: string }
@@ -24,7 +24,7 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
     return JSON.parse(res.content) as Nip68Response
 }
 
-const newNip68Event = (content: string, fromPub: string, toPub: string) => ({
+export const newNip68Event = (content: string, fromPub: string, toPub: string) => ({
     content,
     created_at: Math.floor(Date.now() / 1000),
     kind: 21002,
@@ -32,7 +32,7 @@ const newNip68Event = (content: string, fromPub: string, toPub: string) => ({
     tags: [['p', toPub]]
 })
 
-const newNip68Filter = (publicKey: string, eventId: string) => ({
+export const newNip68Filter = (publicKey: string, eventId: string) => ({
     since: Math.floor(Date.now() / 1000) - 1,
     kinds: [21002],
     '#p': [publicKey],

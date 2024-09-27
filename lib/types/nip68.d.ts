@@ -1,6 +1,6 @@
 import { AbstractSimplePool } from "./abstract-pool.ts";
-type RecurringDebitTimeUnit = 'day' | 'week' | 'month';
-type RecurringDebit = {
+export type RecurringDebitTimeUnit = 'day' | 'week' | 'month';
+export type RecurringDebit = {
     frequency: {
         number: number;
         unit: RecurringDebitTimeUnit;
@@ -27,4 +27,16 @@ export type NdebitFailure = {
 };
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure;
 export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData) => Promise<Nip68Response>;
-export {};
+export declare const newNip68Event: (content: string, fromPub: string, toPub: string) => {
+    content: string;
+    created_at: number;
+    kind: number;
+    pubkey: string;
+    tags: string[][];
+};
+export declare const newNip68Filter: (publicKey: string, eventId: string) => {
+    since: number;
+    kinds: number[];
+    '#p': string[];
+    '#e': string[];
+};

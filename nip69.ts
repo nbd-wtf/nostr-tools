@@ -21,7 +21,7 @@ export const SendNofferRequest = async (pool: AbstractSimplePool, privateKey: Ui
     return JSON.parse(res.content) as Nip69Response
 }
 
-const newNip69Event = (content: string, fromPub: string, toPub: string) => ({
+export const newNip69Event = (content: string, fromPub: string, toPub: string) => ({
     content,
     created_at: Math.floor(Date.now() / 1000),
     kind: 21001,
@@ -29,7 +29,7 @@ const newNip69Event = (content: string, fromPub: string, toPub: string) => ({
     tags: [['p', toPub]]
 })
 
-const newNip69Filter = (publicKey: string, eventId: string) => ({
+export const newNip69Filter = (publicKey: string, eventId: string) => ({
     since: Math.floor(Date.now() / 1000) - 1,
     kinds: [21001],
     '#p': [publicKey],
