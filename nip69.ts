@@ -13,7 +13,7 @@ export const SendNofferRequest = async (pool: AbstractSimplePool, privateKey: Ui
     const event = newNip69Event(content, publicKey, pubKey)
     const signed = finalizeEvent(event, privateKey)
     pool.publish(relays, signed)
-    const res = await pool.get(relays, newNip69Filter(pubKey, signed.id), { maxWait: 30 * 1000 })
+    const res = await pool.get(relays, newNip69Filter(publicKey, signed.id), { maxWait: 30 * 1000 })
     if (!res) {
         throw new Error("failed to get nip69 response in time")
     }

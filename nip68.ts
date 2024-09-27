@@ -17,7 +17,7 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
     const event = newNip68Event(content, publicKey, pubKey)
     const signed = finalizeEvent(event, privateKey)
     pool.publish(relays, signed)
-    const res = await pool.get(relays, newNip68Filter(pubKey, signed.id), { maxWait: 30 * 1000 })
+    const res = await pool.get(relays, newNip68Filter(publicKey, signed.id), { maxWait: 30 * 1000 })
     if (!res) {
         throw new Error("failed to get nip68 response in time")
     }
