@@ -1,7 +1,7 @@
 import { hexToBytes } from "@noble/hashes/utils"
 import { decrypt, encrypt, getConversationKey } from "./nip44.ts"
 import { finalizeEvent, getPublicKey } from "./pure.ts"
-import { AbstractSimplePool } from "./abstract-pool.ts"
+import { AbstractSimplePool, SubCloser } from "./abstract-pool.ts"
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
 export type RecurringDebit = { frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
 export type SingleDebit = { pointer?: string, amount_sats?: number, bolt11: string, frequency?: undefined }
@@ -16,13 +16,21 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
     const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, pubKey))
     const event = newNip68Event(content, publicKey, pubKey)
     const signed = finalizeEvent(event, privateKey)
-    pool.publish(relays, signed)
-    const res = await pool.get(relays, newNip68Filter(publicKey, signed.id), { maxWait: 30 * 1000 })
-    if (!res) {
-        throw new Error("failed to get nip68 response in time")
-    }
-    decrypt(res.content, getConversationKey(privateKey, pubKey))
-    return JSON.parse(res.content) as Nip68Response
+    await Promise.all(pool.publish(relays, signed))
+    return new Promise<Nip68Response>((res, rej) => {
+        let closer: SubCloser = { close: () => { } }
+        const timeout = setTimeout(() => {
+            closer.close(); rej("failed to get nip69 response in time")
+        }, 30 * 1000)
+
+        closer = pool.subscribeMany(relays, [newNip68Filter(publicKey, signed.id)], {
+            onevent: async (e) => {
+                clearTimeout(timeout)
+                const content = decrypt(e.content, getConversationKey(privateKey, pubKey))
+                res(JSON.parse(content))
+            }
+        })
+    })
 }
 
 export const newNip68Event = (content: string, fromPub: string, toPub: string) => ({

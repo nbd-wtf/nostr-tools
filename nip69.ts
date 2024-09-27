@@ -1,7 +1,7 @@
 import { hexToBytes } from "@noble/hashes/utils"
 import { decrypt, encrypt, getConversationKey } from "./nip44.ts"
 import { finalizeEvent, getPublicKey } from "./pure.ts"
-import { AbstractSimplePool } from "./abstract-pool.ts"
+import { AbstractSimplePool, SubCloser } from "./abstract-pool.ts"
 export type NofferData = { offer: string, amount?: number }
 export type Nip69Success = { bolt11: string }
 export type Nip69Error = { code: number, error: string, range: { min: number, max: number } }
@@ -12,13 +12,21 @@ export const SendNofferRequest = async (pool: AbstractSimplePool, privateKey: Ui
     const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, pubKey))
     const event = newNip69Event(content, publicKey, pubKey)
     const signed = finalizeEvent(event, privateKey)
-    pool.publish(relays, signed)
-    const res = await pool.get(relays, newNip69Filter(publicKey, signed.id), { maxWait: 30 * 1000 })
-    if (!res) {
-        throw new Error("failed to get nip69 response in time")
-    }
-    decrypt(res.content, getConversationKey(privateKey, pubKey))
-    return JSON.parse(res.content) as Nip69Response
+    await Promise.all(pool.publish(relays, signed))
+    return new Promise<Nip69Response>((res, rej) => {
+        let closer: SubCloser = { close: () => { } }
+        const timeout = setTimeout(() => {
+            closer.close(); rej("failed to get nip69 response in time")
+        }, 30 * 1000)
+
+        closer = pool.subscribeMany(relays, [newNip69Filter(publicKey, signed.id)], {
+            onevent: async (e) => {
+                clearTimeout(timeout)
+                const content = decrypt(e.content, getConversationKey(privateKey, pubKey))
+                res(JSON.parse(content))
+            }
+        })
+    })
 }
 
 export const newNip69Event = (content: string, fromPub: string, toPub: string) => ({
