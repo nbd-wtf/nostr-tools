@@ -7,12 +7,13 @@ export type RecurringDebit = {
     };
     amount_sats: number;
 };
-export type NdebitData = {
+export type SingleDebit = {
     pointer?: string;
-    amount_sats: number;
-} & (RecurringDebit | {
+    amount_sats?: number;
     bolt11: string;
-});
+    frequency?: undefined;
+};
+export type NdebitData = RecurringDebit | SingleDebit;
 export type NdebitSuccess = {
     res: 'ok';
 };

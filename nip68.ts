@@ -4,7 +4,8 @@ import { finalizeEvent, getPublicKey } from "./pure.ts"
 import { AbstractSimplePool } from "./abstract-pool.ts"
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
 export type RecurringDebit = { frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
-export type NdebitData = { pointer?: string, amount_sats: number } & (RecurringDebit | { bolt11: string })
+export type SingleDebit = { pointer?: string, amount_sats?: number, bolt11: string, frequency?: undefined }
+export type NdebitData = RecurringDebit | SingleDebit
 export type NdebitSuccess = { res: 'ok' }
 export type NdebitSuccessPayment = { res: 'ok', preimage: string }
 export type NdebitFailure = { res: 'GFY', error: string, code: number }
