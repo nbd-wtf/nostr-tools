@@ -1,3 +1,4 @@
+/// <reference types="mock-socket/index.js" />
 import { WebSocket } from 'mock-socket';
 import { type Event } from './pure.ts';
 export declare const MockWebSocketClient: typeof WebSocket;

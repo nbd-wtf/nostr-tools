@@ -9,16 +9,16 @@ export type Ncryptsec = `ncryptsec1${string}`;
 export type Noffer = `noffer1${string}`;
 export type Ndebit = `ndebit1${string}`;
 export declare const NostrTypeGuard: {
-    isNProfile: (value?: string | null) => value is NProfile;
-    isNRelay: (value?: string | null) => value is NRelay;
-    isNEvent: (value?: string | null) => value is NEvent;
-    isNAddr: (value?: string | null) => value is NAddr;
-    isNSec: (value?: string | null) => value is NSec;
-    isNPub: (value?: string | null) => value is NPub;
-    isNote: (value?: string | null) => value is Note;
-    isNcryptsec: (value?: string | null) => value is Ncryptsec;
-    isNoffer: (value?: string | null) => value is Noffer;
-    isNdebit: (value?: string | null) => value is Ndebit;
+    isNProfile: (value?: string | null) => value is `nprofile1${string}`;
+    isNRelay: (value?: string | null) => value is `nrelay1${string}`;
+    isNEvent: (value?: string | null) => value is `nevent1${string}`;
+    isNAddr: (value?: string | null) => value is `naddr1${string}`;
+    isNSec: (value?: string | null) => value is `nsec1${string}`;
+    isNPub: (value?: string | null) => value is `npub1${string}`;
+    isNote: (value?: string | null) => value is `note1${string}`;
+    isNcryptsec: (value?: string | null) => value is `ncryptsec1${string}`;
+    isNoffer: (value?: string | null) => value is `noffer1${string}`;
+    isNdebit: (value?: string | null) => value is `ndebit1${string}`;
 };
 export declare const Bech32MaxSize = 5000;
 /**
@@ -57,7 +57,7 @@ export declare enum OfferPriceType {
 export type DebitPointer = {
     pubkey: string;
     relay: string;
-    pointerId?: string;
+    pointer?: string;
 };
 type Prefixes = {
     nprofile: ProfilePointer;
