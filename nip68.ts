@@ -1,9 +1,8 @@
-import { hexToBytes } from "@noble/hashes/utils"
-import { decrypt, encrypt, getConversationKey } from "./nip44.ts"
-import { finalizeEvent, getPublicKey } from "./pure.ts"
-import { AbstractSimplePool, SubCloser } from "./abstract-pool.ts"
+import { decrypt, encrypt, getConversationKey } from './nip44.ts'
+import { finalizeEvent, getPublicKey } from './pure.ts'
+import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
-export type RecurringDebit = { frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
+export type RecurringDebit = { pointer?: string, frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
 export type SingleDebit = { pointer?: string, amount_sats?: number, bolt11: string, frequency?: undefined }
 export type NdebitData = RecurringDebit | SingleDebit
 export type NdebitSuccess = { res: 'ok' }
@@ -20,7 +19,7 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
     return new Promise<Nip68Response>((res, rej) => {
         let closer: SubCloser = { close: () => { } }
         const timeout = setTimeout(() => {
-            closer.close(); rej("failed to get nip69 response in time")
+            closer.close(); rej('failed to get nip69 response in time')
         }, 30 * 1000)
 
         closer = pool.subscribeMany(relays, [newNip68Filter(publicKey, signed.id)], {
