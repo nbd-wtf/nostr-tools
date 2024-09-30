@@ -1,6 +1,7 @@
-import { AbstractSimplePool } from "./abstract-pool.ts";
+import { AbstractSimplePool } from './abstract-pool.ts';
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month';
 export type RecurringDebit = {
+    pointer?: string;
     frequency: {
         number: number;
         unit: RecurringDebitTimeUnit;

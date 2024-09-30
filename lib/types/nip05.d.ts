@@ -8,7 +8,7 @@ export type Nip05 = `${string}@${string}`;
  * - 2: domain
  */
 export declare const NIP05_REGEX: RegExp;
-export declare const isNip05: (value?: string | null) => value is Nip05;
+export declare const isNip05: (value?: string | null) => value is `${string}@${string}`;
 export declare function useFetchImplementation(fetchImplementation: any): void;
 export declare function searchDomain(domain: string, query?: string): Promise<{
     [name: string]: string;
