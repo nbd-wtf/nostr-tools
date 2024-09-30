@@ -159,10 +159,10 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
 
 test('encode and decode noffer', () => {
   const noffer = nofferEncode({
-    relay: "wss://strfry.shock.network",
-    offer: "a4ed09f594098685b1b7b40b6ec31de641baac450f7b30fe6e96f0f937801000",
+    relay: 'wss://strfry.shock.network',
+    offer: 'a4ed09f594098685b1b7b40b6ec31de641baac450f7b30fe6e96f0f937801000',
     priceType: OfferPriceType.Spontaneous,
-    pubkey: "76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e",
+    pubkey: '76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e',
   })
 
   const { type, data } = decode(noffer)
@@ -177,8 +177,8 @@ test('encode and decode noffer', () => {
 
 test('encode and decode ndebit', () => {
   const ndebit = ndebitEncode({
-    relay: "wss://strfry.shock.network",
-    pubkey: "76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e",
+    relay: 'wss://strfry.shock.network',
+    pubkey: '76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e',
   })
 
   const { type, data } = decode(ndebit)
@@ -186,5 +186,5 @@ test('encode and decode ndebit', () => {
   const pointer = data as DebitPointer
   expect(pointer.relay).toEqual('wss://strfry.shock.network')
   expect(pointer.pubkey).toEqual('76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e')
-  expect(pointer.pointerId).toBeUndefined()
+  expect(pointer.pointer).toBeUndefined()
 })
