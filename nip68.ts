@@ -2,9 +2,9 @@ import { decrypt, encrypt, getConversationKey } from './nip44.ts'
 import { finalizeEvent, getPublicKey } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month'
-export type RecurringDebit = { pointer?: string, frequency: { number: number, unit: RecurringDebitTimeUnit }, amount_sats: number }
-export type SingleDebit = { pointer?: string, amount_sats?: number, bolt11: string, frequency?: undefined }
-export type NdebitData = RecurringDebit | SingleDebit
+export type BudgetFrequency = { number: number, unit: RecurringDebitTimeUnit }
+export type NdebitData = { pointer?: string, amount_sats?: number, bolt11?: string, frequency?: BudgetFrequency }
+
 export type NdebitSuccess = { res: 'ok' }
 export type NdebitSuccessPayment = { res: 'ok', preimage: string }
 export type NdebitFailure = { res: 'GFY', error: string, code: number }
@@ -30,6 +30,22 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
             }
         })
     })
+}
+
+export const newFullAccessRequest = (): NdebitData => {
+    return {}
+}
+export const newPaymentRequest = (invoice: string, amount?: number): NdebitData => {
+    return {
+        bolt11: invoice,
+        amount_sats: amount
+    }
+}
+export const newBudgetRequest = (frequency: BudgetFrequency, amount: number): NdebitData => {
+    return {
+        amount_sats: amount,
+        frequency: frequency
+    }
 }
 
 export const newNip68Event = (content: string, fromPub: string, toPub: string) => ({
