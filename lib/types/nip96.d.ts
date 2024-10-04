@@ -1,5 +1,3 @@
-/// <reference types="bun-types" />
-/// <reference types="node" resolution-mode="require"/>
 import { EventTemplate } from './core.ts';
 /**
  * Represents the configuration for a server compliant with NIP-96.

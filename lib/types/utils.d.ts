@@ -1,4 +1,3 @@
-/// <reference types="bun-types" />
 import type { Event } from './core.ts';
 export declare const utf8Decoder: TextDecoder;
 export declare const utf8Encoder: TextEncoder;

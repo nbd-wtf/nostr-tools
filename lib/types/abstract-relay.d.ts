@@ -1,4 +1,3 @@
-/// <reference types="bun-types" />
 import type { Event, EventTemplate, VerifiedEvent, Nostr } from './core.ts';
 import { type Filter } from './filter.ts';
 export type AbstractRelayConstructorOptions = {

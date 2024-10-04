@@ -1,20 +1,15 @@
 import { AbstractSimplePool } from './abstract-pool.ts';
 export type RecurringDebitTimeUnit = 'day' | 'week' | 'month';
-export type RecurringDebit = {
-    pointer?: string;
-    frequency: {
-        number: number;
-        unit: RecurringDebitTimeUnit;
-    };
-    amount_sats: number;
+export type BudgetFrequency = {
+    number: number;
+    unit: RecurringDebitTimeUnit;
 };
-export type SingleDebit = {
+export type NdebitData = {
     pointer?: string;
     amount_sats?: number;
-    bolt11: string;
-    frequency?: undefined;
+    bolt11?: string;
+    frequency?: BudgetFrequency;
 };
-export type NdebitData = RecurringDebit | SingleDebit;
 export type NdebitSuccess = {
     res: 'ok';
 };
@@ -29,6 +24,9 @@ export type NdebitFailure = {
 };
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure;
 export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData) => Promise<Nip68Response>;
+export declare const newFullAccessRequest: () => NdebitData;
+export declare const newPaymentRequest: (invoice: string, amount?: number) => NdebitData;
+export declare const newBudgetRequest: (frequency: BudgetFrequency, amount: number) => NdebitData;
 export declare const newNip68Event: (content: string, fromPub: string, toPub: string) => {
     content: string;
     created_at: number;
