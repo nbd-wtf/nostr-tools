@@ -10,7 +10,7 @@ export type NdebitSuccessPayment = { res: 'ok', preimage: string }
 export type NdebitFailure = { res: 'GFY', error: string, code: number }
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure
 
-export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData): Promise<Nip68Response> => {
+export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData, timeoutSeconds?: number): Promise<Nip68Response> => {
     const publicKey = getPublicKey(privateKey)
     const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, pubKey))
     const event = newNip68Event(content, publicKey, pubKey)
@@ -18,13 +18,15 @@ export const SendNdebitRequest = async (pool: AbstractSimplePool, privateKey: Ui
     await Promise.all(pool.publish(relays, signed))
     return new Promise<Nip68Response>((res, rej) => {
         let closer: SubCloser = { close: () => { } }
-        const timeout = setTimeout(() => {
-            closer.close(); rej('failed to get nip69 response in time')
-        }, 30 * 1000)
-
+        let timer: Timer | null = null
+        if (timeoutSeconds) {
+            timer = setTimeout(() => {
+                closer.close(); rej('failed to get nip69 response in time')
+            }, timeoutSeconds * 1000)
+        }
         closer = pool.subscribeMany(relays, [newNip68Filter(publicKey, signed.id)], {
             onevent: async (e) => {
-                clearTimeout(timeout)
+                if (timer) clearTimeout(timer)
                 const content = decrypt(e.content, getConversationKey(privateKey, pubKey))
                 res(JSON.parse(content))
             }

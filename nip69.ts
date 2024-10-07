@@ -7,22 +7,22 @@ export type Nip69Success = { bolt11: string }
 export type Nip69Error = { code: number, error: string, range: { min: number, max: number } }
 export type Nip69Response = Nip69Success | Nip69Error
 
-export const SendNofferRequest = async (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NofferData): Promise<Nip69Response> => {
+export const SendNofferRequest = async (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], toPubKey: string, data: NofferData, timeoutSeconds = 30): Promise<Nip69Response> => {
     const publicKey = getPublicKey(privateKey)
-    const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, pubKey))
-    const event = newNip69Event(content, publicKey, pubKey)
+    const content = encrypt(JSON.stringify(data), getConversationKey(privateKey, toPubKey))
+    const event = newNip69Event(content, publicKey, toPubKey)
     const signed = finalizeEvent(event, privateKey)
     await Promise.all(pool.publish(relays, signed))
     return new Promise<Nip69Response>((res, rej) => {
         let closer: SubCloser = { close: () => { } }
         const timeout = setTimeout(() => {
             closer.close(); rej("failed to get nip69 response in time")
-        }, 30 * 1000)
+        }, timeoutSeconds * 1000)
 
         closer = pool.subscribeMany(relays, [newNip69Filter(publicKey, signed.id)], {
             onevent: async (e) => {
                 clearTimeout(timeout)
-                const content = decrypt(e.content, getConversationKey(privateKey, pubKey))
+                const content = decrypt(e.content, getConversationKey(privateKey, toPubKey))
                 res(JSON.parse(content))
             }
         })
