@@ -2,7 +2,7 @@ import { hexToBytes } from "@noble/hashes/utils"
 import { decrypt, encrypt, getConversationKey } from "./nip44.ts"
 import { finalizeEvent, getPublicKey } from "./pure.ts"
 import { AbstractSimplePool, SubCloser } from "./abstract-pool.ts"
-export type NofferData = { offer: string, amount?: number }
+export type NofferData = { offer: string, amount?: number, zap?: string }
 export type Nip69Success = { bolt11: string }
 export type Nip69Error = { code: number, error: string, range: { min: number, max: number } }
 export type Nip69Response = Nip69Success | Nip69Error

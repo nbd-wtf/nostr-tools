@@ -2,6 +2,7 @@ import { AbstractSimplePool } from "./abstract-pool.ts";
 export type NofferData = {
     offer: string;
     amount?: number;
+    zap?: string;
 };
 export type Nip69Success = {
     bolt11: string;
