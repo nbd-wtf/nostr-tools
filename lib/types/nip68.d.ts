@@ -23,7 +23,7 @@ export type NdebitFailure = {
     code: number;
 };
 export type Nip68Response = NdebitSuccess | NdebitSuccessPayment | NdebitFailure;
-export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData) => Promise<Nip68Response>;
+export declare const SendNdebitRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NdebitData, timeoutSeconds?: number) => Promise<Nip68Response>;
 export declare const newFullAccessRequest: () => NdebitData;
 export declare const newPaymentRequest: (invoice: string, amount?: number) => NdebitData;
 export declare const newBudgetRequest: (frequency: BudgetFrequency, amount: number) => NdebitData;

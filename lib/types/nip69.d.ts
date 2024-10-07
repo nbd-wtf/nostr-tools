@@ -15,7 +15,7 @@ export type Nip69Error = {
     };
 };
 export type Nip69Response = Nip69Success | Nip69Error;
-export declare const SendNofferRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], pubKey: string, data: NofferData) => Promise<Nip69Response>;
+export declare const SendNofferRequest: (pool: AbstractSimplePool, privateKey: Uint8Array, relays: string[], toPubKey: string, data: NofferData, timeoutSeconds?: number) => Promise<Nip69Response>;
 export declare const newNip69Event: (content: string, fromPub: string, toPub: string) => {
     content: string;
     created_at: number;
