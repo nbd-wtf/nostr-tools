@@ -205,7 +205,17 @@ export class AbstractSimplePool {
       }
 
       let r = await this.ensureRelay(url)
-      return r.publish(event)
+      return r.publish(event).then(reason => {
+        if (this.trackRelays) {
+          let set = this.seenOn.get(event.id)
+          if (!set) {
+            set = new Set()
+            this.seenOn.set(event.id, set)
+          }
+          set.add(r)
+        }
+        return reason
+      })
     })
   }
 
