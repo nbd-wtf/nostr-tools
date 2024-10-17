@@ -47,7 +47,7 @@ export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublic
   ) as Event
 }
 
-export function createWrap(event: Event, recipientPublicKey: string) {
+export function createWrap(seal: Event, recipientPublicKey: string) {
   const randomKey = generateSecretKey()
 
   return finalizeEvent(
