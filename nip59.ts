@@ -2,7 +2,7 @@
 import { EventTemplate, UnsignedEvent, Event } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
-
+import { Seal, GiftWrap } from './kinds.ts'
 
 type Rumor = UnsignedEvent & { id: string }
 
@@ -38,7 +38,7 @@ export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Arra
 export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublicKey: string) {
   return finalizeEvent(
     {
-      kind: 13,
+      kind: Seal,
       content: nip44Encrypt(rumor, privateKey, recipientPublicKey),
       created_at: randomNow(),
       tags: [],
@@ -52,8 +52,8 @@ export function createWrap(seal: Event, recipientPublicKey: string) {
 
   return finalizeEvent(
     {
-      kind: 1059,
-      content: nip44Encrypt(event, randomKey, recipientPublicKey),
+      kind: GiftWrap,
+      content: nip44Encrypt(seal, randomKey, recipientPublicKey),
       created_at: randomNow(),
       tags: [["p", recipientPublicKey]],
     },
