@@ -1,4 +1,3 @@
-
 import { EventTemplate, UnsignedEvent, Event } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
@@ -9,11 +8,9 @@ type Rumor = UnsignedEvent & { id: string }
 const TWO_DAYS = 2 * 24 * 60 * 60
 
 const now = () => Math.round(Date.now() / 1000)
-const randomNow = () => Math.round(now() - (Math.random() * TWO_DAYS))
+const randomNow = () => Math.round(now() - Math.random() * TWO_DAYS)
 
-
-const nip44ConversationKey = (privateKey: Uint8Array, publicKey: string) =>
-  getConversationKey(privateKey, publicKey)
+const nip44ConversationKey = (privateKey: Uint8Array, publicKey: string) => getConversationKey(privateKey, publicKey)
 
 const nip44Encrypt = (data: EventTemplate, privateKey: Uint8Array, publicKey: string) =>
   encrypt(JSON.stringify(data), nip44ConversationKey(privateKey, publicKey))
@@ -24,7 +21,7 @@ const nip44Decrypt = (data: Event, privateKey: Uint8Array) =>
 export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array) {
   const rumor = {
     created_at: now(),
-    content: "",
+    content: '',
     tags: [],
     ...event,
     pubkey: getPublicKey(privateKey),
@@ -43,7 +40,7 @@ export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublic
       created_at: randomNow(),
       tags: [],
     },
-    privateKey
+    privateKey,
   ) as Event
 }
 
@@ -55,14 +52,13 @@ export function createWrap(seal: Event, recipientPublicKey: string) {
       kind: GiftWrap,
       content: nip44Encrypt(seal, randomKey, recipientPublicKey),
       created_at: randomNow(),
-      tags: [["p", recipientPublicKey]],
+      tags: [['p', recipientPublicKey]],
     },
-    randomKey
+    randomKey,
   ) as Event
 }
 
 export function wrapEvent(event: Partial<UnsignedEvent>, senderPrivateKey: Uint8Array, recipientPublicKey: string) {
-
   const rumor = createRumor(event, senderPrivateKey)
 
   const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey)
@@ -70,7 +66,6 @@ export function wrapEvent(event: Partial<UnsignedEvent>, senderPrivateKey: Uint8
 }
 
 export function unwrapEvent(wrap: Event, recipientPrivateKey: Uint8Array) {
-
   const unwrappedSeal = nip44Decrypt(wrap, recipientPrivateKey)
   return nip44Decrypt(unwrappedSeal, recipientPrivateKey)
 }
