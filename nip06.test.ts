@@ -64,7 +64,7 @@ test('generate account from extended private key', () => {
     'xprv9z78fizET65qsCaRr1MSutTSGk1fcKfSt1sBqmuWShtkjRJJ4WCKcSnha6EmgNzFSsyom3MWtydHyPtJtSLZQUtictVQtM2vkPcguh6TQCH'
   const { privateKey, publicKey } = accountFromExtendedKey(xprv)
 
-  expect(privateKey).toBe(hexToBytes('5f29af3b9676180290e77a4efad265c4c2ff28a5302461f73597fda26bb25731'))
+  expect(privateKey).toEqual(hexToBytes('5f29af3b9676180290e77a4efad265c4c2ff28a5302461f73597fda26bb25731'))
   expect(publicKey).toBe('e8bcf3823669444d0b49ad45d65088635d9fd8500a75b5f20b59abefa56a144f')
 })
 
