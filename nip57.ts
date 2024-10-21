@@ -49,7 +49,7 @@ export function makeZapRequest({
   comment = '',
 }: {
   profile: string
-  event: string | null
+  event: string | Event | null
   amount: number
   comment: string
   relays: string[]
@@ -68,8 +68,22 @@ export function makeZapRequest({
     ],
   }
 
-  if (event) {
+  if (event && typeof event === 'string') {
     zr.tags.push(['e', event])
+  }
+  if (event && typeof event === 'object') {
+    zr.tags.push(['e', event.id])
+    // replacable event
+    if ((10000 <= event.kind  && event.kind < 20000) || event.kind  == 0 || event.kind  == 3){
+      const a = ["a", `${event.kind}:${event.pubkey}`]
+      zr.tags.push(a)
+    // parameterized replacable event
+    }else if (30000 <= event.kind && event.kind < 40000){
+      let d = event.tags.find(([t, v]) => t === 'd' && v)
+      if (!d) throw new Error('d tag not found or is empty')
+      const a = ["a", `${event.kind}:${event.pubkey}:${d[1]}`]
+      zr.tags.push(a)
+    }
   }
 
   return zr
