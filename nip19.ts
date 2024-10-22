@@ -4,7 +4,6 @@ import { bech32 } from '@scure/base'
 import { utf8Decoder, utf8Encoder } from './utils.ts'
 
 export type NProfile = `nprofile1${string}`
-export type NRelay = `nrelay1${string}`
 export type NEvent = `nevent1${string}`
 export type NAddr = `naddr1${string}`
 export type NSec = `nsec1${string}`
@@ -14,7 +13,6 @@ export type Ncryptsec = `ncryptsec1${string}`
 
 export const NostrTypeGuard = {
   isNProfile: (value?: string | null): value is NProfile => /^nprofile1[a-z\d]+$/.test(value || ''),
-  isNRelay: (value?: string | null): value is NRelay => /^nrelay1[a-z\d]+$/.test(value || ''),
   isNEvent: (value?: string | null): value is NEvent => /^nevent1[a-z\d]+$/.test(value || ''),
   isNAddr: (value?: string | null): value is NAddr => /^naddr1[a-z\d]+$/.test(value || ''),
   isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
