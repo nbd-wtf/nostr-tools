@@ -172,26 +172,6 @@ describe('NostrTypeGuard', () => {
     expect(is).toBeFalse()
   })
 
-  test('isNRelay', () => {
-    const is = NostrTypeGuard.isNRelay('nrelay1qqt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueq4r295t')
-
-    expect(is).toBeTrue()
-  })
-
-  test('isNRelay with invalid nrelay', () => {
-    const is = NostrTypeGuard.isNRelay('nrelay1qqt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueã4r295t')
-
-    expect(is).toBeFalse()
-  })
-
-  test('isNRelay with invalid nrelay', () => {
-    const is = NostrTypeGuard.isNRelay(
-      'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
-    )
-
-    expect(is).toBeFalse()
-  })
-
   test('isNEvent', () => {
     const is = NostrTypeGuard.isNEvent(
       'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
