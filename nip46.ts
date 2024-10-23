@@ -207,11 +207,13 @@ export class BunkerSigner {
   }
 
   /**
-   * This was supposed to call the "get_public_key" method on the bunker,
-   * but instead we just returns the public key we already know.
+   * Calls the "get_public_key" method on the bunker.
+   * (before we would return the public key hardcoded in the bunker parameters, but
+   *  that is not correct as that may be the bunker pubkey and the actual signer
+   *  pubkey may be different.)
    */
   async getPublicKey(): Promise<string> {
-    return this.bp.pubkey
+    return await this.sendRequest('get_public_key', [])
   }
 
   /**
