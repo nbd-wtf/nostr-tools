@@ -33,8 +33,8 @@ export function classifyKind(kind: number): KindClassification {
 }
 
 export function isKind<T extends number>(event: unknown, kind: T | Array<T>): event is NostrEvent & { kind: T } {
-  const kindAsArray: number[] = kind instanceof Array ? kind : [ kind ]
-  return validateEvent(event) && kindAsArray.includes(event.kind) || false
+  const kindAsArray: number[] = kind instanceof Array ? kind : [kind]
+  return (validateEvent(event) && kindAsArray.includes(event.kind)) || false
 }
 
 export const Metadata = 0
