@@ -261,7 +261,7 @@ export class AbstractRelay {
     return ret
   }
 
-  public subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Subscription {
+  public subscribe(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
     const subscription = this.prepareSubscription(filters, params)
     subscription.fire()
     return subscription
