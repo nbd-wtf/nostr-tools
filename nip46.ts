@@ -89,6 +89,8 @@ export class BunkerSigner {
   private secretKey: Uint8Array
   public bp: BunkerPointer
 
+  private cachedPubKey: string | undefined
+
   /**
    * Creates a new instance of the Nip46 class.
    * @param relays - An array of relay addresses.
@@ -213,7 +215,10 @@ export class BunkerSigner {
    *  pubkey may be different.)
    */
   async getPublicKey(): Promise<string> {
-    return await this.sendRequest('get_public_key', [])
+    if (!this.cachedPubKey) {
+      this.cachedPubKey = await this.sendRequest('get_public_key', [])
+    }
+    return this.cachedPubKey
   }
 
   /**
