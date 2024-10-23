@@ -32,7 +32,7 @@ export function classifyKind(kind: number): KindClassification {
   return 'unknown'
 }
 
-export function isKind<T extends number>(event: unknown, kind: T | Array<T>): event is NostrEvent & { kind: T } {
+export function isKind<T extends number>(event: unknown, kind: T | Array<T>): event is NostrEvent<T> {
   const kindAsArray: number[] = kind instanceof Array ? kind : [kind]
   return (validateEvent(event) && kindAsArray.includes(event.kind)) || false
 }
