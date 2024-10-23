@@ -5,11 +5,11 @@ import { HDKey } from '@scure/bip32'
 
 const DERIVATION_PATH = `m/44'/1237'`
 
-export function privateKeyFromSeedWords(mnemonic: string, passphrase?: string, accountIndex = 0): string {
+export function privateKeyFromSeedWords(mnemonic: string, passphrase?: string, accountIndex = 0): Uint8Array {
   let root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
   let privateKey = root.derive(`${DERIVATION_PATH}/${accountIndex}'/0/0`).privateKey
   if (!privateKey) throw new Error('could not derive private key')
-  return bytesToHex(privateKey)
+  return privateKey
 }
 
 export function accountFromSeedWords(
@@ -17,14 +17,14 @@ export function accountFromSeedWords(
   passphrase?: string,
   accountIndex = 0,
 ): {
-  privateKey: string
+  privateKey: Uint8Array
   publicKey: string
 } {
   const root = HDKey.fromMasterSeed(mnemonicToSeedSync(mnemonic, passphrase))
   const seed = root.derive(`${DERIVATION_PATH}/${accountIndex}'/0/0`)
-  const privateKey = bytesToHex(seed.privateKey!)
   const publicKey = bytesToHex(seed.publicKey!.slice(1))
-  if (!privateKey && !publicKey) {
+  const privateKey = seed.privateKey
+  if (!privateKey || !publicKey) {
     throw new Error('could not derive key pair')
   }
   return { privateKey, publicKey }
@@ -50,7 +50,7 @@ export function accountFromExtendedKey(
   base58key: string,
   accountIndex = 0,
 ): {
-  privateKey?: string
+  privateKey?: Uint8Array
   publicKey: string
 } {
   let extendedKey = HDKey.fromExtendedKey(base58key)
@@ -59,7 +59,7 @@ export function accountFromExtendedKey(
   let publicKey = bytesToHex(child.publicKey!.slice(1))
   if (!publicKey) throw new Error('could not derive public key')
   if (version === 'xprv') {
-    let privateKey = bytesToHex(child.privateKey!)
+    let privateKey = child.privateKey!
     if (!privateKey) throw new Error('could not derive private key')
     return { privateKey, publicKey }
   }
