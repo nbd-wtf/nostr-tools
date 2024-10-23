@@ -1,5 +1,5 @@
 import { Event, finalizeEvent } from './pure.ts'
-import { ChannelCreation, ChannelHideMessage, ChannelMessage, ChannelMetadata, ChannelMuteUser } from './kinds.ts'
+import { ChannelCreation, ChannelHideMessage, ChannelMessage, ChannelMetadata as KindChannelMetadata, ChannelMuteUser } from './kinds.ts'
 
 export interface ChannelMetadata {
   name: string
@@ -78,7 +78,7 @@ export const channelMetadataEvent = (t: ChannelMetadataEventTemplate, privateKey
 
   return finalizeEvent(
     {
-      kind: ChannelMetadata,
+      kind: KindChannelMetadata,
       tags: [['e', t.channel_create_event_id], ...(t.tags ?? [])],
       content: content,
       created_at: t.created_at,
