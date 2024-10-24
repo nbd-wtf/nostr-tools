@@ -92,11 +92,11 @@ export function wrapManyEvents(
   return wrappeds
 }
 
-export function unwrapEvent(wrappedEvent: WrappedEvent, recipientPrivateKey: string | Uint8Array) {
+export function unwrapEvent(wrappedEvent: WrappedEvent, recipientPrivateKey: Uint8Array) {
   return nip59.unwrapEvent(wrappedEvent, recipientPrivateKey)
 }
 
-export function unwrapManyEvents(wrappedEvents: WrappedEvent[], recipientPrivateKey: string | Uint8Array) {
+export function unwrapManyEvents(wrappedEvents: WrappedEvent[], recipientPrivateKey: Uint8Array) {
   let unwrappedEvents = []
 
   wrappedEvents.forEach(e => {
