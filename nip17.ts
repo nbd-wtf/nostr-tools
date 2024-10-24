@@ -54,19 +54,16 @@ function createEvent(
 
 export function wrapEvent(
   senderPrivateKey: Uint8Array,
-  recipients: Recipient,
+  recipient: Recipient,
   message: string,
   conversationTitle?: string,
   replyTo?: ReplyTo,
 ) {
   // Create the event using createEvent
-  const event = createEvent(recipients, message, conversationTitle, replyTo)
-
-  // Assuming recipients is an array or single recipient, extract the first recipient's public key
-  const recipientPublicKey = Array.isArray(recipients) ? recipients[0].publicKey : recipients.publicKey
+  const event = createEvent(recipient, message, conversationTitle, replyTo)
 
   // Wrap the created event using nip59
-  return nip59.wrapEvent(event, senderPrivateKey, recipientPublicKey)
+  return nip59.wrapEvent(event, senderPrivateKey, recipient.publicKey)
 }
 
 export function wrapManyEvents(
