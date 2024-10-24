@@ -80,16 +80,16 @@ export function wrapManyEvents(
   const senderPublicKey = getPublicKey(senderPrivateKey)
 
   // Initialize the wraps array with the sender's own wrapped event
-  const wraps = [
-    wrapEvent(senderPrivateKey, { publicKey: senderPublicKey }, message, conversationTitle, replyTo), // sender's wrapped event
+  const wrappeds = [
+    wrapEvent(senderPrivateKey, { publicKey: senderPublicKey }, message, conversationTitle, replyTo)
   ]
 
   // Wrap the event for each recipient
   recipients.forEach(recipient => {
-    wraps.push(wrapEvent(senderPrivateKey, recipient, message, conversationTitle, replyTo))
+    wrappeds.push(wrapEvent(senderPrivateKey, recipient, message, conversationTitle, replyTo))
   })
 
-  return wraps
+  return wrappeds
 }
 
 export function unwrapEvent(wrappedEvent: WrappedEvent, recipientPrivateKey: string | Uint8Array) {
