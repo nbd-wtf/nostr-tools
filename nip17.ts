@@ -53,7 +53,7 @@ function createEvent(
 }
 
 export function wrapEvent(
-  senderPrivateKey: string | Uint8Array,
+  senderPrivateKey: Uint8Array,
   recipients: Recipient,
   message: string,
   conversationTitle?: string,
@@ -70,7 +70,7 @@ export function wrapEvent(
 }
 
 export function wrapManyEvents(
-  senderPrivateKey: string | Uint8Array,
+  senderPrivateKey: Uint8Array,
   recipients: Recipient[],
   message: string,
   conversationTitle?: string,
