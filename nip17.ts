@@ -23,16 +23,6 @@ type WrappedEvent = {
   sig: string
 }
 
-type Event = {
-  kind: number
-  content: string
-  created_at: number
-  tags: string[][]
-  pubkey: string
-  id: string
-  sig: string
-}
-
 function createEvent(
   recipients: Recipient | Recipient[],
   message: string,
@@ -125,7 +115,7 @@ export async function getWrappedEvents(pubKey: string, relays: string[] = []): P
   const pool = new SimplePool()
 
   try {
-    const events = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
+    const events: WrappedEvent[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
     pool.close(relays)
 
     return events
