@@ -1,13 +1,7 @@
 import { test, expect } from 'bun:test'
 import { getPublicKey } from './pure.ts'
 import { decode } from './nip19.ts'
-import {
-  wrapEvent,
-  wrapManyEvents,
-  unwrapEvent,
-  unwrapManyEvents,
-  getWrappedEvents,
-} from './nip17.ts'
+import { wrapEvent, wrapManyEvents, unwrapEvent, unwrapManyEvents, getWrappedEvents } from './nip17.ts'
 
 const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
 
@@ -46,9 +40,7 @@ test('wrapManyEvents', () => {
       kind: 1059,
       content: '',
       created_at: 1729581521,
-      tags: [
-        [ 'p', '611df01bfcf85c26ae65453b772d8f1dfd25c264621c0277e1fc1518686faef9' ]
-      ],
+      tags: [['p', '611df01bfcf85c26ae65453b772d8f1dfd25c264621c0277e1fc1518686faef9']],
       pubkey: '',
       id: '',
       sig: '',
@@ -58,9 +50,7 @@ test('wrapManyEvents', () => {
       kind: 1059,
       content: '',
       created_at: 1729594619,
-      tags: [
-        [ 'p', 'b60849e5aae4113b236f9deb34f6f85605b4c53930651309a0d60c7ea721aad0' ]
-      ],
+      tags: [['p', 'b60849e5aae4113b236f9deb34f6f85605b4c53930651309a0d60c7ea721aad0']],
       pubkey: '',
       id: '',
       sig: '',
@@ -70,23 +60,15 @@ test('wrapManyEvents', () => {
       kind: 1059,
       content: '',
       created_at: 1729560014,
-      tags: [
-        [ 'p', '36f7288c84d85ca6aa189dc3581d63ce140b7eeef5ae759421c5b5a3627312db' ]
-      ],
+      tags: [['p', '36f7288c84d85ca6aa189dc3581d63ce140b7eeef5ae759421c5b5a3627312db']],
       pubkey: '',
       id: '',
       sig: '',
       [Symbol('verified')]: true,
-    }
+    },
   ]
 
-  const wrappedEvents = wrapManyEvents(
-    senderPrivateKey,
-    recipients,
-    message,
-    conversationTitle,
-    replyTo,
-  )
+  const wrappedEvents = wrapManyEvents(senderPrivateKey, recipients, message, conversationTitle, replyTo)
 
   wrappedEvents.forEach((event, index) => {
     expect(event.kind).toEqual(expected[index].kind)
@@ -100,9 +82,10 @@ test('unwrapEvent', () => {
     content: 'Hello, this is a direct message!',
     pubkey: '611df01bfcf85c26ae65453b772d8f1dfd25c264621c0277e1fc1518686faef9',
     tags: [
-      [ 'p', 'b60849e5aae4113b236f9deb34f6f85605b4c53930651309a0d60c7ea721aad0', 'wss://relay1.com' ],
-      [ 'e', 'previousEventId123', '', 'reply' ], [ 'subject', 'Private Group Conversation' ]
-    ]
+      ['p', 'b60849e5aae4113b236f9deb34f6f85605b4c53930651309a0d60c7ea721aad0', 'wss://relay1.com'],
+      ['e', 'previousEventId123', '', 'reply'],
+      ['subject', 'Private Group Conversation'],
+    ],
   }
   const result = unwrapEvent(wrappedEvent, sk1)
 
@@ -117,9 +100,7 @@ test('getWrappedEvents and unwrapManyEvents', async () => {
     {
       created_at: 1729721879,
       content: 'Hello!',
-      tags: [
-        [ 'p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa' ]
-      ],
+      tags: [['p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa']],
       kind: 14,
       pubkey: 'c0f56665e73eedc90b9565ecb34d961a2eb7ac1e2747899e4f73a813f940bc22',
       id: 'aee0a3e6487b2ac8c1851cc84f3ae0fca9af8a9bdad85c4ba5fdf45d3ee817c3',
@@ -127,18 +108,13 @@ test('getWrappedEvents and unwrapManyEvents', async () => {
     {
       created_at: 1729722025,
       content: 'How are you?',
-      tags: [
-        [ 'p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa' ]
-      ],
+      tags: [['p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa']],
       kind: 14,
       pubkey: 'c0f56665e73eedc90b9565ecb34d961a2eb7ac1e2747899e4f73a813f940bc22',
       id: '212387ec5efee7d6eb20b747121e9fc1adb798de6c3185e932335bb1bcc61a77',
-    }
+    },
   ]
-  const relays = [
-    'wss://relay.damus.io',
-    'wss://nos.lol',
-  ]
+  const relays = ['wss://relay.damus.io', 'wss://nos.lol']
   const privateKey = '582c3e7902c10c84d1cfe899a102e56bde628972d58d63011163ce0cdf4279b6'
   const publicKey = '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa'
   const wrappedEvents = await getWrappedEvents(publicKey, relays)
