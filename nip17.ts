@@ -1,3 +1,4 @@
+import { Event } from './core.ts'
 import { PrivateDirectMessage, GiftWrap } from './kinds.ts'
 import { getPublicKey } from './pure'
 import { SimplePool } from './pool'
@@ -11,16 +12,6 @@ type Recipient = {
 type ReplyTo = {
   eventId: string
   relayUrl?: string
-}
-
-type WrappedEvent = {
-  kind: number
-  content: string
-  created_at: number
-  tags: string[][]
-  pubkey: string
-  id: string
-  sig: string
 }
 
 function createEvent(
@@ -92,11 +83,11 @@ export function wrapManyEvents(
   return wrappeds
 }
 
-export function unwrapEvent(wrappedEvent: WrappedEvent, recipientPrivateKey: Uint8Array) {
+export function unwrapEvent(wrappedEvent: Event, recipientPrivateKey: Uint8Array) {
   return nip59.unwrapEvent(wrappedEvent, recipientPrivateKey)
 }
 
-export function unwrapManyEvents(wrappedEvents: WrappedEvent[], recipientPrivateKey: Uint8Array) {
+export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Uint8Array) {
   let unwrappedEvents = []
 
   wrappedEvents.forEach(e => {
@@ -112,7 +103,7 @@ export async function getWrappedEvents(pubKey: string, relays: string[] = []): P
   const pool = new SimplePool()
 
   try {
-    const events: WrappedEvent[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
+    const events: Event[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
     pool.close(relays)
 
     return events
