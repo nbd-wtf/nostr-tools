@@ -1,7 +1,5 @@
-import { Event } from './core.ts'
-import { PrivateDirectMessage, GiftWrap } from './kinds.ts'
+import { PrivateDirectMessage } from './kinds.ts'
 import { getPublicKey } from './pure'
-import { SimplePool } from './pool'
 import * as nip59 from './nip59'
 
 type Recipient = {
@@ -50,10 +48,7 @@ export function wrapEvent(
   conversationTitle?: string,
   replyTo?: ReplyTo,
 ) {
-  // Create the event using createEvent
   const event = createEvent(recipient, message, conversationTitle, replyTo)
-
-  // Wrap the created event using nip59
   return nip59.wrapEvent(event, senderPrivateKey, recipient.publicKey)
 }
 
@@ -70,7 +65,7 @@ export function wrapManyEvents(
 
   const senderPublicKey = getPublicKey(senderPrivateKey)
 
-  // Initialize the wraps array with the sender's own wrapped event
+  // Initialize the wrappeds array with the sender's own wrapped event
   const wrappeds = [wrapEvent(senderPrivateKey, { publicKey: senderPublicKey }, message, conversationTitle, replyTo)]
 
   // Wrap the event for each recipient
@@ -81,32 +76,6 @@ export function wrapManyEvents(
   return wrappeds
 }
 
-export function unwrapEvent(wrappedEvent: Event, recipientPrivateKey: Uint8Array) {
-  return nip59.unwrapEvent(wrappedEvent, recipientPrivateKey)
-}
+export const unwrapEvent = nip59.unwrapEvent
 
-export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Uint8Array) {
-  let unwrappedEvents = []
-
-  wrappedEvents.forEach(e => {
-    unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
-  })
-
-  unwrappedEvents.sort((a, b) => a.created_at - b.created_at)
-
-  return unwrappedEvents
-}
-
-export async function getWrappedEvents(pubKey: string, relays: string[] = []): Promise<Event[] | undefined> {
-  const pool = new SimplePool()
-
-  try {
-    const events: Event[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
-    pool.close(relays)
-
-    return events
-  } catch (error) {
-    console.error('Failed to:', error)
-    return undefined
-  }
-}
+export const unwrapManyEvents = nip59.unwrapManyEvents
