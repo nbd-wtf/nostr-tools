@@ -1,4 +1,3 @@
-import { hexToBytes } from '@noble/hashes/utils'
 import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
@@ -249,11 +248,6 @@ export class BunkerSigner {
 
   async nip04Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
     return await this.sendRequest('nip04_decrypt', [thirdPartyPubkey, ciphertext])
-  }
-
-  async nip44GetKey(thirdPartyPubkey: string): Promise<Uint8Array> {
-    let resp = await this.sendRequest('nip44_get_key', [thirdPartyPubkey])
-    return hexToBytes(resp)
   }
 
   async nip44Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string> {
