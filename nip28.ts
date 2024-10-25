@@ -1,5 +1,11 @@
 import { Event, finalizeEvent } from './pure.ts'
-import { ChannelCreation, ChannelHideMessage, ChannelMessage, ChannelMetadata as KindChannelMetadata, ChannelMuteUser } from './kinds.ts'
+import {
+  ChannelCreation,
+  ChannelHideMessage,
+  ChannelMessage,
+  ChannelMetadata as KindChannelMetadata,
+  ChannelMuteUser,
+} from './kinds.ts'
 
 export interface ChannelMetadata {
   name: string
