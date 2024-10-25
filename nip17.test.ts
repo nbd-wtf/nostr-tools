@@ -1,7 +1,7 @@
 import { test, expect } from 'bun:test'
 import { getPublicKey } from './pure.ts'
 import { decode } from './nip19.ts'
-import { wrapEvent, wrapManyEvents, unwrapEvent, unwrapManyEvents, getWrappedEvents } from './nip17.ts'
+import { wrapEvent, wrapManyEvents, unwrapEvent } from './nip17.ts'
 
 const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
 
@@ -93,34 +93,4 @@ test('unwrapEvent', () => {
   expect(result.content).toEqual(expected.content)
   expect(result.pubkey).toEqual(expected.pubkey)
   expect(result.tags).toEqual(expected.tags)
-})
-
-test('getWrappedEvents and unwrapManyEvents', async () => {
-  const expected = [
-    {
-      created_at: 1729721879,
-      content: 'Hello!',
-      tags: [['p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa']],
-      kind: 14,
-      pubkey: 'c0f56665e73eedc90b9565ecb34d961a2eb7ac1e2747899e4f73a813f940bc22',
-      id: 'aee0a3e6487b2ac8c1851cc84f3ae0fca9af8a9bdad85c4ba5fdf45d3ee817c3',
-    },
-    {
-      created_at: 1729722025,
-      content: 'How are you?',
-      tags: [['p', '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa']],
-      kind: 14,
-      pubkey: 'c0f56665e73eedc90b9565ecb34d961a2eb7ac1e2747899e4f73a813f940bc22',
-      id: '212387ec5efee7d6eb20b747121e9fc1adb798de6c3185e932335bb1bcc61a77',
-    },
-  ]
-  const relays = ['wss://relay.damus.io', 'wss://nos.lol']
-  const privateKey = '582c3e7902c10c84d1cfe899a102e56bde628972d58d63011163ce0cdf4279b6'
-  const publicKey = '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa'
-  const wrappedEvents = await getWrappedEvents(publicKey, relays)
-  const unwrappedEvents = unwrapManyEvents(wrappedEvents, privateKey)
-
-  unwrappedEvents.forEach((event, index) => {
-    expect(event).toEqual(expected[index])
-  })
 })

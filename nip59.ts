@@ -2,6 +2,7 @@ import { EventTemplate, UnsignedEvent, Event } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
 import { Seal, GiftWrap } from './kinds.ts'
+import { SimplePool } from './pool'
 
 type Rumor = UnsignedEvent & { id: string }
 
@@ -65,7 +66,53 @@ export function wrapEvent(event: Partial<UnsignedEvent>, senderPrivateKey: Uint8
   return createWrap(seal, recipientPublicKey)
 }
 
+export function wrapManyEvents(
+  event: Partial<UnsignedEvent>,
+  senderPrivateKey: Uint8Array,
+  recipientsPublicKeys: string[],
+) {
+  if (!recipientsPublicKeys || recipientsPublicKeys.length === 0) {
+    throw new Error('At least one recipient is required.')
+  }
+
+  const senderPublicKey = getPublicKey(senderPrivateKey)
+
+  const wrappeds = [wrapEvent(event, senderPrivateKey, senderPublicKey)]
+
+  recipientsPublicKeys.forEach(recipientPublicKey => {
+    wrappeds.push(wrapEvent(event, senderPrivateKey, recipientPublicKey))
+  })
+
+  return wrappeds
+}
+
 export function unwrapEvent(wrap: Event, recipientPrivateKey: Uint8Array) {
   const unwrappedSeal = nip44Decrypt(wrap, recipientPrivateKey)
   return nip44Decrypt(unwrappedSeal, recipientPrivateKey)
+}
+
+export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Uint8Array) {
+  let unwrappedEvents = []
+
+  wrappedEvents.forEach(e => {
+    unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
+  })
+
+  unwrappedEvents.sort((a, b) => a.created_at - b.created_at)
+
+  return unwrappedEvents
+}
+
+export async function getWrappedEvents(pubKey: string, relays: string[] = []): Promise<Event[] | undefined> {
+  const pool = new SimplePool()
+
+  try {
+    const events: Event[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
+    pool.close(relays)
+
+    return events
+  } catch (error) {
+    console.error('Failed to:', error)
+    return undefined
+  }
 }
