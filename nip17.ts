@@ -1,5 +1,5 @@
 import { PrivateDirectMessage } from './kinds.ts'
-import { EventTemplate, getPublicKey } from './pure.ts'
+import { EventTemplate, NostrEvent, getPublicKey } from './pure.ts'
 import * as nip59 from './nip59.ts'
 
 type Recipient = {
@@ -48,7 +48,7 @@ export function wrapEvent(
   message: string,
   conversationTitle?: string,
   replyTo?: ReplyTo,
-) {
+): NostrEvent {
   const event = createEvent(recipient, message, conversationTitle, replyTo)
   return nip59.wrapEvent(event, senderPrivateKey, recipient.publicKey)
 }
@@ -59,22 +59,17 @@ export function wrapManyEvents(
   message: string,
   conversationTitle?: string,
   replyTo?: ReplyTo,
-) {
+): NostrEvent[] {
   if (!recipients || recipients.length === 0) {
     throw new Error('At least one recipient is required.')
   }
 
   const senderPublicKey = getPublicKey(senderPrivateKey)
 
-  // Initialize the wrappeds array with the sender's own wrapped event
-  const wrappeds = [wrapEvent(senderPrivateKey, { publicKey: senderPublicKey }, message, conversationTitle, replyTo)]
-
-  // Wrap the event for each recipient
-  recipients.forEach(recipient => {
-    wrappeds.push(wrapEvent(senderPrivateKey, recipient, message, conversationTitle, replyTo))
-  })
-
-  return wrappeds
+  // wrap the event for the sender and then for each recipient
+  return [{ publicKey: senderPublicKey }, ...recipients].map(recipient =>
+    wrapEvent(senderPrivateKey, recipient, message, conversationTitle, replyTo),
+  )
 }
 
 export const unwrapEvent = nip59.unwrapEvent
