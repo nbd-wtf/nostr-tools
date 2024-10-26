@@ -235,7 +235,7 @@ export class BunkerSigner {
   async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
-    if (signed.pubkey === this.bp.pubkey && verifyEvent(signed)) {
+    if (verifyEvent(signed)) {
       return signed
     } else {
       throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
