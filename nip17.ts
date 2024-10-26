@@ -1,6 +1,6 @@
 import { PrivateDirectMessage } from './kinds.ts'
-import { getPublicKey } from './pure'
-import * as nip59 from './nip59'
+import { EventTemplate, getPublicKey } from './pure.ts'
+import * as nip59 from './nip59.ts'
 
 type Recipient = {
   publicKey: string
@@ -17,10 +17,11 @@ function createEvent(
   message: string,
   conversationTitle?: string,
   replyTo?: ReplyTo,
-) {
-  const baseEvent = {
+): EventTemplate {
+  const baseEvent: EventTemplate = {
+    created_at: Math.ceil(Date.now() / 1000),
     kind: PrivateDirectMessage,
-    tags: [] as (string | string[])[],
+    tags: [],
     content: message,
   }
 

@@ -2,7 +2,6 @@ import { EventTemplate, UnsignedEvent, Event } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
 import { Seal, GiftWrap } from './kinds.ts'
-import { SimplePool } from './pool'
 
 type Rumor = UnsignedEvent & { id: string }
 
@@ -86,13 +85,13 @@ export function wrapManyEvents(
   return wrappeds
 }
 
-export function unwrapEvent(wrap: Event, recipientPrivateKey: Uint8Array) {
+export function unwrapEvent(wrap: Event, recipientPrivateKey: Uint8Array): Rumor {
   const unwrappedSeal = nip44Decrypt(wrap, recipientPrivateKey)
   return nip44Decrypt(unwrappedSeal, recipientPrivateKey)
 }
 
-export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Uint8Array) {
-  let unwrappedEvents = []
+export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Uint8Array): Rumor[] {
+  let unwrappedEvents: Rumor[] = []
 
   wrappedEvents.forEach(e => {
     unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
@@ -101,18 +100,4 @@ export function unwrapManyEvents(wrappedEvents: Event[], recipientPrivateKey: Ui
   unwrappedEvents.sort((a, b) => a.created_at - b.created_at)
 
   return unwrappedEvents
-}
-
-export async function getWrappedEvents(pubKey: string, relays: string[] = []): Promise<Event[] | undefined> {
-  const pool = new SimplePool()
-
-  try {
-    const events: Event[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [pubKey] })
-    pool.close(relays)
-
-    return events
-  } catch (error) {
-    console.error('Failed to:', error)
-    return undefined
-  }
 }

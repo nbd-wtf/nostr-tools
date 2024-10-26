@@ -1,7 +1,10 @@
 import { test, expect } from 'bun:test'
-import { wrapEvent, wrapManyEvents, unwrapEvent, unwrapManyEvents, getWrappedEvents } from './nip59.ts'
+import { wrapEvent, wrapManyEvents, unwrapEvent, unwrapManyEvents } from './nip59.ts'
 import { decode } from './nip19.ts'
-import { getPublicKey } from './pure.ts'
+import { NostrEvent, getPublicKey } from './pure.ts'
+import { SimplePool } from './pool.ts'
+import { GiftWrap } from './kinds.ts'
+import { hexToBytes } from '@noble/hashes/utils'
 
 const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
 const recipientPrivateKey = decode(`nsec1uyyrnx7cgfp40fcskcr2urqnzekc20fj0er6de0q8qvhx34ahazsvs9p36`).data
@@ -97,9 +100,11 @@ test('getWrappedEvents and unwrapManyEvents', async () => {
     },
   ]
   const relays = ['wss://relay.damus.io', 'wss://nos.lol']
-  const privateKey = '582c3e7902c10c84d1cfe899a102e56bde628972d58d63011163ce0cdf4279b6'
+  const privateKey = hexToBytes('582c3e7902c10c84d1cfe899a102e56bde628972d58d63011163ce0cdf4279b6')
   const publicKey = '33d6bb037bf2e8c4571708e480e42d141bedc5a562b4884ec233b22d6fdea6aa'
-  const wrappedEvents = await getWrappedEvents(publicKey, relays)
+
+  const pool = new SimplePool()
+  const wrappedEvents: NostrEvent[] = await pool.querySync(relays, { kinds: [GiftWrap], '#p': [publicKey] })
   const unwrappedEvents = unwrapManyEvents(wrappedEvents, privateKey)
 
   unwrappedEvents.forEach((event, index) => {
