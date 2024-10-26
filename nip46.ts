@@ -48,7 +48,7 @@ export async function parseBunkerInput(input: string): Promise<BunkerPointer | n
   return queryBunkerProfile(input)
 }
 
-async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
+export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
   const match = nip05.match(NIP05_REGEX)
   if (!match) return null
 
@@ -291,9 +291,6 @@ export async function createAccount(
 
   return rpc
 }
-
-// @deprecated use fetchBunkerProviders instead
-export const fetchCustodialBunkers = fetchBunkerProviders
 
 /**
  * Fetches info on available providers that announce themselves using NIP-89 events.
