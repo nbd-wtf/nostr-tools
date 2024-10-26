@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.9.3",
+  "version": "2.9.4",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -102,6 +102,11 @@
       "import": "./lib/esm/nip13.js",
       "require": "./lib/cjs/nip13.js",
       "types": "./lib/types/nip13.d.ts"
+    },
+    "./nip17": {
+      "import": "./lib/esm/nip17.js",
+      "require": "./lib/cjs/nip17.js",
+      "types": "./lib/types/nip17.d.ts"
     },
     "./nip18": {
       "import": "./lib/esm/nip18.js",
