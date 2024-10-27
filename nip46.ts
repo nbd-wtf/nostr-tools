@@ -1,8 +1,8 @@
 import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
-import { decrypt, encrypt } from './nip04.ts'
-import { getConversationKey, decrypt as nip44decrypt } from './nip44.ts'
+import { decrypt as legacyDecrypt } from './nip04.ts'
+import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
@@ -86,6 +86,7 @@ export class BunkerSigner {
   }
   private waitingForAuth: { [id: string]: boolean }
   private secretKey: Uint8Array
+  private conversationKey: Uint8Array
   public bp: BunkerPointer
 
   private cachedPubKey: string | undefined
@@ -103,6 +104,7 @@ export class BunkerSigner {
 
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
+    this.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
     this.bp = bp
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
@@ -112,18 +114,18 @@ export class BunkerSigner {
 
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
-    const skBytes = this.secretKey
+    const convKey = this.conversationKey
 
     this.subCloser = this.pool.subscribeMany(
       this.bp.relays,
-      [{ kinds: [NostrConnect], '#p': [getPublicKey(this.secretKey)] }],
+      [{ kinds: [NostrConnect], authors: [bp.pubkey], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
           let o
           try {
-            o = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
+            o = JSON.parse(decrypt(event.content, convKey))
           } catch (err) {
-            o = JSON.parse(nip44decrypt(event.content, getConversationKey(skBytes, event.pubkey)))
+            o = JSON.parse(await legacyDecrypt(event.content, event.pubkey, event.content))
           }
 
           const { id, result, error } = o
@@ -166,7 +168,7 @@ export class BunkerSigner {
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 
-        const encryptedContent = await encrypt(this.secretKey, this.bp.pubkey, JSON.stringify({ id, method, params }))
+        const encryptedContent = encrypt(JSON.stringify({ id, method, params }), this.conversationKey)
 
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(

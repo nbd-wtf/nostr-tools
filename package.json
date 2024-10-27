@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.9.4",
+  "version": "2.10.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
