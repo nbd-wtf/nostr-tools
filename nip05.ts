@@ -17,7 +17,9 @@ let _fetch: any
 
 try {
   _fetch = fetch
-} catch (_) {null}
+} catch (_) {
+  null
+}
 
 export function useFetchImplementation(fetchImplementation: unknown) {
   _fetch = fetchImplementation
@@ -28,7 +30,7 @@ export async function searchDomain(domain: string, query = ''): Promise<{ [name:
     const url = `https://${domain}/.well-known/nostr.json?name=${query}`
     const res = await _fetch(url, { redirect: 'manual' })
     if (res.status !== 200) {
-      throw Error("Wrong response code")
+      throw Error('Wrong response code')
     }
     const json = await res.json()
     return json.names
@@ -47,7 +49,7 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
     const url = `https://${domain}/.well-known/nostr.json?name=${name}`
     const res = await _fetch(url, { redirect: 'manual' })
     if (res.status !== 200) {
-      throw Error("Wrong response code")
+      throw Error('Wrong response code')
     }
     const json = await res.json()
 
