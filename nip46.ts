@@ -125,7 +125,7 @@ export class BunkerSigner {
           try {
             o = JSON.parse(decrypt(event.content, convKey))
           } catch (err) {
-            o = JSON.parse(await legacyDecrypt(event.content, event.pubkey, event.content))
+            o = JSON.parse(await legacyDecrypt(clientSecretKey, event.pubkey, event.content))
           }
 
           const { id, result, error } = o
