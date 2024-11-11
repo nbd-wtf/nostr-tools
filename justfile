@@ -13,6 +13,9 @@ test-only file:
 
 publish: build
   npm publish
+  perl -i -0pe "s/},\n  \"optionalDependencies\": {\n/,/" package.json
+  jsr publish --allow-dirty
+  git checkout -- package.json
 
 format:
   eslint --ext .ts --fix *.ts

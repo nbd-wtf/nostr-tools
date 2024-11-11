@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-
+import { Server } from 'mock-socket'
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { Relay, useWebSocketImplementation } from './relay.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
@@ -91,4 +91,29 @@ test('listening and publishing and closing', async done => {
       sk,
     ),
   )
+})
+
+test('publish timeout', async () => {
+  const url = 'wss://relay.example.com'
+  new Server(url)
+
+  const relay = new Relay(url)
+  relay.publishTimeout = 100
+  await relay.connect()
+
+  setTimeout(() => relay.close(), 20000) // close the relay to fail the test on timeout
+
+  expect(
+    relay.publish(
+      finalizeEvent(
+        {
+          kind: 1,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [],
+          content: 'hello',
+        },
+        generateSecretKey(),
+      ),
+    ),
+  ).rejects.toThrow('publish timed out')
 })

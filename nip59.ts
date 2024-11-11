@@ -1,4 +1,4 @@
-import { EventTemplate, UnsignedEvent, Event } from './core.ts'
+import { EventTemplate, UnsignedEvent, NostrEvent } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
 import { Seal, GiftWrap } from './kinds.ts'
@@ -15,10 +15,10 @@ const nip44ConversationKey = (privateKey: Uint8Array, publicKey: string) => getC
 const nip44Encrypt = (data: EventTemplate, privateKey: Uint8Array, publicKey: string) =>
   encrypt(JSON.stringify(data), nip44ConversationKey(privateKey, publicKey))
 
-const nip44Decrypt = (data: Event, privateKey: Uint8Array) =>
+const nip44Decrypt = (data: NostrEvent, privateKey: Uint8Array) =>
   JSON.parse(decrypt(data.content, nip44ConversationKey(privateKey, data.pubkey)))
 
-export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array) {
+export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array): Rumor {
   const rumor = {
     created_at: now(),
     content: '',
@@ -32,7 +32,7 @@ export function createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Arra
   return rumor as Rumor
 }
 
-export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublicKey: string) {
+export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublicKey: string): NostrEvent {
   return finalizeEvent(
     {
       kind: Seal,
@@ -41,10 +41,10 @@ export function createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublic
       tags: [],
     },
     privateKey,
-  ) as Event
+  )
 }
 
-export function createWrap(seal: Event, recipientPublicKey: string) {
+export function createWrap(seal: NostrEvent, recipientPublicKey: string): NostrEvent {
   const randomKey = generateSecretKey()
 
   return finalizeEvent(
@@ -55,17 +55,53 @@ export function createWrap(seal: Event, recipientPublicKey: string) {
       tags: [['p', recipientPublicKey]],
     },
     randomKey,
-  ) as Event
+  ) as NostrEvent
 }
 
-export function wrapEvent(event: Partial<UnsignedEvent>, senderPrivateKey: Uint8Array, recipientPublicKey: string) {
+export function wrapEvent(
+  event: Partial<UnsignedEvent>,
+  senderPrivateKey: Uint8Array,
+  recipientPublicKey: string,
+): NostrEvent {
   const rumor = createRumor(event, senderPrivateKey)
 
   const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey)
   return createWrap(seal, recipientPublicKey)
 }
 
-export function unwrapEvent(wrap: Event, recipientPrivateKey: Uint8Array) {
+export function wrapManyEvents(
+  event: Partial<UnsignedEvent>,
+  senderPrivateKey: Uint8Array,
+  recipientsPublicKeys: string[],
+): NostrEvent[] {
+  if (!recipientsPublicKeys || recipientsPublicKeys.length === 0) {
+    throw new Error('At least one recipient is required.')
+  }
+
+  const senderPublicKey = getPublicKey(senderPrivateKey)
+
+  const wrappeds = [wrapEvent(event, senderPrivateKey, senderPublicKey)]
+
+  recipientsPublicKeys.forEach(recipientPublicKey => {
+    wrappeds.push(wrapEvent(event, senderPrivateKey, recipientPublicKey))
+  })
+
+  return wrappeds
+}
+
+export function unwrapEvent(wrap: NostrEvent, recipientPrivateKey: Uint8Array): Rumor {
   const unwrappedSeal = nip44Decrypt(wrap, recipientPrivateKey)
   return nip44Decrypt(unwrappedSeal, recipientPrivateKey)
+}
+
+export function unwrapManyEvents(wrappedEvents: NostrEvent[], recipientPrivateKey: Uint8Array): Rumor[] {
+  let unwrappedEvents: Rumor[] = []
+
+  wrappedEvents.forEach(e => {
+    unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
+  })
+
+  unwrappedEvents.sort((a, b) => a.created_at - b.created_at)
+
+  return unwrappedEvents
 }
