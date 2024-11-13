@@ -108,23 +108,26 @@ export function parse(event: Pick<Event, 'tags'>): {
 
   // remove root and reply from mentions, inherit relay hints from authors if any
   ;[result.reply, result.root].forEach(ref => {
-    let idx = result.mentions.indexOf(ref!)
+    if (!ref) return
+
+    let idx = result.mentions.indexOf(ref)
     if (idx !== -1) {
       result.mentions.splice(idx, 1)
     }
-    if (ref!.author) {
-      let author = result.profiles.find(p => p.pubkey === ref!.author)
+    if (ref.author) {
+      let author = result.profiles.find(p => p.pubkey === ref.author)
       if (author && author.relays) {
-        if (!ref!.relays) {
-          ref!.relays = []
+        if (!ref.relays) {
+          ref.relays = []
         }
         author.relays.forEach(url => {
-          if (ref?.relays!?.indexOf(url) === -1) ref!.relays!.push(url)
+          if (ref.relays!?.indexOf(url) === -1) ref.relays!.push(url)
         })
-        author.relays = ref!.relays
+        author.relays = ref.relays
       }
     }
   })
+
   result.mentions.forEach(ref => {
     if (ref!.author) {
       let author = result.profiles.find(p => p.pubkey === ref.author)
