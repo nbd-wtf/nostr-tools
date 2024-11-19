@@ -8,7 +8,6 @@ export type NEvent = `nevent1${string}`
 export type NAddr = `naddr1${string}`
 export type NSec = `nsec1${string}`
 export type NPub = `npub1${string}`
-export type Note = `note1${string}`
 export type Ncryptsec = `ncryptsec1${string}`
 
 export const NostrTypeGuard = {
@@ -17,7 +16,6 @@ export const NostrTypeGuard = {
   isNAddr: (value?: string | null): value is NAddr => /^naddr1[a-z\d]+$/.test(value || ''),
   isNSec: (value?: string | null): value is NSec => /^nsec1[a-z\d]{58}$/.test(value || ''),
   isNPub: (value?: string | null): value is NPub => /^npub1[a-z\d]{58}$/.test(value || ''),
-  isNote: (value?: string | null): value is Note => /^note1[a-z\d]+$/.test(value || ''),
   isNcryptsec: (value?: string | null): value is Ncryptsec => /^ncryptsec1[a-z\d]+$/.test(value || ''),
 }
 
@@ -67,7 +65,6 @@ type Prefixes = {
   naddr: AddressPointer
   nsec: Uint8Array
   npub: string
-  note: string
 }
 
 type DecodeValue<Prefix extends keyof Prefixes> = {
@@ -140,7 +137,6 @@ export function decode(nip19: string): DecodeResult {
       return { type: prefix, data }
 
     case 'npub':
-    case 'note':
       return { type: prefix, data: bytesToHex(data) }
 
     default:
@@ -171,10 +167,6 @@ export function nsecEncode(key: Uint8Array): NSec {
 
 export function npubEncode(hex: string): NPub {
   return encodeBytes('npub', hexToBytes(hex))
-}
-
-export function noteEncode(hex: string): Note {
-  return encodeBytes('note', hexToBytes(hex))
 }
 
 function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): `${Prefix}1${string}` {

@@ -244,24 +244,6 @@ describe('NostrTypeGuard', () => {
     expect(is).toBeFalse()
   })
 
-  test('isNote', () => {
-    const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky')
-
-    expect(is).toBeTrue()
-  })
-
-  test('isNote with invalid note', () => {
-    const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
-
-    expect(is).toBeFalse()
-  })
-
-  test('isNote with invalid note', () => {
-    const is = NostrTypeGuard.isNote('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzasv8xeh5q92fv33sjgqy4pats')
-
-    expect(is).toBeFalse()
-  })
-
   test('isNcryptsec', () => {
     const is = NostrTypeGuard.isNcryptsec(
       'ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsl8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p',
@@ -279,7 +261,7 @@ describe('NostrTypeGuard', () => {
   })
 
   test('isNcryptsec with invalid ncrytpsec', () => {
-    const is = NostrTypeGuard.isNcryptsec('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
+    const is = NostrTypeGuard.isNcryptsec('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzãsv8xeh5q92fv33sjgqy4pats')
 
     expect(is).toBeFalse()
   })
