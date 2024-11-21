@@ -44,8 +44,8 @@ export function* matchAll(content: string): Iterable<NostrURIMatch> {
  *   switch(decoded.type) {
  *     case 'npub':
  *       return renderMention(decoded)
- *     case 'nevent':
- *       return renderEvent(decoded)
+ *     case 'note':
+ *       return renderNote(decoded)
  *     default:
  *       return value
  *   }
