@@ -3,7 +3,7 @@ import { matchAll, replaceAll } from './nip27.ts'
 
 test('matchAll', () => {
   const result = matchAll(
-    'Hello nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6!\n\nnostr:nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+    'Hello nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
   )
 
   expect([...result]).toEqual([
@@ -18,52 +18,46 @@ test('matchAll', () => {
       end: 75,
     },
     {
-      uri: 'nostr:nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
-      value: 'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+      uri: 'nostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
+      value: 'note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
       decoded: {
-        type: 'nevent',
-        data: {
-          id: 'b3e392b11f5d4f28321cedd09303a748acfd0487aea5a7450b3481c60b6e4f87',
-          relays: ['wss://relay.example.com'],
-        },
+        type: 'note',
+        data: '46d731680add2990efe1cc619dc9b8014feeb23261ab9dee50e9d11814de5a2b',
       },
       start: 78,
-      end: 192,
+      end: 147,
     },
   ])
 })
 
 test('matchAll with an invalid nip19', () => {
   const result = matchAll(
-    'Hello nostr:npub129tvj896hqqkljerxkccpj9flshwnw999v9uwn9lfmwlj8vnzwgq9y5llnpub1rujdpkd8mwezrvpqd2rx2zphfaztqrtsfg6w3vdnlj!\n\nnostr:nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+    'Hello nostr:npub129tvj896hqqkljerxkccpj9flshwnw999v9uwn9lfmwlj8vnzwgq9y5llnpub1rujdpkd8mwezrvpqd2rx2zphfaztqrtsfg6w3vdnlj!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
   )
 
   expect([...result]).toEqual([
     {
       decoded: {
-        data: {
-          id: 'b3e392b11f5d4f28321cedd09303a748acfd0487aea5a7450b3481c60b6e4f87',
-          relays: ['wss://relay.example.com'],
-        },
-        type: 'nevent',
+        data: '46d731680add2990efe1cc619dc9b8014feeb23261ab9dee50e9d11814de5a2b',
+        type: 'note',
       },
-      end: 238,
+      end: 193,
       start: 124,
-      uri: 'nostr:nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
-      value: 'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+      uri: 'nostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
+      value: 'note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky',
     },
   ])
 })
 
 test('replaceAll', () => {
   const content =
-    'Hello nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6!\n\nnostr:nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9'
+    'Hello nostr:npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6!\n\nnostr:note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky'
 
   const result = replaceAll(content, ({ decoded, value }) => {
     switch (decoded.type) {
       case 'npub':
         return '@alex'
-      case 'nevent':
+      case 'note':
         return '!1234'
       default:
         return value

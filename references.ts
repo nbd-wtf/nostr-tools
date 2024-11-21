@@ -9,7 +9,7 @@ type Reference = {
   address?: AddressPointer
 }
 
-const mentionRegex = /\bnostr:((npub|naddr|nevent|nprofile)1\w+)\b|#\[(\d+)\]/g
+const mentionRegex = /\bnostr:((note|npub|naddr|nevent|nprofile)1\w+)\b|#\[(\d+)\]/g
 
 export function parseReferences(evt: Event): Reference[] {
   let references: Reference[] = []
@@ -30,6 +30,13 @@ export function parseReferences(evt: Event): Reference[] {
             references.push({
               text: ref[0],
               profile: data as ProfilePointer,
+            })
+            break
+          }
+          case 'note': {
+            references.push({
+              text: ref[0],
+              event: { id: data as string, relays: [] },
             })
             break
           }
