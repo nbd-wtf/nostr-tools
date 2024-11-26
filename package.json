@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.10.3",
+  "version": "2.10.4",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -234,7 +234,7 @@
     "@scure/bip39": "1.2.1"
   },
   "optionalDependencies": {
-    "nostr-wasm": "v0.1.0"
+    "nostr-wasm": "0.1.0"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"
