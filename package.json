@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.8.0",
+  "version": "2.10.4",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -103,6 +103,11 @@
       "require": "./lib/cjs/nip13.js",
       "types": "./lib/types/nip13.d.ts"
     },
+    "./nip17": {
+      "import": "./lib/esm/nip17.js",
+      "require": "./lib/cjs/nip17.js",
+      "types": "./lib/types/nip17.d.ts"
+    },
     "./nip18": {
       "import": "./lib/esm/nip18.js",
       "require": "./lib/cjs/nip18.js",
@@ -173,6 +178,11 @@
       "require": "./lib/cjs/nip57.js",
       "types": "./lib/types/nip57.d.ts"
     },
+    "./nip59": {
+      "import": "./lib/esm/nip59.js",
+      "require": "./lib/cjs/nip59.js",
+      "types": "./lib/types/nip59.d.ts"
+    },
     "./nip58": {
       "import": "./lib/esm/nip58.js",
       "require": "./lib/cjs/nip58.js",
@@ -234,7 +244,7 @@
     "@scure/bip39": "1.2.1"
   },
   "optionalDependencies": {
-    "nostr-wasm": "v0.1.0"
+    "nostr-wasm": "0.1.0"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"

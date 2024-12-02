@@ -1,4 +1,4 @@
-# ![](https://img.shields.io/github/actions/workflow/status/nbd-wtf/nostr-tools/test.yml) nostr-tools
+# ![](https://img.shields.io/github/actions/workflow/status/nbd-wtf/nostr-tools/test.yml) [![JSR](https://jsr.io/badges/@nostr/tools)](https://jsr.io/@nostr/tools) nostr-tools
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
@@ -9,10 +9,18 @@ This package is only providing lower-level functionality. If you want more highe
 ## Installation
 
 ```bash
- npm install nostr-tools # or yarn add nostr-tools
+# npm
+npm install --save nostr-tools
+
+# jsr
+npx jsr add @nostr/tools
 ```
 
 If using TypeScript, this package requires TypeScript >= 5.0.
+
+## Documentation
+
+https://jsr.io/@nostr/tools/doc
 
 ## Usage
 

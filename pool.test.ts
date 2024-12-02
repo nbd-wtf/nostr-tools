@@ -205,3 +205,33 @@ test('get()', async () => {
   expect(event).not.toBeNull()
   expect(event).toHaveProperty('id', ids[0])
 })
+
+test('track relays when publishing', async () => {
+  let event1 = finalizeEvent(
+    {
+      kind: 1,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'hello',
+    },
+    generateSecretKey(),
+  )
+  let event2 = finalizeEvent(
+    {
+      kind: 1,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'hello',
+    },
+    generateSecretKey(),
+  )
+
+  pool.trackRelays = true
+  await Promise.all(pool.publish(relayURLs, event1))
+  expect(pool.seenOn.get(event1.id)).toBeDefined()
+  expect(Array.from(pool.seenOn.get(event1.id)!).map(r => r.url)).toEqual(expect.arrayContaining(relayURLs))
+
+  pool.trackRelays = false
+  await Promise.all(pool.publish(relayURLs, event2))
+  expect(pool.seenOn.get(event2.id)).toBeUndefined()
+})

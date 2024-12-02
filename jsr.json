@@ -1,6 +1,6 @@
 {
   "name": "@nostr/tools",
-  "version": "2.3.2",
+  "version": "2.10.4",
   "exports": {
     ".": "./index.ts",
     "./core": "./core.ts",
@@ -20,6 +20,7 @@
     "./nip10": "./nip10.ts",
     "./nip11": "./nip11.ts",
     "./nip13": "./nip13.ts",
+    "./nip17": "./nip17.ts",
     "./nip18": "./nip18.ts",
     "./nip19": "./nip19.ts",
     "./nip21": "./nip21.ts",
@@ -34,6 +35,8 @@
     "./nip46": "./nip46.ts",
     "./nip49": "./nip49.ts",
     "./nip57": "./nip57.ts",
+    "./nip58": "./nip58.ts",
+    "./nip59": "./nip59.ts",
     "./nip75": "./nip75.ts",
     "./nip94": "./nip94.ts",
     "./nip96": "./nip96.ts",

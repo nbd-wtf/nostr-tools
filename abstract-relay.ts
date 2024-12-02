@@ -24,6 +24,7 @@ export class AbstractRelay {
 
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
+  public publishTimeout: number = 4400
   public openSubs: Map<string, Subscription> = new Map()
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
@@ -198,9 +199,11 @@ export class AbstractRelay {
           const ok: boolean = data[2]
           const reason: string = data[3]
           const ep = this.openEventPublishes.get(id) as EventPublishResolver
-          if (ok) ep.resolve(reason)
-          else ep.reject(new Error(reason))
-          this.openEventPublishes.delete(id)
+          if (ep) {
+            if (ok) ep.resolve(reason)
+            else ep.reject(new Error(reason))
+            this.openEventPublishes.delete(id)
+          }
           return
         }
         case 'CLOSED': {
@@ -248,6 +251,13 @@ export class AbstractRelay {
       this.openEventPublishes.set(event.id, { resolve, reject })
     })
     this.send('["EVENT",' + JSON.stringify(event) + ']')
+    setTimeout(() => {
+      const ep = this.openEventPublishes.get(event.id) as EventPublishResolver
+      if (ep) {
+        ep.reject(new Error('publish timed out'))
+        this.openEventPublishes.delete(event.id)
+      }
+    }, this.publishTimeout)
     return ret
   }
 
@@ -261,7 +271,7 @@ export class AbstractRelay {
     return ret
   }
 
-  public subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Subscription {
+  public subscribe(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
     const subscription = this.prepareSubscription(filters, params)
     subscription.fire()
     return subscription

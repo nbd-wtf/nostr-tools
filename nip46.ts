@@ -1,9 +1,8 @@
-import { hexToBytes } from '@noble/hashes/utils'
 import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
-import { decrypt, encrypt } from './nip04.ts'
-import { getConversationKey, decrypt as nip44decrypt } from './nip44.ts'
+import { decrypt as legacyDecrypt } from './nip04.ts'
+import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
@@ -49,7 +48,7 @@ export async function parseBunkerInput(input: string): Promise<BunkerPointer | n
   return queryBunkerProfile(input)
 }
 
-async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
+export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
   const match = nip05.match(NIP05_REGEX)
   if (!match) return null
 
@@ -87,7 +86,10 @@ export class BunkerSigner {
   }
   private waitingForAuth: { [id: string]: boolean }
   private secretKey: Uint8Array
+  private conversationKey: Uint8Array
   public bp: BunkerPointer
+
+  private cachedPubKey: string | undefined
 
   /**
    * Creates a new instance of the Nip46 class.
@@ -102,6 +104,7 @@ export class BunkerSigner {
 
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
+    this.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
     this.bp = bp
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
@@ -111,18 +114,18 @@ export class BunkerSigner {
 
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
-    const skBytes = this.secretKey
+    const convKey = this.conversationKey
 
     this.subCloser = this.pool.subscribeMany(
       this.bp.relays,
-      [{ kinds: [NostrConnect], '#p': [getPublicKey(this.secretKey)] }],
+      [{ kinds: [NostrConnect], authors: [bp.pubkey], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
           let o
           try {
-            o = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
+            o = JSON.parse(decrypt(event.content, convKey))
           } catch (err) {
-            o = JSON.parse(nip44decrypt(event.content, getConversationKey(skBytes, event.pubkey)))
+            o = JSON.parse(await legacyDecrypt(clientSecretKey, event.pubkey, event.content))
           }
 
           const { id, result, error } = o
@@ -165,7 +168,7 @@ export class BunkerSigner {
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 
-        const encryptedContent = await encrypt(this.secretKey, this.bp.pubkey, JSON.stringify({ id, method, params }))
+        const encryptedContent = encrypt(JSON.stringify({ id, method, params }), this.conversationKey)
 
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(
@@ -207,11 +210,16 @@ export class BunkerSigner {
   }
 
   /**
-   * This was supposed to call the "get_public_key" method on the bunker,
-   * but instead we just returns the public key we already know.
+   * Calls the "get_public_key" method on the bunker.
+   * (before we would return the public key hardcoded in the bunker parameters, but
+   *  that is not correct as that may be the bunker pubkey and the actual signer
+   *  pubkey may be different.)
    */
   async getPublicKey(): Promise<string> {
-    return this.bp.pubkey
+    if (!this.cachedPubKey) {
+      this.cachedPubKey = await this.sendRequest('get_public_key', [])
+    }
+    return this.cachedPubKey
   }
 
   /**
@@ -229,7 +237,7 @@ export class BunkerSigner {
   async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
-    if (signed.pubkey === this.bp.pubkey && verifyEvent(signed)) {
+    if (verifyEvent(signed)) {
       return signed
     } else {
       throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
@@ -242,11 +250,6 @@ export class BunkerSigner {
 
   async nip04Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
     return await this.sendRequest('nip04_decrypt', [thirdPartyPubkey, ciphertext])
-  }
-
-  async nip44GetKey(thirdPartyPubkey: string): Promise<Uint8Array> {
-    let resp = await this.sendRequest('nip44_get_key', [thirdPartyPubkey])
-    return hexToBytes(resp)
   }
 
   async nip44Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string> {
@@ -290,9 +293,6 @@ export async function createAccount(
 
   return rpc
 }
-
-// @deprecated use fetchBunkerProviders instead
-export const fetchCustodialBunkers = fetchBunkerProviders
 
 /**
  * Fetches info on available providers that announce themselves using NIP-89 events.

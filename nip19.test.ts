@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import { generateSecretKey, getPublicKey } from './pure.ts'
 import {
   decode,
@@ -15,6 +15,7 @@ import {
   OfferPointer,
   ndebitEncode,
   DebitPointer,
+  NostrTypeGuard,
 } from './nip19.ts'
 
 test('encode and decode nsec', () => {
@@ -187,4 +188,136 @@ test('encode and decode ndebit', () => {
   expect(pointer.relay).toEqual('wss://strfry.shock.network')
   expect(pointer.pubkey).toEqual('76ed45f00cea7bac59d8d0b7d204848f5319d7b96c140ffb6fcbaaab0a13d44e')
   expect(pointer.pointer).toBeUndefined()
+})
+
+describe('NostrTypeGuard', () => {
+  test('isNProfile', () => {
+    const is = NostrTypeGuard.isNProfile('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg')
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNProfile invalid nprofile', () => {
+    const is = NostrTypeGuard.isNProfile('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxãg')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNProfile with invalid nprofile', () => {
+    const is = NostrTypeGuard.isNProfile('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNEvent', () => {
+    const is = NostrTypeGuard.isNEvent(
+      'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8arnc9',
+    )
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNEvent with invalid nevent', () => {
+    const is = NostrTypeGuard.isNEvent(
+      'nevent1qqst8cujky046negxgwwm5ynqwn53t8aqjr6afd8g59nfqwxpdhylpcpzamhxue69uhhyetvv9ujuetcv9khqmr99e3k7mg8ãrnc9',
+    )
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNEvent with invalid nevent', () => {
+    const is = NostrTypeGuard.isNEvent('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNAddr', () => {
+    const is = NostrTypeGuard.isNAddr(
+      'naddr1qqxnzdesxqmnxvpexqunzvpcqyt8wumn8ghj7un9d3shjtnwdaehgu3wvfskueqzypve7elhmamff3sr5mgxxms4a0rppkmhmn7504h96pfcdkpplvl2jqcyqqq823cnmhuld',
+    )
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNAddr with invalid nadress', () => {
+    const is = NostrTypeGuard.isNAddr('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNSec', () => {
+    const is = NostrTypeGuard.isNSec('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNSec with invalid nsec', () => {
+    const is = NostrTypeGuard.isNSec('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juã')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNSec with invalid nsec', () => {
+    const is = NostrTypeGuard.isNSec('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNPub', () => {
+    const is = NostrTypeGuard.isNPub('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzasv8xeh5q92fv33sjgqy4pats')
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNPub with invalid npub', () => {
+    const is = NostrTypeGuard.isNPub('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzãsv8xeh5q92fv33sjgqy4pats')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNPub with invalid npub', () => {
+    const is = NostrTypeGuard.isNPub('nsec1lqw6zqyanj9mz8gwhdam6tqge42vptz4zg93qsfej440xm5h5esqya0juv')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNote', () => {
+    const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sclreky')
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNote with invalid note', () => {
+    const is = NostrTypeGuard.isNote('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNote with invalid note', () => {
+    const is = NostrTypeGuard.isNote('npub1jz5mdljkmffmqjshpyjgqgrhdkuxd9ztzasv8xeh5q92fv33sjgqy4pats')
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNcryptsec', () => {
+    const is = NostrTypeGuard.isNcryptsec(
+      'ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsl8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p',
+    )
+
+    expect(is).toBeTrue()
+  })
+
+  test('isNcryptsec with invalid ncrytpsec', () => {
+    const is = NostrTypeGuard.isNcryptsec(
+      'ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsã8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p',
+    )
+
+    expect(is).toBeFalse()
+  })
+
+  test('isNcryptsec with invalid ncrytpsec', () => {
+    const is = NostrTypeGuard.isNcryptsec('note1gmtnz6q2m55epmlpe3semjdcq987av3jvx4emmjsa8g3s9x7tg4sçlreky')
+
+    expect(is).toBeFalse()
+  })
 })
