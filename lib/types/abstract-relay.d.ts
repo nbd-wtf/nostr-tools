@@ -12,6 +12,7 @@ export declare class AbstractRelay {
     _onauth: ((challenge: string) => void) | null;
     baseEoseTimeout: number;
     connectionTimeout: number;
+    publishTimeout: number;
     openSubs: Map<string, Subscription>;
     private connectionTimeoutHandle;
     private connectionPromise;
@@ -37,7 +38,9 @@ export declare class AbstractRelay {
     count(filters: Filter[], params: {
         id?: string | null;
     }): Promise<number>;
-    subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Subscription;
+    subscribe(filters: Filter[], params: Partial<SubscriptionParams> & {
+        id?: string;
+    }): Subscription;
     prepareSubscription(filters: Filter[], params: Partial<SubscriptionParams> & {
         id?: string;
     }): Subscription;

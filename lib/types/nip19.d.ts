@@ -1,5 +1,4 @@
 export type NProfile = `nprofile1${string}`;
-export type NRelay = `nrelay1${string}`;
 export type NEvent = `nevent1${string}`;
 export type NAddr = `naddr1${string}`;
 export type NSec = `nsec1${string}`;
@@ -10,7 +9,6 @@ export type Noffer = `noffer1${string}`;
 export type Ndebit = `ndebit1${string}`;
 export declare const NostrTypeGuard: {
     isNProfile: (value?: string | null) => value is NProfile;
-    isNRelay: (value?: string | null) => value is NRelay;
     isNEvent: (value?: string | null) => value is NEvent;
     isNAddr: (value?: string | null) => value is NAddr;
     isNSec: (value?: string | null) => value is NSec;

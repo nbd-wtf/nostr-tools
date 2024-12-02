@@ -11,6 +11,7 @@ export type BunkerPointer = {
 /** This takes either a bunker:// URL or a name@domain.com NIP-05 identifier
     and returns a BunkerPointer -- or null in case of error */
 export declare function parseBunkerInput(input: string): Promise<BunkerPointer | null>;
+export declare function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null>;
 export type BunkerSignerParams = {
     pool?: AbstractSimplePool;
     onauth?: (url: string) => void;
@@ -24,7 +25,9 @@ export declare class BunkerSigner {
     private listeners;
     private waitingForAuth;
     private secretKey;
+    private conversationKey;
     bp: BunkerPointer;
+    private cachedPubKey;
     /**
      * Creates a new instance of the Nip46 class.
      * @param relays - An array of relay addresses.
@@ -44,8 +47,10 @@ export declare class BunkerSigner {
      */
     connect(): Promise<void>;
     /**
-     * This was supposed to call the "get_public_key" method on the bunker,
-     * but instead we just returns the public key we already know.
+     * Calls the "get_public_key" method on the bunker.
+     * (before we would return the public key hardcoded in the bunker parameters, but
+     *  that is not correct as that may be the bunker pubkey and the actual signer
+     *  pubkey may be different.)
      */
     getPublicKey(): Promise<string>;
     /**
@@ -60,7 +65,6 @@ export declare class BunkerSigner {
     signEvent(event: UnsignedEvent): Promise<VerifiedEvent>;
     nip04Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string>;
     nip04Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string>;
-    nip44GetKey(thirdPartyPubkey: string): Promise<Uint8Array>;
     nip44Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string>;
     nip44Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string>;
 }
@@ -76,7 +80,6 @@ export declare class BunkerSigner {
  * @returns A Promise that resolves to the auth_url that the client should follow to create an account.
  */
 export declare function createAccount(bunker: BunkerProfile, params: BunkerSignerParams, username: string, domain: string, email?: string, localSecretKey?: Uint8Array): Promise<BunkerSigner>;
-export declare const fetchCustodialBunkers: typeof fetchBunkerProviders;
 /**
  * Fetches info on available providers that announce themselves using NIP-89 events.
  * @returns A promise that resolves to an array of available bunker objects.
