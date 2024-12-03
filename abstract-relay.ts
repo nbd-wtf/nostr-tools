@@ -200,6 +200,7 @@ export class AbstractRelay {
           const reason: string = data[3]
           const ep = this.openEventPublishes.get(id) as EventPublishResolver
           if (ep) {
+            clearTimeout(ep.timeout)
             if (ok) ep.resolve(reason)
             else ep.reject(new Error(reason))
             this.openEventPublishes.delete(id)
@@ -240,7 +241,14 @@ export class AbstractRelay {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
     const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
     const ret = new Promise<string>((resolve, reject) => {
-      this.openEventPublishes.set(evt.id, { resolve, reject })
+      const timeout = setTimeout(() => {
+        const ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
+        if (ep) {
+          ep.reject(new Error('auth timed out'))
+          this.openEventPublishes.delete(evt.id)
+        }
+      }, this.publishTimeout)
+      this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
     })
     this.send('["AUTH",' + JSON.stringify(evt) + ']')
     return ret
@@ -248,16 +256,16 @@ export class AbstractRelay {
 
   public async publish(event: Event): Promise<string> {
     const ret = new Promise<string>((resolve, reject) => {
-      this.openEventPublishes.set(event.id, { resolve, reject })
+      const timeout = setTimeout(() => {
+        const ep = this.openEventPublishes.get(event.id) as EventPublishResolver
+        if (ep) {
+          ep.reject(new Error('publish timed out'))
+          this.openEventPublishes.delete(event.id)
+        }
+      }, this.publishTimeout)
+      this.openEventPublishes.set(event.id, { resolve, reject, timeout })
     })
     this.send('["EVENT",' + JSON.stringify(event) + ']')
-    setTimeout(() => {
-      const ep = this.openEventPublishes.get(event.id) as EventPublishResolver
-      if (ep) {
-        ep.reject(new Error('publish timed out'))
-        this.openEventPublishes.delete(event.id)
-      }
-    }, this.publishTimeout)
     return ret
   }
 
@@ -381,4 +389,5 @@ export type CountResolver = {
 export type EventPublishResolver = {
   resolve: (reason: string) => void
   reject: (err: Error) => void
+  timeout: ReturnType<typeof setTimeout>
 }
