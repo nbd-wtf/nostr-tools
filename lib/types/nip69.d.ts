@@ -3,6 +3,7 @@ export type NofferData = {
     offer: string;
     amount?: number;
     zap?: string;
+    payer_data?: any;
 };
 export type Nip69Success = {
     bolt11: string;
