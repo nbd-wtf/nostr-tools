@@ -173,10 +173,6 @@ export function npubEncode(hex: string): NPub {
   return encodeBytes('npub', hexToBytes(hex))
 }
 
-export function noteEncode(hex: string): Note {
-  return encodeBytes('note', hexToBytes(hex))
-}
-
 function encodeBech32<Prefix extends string>(prefix: Prefix, data: Uint8Array): `${Prefix}1${string}` {
   let words = bech32.toWords(data)
   return bech32.encode(prefix, words, Bech32MaxSize) as `${Prefix}1${string}`
