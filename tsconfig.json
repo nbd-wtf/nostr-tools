@@ -1,18 +1,17 @@
 {
   "compilerOptions": {
-    "module": "NodeNext",
-    "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "node",
     "declaration": true,
+    "declarationDir": "./lib/types",
     "strict": true,
-    "moduleResolution": "NodeNext",
-    "skipLibCheck": true,
     "esModuleInterop": true,
-    "emitDeclarationOnly": true,
-    "allowImportingTsExtensions": true,
-    "outDir": "lib/types",
-    "resolveJsonModule": true,
-    "rootDir": ".",
-    "types": ["bun-types"]
-  }
+    "skipLibCheck": true,
+    "allowJs": true,
+    "outDir": "./lib/types",
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["*.ts"],
+  "exclude": ["node_modules", "lib"]
 }
