@@ -58,13 +58,21 @@ export type GroupAdmin = {
  * Represents the permissions that a NIP29 group admin can have.
  */
 export enum GroupAdminPermission {
+  /** @deprecated use PutUser instead */
   AddUser = 'add-user',
   EditMetadata = 'edit-metadata',
   DeleteEvent = 'delete-event',
   RemoveUser = 'remove-user',
+  /** @deprecated removed from NIP */
   AddPermission = 'add-permission',
+  /** @deprecated removed from NIP */
   RemovePermission = 'remove-permission',
+  /** @deprecated removed from NIP */
   EditGroupStatus = 'edit-group-status',
+  PutUser = 'put-user',
+  CreateGroup = 'create-group',
+  DeleteGroup = 'delete-group',
+  CreateInvite = 'create-invite',
 }
 
 /**
