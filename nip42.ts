@@ -1,17 +1,26 @@
-import { EventTemplate } from './core.ts'
-import { ClientAuth } from './kinds.ts'
+import type { Event } from './core'
 
 /**
- * creates an EventTemplate for an AUTH event to be signed.
+ * creates an Event for an AUTH event to be signed.
  */
-export function makeAuthEvent(relayURL: string, challenge: string): EventTemplate {
+export function makeAuthEvent(pubkey: string, challenge: string): Event {
   return {
-    kind: ClientAuth,
+    kind: 22242,
+    pubkey,
     created_at: Math.floor(Date.now() / 1000),
+    id: '',
+    sig: '',
     tags: [
-      ['relay', relayURL],
       ['challenge', challenge],
     ],
     content: '',
   }
 }
+
+export {
+  generateAuthChallenge,
+  generateKeyPair,
+  getPublicKeyFromPrivateKey,
+  verifySignature,
+  signEvent
+} from './nip42.crypto'

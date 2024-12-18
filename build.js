@@ -19,6 +19,8 @@ let common = {
   entryPoints,
   bundle: true,
   sourcemap: 'external',
+  platform: 'neutral', // Use neutral platform to avoid Node.js specifics
+  mainFields: ['browser', 'module', 'main'], // Prioritize browser-compatible versions
 }
 
 esbuild
@@ -40,7 +42,6 @@ esbuild
   .then(() => {
     const packageJson = JSON.stringify({ type: 'commonjs' })
     fs.writeFileSync(`${__dirname}/lib/cjs/package.json`, packageJson, 'utf8')
-
     console.log('cjs build success.')
   })
 
@@ -51,10 +52,6 @@ esbuild
     outfile: 'lib/nostr.bundle.js',
     format: 'iife',
     globalName: 'NostrTools',
-    define: {
-      window: 'self',
-      global: 'self',
-      process: '{"env": {}}',
-    },
+    packages: 'external',
   })
-  .then(() => console.log('standalone build success.'))
+  .then(() => console.log('bundle build success.'))
