@@ -16,7 +16,7 @@ export type SubCloser = { close: () => void }
 
 export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {}
 
-export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose' | 'id'> & {
+export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
   id?: string
