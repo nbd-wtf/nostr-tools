@@ -29,7 +29,7 @@ export function finishRepostEvent(
     {
       kind: Repost,
       tags: [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]],
-      content: t.content === '' ? '' : JSON.stringify(reposted),
+      content: t.content === '' || reposted.tags?.find(tag => tag[0] === '-') ? '' : JSON.stringify(reposted),
       created_at: t.created_at,
     },
     privateKey,
