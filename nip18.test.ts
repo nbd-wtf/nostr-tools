@@ -100,3 +100,30 @@ describe('getRepostedEventPointer', () => {
     expect(repostedEventPointer!.relays).toEqual([relayUrl])
   })
 })
+
+describe('finishRepostEvent', () => {
+  const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
+
+  test('should create an event with empty content if the reposted event is protected', () => {
+    const repostedEvent = finalizeEvent(
+      {
+        kind: ShortTextNote,
+        tags: [
+          ['e', 'replied event id'],
+          ['p', 'replied event pubkey'],
+          ['-'],
+        ],
+        content: 'Replied to a post',
+        created_at: 1617932115,
+      },
+      privateKey,
+    )
+    const template = {
+      created_at: 1617932115,
+    }
+
+    const event = finishRepostEvent(template, repostedEvent, relayUrl, privateKey)
+
+    expect(event.content).toBe('')
+  })
+})
