@@ -15,10 +15,13 @@ export function isEphemeralKind(kind: number): boolean {
   return 20000 <= kind && kind < 30000
 }
 
-/** Events are **parameterized replaceable**, which means that, for each combination of `pubkey`, `kind` and the `d` tag, only the latest event is expected to be stored by relays, older versions are expected to be discarded. */
-export function isParameterizedReplaceableKind(kind: number): boolean {
+/** Events are **addressable**, which means that, for each combination of `pubkey`, `kind` and the `d` tag, only the latest event is expected to be stored by relays, older versions are expected to be discarded. */
+export function isAddressableKind(kind: number): boolean {
   return 30000 <= kind && kind < 40000
 }
+
+/** @deprecated use isAddressableKind instead */
+export const isParameterizedReplaceableKind = isAddressableKind
 
 /** Classification of the event kind. */
 export type KindClassification = 'regular' | 'replaceable' | 'ephemeral' | 'parameterized' | 'unknown'
@@ -28,7 +31,7 @@ export function classifyKind(kind: number): KindClassification {
   if (isRegularKind(kind)) return 'regular'
   if (isReplaceableKind(kind)) return 'replaceable'
   if (isEphemeralKind(kind)) return 'ephemeral'
-  if (isParameterizedReplaceableKind(kind)) return 'parameterized'
+  if (isAddressableKind(kind)) return 'parameterized'
   return 'unknown'
 }
 

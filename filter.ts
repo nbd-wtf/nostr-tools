@@ -1,5 +1,5 @@
 import { Event } from './core.ts'
-import { isParameterizedReplaceableKind, isReplaceableKind } from './kinds.ts'
+import { isAddressableKind, isReplaceableKind } from './kinds.ts'
 
 export type Filter = {
   ids?: string[]
@@ -98,7 +98,7 @@ export function getFilterLimit(filter: Filter): number {
       : Infinity,
 
     // Parameterized replaceable events are limited by the number of authors, kinds, and "d" tags.
-    filter.authors?.length && filter.kinds?.every(kind => isParameterizedReplaceableKind(kind)) && filter['#d']?.length
+    filter.authors?.length && filter.kinds?.every(kind => isAddressableKind(kind)) && filter['#d']?.length
       ? filter.authors.length * filter.kinds.length * filter['#d'].length
       : Infinity,
   )
