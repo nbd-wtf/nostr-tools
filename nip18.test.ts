@@ -108,11 +108,7 @@ describe('finishRepostEvent', () => {
     const repostedEvent = finalizeEvent(
       {
         kind: ShortTextNote,
-        tags: [
-          ['e', 'replied event id'],
-          ['p', 'replied event pubkey'],
-          ['-'],
-        ],
+        tags: [['-']],
         content: 'Replied to a post',
         created_at: 1617932115,
       },
