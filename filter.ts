@@ -26,8 +26,8 @@ export function matchFilter(filter: Filter, event: Event): boolean {
   for (let f in filter) {
     if (f[0] === '#') {
       let tagName = f.slice(1)
-      let values = filter[`#${tagName}`]
-      if (values && !event.tags.find(([t, v]) => t === f.slice(1) && values!.indexOf(v) !== -1)) return false
+      let values = filter[`#${tagName}`]?.map(v => v.toLowerCase())
+      if (values && !event.tags.find(([t, v]) => t === tagName && values!.indexOf(v.toLowerCase()) !== -1)) return false
     }
   }
 
