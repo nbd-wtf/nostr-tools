@@ -126,7 +126,7 @@ export interface Limitations {
   restricted_writes: boolean
 }
 
-interface RetentionDetails {
+export interface RetentionDetails {
   kinds: (number | number[])[]
   time?: number | null
   count?: number | null
