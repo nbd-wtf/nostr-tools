@@ -267,13 +267,11 @@ export async function readServerConfig(serverUrl: string): Promise<ServerConfigu
  * @returns true if the object is a valid FileUploadResponse, otherwise false.
  */
 export function validateFileUploadResponse(response: any): response is FileUploadResponse {
-  if (typeof response !== 'object' || response === null) return false
-
-  if (!response.status || !response.message) {
+  if (typeof response !== 'object' || response === null) {
     return false
   }
 
-  if (response.status !== 'success' && response.status !== 'error' && response.status !== 'processing') {
+  if (!['success', 'error', 'processing'].includes(response.status)) {
     return false
   }
 
@@ -285,10 +283,8 @@ export function validateFileUploadResponse(response: any): response is FileUploa
     return false
   }
 
-  if (response.processing_url) {
-    if (typeof response.processing_url !== 'string') {
-      return false
-    }
+  if (response.processing_url && typeof response.processing_url !== 'string') {
+    return false
   }
 
   if (response.status === 'success' && !response.nip94_event) {
@@ -296,25 +292,21 @@ export function validateFileUploadResponse(response: any): response is FileUploa
   }
 
   if (response.nip94_event) {
-    if (
-      !response.nip94_event.tags ||
-      !Array.isArray(response.nip94_event.tags) ||
-      response.nip94_event.tags.length === 0
-    ) {
+    const tags = response.nip94_event.tags as string[][]
+
+    if (!Array.isArray(tags)) {
       return false
     }
 
-    for (const tag of response.nip94_event.tags) {
-      if (!Array.isArray(tag) || tag.length !== 2) return false
-
-      if (typeof tag[0] !== 'string' || typeof tag[1] !== 'string') return false
-    }
-
-    if (!(response.nip94_event.tags as string[]).find(t => t[0] === 'url')) {
+    if (tags.some(t => t.length < 2 || t.some(x => typeof x !== 'string'))) {
       return false
     }
 
-    if (!(response.nip94_event.tags as string[]).find(t => t[0] === 'ox')) {
+    if (!tags.some(t => t[0] === 'url')) {
+      return false
+    }
+
+    if (!tags.some(t => t[0] === 'ox')) {
       return false
     }
   }
@@ -385,17 +377,13 @@ export async function uploadFile(
     throw new Error('Unknown error in uploading file!')
   }
 
-  try {
-    const parsedResponse = await response.json()
+  const parsedResponse = await response.json()
 
-    if (!validateFileUploadResponse(parsedResponse)) {
-      throw new Error('Invalid response from the server!')
-    }
-
-    return parsedResponse
-  } catch (error) {
-    throw new Error('Error parsing JSON response!')
+  if (!validateFileUploadResponse(parsedResponse)) {
+    throw new Error('Failed to validate upload response!')
   }
+
+  return parsedResponse
 }
 
 /**
@@ -512,33 +500,28 @@ export async function checkFileProcessingStatus(
   }
 
   // Parse the response
-  try {
-    const parsedResponse = await response.json()
+  const parsedResponse = await response.json()
 
-    // 201 Created: Indicates the processing is over.
-    if (response.status === 201) {
-      // Validate the response
-      if (!validateFileUploadResponse(parsedResponse)) {
-        throw new Error('Invalid response from the server!')
-      }
-
-      return parsedResponse
+  // 201 Created: Indicates the processing is over.
+  if (response.status === 201) {
+    if (!validateFileUploadResponse(parsedResponse)) {
+      throw new Error('Failed to validate upload response!')
     }
 
-    // 200 OK: Indicates the processing is still ongoing.
-    if (response.status === 200) {
-      // Validate the response
-      if (!validateDelayedProcessingResponse(parsedResponse)) {
-        throw new Error('Invalid response from the server!')
-      }
-
-      return parsedResponse
-    }
-
-    throw new Error('Invalid response from the server!')
-  } catch (error) {
-    throw new Error('Error parsing JSON response!')
+    return parsedResponse as FileUploadResponse
   }
+
+  // 200 OK: Indicates the processing is still ongoing.
+  if (response.status === 200) {
+    // Validate the response
+    if (!validateDelayedProcessingResponse(parsedResponse)) {
+      throw new Error('Invalid response from the server!')
+    }
+
+    return parsedResponse
+  }
+
+  throw new Error('Invalid response from the server!')
 }
 
 /**

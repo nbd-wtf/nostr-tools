@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test'
 import * as nip55 from './nip55.js'
 
 // Function to parse the NostrSigner URI
-function parseNostrSignerUri(uri) {
+function parseNostrSignerUri(uri: string) {
   const [base, query] = uri.split('?')
   const basePart = base.replace('nostrsigner:', '')
 
