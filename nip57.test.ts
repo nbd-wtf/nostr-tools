@@ -1,7 +1,14 @@
 import { describe, test, expect, mock } from 'bun:test'
 import { finalizeEvent } from './pure.ts'
 import { getPublicKey, generateSecretKey } from './pure.ts'
-import { getZapEndpoint, makeZapReceipt, makeZapRequest, useFetchImplementation, validateZapRequest } from './nip57.ts'
+import {
+  getZapEndpoint,
+  makeZapReceipt,
+  makeZapRequest,
+  useFetchImplementation,
+  validateZapReceipt,
+  validateZapRequest,
+} from './nip57.ts'
 import { buildEvent } from './test-helpers.ts'
 
 describe('getZapEndpoint', () => {
@@ -315,5 +322,109 @@ describe('makeZapReceipt', () => {
       ]),
     )
     expect(JSON.stringify(result.tags)).not.toContain('preimage')
+  })
+})
+
+describe('validateZapReceipt', () => {
+  test("returns an error message if zap receipt's pubkey does not match prodiver's nostrPubkey", async () => {
+    const fetchImplementation = mock(() =>
+      Promise.resolve({
+        json: () => ({
+          allowsNostr: true,
+          nostrPubkey: 'pubkey2',
+          callback: 'callback',
+        }),
+      }),
+    )
+    useFetchImplementation(fetchImplementation)
+
+    const metadata = buildEvent({
+      kind: 0,
+      content: '{"lud06": "lnurl1dp68gurn8ghj7er0d4skjm309emk2mrv944kummhdchkcmn4wfk8qtmwv9kk2vkepaf"}',
+    })
+
+    const privateKey = generateSecretKey()
+    const zapRequest = finalizeEvent(
+      {
+        kind: 9734,
+        created_at: Date.now() / 1000,
+        content: 'content',
+        tags: [
+          ['p', '47259076c85f9240e852420d7213c95e95102f1de929fb60f33a2c32570c98c4'],
+          ['amount', '200000'],
+          ['lnurl', 'lnurl1dp68gurn8ghj7er0d4skjm309emk2mrv944kummhdchkcmn4wfk8qtmwv9kk2vkepaf'],
+          ['relays', 'relay1', 'relay2'],
+        ],
+      },
+      privateKey,
+    )
+    const validZapReceipt = buildEvent({
+      kind: 9735,
+      pubkey: 'pubkey',
+      tags: [
+        ['p', '47259076c85f9240e852420d7213c95e95102f1de929fb60f33a2c32570c98c4'],
+        ['e', '072b76e219cd616709a9731104937d281b93283702b019f048603654d876a06f'],
+        ['P', '0c52bd52cc24adfef62f7fb9c641056a762fc1ec3e5be0bde4b79f3956e51665'],
+        [
+          'bolt11',
+          'lnbc2u1pnx2pwspp5pzw8yj0ummke3g6hxufa8v84emdvj0ry8ds6wy98ch2cpdq89hgshp5usd6se5h59vuscladwuhgm8uxdp54vwyu6we8dp9hfkc8fqtpfzqcqzzsxqyz5vqsp5t8g4wst407pkuuwdy3f6yhtq49k5ewfdxxphfjy35edg925lfzzq9qyyssqs9x5g5pflvg3zc3ueygm5fmxxgqdw7lv0hkyjktr0dav3jurfkcnhpkptzhrywp7an0e825wv3w4znpmm0khdptq408nw6x3gusr3wspdasmay',
+        ],
+        ['preimage', '6bfacb20e12d6e4ea068ad39ed48392cd9bd7535e0d1bc185319494db0202709'],
+        ['description', JSON.stringify(zapRequest)],
+      ],
+    })
+    expect(await validateZapReceipt(validZapReceipt, metadata)).toBe(
+      "Zap receipt's pubkey does not match lnurl provider's nostrPubkey.",
+    )
+  })
+
+  test('returns null for a valid Zap receipt', async () => {
+    const fetchImplementation = mock(() =>
+      Promise.resolve({
+        json: () => ({
+          allowsNostr: true,
+          nostrPubkey: 'pubkey',
+          callback: 'callback',
+        }),
+      }),
+    )
+    useFetchImplementation(fetchImplementation)
+
+    const metadata = buildEvent({
+      kind: 0,
+      content: '{"lud06": "lnurl1dp68gurn8ghj7er0d4skjm309emk2mrv944kummhdchkcmn4wfk8qtmwv9kk2vkepaf"}',
+    })
+
+    const privateKey = generateSecretKey()
+    const zapRequest = finalizeEvent(
+      {
+        kind: 9734,
+        created_at: Date.now() / 1000,
+        content: 'content',
+        tags: [
+          ['p', '47259076c85f9240e852420d7213c95e95102f1de929fb60f33a2c32570c98c4'],
+          ['amount', '200000'],
+          ['lnurl', 'lnurl1dp68gurn8ghj7er0d4skjm309emk2mrv944kummhdchkcmn4wfk8qtmwv9kk2vkepaf'],
+          ['relays', 'relay1', 'relay2'],
+        ],
+      },
+      privateKey,
+    )
+    const validZapReceipt = buildEvent({
+      kind: 9735,
+      pubkey: 'pubkey',
+      tags: [
+        ['p', '47259076c85f9240e852420d7213c95e95102f1de929fb60f33a2c32570c98c4'],
+        ['e', '072b76e219cd616709a9731104937d281b93283702b019f048603654d876a06f'],
+        ['P', '0c52bd52cc24adfef62f7fb9c641056a762fc1ec3e5be0bde4b79f3956e51665'],
+        [
+          'bolt11',
+          'lnbc2u1pnx2pwspp5pzw8yj0ummke3g6hxufa8v84emdvj0ry8ds6wy98ch2cpdq89hgshp5usd6se5h59vuscladwuhgm8uxdp54vwyu6we8dp9hfkc8fqtpfzqcqzzsxqyz5vqsp5t8g4wst407pkuuwdy3f6yhtq49k5ewfdxxphfjy35edg925lfzzq9qyyssqs9x5g5pflvg3zc3ueygm5fmxxgqdw7lv0hkyjktr0dav3jurfkcnhpkptzhrywp7an0e825wv3w4znpmm0khdptq408nw6x3gusr3wspdasmay',
+        ],
+        ['preimage', '6bfacb20e12d6e4ea068ad39ed48392cd9bd7535e0d1bc185319494db0202709'],
+        ['description', JSON.stringify(zapRequest)],
+      ],
+    })
+    expect(await validateZapReceipt(validZapReceipt, metadata)).toBe(null)
   })
 })
