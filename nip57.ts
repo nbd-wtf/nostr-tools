@@ -72,7 +72,6 @@ export function makeZapRequest({
     zr.tags.push(['e', event])
   }
   if (event && typeof event === 'object') {
-    zr.tags.push(['e', event.id])
     // replacable event
     if ((10000 <= event.kind  && event.kind < 20000) || event.kind  == 0 || event.kind  == 3){
       const a = ["a", `${event.kind}:${event.pubkey}:`]
