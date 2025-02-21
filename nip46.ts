@@ -223,7 +223,7 @@ export class BunkerSigner {
   }
 
   /**
-   * Calls the "get_relays" method on the bunker.
+   * @deprecated removed from NIP
    */
   async getRelays(): Promise<RelayRecord> {
     return JSON.parse(await this.sendRequest('get_relays', []))
