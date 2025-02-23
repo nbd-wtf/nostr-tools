@@ -2,6 +2,7 @@ import { bech32 } from '@scure/base'
 
 import { validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
 import { utf8Decoder } from './utils.ts'
+import { isReplaceableKind, isAddressableKind } from './kinds.ts'
 
 var _fetch: any
 
@@ -49,7 +50,7 @@ export function makeZapRequest({
   comment = '',
 }: {
   profile: string
-  event: string | null
+  event: string | Event | null
   amount: number
   comment: string
   relays: string[]
@@ -68,8 +69,21 @@ export function makeZapRequest({
     ],
   }
 
-  if (event) {
+  if (event && typeof event === 'string') {
     zr.tags.push(['e', event])
+  }
+  if (event && typeof event === 'object') {
+    // replacable event
+    if (isReplaceableKind(event.kind)) {
+      const a = ['a', `${event.kind}:${event.pubkey}:`]
+      zr.tags.push(a)
+    // addressable event
+    } else if (isAddressableKind(event.kind)) {
+      let d = event.tags.find(([t, v]) => t === 'd' && v)
+      if (!d) throw new Error('d tag not found or is empty')
+      const a = ['a', `${event.kind}:${event.pubkey}:${d[1]}`]
+      zr.tags.push(a)
+    }
   }
 
   return zr
