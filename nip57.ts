@@ -75,13 +75,13 @@ export function makeZapRequest({
   if (event && typeof event === 'object') {
     // replacable event
     if (isReplaceableKind(event.kind)) {
-      const a = ["a", `${event.kind}:${event.pubkey}:`]
+      const a = ['a', `${event.kind}:${event.pubkey}:`]
       zr.tags.push(a)
     // addressable event
     } else if (isAddressableKind(event.kind)) {
       let d = event.tags.find(([t, v]) => t === 'd' && v)
       if (!d) throw new Error('d tag not found or is empty')
-      const a = ["a", `${event.kind}:${event.pubkey}:${d[1]}`]
+      const a = ['a', `${event.kind}:${event.pubkey}:${d[1]}`]
       zr.tags.push(a)
     }
   }
