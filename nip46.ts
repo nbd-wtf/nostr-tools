@@ -1,4 +1,4 @@
-import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
+import { EventTemplate, NostrEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
 import { decrypt as legacyDecrypt } from './nip04.ts'
@@ -234,7 +234,7 @@ export class BunkerSigner {
    * @param event - The event to sign.
    * @returns A Promise that resolves to the signed event.
    */
-  async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
+  async signEvent(event: EventTemplate): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
     if (verifyEvent(signed)) {
