@@ -34,6 +34,7 @@
     "./nip44": "./nip44.ts",
     "./nip46": "./nip46.ts",
     "./nip49": "./nip49.ts",
+    "./nip54": "./nip54.ts",
     "./nip57": "./nip57.ts",
     "./nip58": "./nip58.ts",
     "./nip59": "./nip59.ts",
