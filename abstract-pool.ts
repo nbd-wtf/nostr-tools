@@ -20,6 +20,7 @@ export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
   id?: string
+  label?: string
 }
 
 export class AbstractSimplePool {
@@ -156,7 +157,7 @@ export class AbstractSimplePool {
   subscribeManyEose(
     relays: string[],
     filters: Filter[],
-    params: Pick<SubscribeManyParams, 'id' | 'onevent' | 'onclose' | 'maxWait'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait'>,
   ): SubCloser {
     const subcloser = this.subscribeMany(relays, filters, {
       ...params,
@@ -170,7 +171,7 @@ export class AbstractSimplePool {
   async querySync(
     relays: string[],
     filter: Filter,
-    params?: Pick<SubscribeManyParams, 'id' | 'maxWait'>,
+    params?: Pick<SubscribeManyParams, 'label' | 'id' | 'maxWait'>,
   ): Promise<Event[]> {
     return new Promise(async resolve => {
       const events: Event[] = []
@@ -189,7 +190,7 @@ export class AbstractSimplePool {
   async get(
     relays: string[],
     filter: Filter,
-    params?: Pick<SubscribeManyParams, 'id' | 'maxWait'>,
+    params?: Pick<SubscribeManyParams, 'label' | 'id' | 'maxWait'>,
   ): Promise<Event | null> {
     filter.limit = 1
     const events = await this.querySync(relays, filter, params)

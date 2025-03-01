@@ -279,15 +279,21 @@ export class AbstractRelay {
     return ret
   }
 
-  public subscribe(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
+  public subscribe(
+    filters: Filter[],
+    params: Partial<SubscriptionParams> & { label?: string; id?: string },
+  ): Subscription {
     const subscription = this.prepareSubscription(filters, params)
     subscription.fire()
     return subscription
   }
 
-  public prepareSubscription(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
+  public prepareSubscription(
+    filters: Filter[],
+    params: Partial<SubscriptionParams> & { label?: string; id?: string },
+  ): Subscription {
     this.serial++
-    const id = params.id || 'sub:' + this.serial
+    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
     const subscription = new Subscription(this, id, filters, params)
     this.openSubs.set(id, subscription)
     return subscription
