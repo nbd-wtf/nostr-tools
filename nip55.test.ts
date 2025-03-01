@@ -68,23 +68,6 @@ test('Sign Event URI', () => {
   expect(jsonObject).toHaveProperty('current_user', 'hex_pub_key')
 })
 
-test('Get Relays URI', () => {
-  const uri = nip55.getRelaysUri({
-    id: 'some_id',
-    currentUser: 'hex_pub_key',
-    appName: 'test app name',
-  })
-
-  const jsonObject = parseNostrSignerUri(uri)
-
-  expect(jsonObject).toHaveProperty('type', 'get_relays')
-  expect(jsonObject).toHaveProperty('compressionType', 'none')
-  expect(jsonObject).toHaveProperty('returnType', 'signature')
-  expect(jsonObject).toHaveProperty('id', 'some_id')
-  expect(jsonObject).toHaveProperty('current_user', 'hex_pub_key')
-  expect(jsonObject).toHaveProperty('appName', 'test app name')
-})
-
 test('Encrypt NIP-04 URI', () => {
   const callbackUrl = 'https://example.com/?event='
 

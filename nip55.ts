@@ -90,13 +90,6 @@ export function signEventUri({ eventJson, ...params }: EventUriParams): string {
   })
 }
 
-/**
- * @deprecated removed from NIP
- */
-export function getRelaysUri(params: BaseParams & { id?: string; currentUser?: string }): string {
-  return buildDefaultUri('get_relays', params)
-}
-
 function encryptUri(type: 'nip44_encrypt' | 'nip04_encrypt', params: EncryptDecryptParams): string {
   return buildDefaultUri(type, { ...params, plainText: params.content })
 }
