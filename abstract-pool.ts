@@ -84,6 +84,7 @@ export class AbstractSimplePool {
     // batch all EOSEs into a single
     const eosesReceived: boolean[] = []
     let handleEose = (i: number) => {
+      if (eosesReceived[i]) return // do not act twice for the same relay
       eosesReceived[i] = true
       if (eosesReceived.filter(a => a).length === relaysLength) {
         params.oneose?.()
@@ -93,6 +94,7 @@ export class AbstractSimplePool {
     // batch all closes into a single
     const closesReceived: string[] = []
     let handleClose = (i: number, reason: string) => {
+      if (closesReceived[i]) return // do not act twice for the same relay
       handleEose(i)
       closesReceived[i] = reason
       if (closesReceived.filter(a => a).length === relaysLength) {
