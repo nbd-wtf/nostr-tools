@@ -79,6 +79,15 @@ export type DecodeResult = {
   [P in keyof Prefixes]: DecodeValue<P>
 }[keyof Prefixes]
 
+export function decodeNostrURI(nip19code: string): DecodeResult | { type: 'invalid'; data: null } {
+  try {
+    if (nip19code.startsWith('nostr:')) nip19code = nip19code.substring(6)
+    return decode(nip19code)
+  } catch (_err) {
+    return { type: 'invalid', data: null }
+  }
+}
+
 export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
 export function decode(nip19: string): DecodeResult
 export function decode(nip19: string): DecodeResult {
