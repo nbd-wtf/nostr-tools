@@ -30,17 +30,8 @@ export function finishRepostEvent(
   if (reposted.kind === ShortTextNote) {
     kind = Repost
   } else {
-    let d = reposted.tags.find(([t, v]) => t === 'd' && v)
-    let address = `${reposted.kind}:${reposted.pubkey}`
-    if (d && d.length) {
-      address += `:${d[1]}`
-    }
-
-    const addressTag = ['a', address]
     kind = GenericRepost
-    tags.push(addressTag)
     tags.push(['k', String(reposted.kind)])
-    tags.push(['relay-url', relayUrl])
   }
 
   return finalizeEvent(
