@@ -29,16 +29,15 @@ export function finishRepostEvent(
   const tags = [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]]
   if (reposted.kind === ShortTextNote) {
     kind = Repost
-  } else if (isAddressableKind(reposted.kind)) {
+  } else {
     let d = reposted.tags.find(([t, v]) => t === 'd' && v)
     if (!d) throw new Error('d tag not found or is empty')
     const address = ['a', `${reposted.kind}:${reposted.pubkey}:${d[1]}`]
 
     kind = GenericRepost
     tags.push(address)
+    tags.push(['k', String(reposted.kind)])
     tags.push(['relay-url', relayUrl])
-  } else {
-    throw new Error(`repost kind ${reposted.kind} is not supported`)
   }
 
   return finalizeEvent(

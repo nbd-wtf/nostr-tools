@@ -114,6 +114,7 @@ describe('GenericRepost', () => {
       ['e', repostedEvent.id, relayUrl],
       ['p', repostedEvent.pubkey],
       ['a', '30009:6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f:badge-id'],
+      ['k', '30009'],
       ['relay-url', 'https://relay.example.com'],
     ])
     expect(event.content).toEqual(JSON.stringify(repostedEvent))
@@ -129,14 +130,6 @@ describe('GenericRepost', () => {
     const repostedEventFromContent = getRepostedEvent(event)
 
     expect(repostedEventFromContent).toEqual(repostedEvent)
-  })
-
-  test('throws an error if repost something different from addressable or short text', () => {
-    const template = { created_at: 1617932115 }
-    const reposting = finishRepostEvent(template, repostedEvent, relayUrl, privateKey)
-    expect(() => {
-      finishRepostEvent(template, reposting, relayUrl, privateKey)
-    }).toThrow()
   })
 
   test('throws an error if d tag is missing for generic repost', () => {
