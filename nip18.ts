@@ -53,7 +53,7 @@ export function finishRepostEvent(
 }
 
 export function getRepostedEventPointer(event: Event): undefined | EventPointer {
-  if (![ Repost, GenericRepost ].includes(event.kind)) {
+  if (![Repost, GenericRepost].includes(event.kind)) {
     return undefined
   }
 

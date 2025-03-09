@@ -113,8 +113,8 @@ describe('GenericRepost', () => {
     expect(event.tags).toEqual([
       ['e', repostedEvent.id, relayUrl],
       ['p', repostedEvent.pubkey],
-      ['a', '30009:6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f:badge-id' ],
-      ['relay-url', 'https://relay.example.com' ]
+      ['a', '30009:6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f:badge-id'],
+      ['relay-url', 'https://relay.example.com'],
     ])
     expect(event.content).toEqual(JSON.stringify(repostedEvent))
     expect(event.created_at).toEqual(template.created_at)
