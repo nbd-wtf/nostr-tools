@@ -113,7 +113,7 @@ describe('GenericRepost', () => {
     expect(event.tags).toEqual([
       ['e', repostedEvent.id, relayUrl],
       ['p', repostedEvent.pubkey],
-      ['k', '30009']
+      ['k', '30009'],
     ])
     expect(event.content).toEqual(JSON.stringify(repostedEvent))
     expect(event.created_at).toEqual(template.created_at)
