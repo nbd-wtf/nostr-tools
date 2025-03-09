@@ -1,6 +1,6 @@
-import { Event, finalizeEvent, verifyEvent } from './pure.ts'
-import { GenericRepost, isAddressableKind, Repost, ShortTextNote } from './kinds.ts'
+import { GenericRepost, Repost, ShortTextNote } from './kinds.ts'
 import { EventPointer } from './nip19.ts'
+import { Event, finalizeEvent, verifyEvent } from './pure.ts'
 
 export type RepostEventTemplate = {
   /**
@@ -31,11 +31,14 @@ export function finishRepostEvent(
     kind = Repost
   } else {
     let d = reposted.tags.find(([t, v]) => t === 'd' && v)
-    if (!d) throw new Error('d tag not found or is empty')
-    const address = ['a', `${reposted.kind}:${reposted.pubkey}:${d[1]}`]
+    let address = `${reposted.kind}:${reposted.pubkey}`
+    if (d && d.length) {
+      address += `:${d[1]}`
+    }
 
+    const addressTag = ['a', address]
     kind = GenericRepost
-    tags.push(address)
+    tags.push(addressTag)
     tags.push(['k', String(reposted.kind)])
     tags.push(['relay-url', relayUrl])
   }

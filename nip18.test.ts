@@ -131,27 +131,6 @@ describe('GenericRepost', () => {
 
     expect(repostedEventFromContent).toEqual(repostedEvent)
   })
-
-  test('throws an error if d tag is missing for generic repost', () => {
-    const missingIdentifierTemplate: EventTemplate = {
-      content: '',
-      created_at: 1617932114,
-      kind: BadgeDefinitionKind,
-      tags: [
-        ['name', 'Badge Name'],
-        ['description', 'Badge Description'],
-        ['image', 'https://example.com/badge.png', '1024x1024'],
-        ['thumb', 'https://example.com/thumb.png', '100x100'],
-        ['thumb', 'https://example.com/thumb2.png', '200x200'],
-      ],
-    }
-
-    const missingIdentifierEvent = finalizeEvent(missingIdentifierTemplate, privateKey)
-    const template = { created_at: 1617932115 }
-    expect(() => {
-      finishRepostEvent(template, missingIdentifierEvent, relayUrl, privateKey)
-    }).toThrow()
-  })
 })
 
 describe('getRepostedEventPointer', () => {
