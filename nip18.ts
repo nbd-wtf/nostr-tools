@@ -1,6 +1,6 @@
-import { Event, finalizeEvent, verifyEvent } from './pure.ts'
-import { Repost } from './kinds.ts'
+import { GenericRepost, Repost, ShortTextNote } from './kinds.ts'
 import { EventPointer } from './nip19.ts'
+import { Event, finalizeEvent, verifyEvent } from './pure.ts'
 
 export type RepostEventTemplate = {
   /**
@@ -25,10 +25,19 @@ export function finishRepostEvent(
   relayUrl: string,
   privateKey: Uint8Array,
 ): Event {
+  let kind: Repost | GenericRepost
+  const tags = [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]]
+  if (reposted.kind === ShortTextNote) {
+    kind = Repost
+  } else {
+    kind = GenericRepost
+    tags.push(['k', String(reposted.kind)])
+  }
+
   return finalizeEvent(
     {
-      kind: Repost,
-      tags: [...(t.tags ?? []), ['e', reposted.id, relayUrl], ['p', reposted.pubkey]],
+      kind,
+      tags,
       content: t.content === '' || reposted.tags?.find(tag => tag[0] === '-') ? '' : JSON.stringify(reposted),
       created_at: t.created_at,
     },
@@ -37,7 +46,7 @@ export function finishRepostEvent(
 }
 
 export function getRepostedEventPointer(event: Event): undefined | EventPointer {
-  if (event.kind !== Repost) {
+  if (![Repost, GenericRepost].includes(event.kind)) {
     return undefined
   }
 
