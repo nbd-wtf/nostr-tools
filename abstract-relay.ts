@@ -35,6 +35,7 @@ export class AbstractRelay {
   private incomingMessageQueue = new Queue<string>()
   private queueRunning = false
   private challenge: string | undefined
+  private authPromise: Promise<string> | undefined
   private serial: number = 0
   private verifyEvent: Nostr['verifyEvent']
 
@@ -77,6 +78,7 @@ export class AbstractRelay {
     if (this.connectionPromise) return this.connectionPromise
 
     this.challenge = undefined
+    this.authPromise = undefined
     this.connectionPromise = new Promise((resolve, reject) => {
       this.connectionTimeoutHandle = setTimeout(() => {
         reject('connection timed out')
@@ -220,6 +222,7 @@ export class AbstractRelay {
           return
         case 'AUTH': {
           this.challenge = data[1] as string
+          this.authPromise = undefined
           this._onauth?.(data[1] as string)
           return
         }
@@ -239,8 +242,9 @@ export class AbstractRelay {
 
   public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
     if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
+    if (this.authPromise) return this.authPromise
     const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
-    const ret = new Promise<string>((resolve, reject) => {
+    this.authPromise = new Promise<string>((resolve, reject) => {
       const timeout = setTimeout(() => {
         const ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
         if (ep) {
@@ -251,7 +255,7 @@ export class AbstractRelay {
       this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
     })
     this.send('["AUTH",' + JSON.stringify(evt) + ']')
-    return ret
+    return this.authPromise
   }
 
   public async publish(event: Event): Promise<string> {
