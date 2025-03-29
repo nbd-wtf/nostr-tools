@@ -150,6 +150,9 @@ export class BunkerSigner {
             delete listeners[id]
           }
         },
+        onclose: () => {
+          this.isOpen = false
+        },
       },
     )
     this.isOpen = true
