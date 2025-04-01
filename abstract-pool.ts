@@ -8,7 +8,7 @@ import {
 } from './abstract-relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event, Nostr } from './core.ts'
+import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
 
@@ -19,6 +19,7 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
+  doauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
   label?: string
 }
@@ -137,7 +138,28 @@ export class AbstractSimplePool {
         let subscription = relay.subscribe(filters, {
           ...params,
           oneose: () => handleEose(i),
-          onclose: reason => handleClose(i, reason),
+          onclose: reason => {
+            if (reason.startsWith('auth-required:') && params.doauth) {
+              relay
+                .auth(params.doauth)
+                .then(() => {
+                  relay.subscribe(filters, {
+                    ...params,
+                    oneose: () => handleEose(i),
+                    onclose: reason => {
+                      handleClose(i, reason) // the second time we won't try to auth anymore
+                    },
+                    alreadyHaveEvent: localAlreadyHaveEventHandler,
+                    eoseTimeout: params.maxWait,
+                  })
+                })
+                .catch(err => {
+                  handleClose(i, `auth was required and attempted, but failed with: ${err}`)
+                })
+            } else {
+              handleClose(i, reason)
+            }
+          },
           alreadyHaveEvent: localAlreadyHaveEventHandler,
           eoseTimeout: params.maxWait,
         })
