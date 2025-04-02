@@ -73,7 +73,7 @@ export type BunkerSignerParams = {
 
 export class BunkerSigner {
   private pool: AbstractSimplePool
-  private subCloser: SubCloser
+  private subCloser: SubCloser | undefined
   private isOpen: boolean
   private serial: number
   private idPrefix: string
@@ -111,15 +111,19 @@ export class BunkerSigner {
     this.listeners = {}
     this.waitingForAuth = {}
 
+    this.setupSubscription(params)
+  }
+
+  private setupSubscription(params: BunkerSignerParams) {
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
     const convKey = this.conversationKey
 
-    this.subCloser = this.pool.subscribeMany(
+    this.subCloser = this.pool.subscribe(
       this.bp.relays,
-      [{ kinds: [NostrConnect], authors: [bp.pubkey], '#p': [getPublicKey(this.secretKey)] }],
+      { kinds: [NostrConnect], authors: [this.bp.pubkey], '#p': [getPublicKey(this.secretKey)] },
       {
-        async onevent(event: NostrEvent) {
+        onevent: async (event: NostrEvent) => {
           const o = JSON.parse(decrypt(event.content, convKey))
           const { id, result, error } = o
 
@@ -130,7 +134,7 @@ export class BunkerSigner {
               params.onauth(error)
             } else {
               console.warn(
-                `nostr-tools/nip46: remote signer ${bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
+                `nostr-tools/nip46: remote signer ${this.bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
               )
             }
             return
@@ -144,7 +148,11 @@ export class BunkerSigner {
           }
         },
         onclose: () => {
-          this.isOpen = false
+          if (this.isOpen) {
+            // If we get onclose but isOpen is still true, that means the client still wants to stay connected
+            this.subCloser!.close()
+            this.setupSubscription(params)
+          }
         },
       },
     )
@@ -154,7 +162,7 @@ export class BunkerSigner {
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
-    this.subCloser.close()
+    this.subCloser!.close()
   }
 
   async sendRequest(method: string, params: string[]): Promise<string> {

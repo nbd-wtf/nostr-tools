@@ -274,7 +274,7 @@
     "msw": "^2.1.4",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
-    "typescript": "^5.0.4"
+    "typescript": "^5.8.2"
   },
   "scripts": {
     "prepublish": "just build"
