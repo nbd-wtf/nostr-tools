@@ -1,7 +1,6 @@
 import { EventTemplate, NostrEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
-import { decrypt as legacyDecrypt } from './nip04.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
@@ -121,13 +120,7 @@ export class BunkerSigner {
       [{ kinds: [NostrConnect], authors: [bp.pubkey], '#p': [getPublicKey(this.secretKey)] }],
       {
         async onevent(event: NostrEvent) {
-          let o
-          try {
-            o = JSON.parse(decrypt(event.content, convKey))
-          } catch (err) {
-            o = JSON.parse(await legacyDecrypt(clientSecretKey, event.pubkey, event.content))
-          }
-
+          const o = JSON.parse(decrypt(event.content, convKey))
           const { id, result, error } = o
 
           if (result === 'auth_url' && waitingForAuth[id]) {
