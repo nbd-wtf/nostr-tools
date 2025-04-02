@@ -57,43 +57,43 @@ let event = finalizeEvent({
 let isGood = verifyEvent(event)
 ```
 
-### Interacting with a relay
+### Interacting with one or multiple relays
+
+Doesn't matter what you do, you always should be using a `SimplePool`:
 
 ```js
 import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools/pure'
-import { Relay } from 'nostr-tools/relay'
+import { SimplePool } from 'nostr-tools/pool'
 
-const relay = await Relay.connect('wss://relay.example.com')
-console.log(`connected to ${relay.url}`)
+const pool = new SimplePool()
 
 // let's query for an event that exists
-const sub = relay.subscribe([
+const event = relay.get(
+  ['wss://relay.example.com'],
   {
     ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
   },
-], {
-  onevent(event) {
-    console.log('we got the event we wanted:', event)
-  },
-  oneose() {
-    sub.close()
-  }
-})
+)
+if (event) {
+  console.log('it exists indeed on this relay:', event)
+}
 
 // let's publish a new event while simultaneously monitoring the relay for it
 let sk = generateSecretKey()
 let pk = getPublicKey(sk)
 
-relay.subscribe([
+pool.subscribe(
+  ['wss://a.com', 'wss://b.com', 'wss://c.com'],
   {
     kinds: [1],
     authors: [pk],
   },
-], {
-  onevent(event) {
-    console.log('got event:', event)
+  {
+    onevent(event) {
+      console.log('got event:', event)
+    }
   }
-})
+)
 
 let eventTemplate = {
   kind: 1,
@@ -104,7 +104,7 @@ let eventTemplate = {
 
 // this assigns the pubkey, calculates the event id and signs the event in a single step
 const signedEvent = finalizeEvent(eventTemplate, sk)
-await relay.publish(signedEvent)
+await pool.publish(['wss://a.com', 'wss://b.com'], signedEvent)
 
 relay.close()
 ```
@@ -119,59 +119,116 @@ import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
 ```
 
-### Interacting with multiple relays
+### Parsing references (mentions) from a content based on NIP-27
 
 ```js
-import { SimplePool } from 'nostr-tools/pool'
+import * as nip27 from '@nostr/tools/nip27'
 
-const pool = new SimplePool()
-
-let relays = ['wss://relay.example.com', 'wss://relay.example2.com']
-
-let h = pool.subscribeMany(
-  [...relays, 'wss://relay.example3.com'],
-  [
-    {
-      authors: ['32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
-    },
-  ],
-  {
-    onevent(event) {
-      // this will only be called once the first time the event is received
-      // ...
-    },
-    oneose() {
-      h.close()
+for (let block of nip27.parse(evt.content)) {
+  switch (block.type) {
+    case 'text':
+      console.log(block.text)
+      break
+    case 'reference': {
+      if ('id' in block.pointer) {
+        console.log("it's a nevent1 uri", block.pointer)
+      } else if ('identifier' in block.pointer) {
+        console.log("it's a naddr1 uri", block.pointer)
+      } else {
+        console.log("it's an npub1 or nprofile1 uri", block.pointer)
+      }
+      break
     }
+    case 'url': {
+      console.log("it's a normal url:", block.url)
+      break
+    }
+    case 'image':
+    case 'video':
+    case 'audio':
+      console.log("it's a media url:", block.url)
+    case 'relay':
+      console.log("it's a websocket url, probably a relay address:", block.url)
+    default:
+      break
   }
-)
-
-await Promise.any(pool.publish(relays, newEvent))
-console.log('published to at least one relay!')
-
-let events = await pool.querySync(relays, { kinds: [0, 1] })
-let event = await pool.get(relays, {
-  ids: ['44e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245'],
-})
+}
 ```
 
-### Parsing references (mentions) from a content using NIP-10 and NIP-27
+### Connecting to a bunker using NIP-46
 
 ```js
-import { parseReferences } from 'nostr-tools/references'
+import { generateSecretKey, getPublicKey } from '@nostr/tools/pure'
+import { BunkerSigner, parseBunkerInput } from '@nostr/tools/nip46'
+import { SimplePool } from '@nostr/tools/pool'
 
-let references = parseReferences(event)
-let simpleAugmentedContent = event.content
-for (let i = 0; i < references.length; i++) {
-  let { text, profile, event, address } = references[i]
-  let augmentedReference = profile
-    ? `<strong>@${profilesCache[profile.pubkey].name}</strong>`
-    : event
-    ? `<em>${eventsCache[event.id].content.slice(0, 5)}</em>`
-    : address
-    ? `<a href="${text}">[link]</a>`
-    : text
-  simpleAugmentedContent.replaceAll(text, augmentedReference)
+// the client needs a local secret key (which is generally persisted) for communicating with the bunker
+const localSecretKey = generateSecretKey()
+
+// parse a bunker URI
+const bunkerPointer = await parseBunkerInput('bunker://abcd...?relay=wss://relay.example.com')
+if (!bunkerPointer) {
+  throw new Error('Invalid bunker input')
+}
+
+// create the bunker instance
+const pool = new SimplePool()
+const bunker = new BunkerSigner(localSecretKey, bunkerPointer, { pool })
+await bunker.connect()
+
+// and use it
+const pubkey = await bunker.getPublicKey()
+const event = await bunker.signEvent({
+  kind: 1,
+  created_at: Math.floor(Date.now() / 1000),
+  tags: [],
+  content: 'Hello from bunker!'
+})
+
+// cleanup
+await signer.close()
+pool.close([])
+```
+
+### Parsing thread from any note based on NIP-10
+
+```js
+import * as nip10 from '@nostr/tools/nip10'
+
+// event is a nostr event with tags
+const refs = nip10.parse(event)
+
+// get the root event of the thread
+if (refs.root) {
+  console.log('root event:', refs.root.id)
+  console.log('root event relay hints:', refs.root.relays)
+  console.log('root event author:', refs.root.author)
+}
+
+// get the immediate parent being replied to
+if (refs.reply) {
+  console.log('reply to:', refs.reply.id)
+  console.log('reply relay hints:', refs.reply.relays)
+  console.log('reply author:', refs.reply.author)
+}
+
+// get any mentioned events
+for (let mention of refs.mentions) {
+  console.log('mentioned event:', mention.id)
+  console.log('mention relay hints:', mention.relays)
+  console.log('mention author:', mention.author)
+}
+
+// get any quoted events
+for (let quote of refs.quotes) {
+  console.log('quoted event:', quote.id)
+  console.log('quote relay hints:', quote.relays)
+}
+
+// get any referenced profiles
+for (let profile of refs.profiles) {
+  console.log('referenced profile:', profile.pubkey)
+  console.log('profile relay hints:', profile.relays)
 }
 ```
 
@@ -203,32 +260,6 @@ declare global {
     nostr?: WindowNostr;
   }
 }
-```
-
-
-### Generating NIP-06 keys
-```js
-import {
-  privateKeyFromSeedWords,
-  accountFromSeedWords,
-  extendedKeysFromSeedWords,
-  accountFromExtendedKey
-} from 'nostr-tools/nip06'
-
-const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
-const passphrase = '123' // optional
-const accountIndex = 0
-const sk0 = privateKeyFromSeedWords(mnemonic, passphrase, accountIndex)
-
-const { privateKey: sk1, publicKey: pk1 } = accountFromSeedWords(mnemonic, passphrase, accountIndex)
-
-const extendedAccountIndex = 0
-
-const { privateExtendedKey, publicExtendedKey } = extendedKeysFromSeedWords(mnemonic, passphrase, extendedAccountIndex)
-
-const { privateKey: sk2, publicKey: pk2 } = accountFromExtendedKey(privateExtendedKey)
-
-const { publicKey: pk3 } = accountFromExtendedKey(publicExtendedKey)
 ```
 
 ### Encoding and decoding NIP-19 codes
