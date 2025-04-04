@@ -1,4 +1,5 @@
 import { bech32 } from '@scure/base'
+const bolt11 = require('light-bolt11-decoder')
 
 import { validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
 import { utf8Decoder } from './utils.ts'
@@ -16,18 +17,7 @@ export function useFetchImplementation(fetchImplementation: any) {
 
 export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   try {
-    let lnurl: string = ''
-    let { lud06, lud16 } = JSON.parse(metadata.content)
-    if (lud06) {
-      let { words } = bech32.decode(lud06, 1000)
-      let data = bech32.fromWords(words)
-      lnurl = utf8Decoder.decode(data)
-    } else if (lud16) {
-      let [name, domain] = lud16.split('@')
-      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
-    } else {
-      return null
-    }
+    const lnurl = getDecodedLnurl(metadata)
 
     let res = await _fetch(lnurl)
     let body = await res.json()
@@ -39,6 +29,35 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
     /*-*/
   }
 
+  return null
+}
+
+function getDecodedLnurl(metadata: Event | null, lnurlEncoded = ''): null | string {
+  try {
+    if (lnurlEncoded !== '') {
+      let { words } = bech32.decode(lnurlEncoded, 1000)
+      let data = bech32.fromWords(words)
+      const lnurl = utf8Decoder.decode(data)
+      return lnurl
+    }
+
+    if (metadata === null) return null
+
+    let lnurl: string = ''
+    let { lud06, lud16 } = JSON.parse(metadata.content)
+    if (lud06) {
+      let { words } = bech32.decode(lud06, 1000)
+      let data = bech32.fromWords(words)
+      lnurl = utf8Decoder.decode(data)
+      return lnurl
+    } else if (lud16) {
+      let [name, domain] = lud16.split('@')
+      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
+      return lnurl
+    }
+  } catch (err) {
+    console.log(err)
+  }
   return null
 }
 
@@ -141,4 +160,51 @@ export function makeZapReceipt({
   }
 
   return zap
+}
+
+export async function validateZapReceipt(
+  zapReceipt: Event,
+  zapReceiptRecipientMetadata: Event,
+): Promise<string | null> {
+  if (zapReceipt?.kind !== 9735) return 'Zap receipt has the wrong kind number.'
+
+  try {
+    const decodedLnurl = getDecodedLnurl(zapReceiptRecipientMetadata)
+    const res = await _fetch(decodedLnurl)
+    const body = await res.json()
+
+    if (!body?.allowsNostr) return 'allowsNostr is not supported'
+
+    if (body?.nostrPubkey !== zapReceipt.pubkey) {
+      return "Zap receipt's pubkey does not match lnurl provider's nostrPubkey."
+    }
+
+    const zapRequestErrorMessage = validateZapRequest(
+      zapReceipt.tags.find(([name]) => name === 'description')?.[1] ?? '',
+    )
+    if (zapRequestErrorMessage !== null) return zapRequestErrorMessage
+
+    const invoice = zapReceipt.tags.find(([name]) => name === 'bolt11')?.[1]
+    if (invoice) {
+      const amountBolt11 = (bolt11.decode(invoice).sections as { name: string; value: string }[]).find(
+        ({ name }) => name === 'amount',
+      )?.value
+
+      const zapRequest = JSON.parse(zapReceipt.tags.find(([name]) => name === 'description')?.[1]!) as Event
+      const amountZapRequest = zapRequest.tags.find(([name]) => name === 'amount')?.[1]
+
+      if (amountBolt11 !== amountZapRequest) return 'Zaps amount do not match.'
+    }
+
+    const zapRequest = JSON.parse(zapReceipt.tags.find(([name]) => name === 'description')?.[1]!) as Event
+    const zapRequestLnurl = zapRequest.tags.find(([name]) => name === 'lnurl')?.[1]
+    if (zapRequestLnurl) {
+      const zapRequestLnurlDecoded = getDecodedLnurl(null, zapRequestLnurl)
+      if (decodedLnurl !== zapRequestLnurlDecoded) return 'Lnurl does not match'
+    }
+  } catch (err) {
+    console.log(err)
+    return 'Could not validate zap receipt'
+  }
+  return null
 }
