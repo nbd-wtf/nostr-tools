@@ -43,7 +43,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
     let tag = event.tags[i]
     if (!Array.isArray(tag)) return false
     for (let j = 0; j < tag.length; j++) {
-      if (typeof tag[j] === 'object') return false
+      if (typeof tag[j] !== 'string') return false
     }
   }
 

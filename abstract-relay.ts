@@ -90,6 +90,7 @@ export class AbstractRelay {
       try {
         this.ws = new this._WebSocket(this.url)
       } catch (err) {
+        clearTimeout(this.connectionTimeoutHandle)
         reject(err)
         return
       }
@@ -101,6 +102,7 @@ export class AbstractRelay {
       }
 
       this.ws.onerror = ev => {
+        clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket error')
         if (this._connected) {
           this._connected = false

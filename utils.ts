@@ -4,14 +4,18 @@ export const utf8Decoder: TextDecoder = new TextDecoder('utf-8')
 export const utf8Encoder: TextEncoder = new TextEncoder()
 
 export function normalizeURL(url: string): string {
-  if (url.indexOf('://') === -1) url = 'wss://' + url
-  let p = new URL(url)
-  p.pathname = p.pathname.replace(/\/+/g, '/')
-  if (p.pathname.endsWith('/')) p.pathname = p.pathname.slice(0, -1)
-  if ((p.port === '80' && p.protocol === 'ws:') || (p.port === '443' && p.protocol === 'wss:')) p.port = ''
-  p.searchParams.sort()
-  p.hash = ''
-  return p.toString()
+  try {
+    if (url.indexOf('://') === -1) url = 'wss://' + url
+    let p = new URL(url)
+    p.pathname = p.pathname.replace(/\/+/g, '/')
+    if (p.pathname.endsWith('/')) p.pathname = p.pathname.slice(0, -1)
+    if ((p.port === '80' && p.protocol === 'ws:') || (p.port === '443' && p.protocol === 'wss:')) p.port = ''
+    p.searchParams.sort()
+    p.hash = ''
+    return p.toString()
+  } catch (e) {
+    throw new Error(`Invalid URL: ${url}`)
+  }
 }
 
 export function insertEventIntoDescendingList(sortedArray: Event[], event: Event): Event[] {
@@ -111,6 +115,9 @@ export class Queue<V> {
 
     const target = this.first
     this.first = target.next
+    if (this.first) {
+      this.first.prev = null // fix: clean up prev pointer
+    }
 
     return target.value
   }
