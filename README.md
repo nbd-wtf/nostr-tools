@@ -104,7 +104,7 @@ let eventTemplate = {
 
 // this assigns the pubkey, calculates the event id and signs the event in a single step
 const signedEvent = finalizeEvent(eventTemplate, sk)
-await pool.publish(['wss://a.com', 'wss://b.com'], signedEvent)
+await Promise.any(pool.publish(['wss://a.com', 'wss://b.com'], signedEvent))
 
 relay.close()
 ```
