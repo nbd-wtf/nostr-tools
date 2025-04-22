@@ -26,6 +26,17 @@ export type BunkerPointer = {
   secret: null | string
 }
 
+export function toBunkerURL(bunkerPointer: BunkerPointer): string {
+  let bunkerURL = new URL(`bunker://${bunkerPointer.pubkey}`)
+  bunkerPointer.relays.forEach(relay => {
+    bunkerURL.searchParams.append('relay', relay)
+  })
+  if (bunkerPointer.secret) {
+    bunkerURL.searchParams.set('secret', bunkerPointer.secret)
+  }
+  return bunkerURL.toString()
+}
+
 /** This takes either a bunker:// URL or a name@domain.com NIP-05 identifier
     and returns a BunkerPointer -- or null in case of error */
 export async function parseBunkerInput(input: string): Promise<BunkerPointer | null> {
