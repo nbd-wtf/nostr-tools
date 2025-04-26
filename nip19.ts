@@ -61,25 +61,7 @@ export type AddressPointer = {
   relays?: string[]
 }
 
-type Prefixes = {
-  nprofile: ProfilePointer
-  nevent: EventPointer
-  naddr: AddressPointer
-  nsec: Uint8Array
-  npub: string
-  note: string
-}
-
-type DecodeValue<Prefix extends keyof Prefixes> = {
-  type: Prefix
-  data: Prefixes[Prefix]
-}
-
-export type DecodeResult = {
-  [P in keyof Prefixes]: DecodeValue<P>
-}[keyof Prefixes]
-
-export function decodeNostrURI(nip19code: string): DecodeResult | { type: 'invalid'; data: null } {
+export function decodeNostrURI(nip19code: string): ReturnType<typeof decode> | { type: 'invalid'; data: null } {
   try {
     if (nip19code.startsWith('nostr:')) nip19code = nip19code.substring(6)
     return decode(nip19code)
@@ -88,10 +70,32 @@ export function decodeNostrURI(nip19code: string): DecodeResult | { type: 'inval
   }
 }
 
-export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
-export function decode(nip19: string): DecodeResult
-export function decode(nip19: string): DecodeResult {
-  let { prefix, words } = bech32.decode(nip19, Bech32MaxSize)
+export function decode(code: string):
+  | {
+      type: 'nevent'
+      data: EventPointer
+    }
+  | {
+      type: 'nprofile'
+      data: ProfilePointer
+    }
+  | {
+      type: 'naddr'
+      data: AddressPointer
+    }
+  | {
+      type: 'npub'
+      data: string
+    }
+  | {
+      type: 'nsec'
+      data: Uint8Array
+    }
+  | {
+      type: 'note'
+      data: string
+    } {
+  let { prefix, words } = bech32.decode(code, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
   switch (prefix) {
