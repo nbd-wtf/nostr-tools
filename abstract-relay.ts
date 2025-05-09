@@ -224,7 +224,6 @@ export class AbstractRelay {
           return
         case 'AUTH': {
           this.challenge = data[1] as string
-          this.authPromise = undefined
           this._onauth?.(data[1] as string)
           return
         }
@@ -243,10 +242,12 @@ export class AbstractRelay {
   }
 
   public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
-    if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
+    const challenge = this.challenge
+    if (!challenge) throw new Error("can't perform auth, no challenge was received")
     if (this.authPromise) return this.authPromise
-    const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
-    this.authPromise = new Promise<string>((resolve, reject) => {
+
+    this.authPromise = new Promise<string>(async (resolve, reject) => {
+      const evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
       const timeout = setTimeout(() => {
         const ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
         if (ep) {
@@ -255,8 +256,8 @@ export class AbstractRelay {
         }
       }, this.publishTimeout)
       this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
+      this.send('["AUTH",' + JSON.stringify(evt) + ']')
     })
-    this.send('["AUTH",' + JSON.stringify(evt) + ']')
     return this.authPromise
   }
 
