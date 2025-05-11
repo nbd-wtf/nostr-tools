@@ -83,6 +83,7 @@ export type BunkerSignerParams = {
 }
 
 export class BunkerSigner {
+  private params: BunkerSignerParams
   private pool: AbstractSimplePool
   private subCloser: SubCloser | undefined
   private isOpen: boolean
@@ -112,6 +113,7 @@ export class BunkerSigner {
       throw new Error('no relays are specified for this bunker')
     }
 
+    this.params = params
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
     this.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
@@ -159,11 +161,7 @@ export class BunkerSigner {
           }
         },
         onclose: () => {
-          if (this.isOpen) {
-            // If we get onclose but isOpen is still true, that means the client still wants to stay connected
-            this.subCloser!.close()
-            this.setupSubscription(params)
-          }
+          this.subCloser = undefined
         },
       },
     )
@@ -180,6 +178,8 @@ export class BunkerSigner {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
+        if (!this.subCloser) this.setupSubscription(this.params)
+
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 
