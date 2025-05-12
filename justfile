@@ -12,10 +12,13 @@ test-only file:
   bun test {{file}}
 
 publish: build
-  npm publish
+  # publish to jsr first because it is more strict and will catch some errors
   perl -i -0pe "s/},\n  \"optionalDependencies\": {\n/,/" package.json
   jsr publish --allow-dirty
   git checkout -- package.json
+
+  # then to npm
+  npm publish
 
 format:
   eslint --ext .ts --fix *.ts
