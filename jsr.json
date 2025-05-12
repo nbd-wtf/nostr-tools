@@ -40,7 +40,6 @@
     "./nip59": "./nip59.ts",
     "./nip75": "./nip75.ts",
     "./nip94": "./nip94.ts",
-    "./nip96": "./nip96.ts",
     "./nip98": "./nip98.ts",
     "./nip99": "./nip99.ts",
     "./fakejson": "./fakejson.ts",
