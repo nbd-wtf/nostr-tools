@@ -67,15 +67,29 @@ import { SimplePool } from 'nostr-tools/pool'
 
 const pool = new SimplePool()
 
-// let's query for an event that exists
-const event = relay.get(
-  ['wss://relay.example.com'],
+const relays = ['wss://relay.example.com', 'wss://relay.example2.com']
+
+// let's query for one event that exists
+const event = pool.get(
+  relays,
   {
     ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
   },
 )
 if (event) {
   console.log('it exists indeed on this relay:', event)
+}
+
+// let's query for more than one event that exists
+const events = pool.querySync(
+  relays,
+  {
+    kinds: [1],
+    limit: 10
+  },
+)
+if (events) {
+  console.log('it exists indeed on this relay:', events)
 }
 
 // let's publish a new event while simultaneously monitoring the relay for it
