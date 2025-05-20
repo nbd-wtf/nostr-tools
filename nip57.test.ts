@@ -1,7 +1,14 @@
 import { describe, test, expect, mock } from 'bun:test'
 import { finalizeEvent } from './pure.ts'
 import { getPublicKey, generateSecretKey } from './pure.ts'
-import { getZapEndpoint, makeZapReceipt, makeZapRequest, useFetchImplementation, validateZapRequest } from './nip57.ts'
+import {
+  getSatoshisAmountFromBolt11,
+  getZapEndpoint,
+  makeZapReceipt,
+  makeZapRequest,
+  useFetchImplementation,
+  validateZapRequest,
+} from './nip57.ts'
 import { buildEvent } from './test-helpers.ts'
 
 describe('getZapEndpoint', () => {
@@ -316,4 +323,27 @@ describe('makeZapReceipt', () => {
     )
     expect(JSON.stringify(result.tags)).not.toContain('preimage')
   })
+})
+
+test('parses the amount from bolt11 invoices', () => {
+  expect(
+    getSatoshisAmountFromBolt11(
+      'lnbc4u1p5zcarnpp5djng98r73nxu66nxp6gndjkw24q7rdzgp7p80lt0gk4z3h3krkssdq9tfpygcqzzsxqzjcsp58hz3v5qefdm70g5fnm2cn6q9thzpu6m4f5wjqurhur5xzmf9vl3s9qxpqysgq9v6qv86xaruzeak9jjyz54fygrkn526z7xhm0llh8wl44gcgh0rznhjqdswd4cjurzdgh0pgzrfj4sd7f3mf89jd6kadse008ex7kxgqqa5xrk',
+    ),
+  ).toEqual(400)
+  expect(
+    getSatoshisAmountFromBolt11(
+      'lnbc8400u1p5zcaz5pp5ltvyhtg4ed7sd8jurj28ugmavezkmqsadpe3t9npufpcrd0uet0scqzyssp5l3hz4ayt5ee0p83ma4a96l2rruhx33eyycewldu2ffa5pk2qx7jq9q7sqqqqqqqqqqqqqqqqqqqsqqqqqysgqdq8w3jhxaqmqz9gxqyjw5qrzjqwryaup9lh50kkranzgcdnn2fgvx390wgj5jd07rwr3vxeje0glclll8qkt3np4rqyqqqqlgqqqqqeqqjqhuhjk5u9r850ncxngne7cfp9s08s2nm6c2rkz7jhl8gjmlx0fga5tlncgeuh4avlsrkq6ljyyhgq8rrxprga03esqhd0gf5455x6tdcqahhw9q',
+    ),
+  ).toEqual(840000)
+  expect(
+    getSatoshisAmountFromBolt11(
+      'lnbc210n1p5zcuaxpp52nn778cfk46md4ld0hdj2juuzvfrsrdaf4ek2k0yeensae07x2cqdq9tfpygcqzzsxqzjcsp5768c4k79jtnq92pgppan8rjnujcpcqhnqwqwk3lm5dfr7e0k2a7s9qxpqysgqt8lnh9l7ple27t73x7gty570ltas2s33uahc7egke5tdmhxr3ezn590wf2utxyt7d3afnk2lxc2u0enc6n53ck4mxwpmzpxa7ws05aqp0c5x3r',
+    ),
+  ).toEqual(21)
+  expect(
+    getSatoshisAmountFromBolt11(
+      'lnbc899640n1p5zcuavpp5w72fqrf09286lq33vw364qryrq5nw60z4dhdx56f8w05xkx4massdq9tfpygcqzzsxqzjcsp5qrqn4kpvem5jwpl63kj5pfdlqxg2plaffz0prz7vaqjy29uc66us9qxpqysgqlhzzqmn2jxd2476404krm8nvrarymwq7nj2zecl92xug54ek0mfntdxvxwslf756m8kq0r7jtpantm52fmewc72r5lfmd85505jnemgqw5j0pc',
+    ),
+  ).toEqual(89964)
 })
