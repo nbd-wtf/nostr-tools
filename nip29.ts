@@ -2,7 +2,7 @@ import { AbstractSimplePool } from './abstract-pool.ts'
 import { Subscription } from './abstract-relay.ts'
 import type { Event, EventTemplate } from './core.ts'
 import { fetchRelayInformation, RelayInformation } from './nip11.ts'
-import { AddressPointer, decode } from './nip19.ts'
+import { AddressPointer, decode, NostrTypeGuard } from './nip19.ts'
 import { normalizeURL } from './utils.ts'
 
 /**
@@ -518,11 +518,11 @@ export async function loadGroupFromCode(pool: AbstractSimplePool, code: string):
  * @returns A GroupReference object if the code is valid, otherwise null.
  */
 export function parseGroupCode(code: string): null | GroupReference {
-  if (code.startsWith('naddr1')) {
+  if (NostrTypeGuard.isNAddr(code)) {
     try {
       let { data } = decode(code)
 
-      let { relays, identifier } = data as AddressPointer
+      let { relays, identifier } = data
       if (!relays || relays.length === 0) return null
 
       let host = relays![0]
