@@ -35,6 +35,7 @@ export class AbstractRelay {
   private incomingMessageQueue = new Queue<string>()
   private queueRunning = false
   private challenge: string | undefined
+  private authPromise: Promise<string> | undefined
   private serial: number = 0
   private verifyEvent: Nostr['verifyEvent']
 
@@ -77,6 +78,7 @@ export class AbstractRelay {
     if (this.connectionPromise) return this.connectionPromise
 
     this.challenge = undefined
+    this.authPromise = undefined
     this.connectionPromise = new Promise((resolve, reject) => {
       this.connectionTimeoutHandle = setTimeout(() => {
         reject('connection timed out')
@@ -88,6 +90,7 @@ export class AbstractRelay {
       try {
         this.ws = new this._WebSocket(this.url)
       } catch (err) {
+        clearTimeout(this.connectionTimeoutHandle)
         reject(err)
         return
       }
@@ -99,6 +102,7 @@ export class AbstractRelay {
       }
 
       this.ws.onerror = ev => {
+        clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket error')
         if (this._connected) {
           this._connected = false
@@ -238,9 +242,12 @@ export class AbstractRelay {
   }
 
   public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
-    if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
-    const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
-    const ret = new Promise<string>((resolve, reject) => {
+    const challenge = this.challenge
+    if (!challenge) throw new Error("can't perform auth, no challenge was received")
+    if (this.authPromise) return this.authPromise
+
+    this.authPromise = new Promise<string>(async (resolve, reject) => {
+      const evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
       const timeout = setTimeout(() => {
         const ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
         if (ep) {
@@ -249,9 +256,9 @@ export class AbstractRelay {
         }
       }, this.publishTimeout)
       this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
+      this.send('["AUTH",' + JSON.stringify(evt) + ']')
     })
-    this.send('["AUTH",' + JSON.stringify(evt) + ']')
-    return ret
+    return this.authPromise
   }
 
   public async publish(event: Event): Promise<string> {

@@ -1,7 +1,7 @@
 import { test, expect } from 'bun:test'
 import { v2 } from './nip44.js'
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
-import { default as vec } from './nip44.vectors.json' assert { type: 'json' }
+import { default as vec } from './nip44.vectors.json' with { type: 'json' }
 import { schnorr } from '@noble/curves/secp256k1'
 const v2vec = vec.v2
 

@@ -1,7 +1,6 @@
 import { EventTemplate, NostrEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
-import { decrypt as legacyDecrypt } from './nip04.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
@@ -25,6 +24,17 @@ export type BunkerPointer = {
   relays: string[]
   pubkey: string
   secret: null | string
+}
+
+export function toBunkerURL(bunkerPointer: BunkerPointer): string {
+  let bunkerURL = new URL(`bunker://${bunkerPointer.pubkey}`)
+  bunkerPointer.relays.forEach(relay => {
+    bunkerURL.searchParams.append('relay', relay)
+  })
+  if (bunkerPointer.secret) {
+    bunkerURL.searchParams.set('secret', bunkerPointer.secret)
+  }
+  return bunkerURL.toString()
 }
 
 /** This takes either a bunker:// URL or a name@domain.com NIP-05 identifier
@@ -73,8 +83,9 @@ export type BunkerSignerParams = {
 }
 
 export class BunkerSigner {
+  private params: BunkerSignerParams
   private pool: AbstractSimplePool
-  private subCloser: SubCloser
+  private subCloser: SubCloser | undefined
   private isOpen: boolean
   private serial: number
   private idPrefix: string
@@ -102,6 +113,7 @@ export class BunkerSigner {
       throw new Error('no relays are specified for this bunker')
     }
 
+    this.params = params
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
     this.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
@@ -112,22 +124,20 @@ export class BunkerSigner {
     this.listeners = {}
     this.waitingForAuth = {}
 
+    this.setupSubscription(params)
+  }
+
+  private setupSubscription(params: BunkerSignerParams) {
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
     const convKey = this.conversationKey
 
-    this.subCloser = this.pool.subscribeMany(
+    this.subCloser = this.pool.subscribe(
       this.bp.relays,
-      [{ kinds: [NostrConnect], authors: [bp.pubkey], '#p': [getPublicKey(this.secretKey)] }],
+      { kinds: [NostrConnect], authors: [this.bp.pubkey], '#p': [getPublicKey(this.secretKey)] },
       {
-        async onevent(event: NostrEvent) {
-          let o
-          try {
-            o = JSON.parse(decrypt(event.content, convKey))
-          } catch (err) {
-            o = JSON.parse(await legacyDecrypt(clientSecretKey, event.pubkey, event.content))
-          }
-
+        onevent: async (event: NostrEvent) => {
+          const o = JSON.parse(decrypt(event.content, convKey))
           const { id, result, error } = o
 
           if (result === 'auth_url' && waitingForAuth[id]) {
@@ -137,7 +147,7 @@ export class BunkerSigner {
               params.onauth(error)
             } else {
               console.warn(
-                `nostr-tools/nip46: remote signer ${bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
+                `nostr-tools/nip46: remote signer ${this.bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
               )
             }
             return
@@ -150,6 +160,9 @@ export class BunkerSigner {
             delete listeners[id]
           }
         },
+        onclose: () => {
+          this.subCloser = undefined
+        },
       },
     )
     this.isOpen = true
@@ -158,13 +171,15 @@ export class BunkerSigner {
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
-    this.subCloser.close()
+    this.subCloser!.close()
   }
 
   async sendRequest(method: string, params: string[]): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
+        if (!this.subCloser) this.setupSubscription(this.params)
+
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 

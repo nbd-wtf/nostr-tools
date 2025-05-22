@@ -5,7 +5,7 @@ import { base64 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
 
-export async function encrypt(secretKey: string | Uint8Array, pubkey: string, text: string): Promise<string> {
+export function encrypt(secretKey: string | Uint8Array, pubkey: string, text: string): string {
   const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
   const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
   const normalizedKey = getNormalizedX(key)
@@ -21,7 +21,7 @@ export async function encrypt(secretKey: string | Uint8Array, pubkey: string, te
   return `${ctb64}?iv=${ivb64}`
 }
 
-export async function decrypt(secretKey: string | Uint8Array, pubkey: string, data: string): Promise<string> {
+export function decrypt(secretKey: string | Uint8Array, pubkey: string, data: string): string {
   const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
   let [ctb64, ivb64] = data.split('?iv=')
   let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)

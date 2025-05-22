@@ -8,7 +8,7 @@ import {
 } from './abstract-relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event, Nostr } from './core.ts'
+import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
 
@@ -19,6 +19,7 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
+  doauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
   label?: string
 }
@@ -61,11 +62,21 @@ export class AbstractSimplePool {
     })
   }
 
-  subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
-    return this.subscribeManyMap(Object.fromEntries(relays.map(url => [url, filters])), params)
+  subscribe(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
+    return this.subscribeMap(
+      relays.map(url => ({ url, filter })),
+      params,
+    )
   }
 
-  subscribeManyMap(requests: { [relay: string]: Filter[] }, params: SubscribeManyParams): SubCloser {
+  subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
+    return this.subscribeMap(
+      relays.flatMap(url => filters.map(filter => ({ url, filter }))),
+      params,
+    )
+  }
+
+  subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {
     if (this.trackRelays) {
       params.receivedEvent = (relay: AbstractRelay, id: string) => {
         let set = this.seenOn.get(id)
@@ -79,14 +90,13 @@ export class AbstractSimplePool {
 
     const _knownIds = new Set<string>()
     const subs: Subscription[] = []
-    const relaysLength = Object.keys(requests).length
 
     // batch all EOSEs into a single
     const eosesReceived: boolean[] = []
     let handleEose = (i: number) => {
       if (eosesReceived[i]) return // do not act twice for the same relay
       eosesReceived[i] = true
-      if (eosesReceived.filter(a => a).length === relaysLength) {
+      if (eosesReceived.filter(a => a).length === requests.length) {
         params.oneose?.()
         handleEose = () => {}
       }
@@ -97,7 +107,7 @@ export class AbstractSimplePool {
       if (closesReceived[i]) return // do not act twice for the same relay
       handleEose(i)
       closesReceived[i] = reason
-      if (closesReceived.filter(a => a).length === relaysLength) {
+      if (closesReceived.filter(a => a).length === requests.length) {
         params.onclose?.(closesReceived)
         handleClose = () => {}
       }
@@ -114,14 +124,7 @@ export class AbstractSimplePool {
 
     // open a subscription in all given relays
     const allOpened = Promise.all(
-      Object.entries(requests).map(async (req, i, arr) => {
-        if (arr.indexOf(req) !== i) {
-          // duplicate
-          handleClose(i, 'duplicate url')
-          return
-        }
-
-        let [url, filters] = req
+      requests.map(async ({ url, filter }, i) => {
         url = normalizeURL(url)
 
         let relay: AbstractRelay
@@ -134,10 +137,31 @@ export class AbstractSimplePool {
           return
         }
 
-        let subscription = relay.subscribe(filters, {
+        let subscription = relay.subscribe([filter], {
           ...params,
           oneose: () => handleEose(i),
-          onclose: reason => handleClose(i, reason),
+          onclose: reason => {
+            if (reason.startsWith('auth-required:') && params.doauth) {
+              relay
+                .auth(params.doauth)
+                .then(() => {
+                  relay.subscribe([filter], {
+                    ...params,
+                    oneose: () => handleEose(i),
+                    onclose: reason => {
+                      handleClose(i, reason) // the second time we won't try to auth anymore
+                    },
+                    alreadyHaveEvent: localAlreadyHaveEventHandler,
+                    eoseTimeout: params.maxWait,
+                  })
+                })
+                .catch(err => {
+                  handleClose(i, `auth was required and attempted, but failed with: ${err}`)
+                })
+            } else {
+              handleClose(i, reason)
+            }
+          },
           alreadyHaveEvent: localAlreadyHaveEventHandler,
           eoseTimeout: params.maxWait,
         })
@@ -156,10 +180,24 @@ export class AbstractSimplePool {
     }
   }
 
+  subscribeEose(
+    relays: string[],
+    filter: Filter,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'doauth'>,
+  ): SubCloser {
+    const subcloser = this.subscribe(relays, filter, {
+      ...params,
+      oneose() {
+        subcloser.close()
+      },
+    })
+    return subcloser
+  }
+
   subscribeManyEose(
     relays: string[],
     filters: Filter[],
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'doauth'>,
   ): SubCloser {
     const subcloser = this.subscribeMany(relays, filters, {
       ...params,
@@ -177,7 +215,7 @@ export class AbstractSimplePool {
   ): Promise<Event[]> {
     return new Promise(async resolve => {
       const events: Event[] = []
-      this.subscribeManyEose(relays, [filter], {
+      this.subscribeEose(relays, filter, {
         ...params,
         onevent(event: Event) {
           events.push(event)

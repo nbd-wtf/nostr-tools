@@ -6,8 +6,7 @@ import {
   NostrTypeGuard,
   nprofileEncode,
   npubEncode,
-  nsecEncode,
-  type ProfilePointer
+  nsecEncode
 } from './nip19.ts'
 import { generateSecretKey, getPublicKey } from './pure.ts'
 

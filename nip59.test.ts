@@ -6,8 +6,8 @@ import { SimplePool } from './pool.ts'
 import { GiftWrap } from './kinds.ts'
 import { hexToBytes } from '@noble/hashes/utils'
 
-const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
-const recipientPrivateKey = decode(`nsec1uyyrnx7cgfp40fcskcr2urqnzekc20fj0er6de0q8qvhx34ahazsvs9p36`).data
+const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data as Uint8Array
+const recipientPrivateKey = decode(`nsec1uyyrnx7cgfp40fcskcr2urqnzekc20fj0er6de0q8qvhx34ahazsvs9p36`).data as Uint8Array
 const recipientPublicKey = getPublicKey(recipientPrivateKey)
 const event = {
   kind: 1,

@@ -61,34 +61,56 @@ export type AddressPointer = {
   relays?: string[]
 }
 
-type Prefixes = {
-  nprofile: ProfilePointer
-  nevent: EventPointer
-  naddr: AddressPointer
-  nsec: Uint8Array
-  npub: string
-  note: string
+export function decodeNostrURI(nip19code: string): ReturnType<typeof decode> | { type: 'invalid'; data: null } {
+  try {
+    if (nip19code.startsWith('nostr:')) nip19code = nip19code.substring(6)
+    return decode(nip19code)
+  } catch (_err) {
+    return { type: 'invalid', data: null }
+  }
 }
 
-type DecodeValue<Prefix extends keyof Prefixes> = {
-  type: Prefix
-  data: Prefixes[Prefix]
+export type DecodedNevent = {
+  type: 'nevent'
+  data: EventPointer
 }
 
-export type DecodeResult = {
-  [P in keyof Prefixes]: DecodeValue<P>
-}[keyof Prefixes]
+export type DecodedNprofile = {
+  type: 'nprofile'
+  data: ProfilePointer
+}
 
-export function decode<Prefix extends keyof Prefixes>(nip19: `${Prefix}1${string}`): DecodeValue<Prefix>
-export function decode(nip19: NProfile): DecodeValue<'nprofile'>
-export function decode(nip19: NEvent): DecodeValue<'nevent'>
-export function decode(nip19: NAddr): DecodeValue<'naddr'>
-export function decode(nip19: NSec): DecodeValue<'nsec'>
-export function decode(nip19: NPub): DecodeValue<'npub'>
-export function decode(nip19: Note): DecodeValue<'note'>
-export function decode(nip19: string): DecodeResult
-export function decode(nip19: string): DecodeResult {
-  let { prefix, words } = bech32.decode(nip19, Bech32MaxSize)
+export type DecodedNaddr = {
+  type: 'naddr'
+  data: AddressPointer
+}
+
+export type DecodedNsec = {
+  type: 'nsec'
+  data: Uint8Array
+}
+
+export type DecodedNpub = {
+  type: 'npub'
+  data: string
+}
+
+export type DecodedNote = {
+  type: 'note'
+  data: string
+}
+
+export type DecodedResult = DecodedNevent | DecodedNprofile | DecodedNaddr | DecodedNpub | DecodedNsec | DecodedNote
+
+export function decode(nip19: NEvent): DecodedNevent
+export function decode(nip19: NProfile): DecodedNprofile
+export function decode(nip19: NAddr): DecodedNaddr
+export function decode(nip19: NSec): DecodedNsec
+export function decode(nip19: NPub): DecodedNpub
+export function decode(nip19: Note): DecodedNote
+export function decode(code: string): DecodedResult
+export function decode(code: string): DecodedResult {
+  let { prefix, words } = bech32.decode(code, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
   switch (prefix) {

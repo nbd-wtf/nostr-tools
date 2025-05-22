@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.10.4",
+  "version": "2.13.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -203,11 +203,6 @@
       "require": "./lib/cjs/nip94.js",
       "types": "./lib/types/nip94.d.ts"
     },
-    "./nip96": {
-      "import": "./lib/esm/nip96.js",
-      "require": "./lib/cjs/nip96.js",
-      "types": "./lib/types/nip96.d.ts"
-    },
     "./nip98": {
       "import": "./lib/esm/nip98.js",
       "require": "./lib/cjs/nip98.js",
@@ -236,9 +231,7 @@
     "@noble/hashes": "1.3.1",
     "@scure/base": "1.1.1",
     "@scure/bip32": "1.3.1",
-    "@scure/bip39": "1.2.1"
-  },
-  "optionalDependencies": {
+    "@scure/bip39": "1.2.1",
     "nostr-wasm": "0.1.0"
   },
   "peerDependencies": {
@@ -263,18 +256,14 @@
     "@typescript-eslint/parser": "^6.5.0",
     "bun-types": "^1.0.18",
     "esbuild": "0.16.9",
-    "esbuild-plugin-alias": "^0.2.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-babel": "^5.3.1",
-    "esm-loader-typescript": "^1.0.3",
     "events": "^3.3.0",
     "mitata": "^0.1.6",
     "mock-socket": "^9.3.1",
-    "msw": "^2.1.4",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
-    "typescript": "^5.0.4"
+    "typescript": "^5.8.2"
   },
   "scripts": {
     "prepublish": "just build"

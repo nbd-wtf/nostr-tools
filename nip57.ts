@@ -77,7 +77,7 @@ export function makeZapRequest({
     if (isReplaceableKind(event.kind)) {
       const a = ['a', `${event.kind}:${event.pubkey}:`]
       zr.tags.push(a)
-    // addressable event
+      // addressable event
     } else if (isAddressableKind(event.kind)) {
       let d = event.tags.find(([t, v]) => t === 'd' && v)
       if (!d) throw new Error('d tag not found or is empty')
@@ -141,4 +141,53 @@ export function makeZapReceipt({
   }
 
   return zap
+}
+
+export function getSatoshisAmountFromBolt11(bolt11: string): number {
+  if (bolt11.length < 50) {
+    return 0
+  }
+  bolt11 = bolt11.substring(0, 50)
+  const idx = bolt11.lastIndexOf('1')
+  if (idx === -1) {
+    return 0
+  }
+  const hrp = bolt11.substring(0, idx)
+  if (!hrp.startsWith('lnbc')) {
+    return 0
+  }
+  const amount = hrp.substring(4) // equivalent to strings.CutPrefix
+
+  if (amount.length < 1) {
+    return 0
+  }
+
+  // if last character is a digit, then the amount can just be interpreted as BTC
+  const char = amount[amount.length - 1]
+  const digit = char.charCodeAt(0) - '0'.charCodeAt(0)
+  const isDigit = digit >= 0 && digit <= 9
+
+  let cutPoint = amount.length - 1
+  if (isDigit) {
+    cutPoint++
+  }
+
+  if (cutPoint < 1) {
+    return 0
+  }
+
+  const num = parseInt(amount.substring(0, cutPoint))
+
+  switch (char) {
+    case 'm':
+      return num * 100000
+    case 'u':
+      return num * 100
+    case 'n':
+      return num / 10
+    case 'p':
+      return num / 10000
+    default:
+      return num * 100000000
+  }
 }
