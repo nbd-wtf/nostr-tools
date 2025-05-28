@@ -119,12 +119,12 @@ test('subscribe many map', async () => {
 
   const [relayA, relayB, relayC] = relayURLs
 
-  pool.subscribeManyMap(
-    {
-      [relayA]: [{ authors: [pub], kinds: [20001] }],
-      [relayB]: [{ authors: [pub], kinds: [20002] }],
-      [relayC]: [{ kinds: [20003], '#t': ['biloba'] }],
-    },
+  pool.subscribeMap(
+    [
+      { url: relayA, filter: { authors: [pub], kinds: [20001] } },
+      { url: relayB, filter: { authors: [pub], kinds: [20002] } },
+      { url: relayC, filter: { kinds: [20003], '#t': ['biloba'] } },
+    ],
     {
       onevent(event: Event) {
         received.push(event)
