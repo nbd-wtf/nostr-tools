@@ -32,7 +32,7 @@ export async function makeNwcRequestEvent(
       invoice,
     },
   }
-  const encryptedContent = await encrypt(secretKey, pubkey, JSON.stringify(content))
+  const encryptedContent = encrypt(secretKey, pubkey, JSON.stringify(content))
   const eventTemplate = {
     kind: NWCWalletRequest,
     created_at: Math.round(Date.now() / 1000),
