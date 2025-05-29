@@ -1,17 +1,14 @@
-import { test, expect, describe } from 'bun:test'
-import { generateSecretKey, getPublicKey } from './pure.ts'
+import { describe, expect, test } from 'bun:test'
 import {
   decode,
   naddrEncode,
+  neventEncode,
+  NostrTypeGuard,
   nprofileEncode,
   npubEncode,
-  nsecEncode,
-  neventEncode,
-  type AddressPointer,
-  type ProfilePointer,
-  EventPointer,
-  NostrTypeGuard,
+  nsecEncode
 } from './nip19.ts'
+import { generateSecretKey, getPublicKey } from './pure.ts'
 
 test('encode and decode nsec', () => {
   let sk = generateSecretKey()
@@ -38,7 +35,7 @@ test('encode and decode nprofile', () => {
   expect(nprofile).toMatch(/nprofile1\w+/)
   let { type, data } = decode(nprofile)
   expect(type).toEqual('nprofile')
-  const pointer = data as ProfilePointer
+  const pointer = data
   expect(pointer.pubkey).toEqual(pk)
   expect(pointer.relays).toContain(relays[0])
   expect(pointer.relays).toContain(relays[1])
@@ -67,7 +64,7 @@ test('encode and decode naddr', () => {
   expect(naddr).toMatch(/naddr1\w+/)
   let { type, data } = decode(naddr)
   expect(type).toEqual('naddr')
-  const pointer = data as AddressPointer
+  const pointer = data
   expect(pointer.pubkey).toEqual(pk)
   expect(pointer.relays).toContain(relays[0])
   expect(pointer.relays).toContain(relays[1])
@@ -86,7 +83,7 @@ test('encode and decode nevent', () => {
   expect(nevent).toMatch(/nevent1\w+/)
   let { type, data } = decode(nevent)
   expect(type).toEqual('nevent')
-  const pointer = data as EventPointer
+  const pointer = data
   expect(pointer.id).toEqual(pk)
   expect(pointer.relays).toContain(relays[0])
   expect(pointer.kind).toEqual(30023)
@@ -103,7 +100,7 @@ test('encode and decode nevent with kind 0', () => {
   expect(nevent).toMatch(/nevent1\w+/)
   let { type, data } = decode(nevent)
   expect(type).toEqual('nevent')
-  const pointer = data as EventPointer
+  const pointer = data
   expect(pointer.id).toEqual(pk)
   expect(pointer.relays).toContain(relays[0])
   expect(pointer.kind).toEqual(0)
@@ -121,7 +118,7 @@ test('encode and decode naddr with empty "d"', () => {
   expect(naddr).toMatch(/naddr\w+/)
   let { type, data } = decode(naddr)
   expect(type).toEqual('naddr')
-  const pointer = data as AddressPointer
+  const pointer = data
   expect(pointer.identifier).toEqual('')
   expect(pointer.relays).toContain(relays[0])
   expect(pointer.kind).toEqual(3)
@@ -133,7 +130,7 @@ test('decode naddr from habla.news', () => {
     'naddr1qq98yetxv4ex2mnrv4esygrl54h466tz4v0re4pyuavvxqptsejl0vxcmnhfl60z3rth2xkpjspsgqqqw4rsf34vl5',
   )
   expect(type).toEqual('naddr')
-  const pointer = data as AddressPointer
+  const pointer = data
   expect(pointer.pubkey).toEqual('7fa56f5d6962ab1e3cd424e758c3002b8665f7b0d8dcee9fe9e288d7751ac194')
   expect(pointer.kind).toEqual(30023)
   expect(pointer.identifier).toEqual('references')
@@ -145,7 +142,7 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
   )
 
   expect(type).toEqual('naddr')
-  const pointer = data as AddressPointer
+  const pointer = data
   expect(pointer.pubkey).toEqual('3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d')
   expect(pointer.relays).toContain('wss://relay.nostr.example.mydomain.example.com')
   expect(pointer.relays).toContain('wss://nostr.banana.com')
