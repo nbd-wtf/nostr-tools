@@ -112,7 +112,9 @@ export class AbstractRelay {
         }
       }
 
-      this.ws.onclose = async () => {
+      this.ws.onclose = (ev) => {
+        clearTimeout(this.connectionTimeoutHandle)
+        reject((ev as any).message || 'websocket closed')
         if (this._connected) {
           this._connected = false
           this.connectionPromise = undefined
