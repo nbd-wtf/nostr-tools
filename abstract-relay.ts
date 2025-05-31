@@ -1,6 +1,6 @@
 /* global WebSocket */
 
-import type { Event, EventTemplate, VerifiedEvent, Nostr } from './core.ts'
+import type { Event, EventTemplate, VerifiedEvent, Nostr, NostrEvent } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { Queue, normalizeURL } from './utils.ts'
@@ -10,6 +10,13 @@ import { yieldThread } from './helpers.ts'
 export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
+}
+
+export class SendingOnClosedConnection extends Error {
+  constructor(message: string, relay: string) {
+    super(`Tried to send message '${message} on a closed connection to ${relay}.`)
+    this.name = 'SendingOnClosedConnection'
+  }
 }
 
 export class AbstractRelay {
@@ -112,7 +119,7 @@ export class AbstractRelay {
         }
       }
 
-      this.ws.onclose = (ev) => {
+      this.ws.onclose = ev => {
         clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket closed')
         if (this._connected) {
@@ -178,7 +185,7 @@ export class AbstractRelay {
       switch (data[0]) {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
-          const event = data[2] as Event
+          const event = data[2] as NostrEvent
           if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
           }
@@ -236,7 +243,7 @@ export class AbstractRelay {
   }
 
   public async send(message: string) {
-    if (!this.connectionPromise) throw new Error('sending on closed connection')
+    if (!this.connectionPromise) throw new SendingOnClosedConnection(message, this.url)
 
     this.connectionPromise.then(() => {
       this.ws?.send(message)
@@ -379,7 +386,15 @@ export class Subscription {
     if (!this.closed && this.relay.connected) {
       // if the connection was closed by the user calling .close() we will send a CLOSE message
       // otherwise this._open will be already set to false so we will skip this
-      this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
+      try {
+        this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
+      } catch (err) {
+        if (err instanceof SendingOnClosedConnection) {
+          /* doesn't matter, it's ok */
+        } else {
+          throw err
+        }
+      }
       this.closed = true
     }
     this.relay.openSubs.delete(this.id)
