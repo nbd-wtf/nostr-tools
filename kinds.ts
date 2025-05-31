@@ -20,9 +20,6 @@ export function isAddressableKind(kind: number): boolean {
   return 30000 <= kind && kind < 40000
 }
 
-/** @deprecated use isAddressableKind instead */
-export const isParameterizedReplaceableKind = isAddressableKind
-
 /** Classification of the event kind. */
 export type KindClassification = 'regular' | 'replaceable' | 'ephemeral' | 'parameterized' | 'unknown'
 

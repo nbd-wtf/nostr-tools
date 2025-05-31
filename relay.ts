@@ -3,13 +3,6 @@
 import { verifyEvent } from './pure.ts'
 import { AbstractRelay } from './abstract-relay.ts'
 
-/**
- * @deprecated use Relay.connect() instead.
- */
-export function relayConnect(url: string): Promise<Relay> {
-  return Relay.connect(url)
-}
-
 var _WebSocket: typeof WebSocket
 
 try {
