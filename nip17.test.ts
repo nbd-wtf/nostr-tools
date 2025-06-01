@@ -4,7 +4,7 @@ import { decode } from './nip19.ts'
 import { wrapEvent, wrapManyEvents, unwrapEvent } from './nip17.ts'
 import { hexToBytes } from '@noble/hashes/utils'
 
-const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data as Uint8Array
+const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
 
 const sk1 = hexToBytes('f09ac9b695d0a4c6daa418fe95b977eea20f54d9545592bc36a4f9e14f3eb840')
 const sk2 = hexToBytes('5393a825e5892d8e18d4a5ea61ced105e8bb2a106f42876be3a40522e0b13747')

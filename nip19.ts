@@ -70,31 +70,46 @@ export function decodeNostrURI(nip19code: string): ReturnType<typeof decode> | {
   }
 }
 
-export function decode(code: string):
-  | {
-      type: 'nevent'
-      data: EventPointer
-    }
-  | {
-      type: 'nprofile'
-      data: ProfilePointer
-    }
-  | {
-      type: 'naddr'
-      data: AddressPointer
-    }
-  | {
-      type: 'npub'
-      data: string
-    }
-  | {
-      type: 'nsec'
-      data: Uint8Array
-    }
-  | {
-      type: 'note'
-      data: string
-    } {
+export type DecodedNevent = {
+  type: 'nevent'
+  data: EventPointer
+}
+
+export type DecodedNprofile = {
+  type: 'nprofile'
+  data: ProfilePointer
+}
+
+export type DecodedNaddr = {
+  type: 'naddr'
+  data: AddressPointer
+}
+
+export type DecodedNsec = {
+  type: 'nsec'
+  data: Uint8Array
+}
+
+export type DecodedNpub = {
+  type: 'npub'
+  data: string
+}
+
+export type DecodedNote = {
+  type: 'note'
+  data: string
+}
+
+export type DecodedResult = DecodedNevent | DecodedNprofile | DecodedNaddr | DecodedNpub | DecodedNsec | DecodedNote
+
+export function decode(nip19: NEvent): DecodedNevent
+export function decode(nip19: NProfile): DecodedNprofile
+export function decode(nip19: NAddr): DecodedNaddr
+export function decode(nip19: NSec): DecodedNsec
+export function decode(nip19: NPub): DecodedNpub
+export function decode(nip19: Note): DecodedNote
+export function decode(code: string): DecodedResult
+export function decode(code: string): DecodedResult {
   let { prefix, words } = bech32.decode(code, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
