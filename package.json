@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.14.0",
+  "version": "2.14.1",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -212,6 +212,11 @@
       "import": "./lib/esm/nip99.js",
       "require": "./lib/cjs/nip99.js",
       "types": "./lib/types/nip99.d.ts"
+    },
+    "./nipb7": {
+      "import": "./lib/esm/nipb7.js",
+      "require": "./lib/cjs/nipb7.js",
+      "types": "./lib/types/nipb7.d.ts"
     },
     "./fakejson": {
       "import": "./lib/esm/fakejson.js",
