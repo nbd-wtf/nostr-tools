@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "nostr-tools",
-  "version": "2.13.3",
+  "version": "2.14.0",
   "description": "Tools for making a Nostr client.",
   "repository": {
     "type": "git",
@@ -217,6 +217,11 @@
       "import": "./lib/esm/fakejson.js",
       "require": "./lib/cjs/fakejson.js",
       "types": "./lib/types/fakejson.d.ts"
+    },
+    "./signer": {
+      "import": "./lib/esm/signer.js",
+      "require": "./lib/cjs/signer.js",
+      "types": "./lib/types/signer.d.ts"
     },
     "./utils": {
       "import": "./lib/esm/utils.js",
