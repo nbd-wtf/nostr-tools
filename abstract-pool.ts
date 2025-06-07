@@ -19,6 +19,8 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
+  onauth?: (event: EventTemplate) => Promise<VerifiedEvent>
+  // Deprecated: use onauth instead
   doauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
   label?: string
@@ -63,6 +65,8 @@ export class AbstractSimplePool {
   }
 
   subscribe(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
+    params.onauth = params.onauth || params.doauth
+
     return this.subscribeMap(
       relays.map(url => ({ url, filter })),
       params,
@@ -70,6 +74,8 @@ export class AbstractSimplePool {
   }
 
   subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
+    params.onauth = params.onauth || params.doauth
+
     return this.subscribeMap(
       relays.flatMap(url => filters.map(filter => ({ url, filter }))),
       params,
@@ -77,6 +83,8 @@ export class AbstractSimplePool {
   }
 
   subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {
+    params.onauth = params.onauth || params.doauth
+
     if (this.trackRelays) {
       params.receivedEvent = (relay: AbstractRelay, id: string) => {
         let set = this.seenOn.get(id)
@@ -141,9 +149,9 @@ export class AbstractSimplePool {
           ...params,
           oneose: () => handleEose(i),
           onclose: reason => {
-            if (reason.startsWith('auth-required:') && params.doauth) {
+            if (reason.startsWith('auth-required: ') && params.onauth) {
               relay
-                .auth(params.doauth)
+                .auth(params.onauth)
                 .then(() => {
                   relay.subscribe([filter], {
                     ...params,
@@ -183,8 +191,10 @@ export class AbstractSimplePool {
   subscribeEose(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'doauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth' | 'doauth'>,
   ): SubCloser {
+    params.onauth = params.onauth || params.doauth
+
     const subcloser = this.subscribe(relays, filter, {
       ...params,
       oneose() {
@@ -197,8 +207,10 @@ export class AbstractSimplePool {
   subscribeManyEose(
     relays: string[],
     filters: Filter[],
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'doauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth' | 'doauth'>,
   ): SubCloser {
+    params.onauth = params.onauth || params.doauth
+
     const subcloser = this.subscribeMany(relays, filters, {
       ...params,
       oneose() {
@@ -238,7 +250,11 @@ export class AbstractSimplePool {
     return events[0] || null
   }
 
-  publish(relays: string[], event: Event): Promise<string>[] {
+  publish(
+    relays: string[],
+    event: Event,
+    options?: { onauth?: (evt: EventTemplate) => Promise<VerifiedEvent> },
+  ): Promise<string>[] {
     return relays.map(normalizeURL).map(async (url, i, arr) => {
       if (arr.indexOf(url) !== i) {
         // duplicate
@@ -246,17 +262,26 @@ export class AbstractSimplePool {
       }
 
       let r = await this.ensureRelay(url)
-      return r.publish(event).then(reason => {
-        if (this.trackRelays) {
-          let set = this.seenOn.get(event.id)
-          if (!set) {
-            set = new Set()
-            this.seenOn.set(event.id, set)
+      return r
+        .publish(event)
+        .catch(async err => {
+          if (err instanceof Error && err.message.startsWith('auth-required: ') && options?.onauth) {
+            await r.auth(options.onauth)
+            return r.publish(event) // retry
           }
-          set.add(r)
-        }
-        return reason
-      })
+          throw err
+        })
+        .then(reason => {
+          if (this.trackRelays) {
+            let set = this.seenOn.get(event.id)
+            if (!set) {
+              set = new Set()
+              this.seenOn.set(event.id, set)
+            }
+            set.add(r)
+          }
+          return reason
+        })
     })
   }
 
