@@ -26,9 +26,6 @@ export class AbstractRelay {
   public onclose: (() => void) | null = null
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
 
-  // this is exposed just to help in ndk migration, shouldn't be relied upon
-  public _onauth: ((challenge: string) => void) | null = null
-
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
@@ -233,7 +230,6 @@ export class AbstractRelay {
           return
         case 'AUTH': {
           this.challenge = data[1] as string
-          this._onauth?.(data[1] as string)
           return
         }
       }
