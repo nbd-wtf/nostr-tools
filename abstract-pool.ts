@@ -12,7 +12,7 @@ import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
 
-export type SubCloser = { close: () => void }
+export type SubCloser = { close: (reason?: string) => void }
 
 export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {}
 
@@ -179,10 +179,10 @@ export class AbstractSimplePool {
     )
 
     return {
-      async close() {
+      async close(reason?: string) {
         await allOpened
         subs.forEach(sub => {
-          sub.close()
+          sub.close(reason)
         })
       },
     }
@@ -198,7 +198,7 @@ export class AbstractSimplePool {
     const subcloser = this.subscribe(relays, filter, {
       ...params,
       oneose() {
-        subcloser.close()
+        subcloser.close('closed automatically on eose')
       },
     })
     return subcloser
@@ -214,7 +214,7 @@ export class AbstractSimplePool {
     const subcloser = this.subscribeMany(relays, filters, {
       ...params,
       oneose() {
-        subcloser.close()
+        subcloser.close('closed automatically on eose')
       },
     })
     return subcloser
