@@ -252,16 +252,20 @@ export class AbstractRelay {
     if (this.authPromise) return this.authPromise
 
     this.authPromise = new Promise<string>(async (resolve, reject) => {
-      const evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
-      const timeout = setTimeout(() => {
-        const ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
-        if (ep) {
-          ep.reject(new Error('auth timed out'))
-          this.openEventPublishes.delete(evt.id)
-        }
-      }, this.publishTimeout)
-      this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
-      this.send('["AUTH",' + JSON.stringify(evt) + ']')
+      try {
+        let evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
+        let timeout = setTimeout(() => {
+          let ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
+          if (ep) {
+            ep.reject(new Error('auth timed out'))
+            this.openEventPublishes.delete(evt.id)
+          }
+        }, this.publishTimeout)
+        this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
+        this.send('["AUTH",' + JSON.stringify(evt) + ']')
+      } catch (err) {
+        console.warn('subscribe auth function failed:', err)
+      }
     })
     return this.authPromise
   }
