@@ -9,8 +9,8 @@ interface NWCConnection {
 }
 
 export function parseConnectionString(connectionString: string): NWCConnection {
-  const { pathname, searchParams } = new URL(connectionString)
-  const pubkey = pathname
+  const { host, pathname, searchParams } = new URL(connectionString)
+  const pubkey = pathname || host
   const relay = searchParams.get('relay')
   const secret = searchParams.get('secret')
 
