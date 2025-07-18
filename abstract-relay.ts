@@ -319,6 +319,7 @@ export class AbstractRelay {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.ws?.close()
+    this.onclose?.()
   }
 
   // this is the function assigned to this.ws.onmessage

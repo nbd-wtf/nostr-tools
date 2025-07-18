@@ -50,6 +50,9 @@ export class AbstractSimplePool {
         verifyEvent: this.trustedRelayURLs.has(url) ? alwaysTrue : this.verifyEvent,
         websocketImplementation: this._WebSocket,
       })
+      relay.onclose = () => {
+        this.relays.delete(url)
+      }
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)
     }
@@ -61,6 +64,7 @@ export class AbstractSimplePool {
   close(relays: string[]) {
     relays.map(normalizeURL).forEach(url => {
       this.relays.get(url)?.close()
+      this.relays.delete(url)
     })
   }
 
