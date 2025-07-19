@@ -370,7 +370,7 @@ export class Subscription {
   }
 
   public fire() {
-    this.relay.send('["REQ","' + this.id + '",' + JSON.stringify(this.filters).substring(1))
+    this.relay.send(JSON.stringify(['REQ', this.id, ...this.filters]))
 
     // only now we start counting the eoseTimeout
     this.eoseTimeoutHandle = setTimeout(this.receivedEose.bind(this), this.eoseTimeout)
