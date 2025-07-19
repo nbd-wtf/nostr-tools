@@ -13,7 +13,7 @@ test-only file:
 
 publish: build
   # publish to jsr first because it is more strict and will catch some errors
-  perl -i -0pe "s/},\n  \"optionalDependencies\": {\n/,/" package.json
+  jq 'delete(.optionalDependencies)' package.json | sponge package.json
   jsr publish --allow-dirty
   git checkout -- package.json
 

@@ -1,21 +1,13 @@
 /* global WebSocket */
 
 import { verifyEvent } from './pure.ts'
-import { AbstractRelay } from './abstract-relay.ts'
+import { AbstractRelay, WebSocketBaseConn } from './abstract-relay.ts'
 
-var _WebSocket: typeof WebSocket
-
-try {
-  _WebSocket = WebSocket
-} catch {}
-
-export function useWebSocketImplementation(websocketImplementation: any) {
-  _WebSocket = websocketImplementation
-}
+class BrowserWs extends WebSocket implements WebSocketBase, WebSocketBaseConn {}
 
 export class Relay extends AbstractRelay {
   constructor(url: string) {
-    super(url, { verifyEvent, websocketImplementation: _WebSocket })
+    super(url, { verifyEvent, websocketImplementation: BrowserWs })
   }
 
   static async connect(url: string): Promise<Relay> {
@@ -24,7 +16,5 @@ export class Relay extends AbstractRelay {
     return relay
   }
 }
-
-export type RelayRecord = Record<string, { read: boolean; write: boolean }>
 
 export * from './abstract-relay.ts'

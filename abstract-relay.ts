@@ -7,9 +7,22 @@ import { Queue, normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
+export type RelayRecord = Record<string, { read: boolean; write: boolean }>
+
+export interface WebSocketBase {
+  new (url: string | URL, protocols?: string | string[] | undefined): WebSocketBaseConn
+}
+
+export interface WebSocketBaseConn {
+  onopen: ((this: WebSocketBaseConn, ev: Event) => any) | null
+  onclose: ((this: WebSocketBaseConn) => void) | null
+  onerror: ((this: WebSocketBaseConn, _: MessageEvent<any>) => void) | null
+  onmessage: ((_: MessageEvent<any>) => void) | null
+}
+
 export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
-  websocketImplementation?: typeof WebSocket
+  websocketImplementation?: WebSocketBase
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -43,7 +56,7 @@ export class AbstractRelay {
   private serial: number = 0
   private verifyEvent: Nostr['verifyEvent']
 
-  private _WebSocket: typeof WebSocket
+  private _WebSocket: WebSocketBase
 
   constructor(url: string, opts: AbstractRelayConstructorOptions) {
     this.url = normalizeURL(url)
