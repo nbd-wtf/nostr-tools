@@ -44,7 +44,7 @@
     "./nip99": "./nip99.ts",
     "./nipb7": "./nipb7.ts",
     "./fakejson": "./fakejson.ts",
-    "./utils": "./utils.ts"
+    "./utils": "./utils.ts",
     "./signer": "./signer.ts"
   }
 }
