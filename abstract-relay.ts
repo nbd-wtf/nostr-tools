@@ -49,6 +49,9 @@ export class AbstractRelay {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation || WebSocket
+    // this.pingHeartBeat = opts.pingHeartBeat
+    // this.pingFrequency = opts.pingFrequency
+    // this.pingTimeout = opts.pingTimeout
   }
 
   static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
@@ -102,6 +105,9 @@ export class AbstractRelay {
       this.ws.onopen = () => {
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
+        if (this.ws && this.ws.ping) { // && this.pingHeartBeat
+          this.pingpong()
+        }
         resolve()
       }
 
@@ -131,6 +137,31 @@ export class AbstractRelay {
     })
 
     return this.connectionPromise
+  }
+
+  private async receivePong() {
+    return new Promise((res, err) => {
+      this.ws?.on('pong', () => res(true)) || err("ws can't listen for pong")
+    })
+  }
+
+  private async pingpong() {
+    // if the websocket is connected
+    if (this.ws?.readyState == 1) {
+      // send a ping
+      this.ws.ping()
+      // wait for either a pong or a timeout
+      const result = await Promise.any([
+        this.receivePong(),
+        new Promise(res => setTimeout(() => res(false), 10000)) // TODO: opts.pingTimeout
+      ])
+      if (result) {
+        // schedule another pingpong
+        setTimeout(() => this.pingpong(), 10000) // TODO: opts.pingFrequency
+      } else {
+        this.ws && this.ws.close()
+      }
+    }
   }
 
   private async runQueue() {
