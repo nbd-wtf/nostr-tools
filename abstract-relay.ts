@@ -7,6 +7,11 @@ import { Queue, normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
+type RelayWebSocket = WebSocket & {
+  ping?(): void
+  on?(event: 'pong', listener: () => void): any
+}
+
 export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
@@ -35,7 +40,7 @@ export class AbstractRelay {
   private connectionPromise: Promise<void> | undefined
   private openCountRequests = new Map<string, CountResolver>()
   private openEventPublishes = new Map<string, EventPublishResolver>()
-  private ws: WebSocket | undefined
+  private ws: RelayWebSocket | undefined
   private incomingMessageQueue = new Queue<string>()
   private queueRunning = false
   private challenge: string | undefined
@@ -141,24 +146,31 @@ export class AbstractRelay {
 
   private async receivePong() {
     return new Promise((res, err) => {
-      this.ws?.on('pong', () => res(true)) || err("ws can't listen for pong")
+      (this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
     })
   }
 
   private async pingpong() {
+    console.error('pingpong')
     // if the websocket is connected
     if (this.ws?.readyState == 1) {
+      console.error('pingpong readyState==1')
       // send a ping
-      this.ws.ping()
+      console.error('pingpong ping()');
+      (this.ws && this.ws.ping) && this.ws.ping()
       // wait for either a pong or a timeout
+      console.error('pingpong wait for pong or timeout')
       const result = await Promise.any([
         this.receivePong(),
         new Promise(res => setTimeout(() => res(false), 10000)) // TODO: opts.pingTimeout
       ])
+      console.error('pingpong result', result)
       if (result) {
+        console.error('pingpong scheduling pingpong')
         // schedule another pingpong
         setTimeout(() => this.pingpong(), 10000) // TODO: opts.pingFrequency
       } else {
+        console.error('pingpong closing socket')
         this.ws && this.ws.close()
       }
     }
