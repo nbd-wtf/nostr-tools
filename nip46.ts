@@ -5,7 +5,6 @@ import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
-import type { RelayRecord } from './relay.ts'
 import { Signer } from './signer.ts'
 
 var _fetch: any
@@ -236,13 +235,6 @@ export class BunkerSigner implements Signer {
       this.cachedPubKey = await this.sendRequest('get_public_key', [])
     }
     return this.cachedPubKey
-  }
-
-  /**
-   * @deprecated removed from NIP
-   */
-  async getRelays(): Promise<RelayRecord> {
-    return JSON.parse(await this.sendRequest('get_relays', []))
   }
 
   /**
