@@ -110,7 +110,8 @@ export class AbstractRelay {
       this.ws.onopen = () => {
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
-        if (this.ws && this.ws.ping) { // && this.pingHeartBeat
+        if (this.ws && this.ws.ping) {
+          // && this.pingHeartBeat
           this.pingpong()
         }
         resolve()
@@ -146,31 +147,28 @@ export class AbstractRelay {
 
   private async receivePong() {
     return new Promise((res, err) => {
-      (this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
+      ;(this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
     })
   }
 
+  // nodejs requires this magic here to ensure connections are closed when internet goes off and stuff
+  // in browsers it's done automatically. see https://github.com/nbd-wtf/nostr-tools/issues/491
   private async pingpong() {
-    console.error('pingpong')
     // if the websocket is connected
     if (this.ws?.readyState == 1) {
-      console.error('pingpong readyState==1')
       // send a ping
-      console.error('pingpong ping()');
-      (this.ws && this.ws.ping) && this.ws.ping()
+      this.ws && this.ws.ping && this.ws.ping()
       // wait for either a pong or a timeout
-      console.error('pingpong wait for pong or timeout')
       const result = await Promise.any([
         this.receivePong(),
-        new Promise(res => setTimeout(() => res(false), 10000)) // TODO: opts.pingTimeout
+        new Promise(res => setTimeout(() => res(false), 10000)), // TODO: opts.pingTimeout
       ])
       console.error('pingpong result', result)
       if (result) {
-        console.error('pingpong scheduling pingpong')
         // schedule another pingpong
         setTimeout(() => this.pingpong(), 10000) // TODO: opts.pingFrequency
       } else {
-        console.error('pingpong closing socket')
+        // pingpong closing socket
         this.ws && this.ws.close()
       }
     }

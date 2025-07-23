@@ -2,7 +2,7 @@ import { AbstractSimplePool } from './abstract-pool.ts'
 import { Subscription } from './abstract-relay.ts'
 import type { Event, EventTemplate } from './core.ts'
 import { fetchRelayInformation, RelayInformation } from './nip11.ts'
-import { AddressPointer, decode, NostrTypeGuard } from './nip19.ts'
+import { decode, NostrTypeGuard } from './nip19.ts'
 import { normalizeURL } from './utils.ts'
 
 /**
