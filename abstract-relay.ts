@@ -146,9 +146,11 @@ export class AbstractRelay {
     return this.connectionPromise
   }
 
-  private async receivePong() {
+  private async waitForPingPong() {
     return new Promise((res, err) => {
-      ;(this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
+      (this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
+      // send a ping
+      this.ws && this.ws.ping && this.ws.ping()
     })
   }
 
@@ -157,11 +159,9 @@ export class AbstractRelay {
   private async pingpong() {
     // if the websocket is connected
     if (this.ws?.readyState === 1) {
-      // send a ping
-      this.ws && this.ws.ping && this.ws.ping()
-      // wait for either a pong or a timeout
+      // wait for either a ping-pong reply or a timeout
       const result = await Promise.any([
-        this.receivePong(),
+        this.waitForPingPong(),
         new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
       if (result) {
