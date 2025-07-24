@@ -35,8 +35,8 @@ export class AbstractRelay {
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
-  public pingFrequency: number = 45000
-  public pingTimeout: number = 45000
+  public pingFrequency: number = 20000
+  public pingTimeout: number = 20000
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
