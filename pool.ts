@@ -14,8 +14,8 @@ export function useWebSocketImplementation(websocketImplementation: any) {
 }
 
 export class SimplePool extends AbstractSimplePool {
-  constructor() {
-    super({ verifyEvent, websocketImplementation: _WebSocket })
+  constructor(options?: { enablePing?: boolean }) {
+    super({ verifyEvent, websocketImplementation: _WebSocket, ...options })
   }
 }
 

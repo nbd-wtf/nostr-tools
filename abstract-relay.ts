@@ -15,6 +15,7 @@ type RelayWebSocket = WebSocket & {
 export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
+  enablePing?: boolean
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -34,7 +35,10 @@ export class AbstractRelay {
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
+  public pingFrequency: number = 20000
+  public pingTimeout: number = 20000
   public openSubs: Map<string, Subscription> = new Map()
+  public enablePing: boolean | undefined
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
@@ -54,9 +58,7 @@ export class AbstractRelay {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation || WebSocket
-    // this.pingHeartBeat = opts.pingHeartBeat
-    // this.pingFrequency = opts.pingFrequency
-    // this.pingTimeout = opts.pingTimeout
+    this.enablePing = opts.enablePing
   }
 
   static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
@@ -110,8 +112,7 @@ export class AbstractRelay {
       this.ws.onopen = () => {
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
-        if (this.ws && this.ws.ping) {
-          // && this.pingHeartBeat
+        if (this.enablePing) {
           this.pingpong()
         }
         resolve()
@@ -145,9 +146,26 @@ export class AbstractRelay {
     return this.connectionPromise
   }
 
-  private async receivePong() {
+  private async waitForPingPong() {
     return new Promise((res, err) => {
+      // listen for pong
       ;(this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
+      // send a ping
+      this.ws && this.ws.ping && this.ws.ping()
+    })
+  }
+
+  private async waitForDummyReq() {
+    return new Promise((res, err) => {
+      // make a dummy request with expected empty eose reply
+      // ["REQ", "_", {"ids":["aaaa...aaaa"]}]
+      const sub = this.subscribe([{ ids: ['a'.repeat(64)] }], {
+        oneose: () => {
+          sub.close()
+          res(true)
+        },
+        eoseTimeout: this.pingTimeout + 1000,
+      })
     })
   }
 
@@ -155,21 +173,22 @@ export class AbstractRelay {
   // in browsers it's done automatically. see https://github.com/nbd-wtf/nostr-tools/issues/491
   private async pingpong() {
     // if the websocket is connected
-    if (this.ws?.readyState == 1) {
-      // send a ping
-      this.ws && this.ws.ping && this.ws.ping()
-      // wait for either a pong or a timeout
+    if (this.ws?.readyState === 1) {
+      // wait for either a ping-pong reply or a timeout
       const result = await Promise.any([
-        this.receivePong(),
-        new Promise(res => setTimeout(() => res(false), 10000)), // TODO: opts.pingTimeout
+        // browsers don't have ping so use a dummy req
+        this.ws && this.ws.ping && this.ws.on ? this.waitForPingPong() : this.waitForDummyReq(),
+        new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
-      console.error('pingpong result', result)
       if (result) {
         // schedule another pingpong
-        setTimeout(() => this.pingpong(), 10000) // TODO: opts.pingFrequency
+        setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        this.ws && this.ws.close()
+        this.closeAllSubscriptions('pingpong timed out')
+        this._connected = false
+        this.ws?.close()
+        this.onclose?.()
       }
     }
   }
