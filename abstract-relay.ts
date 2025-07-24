@@ -15,6 +15,7 @@ type RelayWebSocket = WebSocket & {
 export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
+  enablePing?: boolean
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -34,7 +35,10 @@ export class AbstractRelay {
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
+  public pingFrequency: number = 45000
+  public pingTimeout: number = 45000
   public openSubs: Map<string, Subscription> = new Map()
+  public enablePing: boolean | undefined
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
@@ -54,9 +58,7 @@ export class AbstractRelay {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation || WebSocket
-    // this.pingHeartBeat = opts.pingHeartBeat
-    // this.pingFrequency = opts.pingFrequency
-    // this.pingTimeout = opts.pingTimeout
+    this.enablePing = opts.enablePing
   }
 
   static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
@@ -110,8 +112,7 @@ export class AbstractRelay {
       this.ws.onopen = () => {
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
-        if (this.ws && this.ws.ping) {
-          // && this.pingHeartBeat
+        if (this.enablePing && this.ws && this.ws.ping) {
           this.pingpong()
         }
         resolve()
@@ -155,21 +156,20 @@ export class AbstractRelay {
   // in browsers it's done automatically. see https://github.com/nbd-wtf/nostr-tools/issues/491
   private async pingpong() {
     // if the websocket is connected
-    if (this.ws?.readyState == 1) {
+    if (this.ws?.readyState === 1) {
       // send a ping
       this.ws && this.ws.ping && this.ws.ping()
       // wait for either a pong or a timeout
       const result = await Promise.any([
         this.receivePong(),
-        new Promise(res => setTimeout(() => res(false), 10000)), // TODO: opts.pingTimeout
+        new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
-      console.error('pingpong result', result)
       if (result) {
         // schedule another pingpong
-        setTimeout(() => this.pingpong(), 10000) // TODO: opts.pingFrequency
+        setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        this.ws && this.ws.close()
+        this.ws.close()
       }
     }
   }
