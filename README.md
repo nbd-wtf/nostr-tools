@@ -133,6 +133,14 @@ import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
 ```
 
+You can enable regular pings of connected relays with the `enablePing` option. This will set up a heartbeat that closes the websocket if it doesn't receive a response in time. Some platforms don't report websocket disconnections due to network issues, and enabling this can increase reliability.
+
+```js
+import { SimplePool } from 'nostr-tools/pool'
+
+const pool = new SimplePool({ enablePing: true })
+```
+
 ### Parsing references (mentions) from a content based on NIP-27
 
 ```js
