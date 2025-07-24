@@ -112,7 +112,7 @@ export class AbstractRelay {
       this.ws.onopen = () => {
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
-        if (this.enablePing && this.ws && this.ws.ping) {
+        if (this.enablePing) {
           this.pingpong()
         }
         resolve()
@@ -148,9 +148,24 @@ export class AbstractRelay {
 
   private async waitForPingPong() {
     return new Promise((res, err) => {
+      // listen for pong
       (this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
       // send a ping
       this.ws && this.ws.ping && this.ws.ping()
+    })
+  }
+
+  private async waitForDummyReq() {
+    return new Promise((res, err) => {
+      // make a dummy request with expected empty eose reply
+      // ["REQ", "_", {"ids":["aaaa...aaaa"]}]
+      const sub = this.subscribe([{ ids: ['a'.repeat(64)] }], {
+        oneose: () => {
+          sub.close()
+          res(true)
+        },
+        eoseTimeout: this.pingTimeout + 1000,
+      })
     })
   }
 
@@ -161,7 +176,8 @@ export class AbstractRelay {
     if (this.ws?.readyState === 1) {
       // wait for either a ping-pong reply or a timeout
       const result = await Promise.any([
-        this.waitForPingPong(),
+        // browsers don't have ping so use a dummy req
+        (this.ws && this.ws.ping && this.ws.on) ? this.waitForPingPong() : this.waitForDummyReq(),
         new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
       if (result) {
