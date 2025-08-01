@@ -1,6 +1,6 @@
 import { bech32 } from '@scure/base'
 
-import { validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
+import { NostrEvent, validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
 import { utf8Decoder } from './utils.ts'
 import { isReplaceableKind, isAddressableKind } from './kinds.ts'
 
@@ -42,48 +42,43 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   return null
 }
 
-export function makeZapRequest({
-  profile,
-  event,
-  amount,
-  relays,
-  comment = '',
-}: {
-  profile: string
-  event: string | Event | null
+type ProfileZap = {
+  pubkey: string
   amount: number
-  comment: string
+  comment?: string
   relays: string[]
-}): EventTemplate {
-  if (!amount) throw new Error('amount not given')
-  if (!profile) throw new Error('profile not given')
+}
 
+type EventZap = {
+  event: NostrEvent
+  amount: number
+  comment?: string
+  relays: string[]
+}
+
+export function makeZapRequest(params: ProfileZap | EventZap): EventTemplate {
   let zr: EventTemplate = {
     kind: 9734,
     created_at: Math.round(Date.now() / 1000),
-    content: comment,
+    content: params.comment || '',
     tags: [
-      ['p', profile],
-      ['amount', amount.toString()],
-      ['relays', ...relays],
+      ['p', 'pubkey' in params ? params.pubkey : params.event.pubkey],
+      ['amount', params.amount.toString()],
+      ['relays', ...params.relays],
     ],
   }
 
-  if (event && typeof event === 'string') {
-    zr.tags.push(['e', event])
-  }
-  if (event && typeof event === 'object') {
-    // replacable event
-    if (isReplaceableKind(event.kind)) {
-      const a = ['a', `${event.kind}:${event.pubkey}:`]
+  if ('event' in params) {
+    if (isReplaceableKind(params.event.kind)) {
+      const a = ['a', `${params.event.kind}:${params.event.pubkey}:`]
       zr.tags.push(a)
-      // addressable event
-    } else if (isAddressableKind(event.kind)) {
-      let d = event.tags.find(([t, v]) => t === 'd' && v)
+    } else if (isAddressableKind(params.event.kind)) {
+      let d = params.event.tags.find(([t, v]) => t === 'd' && v)
       if (!d) throw new Error('d tag not found or is empty')
-      const a = ['a', `${event.kind}:${event.pubkey}:${d[1]}`]
+      const a = ['a', `${params.event.kind}:${params.event.pubkey}:${d[1]}`]
       zr.tags.push(a)
     }
+    zr.tags.push(['k', params.event.kind.toString()])
   }
 
   return zr
