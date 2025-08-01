@@ -140,8 +140,6 @@ export class AbstractSimplePool {
     // open a subscription in all given relays
     const allOpened = Promise.all(
       requests.map(async ({ url, filter }, i) => {
-        url = normalizeURL(url)
-
         let relay: AbstractRelay
         try {
           relay = await this.ensureRelay(url, {

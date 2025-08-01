@@ -1,6 +1,6 @@
 {
   "name": "@nostr/tools",
-  "version": "2.15.2",
+  "version": "2.15.3",
   "exports": {
     ".": "./index.ts",
     "./core": "./core.ts",
