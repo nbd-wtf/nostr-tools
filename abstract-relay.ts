@@ -121,23 +121,19 @@ export class AbstractRelay {
       this.ws.onerror = ev => {
         clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket error')
-        if (this._connected) {
-          this._connected = false
-          this.connectionPromise = undefined
-          this.onclose?.()
-          this.closeAllSubscriptions('relay connection errored')
-        }
+        this._connected = false
+        this.connectionPromise = undefined
+        this.onclose?.()
+        this.closeAllSubscriptions('relay connection errored')
       }
 
       this.ws.onclose = ev => {
         clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket closed')
-        if (this._connected) {
-          this._connected = false
-          this.connectionPromise = undefined
-          this.onclose?.()
-          this.closeAllSubscriptions('relay connection closed')
-        }
+        this._connected = false
+        this.connectionPromise = undefined
+        this.onclose?.()
+        this.closeAllSubscriptions('relay connection closed')
       }
 
       this.ws.onmessage = this._onmessage.bind(this)
@@ -187,8 +183,8 @@ export class AbstractRelay {
         // pingpong closing socket
         this.closeAllSubscriptions('pingpong timed out')
         this._connected = false
-        this.ws?.close()
         this.onclose?.()
+        this.ws?.close()
       }
     }
   }
@@ -378,8 +374,8 @@ export class AbstractRelay {
   public close() {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
-    this.ws?.close()
     this.onclose?.()
+    this.ws?.close()
   }
 
   // this is the function assigned to this.ws.onmessage
