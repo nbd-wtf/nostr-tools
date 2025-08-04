@@ -69,6 +69,7 @@ export function makeZapRequest(params: ProfileZap | EventZap): EventTemplate {
   }
 
   if ('event' in params) {
+    zr.tags.push(['e', params.event.id])
     if (isReplaceableKind(params.event.kind)) {
       const a = ['a', `${params.event.kind}:${params.event.pubkey}:`]
       zr.tags.push(a)
