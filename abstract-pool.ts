@@ -74,19 +74,32 @@ export class AbstractSimplePool {
   subscribe(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
     params.onauth = params.onauth || params.doauth
 
-    return this.subscribeMap(
-      relays.map(url => ({ url, filter })),
-      params,
-    )
+    const request: { url: string; filter: Filter }[] = []
+    for (let i = 0; i < relays.length; i++) {
+      const url = normalizeURL(relays[i])
+      if (!request.find(r => r.url === url)) {
+        request.push({ url, filter })
+      }
+    }
+
+    return this.subscribeMap(request, params)
   }
 
   subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
     params.onauth = params.onauth || params.doauth
 
-    return this.subscribeMap(
-      relays.flatMap(url => filters.map(filter => ({ url, filter }))),
-      params,
-    )
+    const request: { url: string; filter: Filter }[] = []
+    const uniqUrls: string[] = []
+    for (let i = 0; i < relays.length; i++) {
+      const url = normalizeURL(relays[i])
+      if (uniqUrls.indexOf(url) === -1) {
+        for (let f = 0; f < filters.length; f++) {
+          request.push({ url, filter: filters[f] })
+        }
+      }
+    }
+
+    return this.subscribeMap(request, params)
   }
 
   subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {

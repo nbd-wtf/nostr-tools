@@ -156,13 +156,13 @@ export class AbstractRelay {
   }
 
   private async waitForDummyReq() {
-    return new Promise((res, err) => {
+    return new Promise((resolve, _) => {
       // make a dummy request with expected empty eose reply
       // ["REQ", "_", {"ids":["aaaa...aaaa"]}]
       const sub = this.subscribe([{ ids: ['a'.repeat(64)] }], {
         oneose: () => {
           sub.close()
-          res(true)
+          resolve(true)
         },
         eoseTimeout: this.pingTimeout + 1000,
       })
