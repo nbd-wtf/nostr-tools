@@ -245,7 +245,7 @@ const connectionUri = createNostrConnectURI({
 
 // wait for the bunker to connect
 const pool = new SimplePool()
-const signer = await BunkerSigner.fromURI(localSecretKey, connectionUri,, { pool })
+const signer = await BunkerSigner.fromURI(localSecretKey, connectionUri, { pool })
 
 // and use it
 const pubkey = await signer.getPublicKey()
