@@ -179,13 +179,23 @@ for (let block of nip27.parse(evt.content)) {
 
 ### Connecting to a bunker using NIP-46
 
+`BunkerSigner` allows your application to request signatures and other actions from a remote NIP-46 signer, often called a "bunker". There are two primary ways to establish a connection, depending on whether the client or the bunker initiates the connection.
+
+A local secret key is required for the client to communicate securely with the bunker. This key should generally be persisted for the user's session.
+
 ```js
-import { generateSecretKey, getPublicKey } from '@nostr/tools/pure'
+import { generateSecretKey } from '@nostr/tools/pure'
+
+const localSecretKey = generateSecretKey()
+```
+
+### Method 1: Using a Bunker URI (`bunker://`)
+
+This is the bunker-initiated flow. Your client receives a `bunker://` string or a NIP-05 identifier from the user. You use `BunkerSigner.fromBunker()` to create an instance, which returns immediately. You must then explicitly call `await bunker.connect()` to establish the connection with the bunker.
+
+```js
 import { BunkerSigner, parseBunkerInput } from '@nostr/tools/nip46'
 import { SimplePool } from '@nostr/tools/pool'
-
-// the client needs a local secret key (which is generally persisted) for communicating with the bunker
-const localSecretKey = generateSecretKey()
 
 // parse a bunker URI
 const bunkerPointer = await parseBunkerInput('bunker://abcd...?relay=wss://relay.example.com')
@@ -195,7 +205,7 @@ if (!bunkerPointer) {
 
 // create the bunker instance
 const pool = new SimplePool()
-const bunker = new BunkerSigner(localSecretKey, bunkerPointer, { pool })
+const bunker = BunkerSigner.fromBunker(localSecretKey, bunkerPointer, { pool })
 await bunker.connect()
 
 // and use it
@@ -205,6 +215,45 @@ const event = await bunker.signEvent({
   created_at: Math.floor(Date.now() / 1000),
   tags: [],
   content: 'Hello from bunker!'
+})
+
+// cleanup
+await signer.close()
+pool.close([])
+```
+
+### Method 2: Using a Client-generated URI (`nostrconnect://`)
+
+This is the client-initiated flow, which generally provides a better user experience for first-time connections (e.g., via QR code). Your client generates a `nostrconnect://` URI and waits for the bunker to connect to it.
+
+`BunkerSigner.fromURI()` is an **asynchronous** method. It returns a `Promise` that resolves only after the bunker has successfully connected. Therefore, the returned signer instance is already fully connected and ready to use, so you **do not** need to call `.connect()` on it.
+
+```js
+import { getPublicKey } from '@nostr/tools/pure'
+import { BunkerSigner, createNostrConnectURI } from '@nostr/tools/nip46'
+import { SimplePool } from '@nostr/tools/pool'
+
+const clientPubkey = getPublicKey(localSecretKey)
+
+// generate a connection URI for the bunker to scan
+const connectionUri = createNostrConnectURI({
+  clientPubkey,
+  relays: ['wss://relay.damus.io', 'wss://relay.primal.net'],
+  secret: 'a-random-secret-string', // A secret to verify the bunker's response
+  name: 'My Awesome App'
+})
+
+// wait for the bunker to connect
+const pool = new SimplePool()
+const signer = await BunkerSigner.fromURI(localSecretKey, connectionUri, { pool })
+
+// and use it
+const pubkey = await signer.getPublicKey()
+const event = await signer.signEvent({
+  kind: 1,
+  created_at: Math.floor(Date.now() / 1000),
+  tags: [],
+  content: 'Hello from a client-initiated connection!'
 })
 
 // cleanup

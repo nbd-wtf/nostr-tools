@@ -77,6 +77,115 @@ export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer |
   }
 }
 
+export type NostrConnectParams = {
+  clientPubkey: string
+  relays: string[]
+  secret: string
+  perms?: string[]
+  name?: string
+  url?: string
+  image?: string
+}
+
+export type ParsedNostrConnectURI = {
+  protocol: 'nostrconnect'
+  clientPubkey: string
+  params: {
+    relays: string[]
+    secret: string
+    perms?: string[]
+    name?: string
+    url?: string
+    image?: string
+  };
+  originalString: string
+}
+
+export function createNostrConnectURI(params: NostrConnectParams): string {
+  if (!params.clientPubkey) {
+    throw new Error('clientPubkey is required.')
+  }
+  if (!params.relays || params.relays.length === 0) {
+    throw new Error('At least one relay is required.')
+  }
+  if (!params.secret) {
+    throw new Error('secret is required.')
+  }
+
+  const queryParams = new URLSearchParams()
+
+  params.relays.forEach(relay => {
+    queryParams.append('relay', relay)
+  })
+
+  queryParams.append('secret', params.secret)
+
+  if (params.perms && params.perms.length > 0) {
+    queryParams.append('perms', params.perms.join(','))
+  }
+  if (params.name) {
+    queryParams.append('name', params.name)
+  }
+  if (params.url) {
+    queryParams.append('url', params.url)
+  }
+  if (params.image) {
+    queryParams.append('image', params.image)
+  }
+
+  return `nostrconnect://${params.clientPubkey}?${queryParams.toString()}`
+}
+
+export function parseNostrConnectURI(uri: string): ParsedNostrConnectURI {
+  if (!uri.startsWith('nostrconnect://')) {
+    throw new Error('Invalid nostrconnect URI: Must start with "nostrconnect://".')
+  }
+
+  const [protocolAndPubkey, queryString] = uri.split('?')
+  if (!protocolAndPubkey || !queryString) {
+    throw new Error('Invalid nostrconnect URI: Missing query string.')
+  }
+
+  const clientPubkey = protocolAndPubkey.substring('nostrconnect://'.length)
+  if (!clientPubkey) {
+    throw new Error('Invalid nostrconnect URI: Missing client-pubkey.')
+  }
+
+  const queryParams = new URLSearchParams(queryString)
+
+  const relays = queryParams.getAll('relay')
+  if (relays.length === 0) {
+    throw new Error('Invalid nostrconnect URI: Missing "relay" parameter.')
+  }
+
+  const secret = queryParams.get('secret')
+  if (!secret) {
+    throw new Error('Invalid nostrconnect URI: Missing "secret" parameter.')
+  }
+
+  const permsString = queryParams.get('perms')
+  const perms = permsString ? permsString.split(',') : undefined
+
+  const name = queryParams.get('name') || undefined
+  const url = queryParams.get('url') || undefined
+  const image = queryParams.get('image') || undefined
+
+  return {
+    protocol: 'nostrconnect',
+    clientPubkey,
+    params: {
+      relays,
+      secret,
+      perms,
+      name,
+      url,
+      image,
+    },
+    originalString: uri,
+  }
+}
+
+
 export type BunkerSignerParams = {
   pool?: AbstractSimplePool
   onauth?: (url: string) => void
@@ -97,8 +206,9 @@ export class BunkerSigner implements Signer {
   }
   private waitingForAuth: { [id: string]: boolean }
   private secretKey: Uint8Array
-  private conversationKey: Uint8Array
-  public bp: BunkerPointer
+  // If the client initiates the connection, the two variables below can be filled in later.
+  private conversationKey!: Uint8Array
+  public bp!: BunkerPointer
 
   private cachedPubKey: string | undefined
 
@@ -108,24 +218,97 @@ export class BunkerSigner implements Signer {
    * @param remotePubkey - An optional remote public key. This is the key you want to sign as.
    * @param secretKey - An optional key pair.
    */
-  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer, params: BunkerSignerParams = {}) {
-    if (bp.relays.length === 0) {
-      throw new Error('no relays are specified for this bunker')
-    }
-
+  private constructor(clientSecretKey: Uint8Array, params: BunkerSignerParams) {
     this.params = params
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
-    this.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
-    this.bp = bp
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
     this.serial = 0
     this.listeners = {}
     this.waitingForAuth = {}
-
-    this.setupSubscription(params)
   }
+
+  /**
+   * [Factory Method 1] Creates a Signer using bunker information (bunker:// URL or NIP-05).
+   * This method is used when the public key of the bunker is known in advance.
+   */
+  public static fromBunker(
+    clientSecretKey: Uint8Array,
+    bp: BunkerPointer,
+    params: BunkerSignerParams = {}
+  ): BunkerSigner {
+    if (bp.relays.length === 0) {
+      throw new Error('No relays specified for this bunker')
+    }
+
+    const signer = new BunkerSigner(clientSecretKey, params)
+
+    signer.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
+    signer.bp = bp
+
+    signer.setupSubscription(params)
+    return signer
+  }
+
+  /**
+   * [Factory Method 2] Creates a Signer using a nostrconnect:// URI generated by the client.
+   * In this method, the bunker initiates the connection by scanning the URI.
+   */
+  public static async fromURI(
+    clientSecretKey: Uint8Array,
+    connectionURI: string,
+    params: BunkerSignerParams = {},
+    maxWait: number = 300_000,
+  ): Promise<BunkerSigner> {
+    const signer = new BunkerSigner(clientSecretKey, params)
+    const parsedURI = parseNostrConnectURI(connectionURI)
+    const clientPubkey = getPublicKey(clientSecretKey)
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        sub.close()
+        reject(new Error(`Connection timed out after ${maxWait / 1000} seconds`))
+      }, maxWait)
+
+      const sub = signer.pool.subscribe(
+        parsedURI.params.relays,
+        { kinds: [NostrConnect], '#p': [clientPubkey] },
+        {
+          onevent: async (event: NostrEvent) => {
+            try {
+              const tempConvKey = getConversationKey(clientSecretKey, event.pubkey)
+              const decryptedContent = decrypt(event.content, tempConvKey)
+
+              const response = JSON.parse(decryptedContent)
+
+              if (response.result === parsedURI.params.secret) {
+                clearTimeout(timer)
+                sub.close()
+
+                signer.bp = {
+                  pubkey: event.pubkey,
+                  relays: parsedURI.params.relays,
+                  secret: parsedURI.params.secret,
+                }
+                signer.conversationKey = getConversationKey(clientSecretKey, event.pubkey)
+                signer.setupSubscription(params)
+                resolve(signer)
+              }
+            } catch (e) {
+              console.warn('Failed to process potential connection event', e)
+            }
+          },
+          onclose: () => {
+            clearTimeout(timer)
+            reject(new Error('Subscription closed before connection was established.'))
+          },
+          maxWait,
+        }
+      )
+    })
+  }
+
 
   private setupSubscription(params: BunkerSignerParams) {
     const listeners = this.listeners
@@ -290,7 +473,7 @@ export async function createAccount(
 ): Promise<BunkerSigner> {
   if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
 
-  let rpc = new BunkerSigner(localSecretKey, bunker.bunkerPointer, params)
+  let rpc = BunkerSigner.fromBunker(localSecretKey, bunker.bunkerPointer, params)
 
   let pubkey = await rpc.sendRequest('create_account', [username, domain, email || ''])
 
