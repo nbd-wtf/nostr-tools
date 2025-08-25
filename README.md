@@ -191,7 +191,7 @@ const localSecretKey = generateSecretKey()
 
 ### Method 1: Using a Bunker URI (`bunker://`)
 
-This is the bunker-initiated flow. Your client receives a `bunker://` string or a NIP-05 identifier from the user. You use `BunkerSigner.fromBunker()` to create an instance, which returns immediately. You must then explicitly call `await bunker.connect()` to establish the connection with the bunker.
+This is the bunker-initiated flow. Your client receives a `bunker://` string or a NIP-05 identifier from the user. You use `BunkerSigner.fromBunker()` to create an instance, which returns immediately. For the **initial connection** with a new bunker, you must explicitly call `await bunker.connect()` to establish the connection and receive authorization.
 
 ```js
 import { BunkerSigner, parseBunkerInput } from '@nostr/tools/nip46'
@@ -221,6 +221,7 @@ const event = await bunker.signEvent({
 await signer.close()
 pool.close([])
 ```
+> **Note on Reconnecting:** Once a connection has been successfully established and the `BunkerPointer` is stored, you do **not** need to call `await bunker.connect()` on subsequent sessions. 
 
 ### Method 2: Using a Client-generated URI (`nostrconnect://`)
 
@@ -260,6 +261,7 @@ const event = await signer.signEvent({
 await signer.close()
 pool.close([])
 ```
+> **Note on Persistence:** This method is ideal for the initial sign-in. To allow users to stay logged in across sessions, you should store the connection details and use `Method 1` for subsequent reconnections. 
 
 ### Parsing thread from any note based on NIP-10
 
