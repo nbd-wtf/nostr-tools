@@ -97,7 +97,7 @@ export type ParsedNostrConnectURI = {
     name?: string
     url?: string
     image?: string
-  };
+  }
   originalString: string
 }
 
@@ -185,7 +185,6 @@ export function parseNostrConnectURI(uri: string): ParsedNostrConnectURI {
   }
 }
 
-
 export type BunkerSignerParams = {
   pool?: AbstractSimplePool
   onauth?: (url: string) => void
@@ -236,7 +235,7 @@ export class BunkerSigner implements Signer {
   public static fromBunker(
     clientSecretKey: Uint8Array,
     bp: BunkerPointer,
-    params: BunkerSignerParams = {}
+    params: BunkerSignerParams = {},
   ): BunkerSigner {
     if (bp.relays.length === 0) {
       throw new Error('No relays specified for this bunker')
@@ -304,11 +303,10 @@ export class BunkerSigner implements Signer {
             reject(new Error('Subscription closed before connection was established.'))
           },
           maxWait,
-        }
+        },
       )
     })
   }
-
 
   private setupSubscription(params: BunkerSignerParams) {
     const listeners = this.listeners
