@@ -169,8 +169,10 @@ for (let block of nip27.parse(evt.content)) {
     case 'video':
     case 'audio':
       console.log("it's a media url:", block.url)
+      break
     case 'relay':
       console.log("it's a websocket url, probably a relay address:", block.url)
+      break
     default:
       break
   }
