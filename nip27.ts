@@ -90,35 +90,19 @@ export function* parse(content: string): Iterable<Block> {
           yield { type: 'text', text: content.substring(prevIndex, u - prefixLen) }
         }
 
-        if (
-          url.pathname.endsWith('.png') ||
-          url.pathname.endsWith('.jpg') ||
-          url.pathname.endsWith('.jpeg') ||
-          url.pathname.endsWith('.gif') ||
-          url.pathname.endsWith('.webp')
-        ) {
+        if (/\.(png|jpe?g|gif|webp)$/i.test(url.pathname)) {
           yield { type: 'image', url: url.toString() }
           index = end
           prevIndex = index
           continue
         }
-        if (
-          url.pathname.endsWith('.mp4') ||
-          url.pathname.endsWith('.avi') ||
-          url.pathname.endsWith('.webm') ||
-          url.pathname.endsWith('.mkv')
-        ) {
+        if (/\.(mp4|avi|webm|mkv)$/i.test(url.pathname)) {
           yield { type: 'video', url: url.toString() }
           index = end
           prevIndex = index
           continue
         }
-        if (
-          url.pathname.endsWith('.mp3') ||
-          url.pathname.endsWith('.aac') ||
-          url.pathname.endsWith('.ogg') ||
-          url.pathname.endsWith('.opus')
-        ) {
+        if (/\.(mp3|aac|ogg|opus)$/i.test(url.pathname)) {
           yield { type: 'audio', url: url.toString() }
           index = end
           prevIndex = index
