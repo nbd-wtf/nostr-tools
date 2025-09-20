@@ -78,14 +78,14 @@ export class AbstractSimplePool {
     for (let i = 0; i < relays.length; i++) {
       const url = normalizeURL(relays[i])
       if (!request.find(r => r.url === url)) {
-        request.push({ url, filter })
+        request.push({ url, filter: filter })
       }
     }
 
     return this.subscribeMap(request, params)
   }
 
-  subscribeMany(relays: string[], filters: Filter[], params: SubscribeManyParams): SubCloser {
+  subscribeMany(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
     params.onauth = params.onauth || params.doauth
 
     const request: { url: string; filter: Filter }[] = []
@@ -93,9 +93,8 @@ export class AbstractSimplePool {
     for (let i = 0; i < relays.length; i++) {
       const url = normalizeURL(relays[i])
       if (uniqUrls.indexOf(url) === -1) {
-        for (let f = 0; f < filters.length; f++) {
-          request.push({ url, filter: filters[f] })
-        }
+        uniqUrls.push(url)
+        request.push({ url, filter: filter })
       }
     }
 
@@ -104,6 +103,14 @@ export class AbstractSimplePool {
 
   subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {
     params.onauth = params.onauth || params.doauth
+
+    const grouped = new Map<string, Filter[]>()
+    for (const req of requests) {
+      const { url, filter } = req
+      if (!grouped.has(url)) grouped.set(url, [])
+      grouped.get(url)!.push(filter)
+    }
+    const groupedRequests = Array.from(grouped.entries()).map(([url, filters]) => ({ url, filters }))
 
     if (this.trackRelays) {
       params.receivedEvent = (relay: AbstractRelay, id: string) => {
@@ -152,7 +159,7 @@ export class AbstractSimplePool {
 
     // open a subscription in all given relays
     const allOpened = Promise.all(
-      requests.map(async ({ url, filter }, i) => {
+      groupedRequests.map(async ({ url, filters }, i) => {
         let relay: AbstractRelay
         try {
           relay = await this.ensureRelay(url, {
@@ -163,7 +170,7 @@ export class AbstractSimplePool {
           return
         }
 
-        let subscription = relay.subscribe([filter], {
+        let subscription = relay.subscribe(filters, {
           ...params,
           oneose: () => handleEose(i),
           onclose: reason => {
@@ -171,7 +178,7 @@ export class AbstractSimplePool {
               relay
                 .auth(params.onauth)
                 .then(() => {
-                  relay.subscribe([filter], {
+                  relay.subscribe(filters, {
                     ...params,
                     oneose: () => handleEose(i),
                     onclose: reason => {
@@ -224,12 +231,12 @@ export class AbstractSimplePool {
 
   subscribeManyEose(
     relays: string[],
-    filters: Filter[],
+    filter: Filter,
     params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth' | 'doauth'>,
   ): SubCloser {
     params.onauth = params.onauth || params.doauth
 
-    const subcloser = this.subscribeMany(relays, filters, {
+    const subcloser = this.subscribeMany(relays, filter, {
       ...params,
       oneose() {
         subcloser.close('closed automatically on eose')

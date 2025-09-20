@@ -35,14 +35,18 @@ test('removing duplicates when subscribing', async () => {
     priv,
   )
 
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
-    onevent(event: Event) {
-      // this should be called only once even though we're listening
-      // to multiple relays because the events will be caught and
-      // deduplicated efficiently (without even being parsed)
-      received.push(event)
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event: Event) {
+        // this should be called only once even though we're listening
+        // to multiple relays because the events will be caught and
+        // deduplicated efficiently (without even being parsed)
+        received.push(event)
+      },
     },
-  })
+  )
 
   await Promise.any(pool.publish(relayURLs, event))
   await new Promise(resolve => setTimeout(resolve, 200)) // wait for the new published event to be received
@@ -55,12 +59,12 @@ test('same with double subs', async () => {
   let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
+  pool.subscribeMany(relayURLs, { authors: [pub] }, {
     onevent(event) {
       received.push(event)
     },
   })
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
+  pool.subscribeMany(relayURLs, { authors: [pub] }, {
     onevent(event) {
       received.push(event)
     },
@@ -168,7 +172,7 @@ test('query a bunch of events and cancel on eose', async () => {
   let events = new Set<string>()
 
   await new Promise<void>(resolve => {
-    pool.subscribeManyEose(relayURLs, [{ kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 }], {
+    pool.subscribeManyEose(relayURLs, { kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 }, {
       onevent(event) {
         events.add(event.id)
       },
