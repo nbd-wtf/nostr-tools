@@ -141,6 +141,32 @@ import { SimplePool } from 'nostr-tools/pool'
 const pool = new SimplePool({ enablePing: true })
 ```
 
+You can also enable automatic reconnection with the `enableReconnect` option. This will make the pool try to reconnect to relays with an exponential backoff delay if the connection is lost unexpectedly.
+
+```js
+import { SimplePool } from 'nostr-tools/pool'
+
+const pool = new SimplePool({ enableReconnect: true })
+```
+
+On Node.js, it is recommended to also use `enablePing: true` to ensure network disconnections are properly detected.
+
+```js
+// on Node.js
+const pool = new SimplePool({ enablePing: true, enableReconnect: true })
+```
+
+The `enableReconnect` option can also be a callback function that receives the current subscription filters and returns a new set of filters. This is useful if you want to modify the subscription on reconnect, for example, to update the `since` parameter to fetch only new events.
+
+```js
+const pool = new SimplePool({
+  enableReconnect: (filters) => {
+    const newSince = Math.floor(Date.now() / 1000)
+    return filters.map(filter => ({ ...filter, since: newSince }))
+  }
+})
+```
+
 ### Parsing references (mentions) from a content based on NIP-27
 
 ```js
