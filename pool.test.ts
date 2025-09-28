@@ -325,7 +325,7 @@ test('reconnect with filter update in pool', async () => {
 
   expect(relay.connected).toBeTrue()
 
-  const sub = relay.subscribe([{ kinds: [1], since: 0 }], {})
+  const sub = relay.subscribe([{ kinds: [1], since: 0 }], { onevent: () => {} })
   expect(sub.filters[0].since).toBe(0)
 
   // wait for the first ping to succeed
