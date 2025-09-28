@@ -196,7 +196,7 @@ export class AbstractRelay {
   private async waitForPingPong() {
     return new Promise((res, err) => {
       // listen for pong
-      ;(this.ws && this.ws.on) ? this.ws.on('pong', () => res(true)) : err("ws can't listen for pong")
+      this.ws && this.ws.on ? this.ws.on('pong', () => res(true)) : err("ws can't listen for pong")
       // send a ping
       this.ws && this.ws.ping && this.ws.ping()
     })
