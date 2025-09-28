@@ -223,8 +223,6 @@ export class AbstractRelay {
       } else {
         // pingpong closing socket
         this.closeAllSubscriptions('pingpong timed out')
-        this._connected = false
-        this.onclose?.()
         this.ws?.close()
       }
     }
