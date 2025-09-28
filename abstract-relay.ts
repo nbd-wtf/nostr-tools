@@ -232,7 +232,9 @@ export class AbstractRelay {
         this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        this.ws?.close()
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws?.close()
+        }
       }
     }
   }
@@ -432,7 +434,9 @@ export class AbstractRelay {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.onclose?.()
-    this.ws?.close()
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws?.close()
+    }
   }
 
   // this is the function assigned to this.ws.onmessage
