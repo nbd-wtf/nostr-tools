@@ -118,35 +118,103 @@ test('publish timeout', async () => {
   ).rejects.toThrow('publish timed out')
 })
 
-test('ping-pong timeout', async () => {
+test('ping-pong timeout (with native ping)', async () => {
   const mockRelay = new MockRelay()
-  const relay = new Relay(mockRelay.url, { enablePing: true })
-  relay.pingTimeout = 50
-  relay.pingFrequency = 50
+  let pingCalled = false
 
-  let closed = false
-  const closedPromise = new Promise<void>(resolve => {
-    relay.onclose = () => {
-      closed = true
-      resolve()
+  // mock a native ping/pong mechanism
+  ;(MockWebSocketClient.prototype as any).ping = function (this: any) {
+    pingCalled = true
+    if (!mockRelay.unresponsive) {
+      this.dispatchEvent(new Event('pong'))
     }
-  })
+  }
+  ;(MockWebSocketClient.prototype as any).on = function (this: any, event: string, listener: () => void) {
+    if (event === 'pong') {
+      this.addEventListener('pong', listener)
+    }
+  }
 
-  await relay.connect()
-  expect(relay.connected).toBeTrue()
+  try {
+    const relay = new Relay(mockRelay.url, { enablePing: true })
+    relay.pingTimeout = 50
+    relay.pingFrequency = 50
 
-  // wait for the first ping to succeed
-  await new Promise(resolve => setTimeout(resolve, 75))
-  expect(closed).toBeFalse()
+    let closed = false
+    const closedPromise = new Promise<void>(resolve => {
+      relay.onclose = () => {
+        closed = true
+        resolve()
+      }
+    })
 
-  // now make it unresponsive
-  mockRelay.unresponsive = true
+    await relay.connect()
+    expect(relay.connected).toBeTrue()
 
-  // wait for the second ping to fail
-  await closedPromise
+    // wait for the first ping to succeed
+    await new Promise(resolve => setTimeout(resolve, 75))
+    expect(pingCalled).toBeTrue()
+    expect(closed).toBeFalse()
 
-  expect(relay.connected).toBeFalse()
-  expect(closed).toBeTrue()
+    // now make it unresponsive
+    mockRelay.unresponsive = true
+
+    // wait for the second ping to fail
+    await closedPromise
+
+    expect(relay.connected).toBeFalse()
+    expect(closed).toBeTrue()
+  } finally {
+    delete (MockWebSocketClient.prototype as any).ping
+    delete (MockWebSocketClient.prototype as any).on
+  }
+})
+
+test('ping-pong timeout (no-ping browser environment)', async () => {
+  // spy on send to ensure the fallback dummy REQ is used, since MockWebSocketClient has no ping
+  const originalSend = MockWebSocketClient.prototype.send
+  let dummyReqSent = false
+
+  try {
+    MockWebSocketClient.prototype.send = function (message: string) {
+      if (message.includes('REQ') && message.includes('a'.repeat(64))) {
+        dummyReqSent = true
+      }
+      originalSend.call(this, message)
+    }
+
+    const mockRelay = new MockRelay()
+    const relay = new Relay(mockRelay.url, { enablePing: true })
+    relay.pingTimeout = 50
+    relay.pingFrequency = 50
+
+    let closed = false
+    const closedPromise = new Promise<void>(resolve => {
+      relay.onclose = () => {
+        closed = true
+        resolve()
+      }
+    })
+
+    await relay.connect()
+    expect(relay.connected).toBeTrue()
+
+    // wait for the first ping to succeed
+    await new Promise(resolve => setTimeout(resolve, 75))
+    expect(dummyReqSent).toBeTrue()
+    expect(closed).toBeFalse()
+
+    // now make it unresponsive
+    mockRelay.unresponsive = true
+
+    // wait for the second ping to fail
+    await closedPromise
+
+    expect(relay.connected).toBeFalse()
+    expect(closed).toBeTrue()
+  } finally {
+    MockWebSocketClient.prototype.send = originalSend
+  }
 })
 
 test('reconnect on disconnect', async () => {
