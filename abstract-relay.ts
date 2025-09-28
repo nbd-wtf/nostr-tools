@@ -44,6 +44,7 @@ export class AbstractRelay {
   public enableReconnect: boolean | ((filters: Filter[]) => Filter[])
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private pingTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private reconnectAttempts: number = 0
   private closedIntentionally: boolean = false
 
@@ -109,6 +110,11 @@ export class AbstractRelay {
   }
 
   private handleHardClose(reason: string) {
+    if (this.pingTimeoutHandle) {
+      clearTimeout(this.pingTimeoutHandle)
+      this.pingTimeoutHandle = undefined
+    }
+
     this._connected = false
     this.connectionPromise = undefined
 
@@ -223,7 +229,7 @@ export class AbstractRelay {
       ])
       if (result) {
         // schedule another pingpong
-        setTimeout(() => this.pingpong(), this.pingFrequency)
+        this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
         this.ws?.close()
@@ -415,7 +421,14 @@ export class AbstractRelay {
 
   public close() {
     this.closedIntentionally = true
-    if (this.reconnectTimeoutHandle) clearTimeout(this.reconnectTimeoutHandle)
+    if (this.reconnectTimeoutHandle) {
+      clearTimeout(this.reconnectTimeoutHandle)
+      this.reconnectTimeoutHandle = undefined
+    }
+    if (this.pingTimeoutHandle) {
+      clearTimeout(this.pingTimeoutHandle)
+      this.pingTimeoutHandle = undefined
+    }
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.onclose?.()
