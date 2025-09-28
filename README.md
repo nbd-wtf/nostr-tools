@@ -153,14 +153,14 @@ import { SimplePool } from 'nostr-tools/pool'
 const pool = new SimplePool({ enableReconnect: true })
 ```
 
-On Node.js, it is recommended to also use `enablePing: true` to ensure network disconnections are properly detected.
+Using both `enablePing: true` and `enableReconnect: true` is recommended as it will improve the reliability and timeliness of the reconnection (at the expense of slighly higher bandwidth due to the ping messages).
 
 ```js
 // on Node.js
 const pool = new SimplePool({ enablePing: true, enableReconnect: true })
 ```
 
-The `enableReconnect` option can also be a callback function that receives the current subscription filters and returns a new set of filters. This is useful if you want to modify the subscription on reconnect, for example, to update the `since` parameter to fetch only new events.
+The `enableReconnect` option can also be a callback function which will receive the current subscription filters and should return a new set of filters. This is useful if you want to modify the subscription on reconnect, for example, to update the `since` parameter to fetch only new events.
 
 ```js
 const pool = new SimplePool({
