@@ -210,6 +210,37 @@ test('get()', async () => {
   expect(event).toHaveProperty('id', ids[0])
 })
 
+test('ping-pong timeout in pool', async () => {
+  const mockRelay = mockRelays[0]
+  pool = new SimplePool({ enablePing: true })
+  const relay = await pool.ensureRelay(mockRelay.url)
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+
+  let closed = false
+  const closedPromise = new Promise<void>(resolve => {
+    relay.onclose = () => {
+      closed = true
+      resolve()
+    }
+  })
+
+  expect(relay.connected).toBeTrue()
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closed).toBeFalse()
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail
+  await closedPromise
+
+  expect(relay.connected).toBeFalse()
+  expect(closed).toBeTrue()
+})
+
 test('track relays when publishing', async () => {
   let event1 = finalizeEvent(
     {
