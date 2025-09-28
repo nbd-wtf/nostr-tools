@@ -148,3 +148,117 @@ test('ping-pong timeout', async () => {
   expect(relay.connected).toBeFalse()
   expect(closed).toBeTrue()
 })
+
+test('reconnect on disconnect', async () => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url, { enablePing: true, enableReconnect: true })
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+  relay.resubscribeBackoff = [50, 100] // short backoff for testing
+
+  let closes = 0
+  relay.onclose = () => {
+    closes++
+  }
+
+  await relay.connect()
+  expect(relay.connected).toBeTrue()
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closes).toBe(0)
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail, which will trigger a close
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (closes > 0) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+  expect(closes).toBe(1)
+  expect(relay.connected).toBeFalse()
+
+  // now make it responsive again
+  mockRelay.unresponsive = false
+
+  // wait for reconnect
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+
+  expect(relay.connected).toBeTrue()
+  expect(closes).toBe(1) // should not have closed again
+})
+
+test('reconnect with filter update', async () => {
+  const mockRelay = new MockRelay()
+  const newSince = Math.floor(Date.now() / 1000)
+  const relay = new Relay(mockRelay.url, {
+    enablePing: true,
+    enableReconnect: filters => {
+      return filters.map(f => ({ ...f, since: newSince }))
+    },
+  })
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+  relay.resubscribeBackoff = [50, 100]
+
+  let closes = 0
+  relay.onclose = () => {
+    closes++
+  }
+
+  await relay.connect()
+  expect(relay.connected).toBeTrue()
+
+  const sub = relay.subscribe([{ kinds: [1], since: 0 }], {})
+  expect(sub.filters[0].since).toBe(0)
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closes).toBe(0)
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail, which will trigger a close
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (closes > 0) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+  expect(closes).toBe(1)
+  expect(relay.connected).toBeFalse()
+
+  // now make it responsive again
+  mockRelay.unresponsive = false
+
+  // wait for reconnect
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+
+  expect(relay.connected).toBeTrue()
+  expect(closes).toBe(1)
+
+  // check if filter was updated
+  expect(sub.filters[0].since).toBe(newSince)
+})
