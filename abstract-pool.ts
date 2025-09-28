@@ -57,7 +57,9 @@ export class AbstractSimplePool {
         enableReconnect: this.enableReconnect,
       })
       relay.onclose = () => {
-        this.relays.delete(url)
+        if (relay && !relay.enableReconnect) {
+          this.relays.delete(url)
+        }
       }
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)

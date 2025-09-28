@@ -146,6 +146,10 @@ export class AbstractRelay {
       }
 
       this.ws.onopen = () => {
+        if (this.reconnectTimeoutHandle) {
+          clearTimeout(this.reconnectTimeoutHandle)
+          this.reconnectTimeoutHandle = undefined
+        }
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
         this.reconnectAttempts = 0
