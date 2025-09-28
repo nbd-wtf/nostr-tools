@@ -116,11 +116,11 @@ export class AbstractRelay {
     const wasIntentional = this.closedIntentionally
     this.closedIntentionally = false // reset for next time
 
+    this.onclose?.()
+
     if (this.enableReconnect && !wasIntentional) {
       this.reconnect()
-      this.onclose?.()
     } else {
-      this.onclose?.()
       this.closeAllSubscriptions(reason)
     }
   }
