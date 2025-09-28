@@ -59,16 +59,24 @@ test('same with double subs', async () => {
   let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
-  pool.subscribeMany(relayURLs, { authors: [pub] }, {
-    onevent(event) {
-      received.push(event)
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event) {
+        received.push(event)
+      },
     },
-  })
-  pool.subscribeMany(relayURLs, { authors: [pub] }, {
-    onevent(event) {
-      received.push(event)
+  )
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event) {
+        received.push(event)
+      },
     },
-  })
+  )
 
   let received: Event[] = []
 
@@ -172,12 +180,16 @@ test('query a bunch of events and cancel on eose', async () => {
   let events = new Set<string>()
 
   await new Promise<void>(resolve => {
-    pool.subscribeManyEose(relayURLs, { kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 }, {
-      onevent(event) {
-        events.add(event.id)
+    pool.subscribeManyEose(
+      relayURLs,
+      { kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 },
+      {
+        onevent(event) {
+          events.add(event.id)
+        },
+        onclose: resolve as any,
       },
-      onclose: resolve as any,
-    })
+    )
   })
 
   expect(events.size).toBeGreaterThan(50)
