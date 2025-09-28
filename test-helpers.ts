@@ -26,6 +26,7 @@ export class MockRelay {
   public url: string
   public secretKeys: Uint8Array[]
   public preloadedEvents: Event[]
+  public unresponsive: boolean = false
 
   constructor(url?: string | undefined) {
     serial++
@@ -48,6 +49,7 @@ export class MockRelay {
       let subs: { [subId: string]: { conn: any; filters: Filter[] } } = {}
 
       conn.on('message', (message: string) => {
+        if (this.unresponsive) return
         const data = JSON.parse(message)
 
         switch (data[0]) {
