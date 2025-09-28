@@ -222,7 +222,6 @@ export class AbstractRelay {
         setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        this.closeAllSubscriptions('pingpong timed out')
         this.ws?.close()
       }
     }
