@@ -7,8 +7,6 @@ import { Queue, normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
 import { yieldThread } from './helpers.ts'
 
-const resubscribeBackoff = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
-
 type RelayWebSocket = WebSocket & {
   ping?(): void
   on?(event: 'pong', listener: () => void): any
@@ -40,6 +38,7 @@ export class AbstractRelay {
   public publishTimeout: number = 4400
   public pingFrequency: number = 20000
   public pingTimeout: number = 20000
+  public resubscribeBackoff: number[] = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
   public enableReconnect: boolean | ((filters: Filter[]) => Filter[])
@@ -97,7 +96,7 @@ export class AbstractRelay {
   }
 
   private async reconnect(): Promise<void> {
-    const backoff = resubscribeBackoff[Math.min(this.reconnectAttempts, resubscribeBackoff.length - 1)]
+    const backoff = this.resubscribeBackoff[Math.min(this.reconnectAttempts, this.resubscribeBackoff.length - 1)]
     this.reconnectAttempts++
 
     this.reconnectTimeoutHandle = setTimeout(async () => {
