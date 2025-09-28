@@ -1,7 +1,7 @@
 /* global WebSocket */
 
 import { verifyEvent } from './pure.ts'
-import { AbstractRelay } from './abstract-relay.ts'
+import { AbstractRelay, type AbstractRelayConstructorOptions } from './abstract-relay.ts'
 
 var _WebSocket: typeof WebSocket
 
@@ -14,11 +14,14 @@ export function useWebSocketImplementation(websocketImplementation: any) {
 }
 
 export class Relay extends AbstractRelay {
-  constructor(url: string, options?: { enablePing?: boolean }) {
+  constructor(url: string, options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect'>) {
     super(url, { verifyEvent, websocketImplementation: _WebSocket, ...options })
   }
 
-  static async connect(url: string, options?: { enablePing?: boolean }): Promise<Relay> {
+  static async connect(
+    url: string,
+    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect'>,
+  ): Promise<Relay> {
     const relay = new Relay(url, options)
     await relay.connect()
     return relay
