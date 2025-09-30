@@ -133,12 +133,42 @@ import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
 ```
 
-You can enable regular pings of connected relays with the `enablePing` option. This will set up a heartbeat that closes the websocket if it doesn't receive a response in time. Some platforms don't report websocket disconnections due to network issues, and enabling this can increase reliability.
+#### enablePing
+
+You can enable regular pings of connected relays with the `enablePing` option. This will set up a heartbeat that closes the websocket if it doesn't receive a response in time. Some platforms, like Node.js, don't report websocket disconnections due to network issues, and enabling this can increase the reliability of the `onclose` event.
 
 ```js
 import { SimplePool } from 'nostr-tools/pool'
 
 const pool = new SimplePool({ enablePing: true })
+```
+
+#### enableReconnect
+
+You can also enable automatic reconnection with the `enableReconnect` option. This will make the pool try to reconnect to relays with an exponential backoff delay if the connection is lost unexpectedly.
+
+```js
+import { SimplePool } from 'nostr-tools/pool'
+
+const pool = new SimplePool({ enableReconnect: true })
+```
+
+Using both `enablePing: true` and `enableReconnect: true` is recommended as it will improve the reliability and timeliness of the reconnection (at the expense of slighly higher bandwidth due to the ping messages).
+
+```js
+// on Node.js
+const pool = new SimplePool({ enablePing: true, enableReconnect: true })
+```
+
+The `enableReconnect` option can also be a callback function which will receive the current subscription filters and should return a new set of filters. This is useful if you want to modify the subscription on reconnect, for example, to update the `since` parameter to fetch only new events.
+
+```js
+const pool = new SimplePool({
+  enableReconnect: (filters) => {
+    const newSince = Math.floor(Date.now() / 1000)
+    return filters.map(filter => ({ ...filter, since: newSince }))
+  }
+})
 ```
 
 ### Parsing references (mentions) from a content based on NIP-27

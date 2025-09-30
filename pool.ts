@@ -1,7 +1,7 @@
 /* global WebSocket */
 
 import { verifyEvent } from './pure.ts'
-import { AbstractSimplePool } from './abstract-pool.ts'
+import { AbstractSimplePool, type AbstractPoolConstructorOptions } from './abstract-pool.ts'
 
 var _WebSocket: typeof WebSocket
 
@@ -14,7 +14,7 @@ export function useWebSocketImplementation(websocketImplementation: any) {
 }
 
 export class SimplePool extends AbstractSimplePool {
-  constructor(options?: { enablePing?: boolean }) {
+  constructor(options?: Pick<AbstractPoolConstructorOptions, 'enablePing' | 'enableReconnect'>) {
     super({ verifyEvent, websocketImplementation: _WebSocket, ...options })
   }
 }

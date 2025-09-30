@@ -16,6 +16,7 @@ export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
   enablePing?: boolean
+  enableReconnect?: boolean | ((filters: Filter[]) => Filter[])
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -37,9 +38,15 @@ export class AbstractRelay {
   public publishTimeout: number = 4400
   public pingFrequency: number = 20000
   public pingTimeout: number = 20000
+  public resubscribeBackoff: number[] = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
+  public enableReconnect: boolean | ((filters: Filter[]) => Filter[])
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private pingTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private reconnectAttempts: number = 0
+  private closedIntentionally: boolean = false
 
   private connectionPromise: Promise<void> | undefined
   private openCountRequests = new Map<string, CountResolver>()
@@ -59,6 +66,7 @@ export class AbstractRelay {
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation || WebSocket
     this.enablePing = opts.enablePing
+    this.enableReconnect = opts.enableReconnect || false
   }
 
   static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
@@ -88,6 +96,40 @@ export class AbstractRelay {
     return this._connected
   }
 
+  private async reconnect(): Promise<void> {
+    const backoff = this.resubscribeBackoff[Math.min(this.reconnectAttempts, this.resubscribeBackoff.length - 1)]
+    this.reconnectAttempts++
+
+    this.reconnectTimeoutHandle = setTimeout(async () => {
+      try {
+        await this.connect()
+      } catch (err) {
+        // this will be called again through onclose/onerror
+      }
+    }, backoff)
+  }
+
+  private handleHardClose(reason: string) {
+    if (this.pingTimeoutHandle) {
+      clearTimeout(this.pingTimeoutHandle)
+      this.pingTimeoutHandle = undefined
+    }
+
+    this._connected = false
+    this.connectionPromise = undefined
+
+    const wasIntentional = this.closedIntentionally
+    this.closedIntentionally = false // reset for next time
+
+    this.onclose?.()
+
+    if (this.enableReconnect && !wasIntentional) {
+      this.reconnect()
+    } else {
+      this.closeAllSubscriptions(reason)
+    }
+  }
+
   public async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise
 
@@ -110,8 +152,23 @@ export class AbstractRelay {
       }
 
       this.ws.onopen = () => {
+        if (this.reconnectTimeoutHandle) {
+          clearTimeout(this.reconnectTimeoutHandle)
+          this.reconnectTimeoutHandle = undefined
+        }
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
+        this.reconnectAttempts = 0
+
+        // resubscribe to all open subscriptions
+        for (const sub of this.openSubs.values()) {
+          sub.eosed = false
+          if (typeof this.enableReconnect === 'function') {
+            sub.filters = this.enableReconnect(sub.filters)
+          }
+          sub.fire()
+        }
+
         if (this.enablePing) {
           this.pingpong()
         }
@@ -121,19 +178,13 @@ export class AbstractRelay {
       this.ws.onerror = ev => {
         clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket error')
-        this._connected = false
-        this.connectionPromise = undefined
-        this.onclose?.()
-        this.closeAllSubscriptions('relay connection errored')
+        this.handleHardClose('relay connection errored')
       }
 
       this.ws.onclose = ev => {
         clearTimeout(this.connectionTimeoutHandle)
         reject((ev as any).message || 'websocket closed')
-        this._connected = false
-        this.connectionPromise = undefined
-        this.onclose?.()
-        this.closeAllSubscriptions('relay connection closed')
+        this.handleHardClose('relay connection closed')
       }
 
       this.ws.onmessage = this._onmessage.bind(this)
@@ -145,7 +196,7 @@ export class AbstractRelay {
   private async waitForPingPong() {
     return new Promise((res, err) => {
       // listen for pong
-      ;(this.ws && this.ws.on && this.ws.on('pong', () => res(true))) || err("ws can't listen for pong")
+      this.ws && this.ws.on ? this.ws.on('pong', () => res(true)) : err("ws can't listen for pong")
       // send a ping
       this.ws && this.ws.ping && this.ws.ping()
     })
@@ -178,13 +229,12 @@ export class AbstractRelay {
       ])
       if (result) {
         // schedule another pingpong
-        setTimeout(() => this.pingpong(), this.pingFrequency)
+        this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        this.closeAllSubscriptions('pingpong timed out')
-        this._connected = false
-        this.onclose?.()
-        this.ws?.close()
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws?.close()
+        }
       }
     }
   }
@@ -372,10 +422,21 @@ export class AbstractRelay {
   }
 
   public close() {
+    this.closedIntentionally = true
+    if (this.reconnectTimeoutHandle) {
+      clearTimeout(this.reconnectTimeoutHandle)
+      this.reconnectTimeoutHandle = undefined
+    }
+    if (this.pingTimeoutHandle) {
+      clearTimeout(this.pingTimeoutHandle)
+      this.pingTimeoutHandle = undefined
+    }
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.onclose?.()
-    this.ws?.close()
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws?.close()
+    }
   }
 
   // this is the function assigned to this.ws.onmessage
