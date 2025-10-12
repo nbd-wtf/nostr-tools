@@ -18,13 +18,13 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   try {
     let lnurl: string = ''
     let { lud06, lud16 } = JSON.parse(metadata.content)
-    if (lud06) {
+    if (lud16) {
+      let [name, domain] = lud16.split('@')
+      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
+    } else if (lud06) {
       let { words } = bech32.decode(lud06, 1000)
       let data = bech32.fromWords(words)
       lnurl = utf8Decoder.decode(data)
-    } else if (lud16) {
-      let [name, domain] = lud16.split('@')
-      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
     } else {
       return null
     }
