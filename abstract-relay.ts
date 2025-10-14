@@ -331,11 +331,21 @@ export class AbstractRelay {
           so.close(data[2] as string)
           return
         }
-        case 'NOTICE':
+        case 'NOTICE': {
           this.onnotice(data[1] as string)
           return
+        }
         case 'AUTH': {
           this.challenge = data[1] as string
+          return
+        }
+        case 'NEG-ERR':
+        case 'NEG-MSG': {
+          const msg = data[2] as string
+          const id = data[1] as string
+          const so = this.openSubs.get(id)
+          if (!so || !so.onnegentropy) return
+          so.onnegentropy(msg, data[0] === 'NEG-ERR')
           return
         }
       }
@@ -404,9 +414,12 @@ export class AbstractRelay {
   public subscribe(
     filters: Filter[],
     params: Partial<SubscriptionParams> & { label?: string; id?: string },
+    fireImmediately: boolean = true,
   ): Subscription {
     const subscription = this.prepareSubscription(filters, params)
-    subscription.fire()
+    if (fireImmediately) {
+      subscription.fire()
+    }
     return subscription
   }
 
@@ -459,6 +472,7 @@ export class Subscription {
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
   public receivedEvent: ((relay: AbstractRelay, id: string) => void) | undefined
 
+  public onnegentropy: ((msg: string, isError: boolean) => void) | undefined
   public onevent: (evt: Event) => void
   public oneose: (() => void) | undefined
   public onclose: ((reason: string) => void) | undefined
@@ -474,6 +488,7 @@ export class Subscription {
     this.receivedEvent = params.receivedEvent
     this.eoseTimeout = params.eoseTimeout || relay.baseEoseTimeout
 
+    this.onnegentropy = params.onnegentropy
     this.oneose = params.oneose
     this.onclose = params.onclose
     this.onevent =
@@ -523,6 +538,7 @@ export class Subscription {
 export type SubscriptionParams = {
   onevent?: (evt: Event) => void
   oneose?: () => void
+  onnegentropy?: (msg: string, isError: boolean) => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
   receivedEvent?: (relay: AbstractRelay, id: string) => void
