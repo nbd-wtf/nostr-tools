@@ -64,7 +64,10 @@ export class AbstractRelay {
   constructor(url: string, opts: AbstractRelayConstructorOptions) {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
-    this._WebSocket = opts.websocketImplementation || WebSocket
+    this._WebSocket = opts.websocketImplementation || (typeof WebSocket !== 'undefined' ? WebSocket : (undefined as any))
+    if (!this._WebSocket) {
+      throw new Error('running in a non-browser environment, but no websocket implementation was provided')
+    }
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect || false
   }
@@ -232,7 +235,7 @@ export class AbstractRelay {
         this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        if (this.ws?.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === this._WebSocket.OPEN) {
           this.ws?.close()
         }
       }
@@ -434,7 +437,7 @@ export class AbstractRelay {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.onclose?.()
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    if (this.ws?.readyState === this._WebSocket.OPEN) {
       this.ws?.close()
     }
   }
