@@ -217,6 +217,40 @@ test('ping-pong timeout (no-ping browser environment)', async () => {
   }
 })
 
+test('ping-pong listeners are cleaned up', async () => {
+  const mockRelay = new MockRelay()
+  const pongListeners: any[] = []
+
+  // mock a native ping/pong mechanism
+  ;(MockWebSocketClient.prototype as any).ping = function (this: any) {
+    if (!mockRelay.unresponsive) {
+      this.dispatchEvent(new Event('pong'))
+    }
+  }
+  ;(MockWebSocketClient.prototype as any).on = function (this: any, event: string, listener: () => void) {
+    if (event === 'pong') {
+      pongListeners.push(listener)
+      this.addEventListener('pong', listener)
+    }
+  }
+
+  try {
+    const relay = new Relay(mockRelay.url, { enablePing: true })
+    relay.pingTimeout = 50
+    relay.pingFrequency = 50
+
+    await relay.connect()
+    await new Promise(resolve => setTimeout(resolve, 175))
+
+    expect(pongListeners.length).toBeLessThan(2)
+
+    relay.close()
+  } finally {
+    delete (MockWebSocketClient.prototype as any).ping
+    delete (MockWebSocketClient.prototype as any).on
+  }
+})
+
 test('reconnect on disconnect', async () => {
   const mockRelay = new MockRelay()
   const relay = new Relay(mockRelay.url, { enablePing: true, enableReconnect: true })
