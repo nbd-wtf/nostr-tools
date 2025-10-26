@@ -64,11 +64,7 @@ export class AbstractRelay {
   constructor(url: string, opts: AbstractRelayConstructorOptions) {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
-    this._WebSocket =
-      opts.websocketImplementation || (typeof WebSocket !== 'undefined' ? WebSocket : (undefined as any))
-    if (!this._WebSocket) {
-      throw new Error('running in a non-browser environment, but no websocket implementation was provided')
-    }
+    this._WebSocket = opts.websocketImplementation || WebSocket
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect || false
   }
