@@ -193,12 +193,12 @@ export class AbstractRelay {
     return this.connectionPromise
   }
 
-  private async waitForPingPong() {
-    return new Promise((res, err) => {
+  private waitForPingPong() {
+    return new Promise(resolve => {
       // listen for pong
-      this.ws && this.ws.on ? this.ws.on('pong', () => res(true)) : err("ws can't listen for pong")
+      ;(this.ws as any).once('pong', () => resolve(true))
       // send a ping
-      this.ws && this.ws.ping && this.ws.ping()
+      this.ws!.ping!()
     })
   }
 
@@ -224,7 +224,7 @@ export class AbstractRelay {
       // wait for either a ping-pong reply or a timeout
       const result = await Promise.any([
         // browsers don't have ping so use a dummy req
-        this.ws && this.ws.ping && this.ws.on ? this.waitForPingPong() : this.waitForDummyReq(),
+        this.ws && this.ws.ping && (this.ws as any).once ? this.waitForPingPong() : this.waitForDummyReq(),
         new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
       if (result) {
@@ -232,7 +232,7 @@ export class AbstractRelay {
         this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
       } else {
         // pingpong closing socket
-        if (this.ws?.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === this._WebSocket.OPEN) {
           this.ws?.close()
         }
       }
@@ -434,7 +434,7 @@ export class AbstractRelay {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.onclose?.()
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    if (this.ws?.readyState === this._WebSocket.OPEN) {
       this.ws?.close()
     }
   }

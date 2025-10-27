@@ -129,9 +129,17 @@ test('ping-pong timeout (with native ping)', async () => {
       this.dispatchEvent(new Event('pong'))
     }
   }
-  ;(MockWebSocketClient.prototype as any).on = function (this: any, event: string, listener: () => void) {
+  ;(MockWebSocketClient.prototype as any).once = function (
+    this: any,
+    event: string,
+    listener: (...args: any[]) => void,
+  ) {
     if (event === 'pong') {
-      this.addEventListener('pong', listener)
+      const onceListener = (...args: any[]) => {
+        this.removeEventListener(event, onceListener)
+        listener.apply(this, args)
+      }
+      this.addEventListener('pong', onceListener)
     }
   }
 
@@ -166,7 +174,7 @@ test('ping-pong timeout (with native ping)', async () => {
     expect(closed).toBeTrue()
   } finally {
     delete (MockWebSocketClient.prototype as any).ping
-    delete (MockWebSocketClient.prototype as any).on
+    delete (MockWebSocketClient.prototype as any).once
   }
 })
 
@@ -214,6 +222,67 @@ test('ping-pong timeout (no-ping browser environment)', async () => {
     expect(closed).toBeTrue()
   } finally {
     MockWebSocketClient.prototype.send = originalSend
+  }
+})
+
+test('ping-pong listeners are cleaned up', async () => {
+  const mockRelay = new MockRelay()
+  let listenerCount = 0
+
+  // mock a native ping/pong mechanism
+  ;(MockWebSocketClient.prototype as any).ping = function (this: any) {
+    if (!mockRelay.unresponsive) {
+      this.dispatchEvent(new Event('pong'))
+    }
+  }
+
+  const originalAddEventListener = MockWebSocketClient.prototype.addEventListener
+  MockWebSocketClient.prototype.addEventListener = function (event, listener, options) {
+    if (event === 'pong') {
+      listenerCount++
+    }
+    // @ts-ignore
+    return originalAddEventListener.call(this, event, listener, options)
+  }
+
+  const originalRemoveEventListener = MockWebSocketClient.prototype.removeEventListener
+  MockWebSocketClient.prototype.removeEventListener = function (event, listener) {
+    if (event === 'pong') {
+      listenerCount--
+    }
+    // @ts-ignore
+    return originalRemoveEventListener.call(this, event, listener)
+  }
+
+  // the check in pingpong() is for .once() so we must mock it
+  ;(MockWebSocketClient.prototype as any).once = function (
+    this: any,
+    event: string,
+    listener: (...args: any[]) => void,
+  ) {
+    const onceListener = (...args: any[]) => {
+      this.removeEventListener(event, onceListener)
+      listener.apply(this, args)
+    }
+    this.addEventListener(event, onceListener)
+  }
+
+  try {
+    const relay = new Relay(mockRelay.url, { enablePing: true })
+    relay.pingTimeout = 50
+    relay.pingFrequency = 50
+
+    await relay.connect()
+    await new Promise(resolve => setTimeout(resolve, 175))
+
+    expect(listenerCount).toBeLessThan(2)
+
+    relay.close()
+  } finally {
+    delete (MockWebSocketClient.prototype as any).ping
+    delete (MockWebSocketClient.prototype as any).once
+    MockWebSocketClient.prototype.addEventListener = originalAddEventListener
+    MockWebSocketClient.prototype.removeEventListener = originalRemoveEventListener
   }
 })
 
