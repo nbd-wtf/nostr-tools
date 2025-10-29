@@ -136,7 +136,7 @@ export class AbstractSimplePool {
     let handleEose = (i: number) => {
       if (eosesReceived[i]) return // do not act twice for the same relay
       eosesReceived[i] = true
-      if (eosesReceived.filter(a => a).length === requests.length) {
+      if (eosesReceived.filter(a => a).length === groupedRequests.length) {
         params.oneose?.()
         handleEose = () => {}
       }
@@ -147,7 +147,7 @@ export class AbstractSimplePool {
       if (closesReceived[i]) return // do not act twice for the same relay
       handleEose(i)
       closesReceived[i] = reason
-      if (closesReceived.filter(a => a).length === requests.length) {
+      if (closesReceived.filter(a => a).length === groupedRequests.length) {
         params.onclose?.(closesReceived)
         handleClose = () => {}
       }
