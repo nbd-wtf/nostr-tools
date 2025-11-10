@@ -28,10 +28,7 @@ function extractJSON(message: string) {
 describe('nip77 negentropy message helpers', () => {
   it('sendNegentropyMessage should send NEG-MSG with generated subscription id and filters flattened', () => {
     const relay = new MockRelay()
-    const filters: Filter[] = [
-      { kinds: [1], authors: ['abc'] },
-      { ids: ['deadbeef'] },
-    ]
+    const filters: Filter[] = [{ kinds: [1], authors: ['abc'] }, { ids: ['deadbeef'] }]
     sendNegentropyMessage(relay as any, 'hello', filters)
 
     expect(relay.sent.length).toBe(1)
