@@ -339,13 +339,9 @@ export class AbstractRelay {
           this.challenge = data[1] as string
           return
         }
-        case 'NEG-ERR':
-        case 'NEG-MSG': {
-          const msg = data[2] as string
-          const id = data[1] as string
-          const so = this.openSubs.get(id)
-          if (!so || !so.onnegentropy) return
-          so.onnegentropy(msg, data[0] === 'NEG-ERR')
+        default: {
+          const so = this.openSubs.get(data[1])
+          so?.oncustom?.(data)
           return
         }
       }
@@ -414,13 +410,8 @@ export class AbstractRelay {
   public subscribe(
     filters: Filter[],
     params: Partial<SubscriptionParams> & { label?: string; id?: string },
-    fireImmediately: boolean = true,
   ): Subscription {
-    const subscription = this.prepareSubscription(filters, params)
-    if (fireImmediately) {
-      subscription.fire()
-    }
-    return subscription
+    return this.prepareSubscription(filters, params)
   }
 
   public prepareSubscription(
@@ -472,10 +463,12 @@ export class Subscription {
   public alreadyHaveEvent: ((id: string) => boolean) | undefined
   public receivedEvent: ((relay: AbstractRelay, id: string) => void) | undefined
 
-  public onnegentropy: ((msg: string, isError: boolean) => void) | undefined
   public onevent: (evt: Event) => void
   public oneose: (() => void) | undefined
   public onclose: ((reason: string) => void) | undefined
+
+  // will get any messages that have this subscription id as their second item and are not default standard
+  public oncustom: ((msg: string[]) => void) | undefined
 
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
@@ -490,7 +483,6 @@ export class Subscription {
     this.receivedEvent = params.receivedEvent
     this.eoseTimeout = params.eoseTimeout || relay.baseEoseTimeout
 
-    this.onnegentropy = params.onnegentropy
     this.oneose = params.oneose
     this.onclose = params.onclose
     this.onevent =
@@ -540,7 +532,6 @@ export class Subscription {
 export type SubscriptionParams = {
   onevent?: (evt: Event) => void
   oneose?: () => void
-  onnegentropy?: (msg: string, isError: boolean) => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
   receivedEvent?: (relay: AbstractRelay, id: string) => void
