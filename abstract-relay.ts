@@ -481,6 +481,8 @@ export class Subscription {
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
+    if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
+
     this.relay = relay
     this.filters = filters
     this.id = id
