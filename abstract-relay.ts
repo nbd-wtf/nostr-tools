@@ -256,6 +256,7 @@ export class AbstractRelay {
       return false
     }
 
+    // shortcut EVENT sub
     const subid = getSubscriptionId(json)
     if (subid) {
       const so = this.openSubs.get(subid as string)
@@ -411,7 +412,9 @@ export class AbstractRelay {
     filters: Filter[],
     params: Partial<SubscriptionParams> & { label?: string; id?: string },
   ): Subscription {
-    return this.prepareSubscription(filters, params)
+    const sub = this.prepareSubscription(filters, params)
+    sub.fire()
+    return sub
   }
 
   public prepareSubscription(
