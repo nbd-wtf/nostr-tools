@@ -237,4 +237,247 @@ describe('Filter', () => {
       expect(getFilterLimit({ '#p': [] })).toEqual(0)
     })
   })
+
+  describe('NIP-91 AND filters', () => {
+    describe('matchFilter', () => {
+      test('should return true when all AND filter values are present', () => {
+        const filter = { '&t': ['meme', 'cat'] }
+        const event = buildEvent({
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+          ],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+
+      test('should return false when one AND filter value is missing', () => {
+        const filter = { '&t': ['meme', 'cat'] }
+        const event = buildEvent({
+          tags: [['t', 'meme']],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(false)
+      })
+
+      test('should return false when all AND filter values are missing', () => {
+        const filter = { '&t': ['meme', 'cat'] }
+        const event = buildEvent({
+          tags: [['t', 'dog']],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(false)
+      })
+
+      test('should return true when AND filter has single value that matches', () => {
+        const filter = { '&t': ['meme'] }
+        const event = buildEvent({
+          tags: [['t', 'meme']],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+
+      test('should handle multiple AND filters', () => {
+        const filter = {
+          '&t': ['meme', 'cat'],
+          '&p': ['pubkey1', 'pubkey2'],
+        }
+        const event = buildEvent({
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+            ['p', 'pubkey1'],
+            ['p', 'pubkey2'],
+          ],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+
+      test('should return false when one of multiple AND filters fails', () => {
+        const filter = {
+          '&t': ['meme', 'cat'],
+          '&p': ['pubkey1', 'pubkey2'],
+        }
+        const event = buildEvent({
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+            ['p', 'pubkey1'],
+          ],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(false)
+      })
+
+      test('NIP-91 example: AND takes precedence, OR excludes AND values', () => {
+        const filter = {
+          kinds: [1],
+          '&t': ['meme', 'cat'],
+          '#t': ['black', 'white'],
+        }
+        // Event with both AND values and one OR value
+        const event1 = buildEvent({
+          kind: 1,
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+            ['t', 'black'],
+          ],
+        })
+        expect(matchFilter(filter, event1)).toEqual(true)
+
+        // Event with both AND values and other OR value
+        const event2 = buildEvent({
+          kind: 1,
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+            ['t', 'white'],
+          ],
+        })
+        expect(matchFilter(filter, event2)).toEqual(true)
+
+        // Event with both AND values but no OR values
+        const event3 = buildEvent({
+          kind: 1,
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+          ],
+        })
+        expect(matchFilter(filter, event3)).toEqual(false)
+
+        // Event missing one AND value
+        const event4 = buildEvent({
+          kind: 1,
+          tags: [
+            ['t', 'meme'],
+            ['t', 'black'],
+          ],
+        })
+        expect(matchFilter(filter, event4)).toEqual(false)
+
+        // Event with AND values that are also in OR (should be excluded from OR check)
+        const event5 = buildEvent({
+          kind: 1,
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+            ['t', 'meme'], // duplicate, but AND values should be excluded from OR
+          ],
+        })
+        expect(matchFilter(filter, event5)).toEqual(false) // No OR values remain after exclusion
+      })
+
+      test('should exclude AND values from OR filter matching', () => {
+        const filter = {
+          '&t': ['meme'],
+          '#t': ['meme', 'cat'],
+        }
+        // Event has 'meme' (in AND) and 'cat' (in OR, not in AND)
+        const event1 = buildEvent({
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+          ],
+        })
+        expect(matchFilter(filter, event1)).toEqual(true)
+
+        // Event has only 'meme' (in AND, excluded from OR)
+        const event2 = buildEvent({
+          tags: [['t', 'meme']],
+        })
+        expect(matchFilter(filter, event2)).toEqual(false) // No OR values remain
+      })
+
+      test('should handle AND filter with empty array', () => {
+        const filter = { '&t': [] }
+        const event = buildEvent({
+          tags: [['t', 'meme']],
+        })
+        // Empty AND filter should pass (no requirements)
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+
+      test('should work with other filter conditions', () => {
+        const filter = {
+          kinds: [1],
+          authors: ['abc'],
+          '&t': ['meme', 'cat'],
+        }
+        const event = buildEvent({
+          kind: 1,
+          pubkey: 'abc',
+          tags: [
+            ['t', 'meme'],
+            ['t', 'cat'],
+          ],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+
+      test('should work with OR filter only (backward compatibility)', () => {
+        const filter = { '#t': ['meme', 'cat'] }
+        const event = buildEvent({
+          tags: [['t', 'meme']],
+        })
+        const result = matchFilter(filter, event)
+        expect(result).toEqual(true)
+      })
+    })
+
+    describe('mergeFilters', () => {
+      test('should merge AND filters', () => {
+        const result = mergeFilters({ '&t': ['meme'] }, { '&t': ['cat'] })
+        expect(result).toEqual({
+          '&t': ['meme', 'cat'],
+        })
+      })
+
+      test('should merge AND and OR filters separately', () => {
+        const result = mergeFilters({ '&t': ['meme'], '#t': ['black'] }, { '&t': ['cat'], '#t': ['white'] })
+        expect(result).toEqual({
+          '&t': ['meme', 'cat'],
+          '#t': ['black', 'white'],
+        })
+      })
+
+      test('should merge mixed filters with AND filters', () => {
+        const result = mergeFilters({ kinds: [1], '&t': ['meme'], limit: 3 }, { kinds: [2], '&t': ['cat'], limit: 5 })
+        expect(result).toEqual({
+          kinds: [1, 2],
+          '&t': ['meme', 'cat'],
+          limit: 5,
+        })
+      })
+
+      test('should deduplicate AND filter values', () => {
+        const result = mergeFilters({ '&t': ['meme', 'cat'] }, { '&t': ['meme', 'dog'] })
+        expect(result).toEqual({
+          '&t': ['meme', 'cat', 'dog'],
+        })
+      })
+    })
+
+    describe('getFilterLimit', () => {
+      test('empty AND filters return 0', () => {
+        expect(getFilterLimit({ '&t': [] })).toEqual(0)
+      })
+
+      test('should handle AND filters with other conditions', () => {
+        expect(getFilterLimit({ '&t': ['meme', 'cat'] })).toEqual(Infinity)
+        expect(getFilterLimit({ ids: ['123'], '&t': ['meme'] })).toEqual(1)
+      })
+
+      test('should handle both AND and OR filters', () => {
+        expect(getFilterLimit({ '&t': ['meme'], '#p': ['pubkey1'] })).toEqual(Infinity)
+        expect(getFilterLimit({ '&t': [], '#p': [] })).toEqual(0)
+      })
+    })
+  })
 })
