@@ -138,6 +138,7 @@
     "valid-typeof": 2,
     "wrap-iife": [2, "any"],
     "yield-star-spacing": [2, "both"],
-    "yoda": [0]
+    "yoda": [0],
+    "no-labels": [0]
   }
 }

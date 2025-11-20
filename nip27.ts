@@ -1,3 +1,4 @@
+import { NostrEvent } from './core.ts'
 import { AddressPointer, EventPointer, ProfilePointer, decode } from './nip19.ts'
 
 export type Block =
@@ -29,27 +30,67 @@ export type Block =
       type: 'audio'
       url: string
     }
+  | {
+      type: 'emoji'
+      shortcode: string
+      url: string
+    }
+  | {
+      type: 'hashtag'
+      value: string
+    }
 
 const noCharacter = /\W/m
 const noURLCharacter = /\W |\W$|$|,| /m
+const MAX_HASHTAG_LENGTH = 42
 
-export function* parse(content: string): Iterable<Block> {
+export function* parse(content: string | NostrEvent): Iterable<Block> {
+  let emojis: { type: 'emoji'; shortcode: string; url: string }[] = []
+  if (typeof content !== 'string') {
+    for (let i = 0; i < content.tags.length; i++) {
+      const tag = content.tags[i]
+      if (tag[0] === 'emoji' && tag.length >= 3) {
+        emojis.push({ type: 'emoji', shortcode: tag[1], url: tag[2] })
+      }
+    }
+    content = content.content
+  }
+
   const max = content.length
   let prevIndex = 0
   let index = 0
-  while (index < max) {
-    let u = content.indexOf(':', index)
-    if (u === -1) {
+  mainloop: while (index < max) {
+    const u = content.indexOf(':', index)
+    const h = content.indexOf('#', index)
+    if (u === -1 && h === -1) {
       // reached end
-      break
+      break mainloop
     }
 
-    if (content.substring(u - 5, u) === 'nostr') {
-      const m = content.substring(u + 60).match(noCharacter)
+    if (u === -1 || (h >= 0 && h < u)) {
+      // parse hashtag
+      if (h === 0 || content[h - 1] === ' ') {
+        const m = content.slice(h + 1, h + MAX_HASHTAG_LENGTH).match(noCharacter)
+        const end = m ? h + 1 + m.index! : max
+        yield { type: 'text', text: content.slice(prevIndex, h) }
+        yield { type: 'hashtag', value: content.slice(h + 1, end) }
+        index = end
+        prevIndex = index
+        continue mainloop
+      }
+
+      // ignore this, it is nothing
+      index = h + 1
+      continue mainloop
+    }
+
+    // otherwise parse things that have an ":"
+    if (content.slice(u - 5, u) === 'nostr') {
+      const m = content.slice(u + 60).match(noCharacter)
       const end = m ? u + 60 + m.index! : max
       try {
         let pointer: ProfilePointer | AddressPointer | EventPointer
-        let { data, type } = decode(content.substring(u + 1, end))
+        let { data, type } = decode(content.slice(u + 1, end))
 
         switch (type) {
           case 'npub':
@@ -65,89 +106,107 @@ export function* parse(content: string): Iterable<Block> {
         }
 
         if (prevIndex !== u - 5) {
-          yield { type: 'text', text: content.substring(prevIndex, u - 5) }
+          yield { type: 'text', text: content.slice(prevIndex, u - 5) }
         }
         yield { type: 'reference', pointer }
         index = end
         prevIndex = index
-        continue
+        continue mainloop
       } catch (_err) {
         // ignore this, not a valid nostr uri
         index = u + 1
-        continue
+        continue mainloop
       }
-    } else if (content.substring(u - 5, u) === 'https' || content.substring(u - 4, u) === 'http') {
-      const m = content.substring(u + 4).match(noURLCharacter)
+    } else if (content.slice(u - 5, u) === 'https' || content.slice(u - 4, u) === 'http') {
+      const m = content.slice(u + 4).match(noURLCharacter)
       const end = m ? u + 4 + m.index! : max
       const prefixLen = content[u - 1] === 's' ? 5 : 4
       try {
-        let url = new URL(content.substring(u - prefixLen, end))
+        let url = new URL(content.slice(u - prefixLen, end))
         if (url.hostname.indexOf('.') === -1) {
           throw new Error('invalid url')
         }
 
         if (prevIndex !== u - prefixLen) {
-          yield { type: 'text', text: content.substring(prevIndex, u - prefixLen) }
+          yield { type: 'text', text: content.slice(prevIndex, u - prefixLen) }
         }
 
         if (/\.(png|jpe?g|gif|webp)$/i.test(url.pathname)) {
           yield { type: 'image', url: url.toString() }
           index = end
           prevIndex = index
-          continue
+          continue mainloop
         }
         if (/\.(mp4|avi|webm|mkv)$/i.test(url.pathname)) {
           yield { type: 'video', url: url.toString() }
           index = end
           prevIndex = index
-          continue
+          continue mainloop
         }
         if (/\.(mp3|aac|ogg|opus)$/i.test(url.pathname)) {
           yield { type: 'audio', url: url.toString() }
           index = end
           prevIndex = index
-          continue
+          continue mainloop
         }
 
         yield { type: 'url', url: url.toString() }
         index = end
         prevIndex = index
-        continue
+        continue mainloop
       } catch (_err) {
         // ignore this, not a valid url
         index = end + 1
-        continue
+        continue mainloop
       }
-    } else if (content.substring(u - 3, u) === 'wss' || content.substring(u - 2, u) === 'ws') {
-      const m = content.substring(u + 4).match(noURLCharacter)
+    } else if (content.slice(u - 3, u) === 'wss' || content.slice(u - 2, u) === 'ws') {
+      const m = content.slice(u + 4).match(noURLCharacter)
       const end = m ? u + 4 + m.index! : max
       const prefixLen = content[u - 1] === 's' ? 3 : 2
       try {
-        let url = new URL(content.substring(u - prefixLen, end))
+        let url = new URL(content.slice(u - prefixLen, end))
         if (url.hostname.indexOf('.') === -1) {
           throw new Error('invalid ws url')
         }
 
         if (prevIndex !== u - prefixLen) {
-          yield { type: 'text', text: content.substring(prevIndex, u - prefixLen) }
+          yield { type: 'text', text: content.slice(prevIndex, u - prefixLen) }
         }
         yield { type: 'relay', url: url.toString() }
         index = end
         prevIndex = index
-        continue
+        continue mainloop
       } catch (_err) {
         // ignore this, not a valid url
         index = end + 1
-        continue
+        continue mainloop
       }
     } else {
+      // try to parse an emoji shortcode
+      for (let e = 0; e < emojis.length; e++) {
+        const emoji = emojis[e]
+        if (
+          content[u + emoji.shortcode.length + 1] === ':' &&
+          content.slice(u + 1, u + emoji.shortcode.length + 1) === emoji.shortcode
+        ) {
+          // found an emoji
+          if (prevIndex !== u) {
+            yield { type: 'text', text: content.slice(prevIndex, u) }
+          }
+          yield emoji
+          index = u + emoji.shortcode.length + 2
+          prevIndex = index
+          continue mainloop
+        }
+      }
+
       // ignore this, it is nothing
       index = u + 1
-      continue
+      continue mainloop
     }
   }
 
   if (prevIndex !== max) {
-    yield { type: 'text', text: content.substring(prevIndex) }
+    yield { type: 'text', text: content.slice(prevIndex) }
   }
 }

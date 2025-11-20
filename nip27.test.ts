@@ -1,5 +1,6 @@
 import { test, expect } from 'bun:test'
 import { parse } from './nip27.ts'
+import { NostrEvent } from './core.ts'
 
 test('first: parse simple content with 1 url and 1 nostr uri', () => {
   const content = `nostr:npub1hpslpc8c5sp3e2nhm2fr7swsfqpys5vyjar5dwpn7e7decps6r8qkcln63 check out my profile:nostr:npub1xtscya34g58tk0z605fvr788k263gsu6cy9x0mhnm87echrgufzsevkk5s; and this cool image https://images.com/image.jpg`
@@ -73,5 +74,36 @@ test('third: parse complex content with 4 nostr uris and 3 urls', () => {
     { type: 'video', url: 'https://example.com/vid.webm' },
     { type: 'text', text: ' and finally ' },
     { type: 'url', url: 'https://example.com/docs' },
+  ])
+})
+
+test('parse content with hashtags and emoji shortcodes', () => {
+  const event: NostrEvent = {
+    kind: 1,
+    tags: [
+      ['emoji', 'star', 'https://example.com/star.png'],
+      ['emoji', 'alpaca', 'https://example.com/alpaca.png'],
+    ],
+    content:
+      'hey nostr:npub1hpslpc8c5sp3e2nhm2fr7swsfqpys5vyjar5dwpn7e7decps6r8qkcln63 check out :alpaca::alpaca: #alpaca at wss://alpaca.com! :star:',
+    created_at: 1234567890,
+    pubkey: 'dummy',
+    id: 'dummy',
+    sig: 'dummy',
+  }
+  const blocks = Array.from(parse(event))
+
+  expect(blocks).toEqual([
+    { type: 'text', text: 'hey ' },
+    { type: 'reference', pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' } },
+    { type: 'text', text: ' check out ' },
+    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png' },
+    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png' },
+    { type: 'text', text: ' ' },
+    { type: 'hashtag', value: 'alpaca' },
+    { type: 'text', text: ' at ' },
+    { type: 'relay', url: 'wss://alpaca.com/' },
+    { type: 'text', text: '! ' },
+    { type: 'emoji', shortcode: 'star', url: 'https://example.com/star.png' },
   ])
 })
