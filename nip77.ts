@@ -537,6 +537,7 @@ export class NegentropySync {
   relay: AbstractRelay
   storage: NegentropyStorageVector
   private neg: Negentropy
+  private filter: Filter
   private subscription: Subscription
   private onhave?: (id: string) => void
   private onneed?: (id: string) => void
@@ -557,8 +558,10 @@ export class NegentropySync {
     this.neg = new Negentropy(storage)
     this.onhave = params.onhave
     this.onneed = params.onneed
+    this.filter = filter
 
-    this.subscription = this.relay.prepareSubscription([filter], { label: params.label || 'negentropy' })
+    // we prepare a subscription with an empty filter, but it will not be used
+    this.subscription = this.relay.prepareSubscription([{}], { label: params.label || 'negentropy' })
     this.subscription.oncustom = (data: string[]) => {
       switch (data[0]) {
         case 'NEG-MSG': {
@@ -569,6 +572,9 @@ export class NegentropySync {
             const response = this.neg.reconcile(data[2], this.onhave, this.onneed)
             if (response) {
               this.relay.send(`["NEG-MSG", "${this.subscription.id}", "${response}"]`)
+            } else {
+              this.close()
+              params.onclose?.()
             }
           } catch (error) {
             console.error('negentropy reconcile error:', error)
@@ -591,9 +597,7 @@ export class NegentropySync {
 
   async start(): Promise<void> {
     const initMsg = this.neg.initiate()
-    if (initMsg) {
-      this.relay.send(`["NEG-OPEN","${this.subscription.id}",${initMsg}]`)
-    }
+    this.relay.send(`["NEG-OPEN","${this.subscription.id}",${JSON.stringify(this.filter)},"${initMsg}"]`)
   }
 
   close(): void {
