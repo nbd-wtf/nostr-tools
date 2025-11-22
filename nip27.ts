@@ -131,19 +131,19 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
           yield { type: 'text', text: content.slice(prevIndex, u - prefixLen) }
         }
 
-        if (/\.(png|jpe?g|gif|webp)$/i.test(url.pathname)) {
+        if (/\.(png|jpe?g|gif|webp|heic|svg)$/i.test(url.pathname)) {
           yield { type: 'image', url: url.toString() }
           index = end
           prevIndex = index
           continue mainloop
         }
-        if (/\.(mp4|avi|webm|mkv)$/i.test(url.pathname)) {
+        if (/\.(mp4|avi|webm|mkv|mov)$/i.test(url.pathname)) {
           yield { type: 'video', url: url.toString() }
           index = end
           prevIndex = index
           continue mainloop
         }
-        if (/\.(mp3|aac|ogg|opus)$/i.test(url.pathname)) {
+        if (/\.(mp3|aac|ogg|opus|wav|flac)$/i.test(url.pathname)) {
           yield { type: 'audio', url: url.toString() }
           index = end
           prevIndex = index
