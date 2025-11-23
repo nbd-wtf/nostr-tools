@@ -107,3 +107,9 @@ test('parse content with hashtags and emoji shortcodes', () => {
     { type: 'emoji', shortcode: 'star', url: 'https://example.com/star.png' },
   ])
 })
+
+test('emoji shortcodes are treated as text if no event tags', () => {
+  const blocks = Array.from(parse('hello :alpaca:'))
+
+  expect(blocks).toEqual([{ type: 'text', text: 'hello :alpaca:' }])
+})
