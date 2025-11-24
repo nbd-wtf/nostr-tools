@@ -2,12 +2,12 @@ import { NostrEvent, validateEvent } from './pure.ts'
 
 /** Events are **regular**, which means they're all expected to be stored by relays. */
 export function isRegularKind(kind: number): boolean {
-  return (1000 <= kind && kind < 10000) || [1, 2, 4, 5, 6, 7, 8, 16, 40, 41, 42, 43, 44].includes(kind)
+  return kind < 10000 && kind !== 0 && kind !== 3
 }
 
 /** Events are **replaceable**, which means that, for each combination of `pubkey` and `kind`, only the latest event is expected to (SHOULD) be stored by relays, older versions are expected to be discarded. */
 export function isReplaceableKind(kind: number): boolean {
-  return [0, 3].includes(kind) || (10000 <= kind && kind < 20000)
+  return kind === 0 || kind === 3 || (10000 <= kind && kind < 20000)
 }
 
 /** Events are **ephemeral**, which means they are not expected to be stored by relays. */
