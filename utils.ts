@@ -9,6 +9,8 @@ export function normalizeURL(url: string): string {
   try {
     if (url.indexOf('://') === -1) url = 'wss://' + url
     let p = new URL(url)
+    if (p.protocol === 'http:') p.protocol = 'ws:'
+    else if (p.protocol === 'https:') p.protocol = 'wss:'
     p.pathname = p.pathname.replace(/\/+/g, '/')
     if (p.pathname.endsWith('/')) p.pathname = p.pathname.slice(0, -1)
     if ((p.port === '80' && p.protocol === 'ws:') || (p.port === '443' && p.protocol === 'wss:')) p.port = ''

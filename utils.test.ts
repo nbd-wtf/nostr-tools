@@ -1,6 +1,12 @@
 import { describe, test, expect } from 'bun:test'
 import { buildEvent } from './test-helpers.ts'
-import { Queue, insertEventIntoAscendingList, insertEventIntoDescendingList, binarySearch } from './utils.ts'
+import {
+  Queue,
+  insertEventIntoAscendingList,
+  insertEventIntoDescendingList,
+  binarySearch,
+  normalizeURL,
+} from './utils.ts'
 
 import type { Event } from './core.ts'
 
@@ -262,4 +268,44 @@ test('binary search', () => {
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('c' < b ? -1 : 'c' === b ? 0 : 1))).toEqual([2, false])
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('a' < b ? -1 : 'a' === b ? 0 : 1))).toEqual([0, true])
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('[' < b ? -1 : '[' === b ? 0 : 1))).toEqual([0, false])
+})
+
+describe('normalizeURL', () => {
+  test('normalizes wss:// URLs', () => {
+    expect(normalizeURL('wss://example.com')).toBe('wss://example.com/')
+    expect(normalizeURL('wss://example.com/')).toBe('wss://example.com/')
+    expect(normalizeURL('wss://example.com//path')).toBe('wss://example.com/path')
+    expect(normalizeURL('wss://example.com:443')).toBe('wss://example.com/')
+  })
+
+  test('normalizes https:// URLs', () => {
+    expect(normalizeURL('https://example.com')).toBe('wss://example.com/')
+    expect(normalizeURL('https://example.com/')).toBe('wss://example.com/')
+    expect(normalizeURL('http://example.com//path')).toBe('ws://example.com/path')
+  })
+
+  test('normalizes ws:// URLs', () => {
+    expect(normalizeURL('ws://example.com')).toBe('ws://example.com/')
+    expect(normalizeURL('ws://example.com/')).toBe('ws://example.com/')
+    expect(normalizeURL('ws://example.com//path')).toBe('ws://example.com/path')
+    expect(normalizeURL('ws://example.com:80')).toBe('ws://example.com/')
+  })
+
+  test('adds wss:// to URLs without scheme', () => {
+    expect(normalizeURL('example.com')).toBe('wss://example.com/')
+    expect(normalizeURL('example.com/')).toBe('wss://example.com/')
+    expect(normalizeURL('example.com//path')).toBe('wss://example.com/path')
+  })
+
+  test('handles query parameters', () => {
+    expect(normalizeURL('wss://example.com?z=1&a=2')).toBe('wss://example.com/?a=2&z=1')
+  })
+
+  test('removes hash', () => {
+    expect(normalizeURL('wss://example.com#hash')).toBe('wss://example.com/')
+  })
+
+  test('throws on invalid URL', () => {
+    expect(() => normalizeURL('http://')).toThrow('Invalid URL: http://')
+  })
 })
