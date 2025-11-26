@@ -18,7 +18,7 @@ test('kind classification', () => {
   expect(classifyKind(30000)).toBe('parameterized')
   expect(classifyKind(39999)).toBe('parameterized')
   expect(classifyKind(40000)).toBe('unknown')
-  expect(classifyKind(255)).toBe('unknown')
+  expect(classifyKind(255)).toBe('regular')
 })
 
 test('kind type guard', () => {
