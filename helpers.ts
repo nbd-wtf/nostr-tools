@@ -1,4 +1,5 @@
 import { verifiedSymbol, type Event, type Nostr, VerifiedEvent } from './core.ts'
+import { verifyEvent } from './pure.ts'
 
 export async function yieldThread() {
   return new Promise<void>((resolve, reject) => {
@@ -35,4 +36,13 @@ export async function yieldThread() {
 export const alwaysTrue: Nostr['verifyEvent'] = (t: Event): t is VerifiedEvent => {
   t[verifiedSymbol] = true
   return true
+}
+
+/**
+ * Verify an event signature and return a VerifiedEvent or throw on failure.
+ * Helpful when you want a simple "verify or die" flow instead of manual checks.
+ */
+export function assertVerified(event: Event): VerifiedEvent {
+  if (verifyEvent(event)) return event as VerifiedEvent
+  throw new Error(`Invalid event signature for id ${event.id ?? '<unknown>'}`)
 }
