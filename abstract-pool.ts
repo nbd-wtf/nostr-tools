@@ -36,7 +36,7 @@ export class AbstractSimplePool {
 
   public verifyEvent: Nostr['verifyEvent']
   public enablePing: boolean | undefined
-  public enableReconnect: boolean | ((filters: Filter[]) => Filter[]) | undefined
+  public enableReconnect: boolean
   public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   public trustedRelayURLs: Set<string> = new Set()
 
@@ -46,7 +46,7 @@ export class AbstractSimplePool {
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation
     this.enablePing = opts.enablePing
-    this.enableReconnect = opts.enableReconnect
+    this.enableReconnect = opts.enableReconnect || false
     this.automaticallyAuth = opts.automaticallyAuth
   }
 

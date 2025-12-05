@@ -16,7 +16,7 @@ export type AbstractRelayConstructorOptions = {
   verifyEvent: Nostr['verifyEvent']
   websocketImplementation?: typeof WebSocket
   enablePing?: boolean
-  enableReconnect?: boolean | ((filters: Filter[]) => Filter[])
+  enableReconnect?: boolean
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -42,7 +42,7 @@ export class AbstractRelay {
   public resubscribeBackoff: number[] = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
-  public enableReconnect: boolean | ((filters: Filter[]) => Filter[])
+  public enableReconnect: boolean
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private pingTimeoutHandle: ReturnType<typeof setTimeout> | undefined
@@ -166,8 +166,12 @@ export class AbstractRelay {
         // resubscribe to all open subscriptions
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
-          if (isReconnection && typeof this.enableReconnect === 'function') {
-            sub.filters = this.enableReconnect(sub.filters)
+          if (isReconnection) {
+            for (let f = 0; f < sub.filters.length; f++) {
+              if (sub.lastEmitted) {
+                sub.filters[f].since = sub.lastEmitted + 1
+              }
+            }
           }
           sub.fire()
         }
@@ -299,6 +303,7 @@ export class AbstractRelay {
           if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
           }
+          if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
           return
         }
         case 'COUNT': {
@@ -469,6 +474,7 @@ export class Subscription {
   public readonly relay: AbstractRelay
   public readonly id: string
 
+  public lastEmitted: number | undefined
   public closed: boolean = false
   public eosed: boolean = false
   public filters: Filter[]

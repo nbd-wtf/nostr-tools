@@ -306,12 +306,9 @@ test('reconnect on disconnect in pool', async () => {
 
 test('reconnect with filter update in pool', async () => {
   const mockRelay = mockRelays[0]
-  const newSince = Math.floor(Date.now() / 1000)
   pool = new SimplePool({
     enablePing: true,
-    enableReconnect: filters => {
-      return filters.map(f => ({ ...f, since: newSince }))
-    },
+    enableReconnect: true,
   })
   const relay = await pool.ensureRelay(mockRelay.url)
   relay.pingTimeout = 50
@@ -364,7 +361,7 @@ test('reconnect with filter update in pool', async () => {
   expect(closes).toBe(1)
 
   // check if filter was updated
-  expect(sub.filters[0].since).toBe(newSince)
+  expect(sub.filters[0].since).toBeGreaterThan(1)
 })
 
 test('track relays when publishing', async () => {
