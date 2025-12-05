@@ -14,14 +14,17 @@ import { alwaysTrue } from './helpers.ts'
 
 export type SubCloser = { close: (reason?: string) => void }
 
-export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {}
+export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
+  // automaticallyAuth takes a relay URL and should return null
+  // in case that relay shouldn't be authenticated against
+  // or a function to sign the AUTH event template otherwise (that function may still throw in case of failure)
+  automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
+}
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   onclose?: (reasons: string[]) => void
   onauth?: (event: EventTemplate) => Promise<VerifiedEvent>
-  // Deprecated: use onauth instead
-  doauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
   label?: string
 }
@@ -34,6 +37,7 @@ export class AbstractSimplePool {
   public verifyEvent: Nostr['verifyEvent']
   public enablePing: boolean | undefined
   public enableReconnect: boolean | ((filters: Filter[]) => Filter[]) | undefined
+  public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   public trustedRelayURLs: Set<string> = new Set()
 
   private _WebSocket?: typeof WebSocket
@@ -43,6 +47,7 @@ export class AbstractSimplePool {
     this._WebSocket = opts.websocketImplementation
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect
+    this.automaticallyAuth = opts.automaticallyAuth
   }
 
   async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<AbstractRelay> {
@@ -64,6 +69,14 @@ export class AbstractSimplePool {
       if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)
     }
+
+    if (this.automaticallyAuth) {
+      const authSignerFn = this.automaticallyAuth(url)
+      if (authSignerFn) {
+        relay.onauth = authSignerFn
+      }
+    }
+
     await relay.connect()
 
     return relay
@@ -77,8 +90,6 @@ export class AbstractSimplePool {
   }
 
   subscribe(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
-    params.onauth = params.onauth || params.doauth
-
     const request: { url: string; filter: Filter }[] = []
     for (let i = 0; i < relays.length; i++) {
       const url = normalizeURL(relays[i])
@@ -91,8 +102,6 @@ export class AbstractSimplePool {
   }
 
   subscribeMany(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
-    params.onauth = params.onauth || params.doauth
-
     const request: { url: string; filter: Filter }[] = []
     const uniqUrls: string[] = []
     for (let i = 0; i < relays.length; i++) {
@@ -107,8 +116,6 @@ export class AbstractSimplePool {
   }
 
   subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {
-    params.onauth = params.onauth || params.doauth
-
     const grouped = new Map<string, Filter[]>()
     for (const req of requests) {
       const { url, filter } = req
@@ -221,10 +228,8 @@ export class AbstractSimplePool {
   subscribeEose(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth' | 'doauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
-    params.onauth = params.onauth || params.doauth
-
     const subcloser = this.subscribe(relays, filter, {
       ...params,
       oneose() {
@@ -237,10 +242,8 @@ export class AbstractSimplePool {
   subscribeManyEose(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth' | 'doauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
-    params.onauth = params.onauth || params.doauth
-
     const subcloser = this.subscribeMany(relays, filter, {
       ...params,
       oneose() {

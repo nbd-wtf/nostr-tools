@@ -32,6 +32,7 @@ export class AbstractRelay {
 
   public onclose: (() => void) | null = null
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
+  public onauth: undefined | ((evt: EventTemplate) => Promise<VerifiedEvent>)
 
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
@@ -338,6 +339,9 @@ export class AbstractRelay {
         }
         case 'AUTH': {
           this.challenge = data[1] as string
+          if (this.onauth) {
+            this.auth(this.onauth)
+          }
           return
         }
         default: {
