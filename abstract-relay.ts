@@ -159,12 +159,14 @@ export class AbstractRelay {
         }
         clearTimeout(this.connectionTimeoutHandle)
         this._connected = true
+
+        const isReconnection = this.reconnectAttempts > 0
         this.reconnectAttempts = 0
 
         // resubscribe to all open subscriptions
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
-          if (typeof this.enableReconnect === 'function') {
+          if (isReconnection && typeof this.enableReconnect === 'function') {
             sub.filters = this.enableReconnect(sub.filters)
           }
           sub.fire()
@@ -206,14 +208,17 @@ export class AbstractRelay {
   private async waitForDummyReq() {
     return new Promise((resolve, _) => {
       // make a dummy request with expected empty eose reply
-      // ["REQ", "_", {"ids":["aaaa...aaaa"]}]
-      const sub = this.subscribe([{ ids: ['a'.repeat(64)] }], {
-        oneose: () => {
-          sub.close()
-          resolve(true)
+      // ["REQ", "_", {"ids":["aaaa...aaaa"], "limit": 0}]
+      const sub = this.subscribe(
+        [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
+        {
+          oneose: () => {
+            sub.close()
+            resolve(true)
+          },
+          eoseTimeout: this.pingTimeout + 1000,
         },
-        eoseTimeout: this.pingTimeout + 1000,
-      })
+      )
     })
   }
 
