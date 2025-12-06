@@ -37,7 +37,7 @@ export class AbstractRelay {
   public baseEoseTimeout: number = 4400
   public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
-  public pingFrequency: number = 20000
+  public pingFrequency: number = 29000
   public pingTimeout: number = 20000
   public resubscribeBackoff: number[] = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
   public openSubs: Map<string, Subscription> = new Map()
@@ -209,20 +209,30 @@ export class AbstractRelay {
     })
   }
 
-  private async waitForDummyReq() {
-    return new Promise((resolve, _) => {
+  private waitForDummyReq() {
+    return new Promise((resolve, reject) => {
+      if (!this.connectionPromise) return reject(new Error(`no connection to ${this.url}, can't ping`))
+
       // make a dummy request with expected empty eose reply
       // ["REQ", "_", {"ids":["aaaa...aaaa"], "limit": 0}]
-      const sub = this.subscribe(
-        [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
-        {
-          oneose: () => {
-            sub.close()
-            resolve(true)
+      try {
+        const sub = this.subscribe(
+          [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
+          {
+            oneose: () => {
+              resolve(true)
+              sub.close()
+            },
+            onclose() {
+              // if we get a CLOSED it's because the relay is alive
+              resolve(true)
+            },
+            eoseTimeout: this.pingTimeout + 1000,
           },
-          eoseTimeout: this.pingTimeout + 1000,
-        },
-      )
+        )
+      } catch (err) {
+        reject(err)
+      }
     })
   }
 
