@@ -8,7 +8,7 @@ export interface Nostr {
 /** Designates a verified event signature. */
 export const verifiedSymbol = Symbol('verified')
 
-export interface Event {
+export type NostrEvent = {
   kind: number
   tags: string[][]
   content: string
@@ -19,7 +19,7 @@ export interface Event {
   [verifiedSymbol]?: boolean
 }
 
-export type NostrEvent = Event
+export type Event = NostrEvent
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
