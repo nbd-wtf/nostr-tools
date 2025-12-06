@@ -45,7 +45,7 @@ export class AbstractRelay {
   public enableReconnect: boolean
   private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
-  private pingTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
   private reconnectAttempts: number = 0
   private closedIntentionally: boolean = false
 
@@ -111,9 +111,9 @@ export class AbstractRelay {
   }
 
   private handleHardClose(reason: string) {
-    if (this.pingTimeoutHandle) {
-      clearTimeout(this.pingTimeoutHandle)
-      this.pingTimeoutHandle = undefined
+    if (this.pingIntervalHandle) {
+      clearInterval(this.pingIntervalHandle)
+      this.pingIntervalHandle = undefined
     }
 
     this._connected = false
@@ -177,7 +177,7 @@ export class AbstractRelay {
         }
 
         if (this.enablePing) {
-          this.pingpong()
+          this.pingIntervalHandle = setInterval(() => this.pingpong(), this.pingFrequency)
         }
         resolve()
       }
@@ -247,10 +247,8 @@ export class AbstractRelay {
         this.ws && this.ws.ping && (this.ws as any).once ? this.waitForPingPong() : this.waitForDummyReq(),
         new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
       ])
-      if (result) {
-        // schedule another pingpong
-        this.pingTimeoutHandle = setTimeout(() => this.pingpong(), this.pingFrequency)
-      } else {
+
+      if (!result) {
         // pingpong closing socket
         if (this.ws?.readyState === this._WebSocket.OPEN) {
           this.ws?.close()
@@ -458,9 +456,9 @@ export class AbstractRelay {
       clearTimeout(this.reconnectTimeoutHandle)
       this.reconnectTimeoutHandle = undefined
     }
-    if (this.pingTimeoutHandle) {
-      clearTimeout(this.pingTimeoutHandle)
-      this.pingTimeoutHandle = undefined
+    if (this.pingIntervalHandle) {
+      clearInterval(this.pingIntervalHandle)
+      this.pingIntervalHandle = undefined
     }
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
