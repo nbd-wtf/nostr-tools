@@ -160,16 +160,7 @@ Using both `enablePing: true` and `enableReconnect: true` is recommended as it w
 const pool = new SimplePool({ enablePing: true, enableReconnect: true })
 ```
 
-The `enableReconnect` option can also be a callback function which will receive the current subscription filters and should return a new set of filters. This is useful if you want to modify the subscription on reconnect, for example, to update the `since` parameter to fetch only new events.
-
-```js
-const pool = new SimplePool({
-  enableReconnect: (filters) => {
-    const newSince = Math.floor(Date.now() / 1000)
-    return filters.map(filter => ({ ...filter, since: newSince }))
-  }
-})
-```
+When reconnecting, all existing subscriptions will have their filters automatically updated with `since:` set to the timestamp of the last event received on them `+1`, then restarted.
 
 ### Parsing references (mentions) from a content based on NIP-27
 
@@ -253,7 +244,7 @@ const event = await bunker.signEvent({
 await signer.close()
 pool.close([])
 ```
-> **Note on Reconnecting:** Once a connection has been successfully established and the `BunkerPointer` is stored, you do **not** need to call `await bunker.connect()` on subsequent sessions. 
+> **Note on Reconnecting:** Once a connection has been successfully established and the `BunkerPointer` is stored, you do **not** need to call `await bunker.connect()` on subsequent sessions.
 
 ### Method 2: Using a Client-generated URI (`nostrconnect://`)
 
@@ -293,7 +284,7 @@ const event = await signer.signEvent({
 await signer.close()
 pool.close([])
 ```
-> **Note on Persistence:** This method is ideal for the initial sign-in. To allow users to stay logged in across sessions, you should store the connection details and use `Method 1` for subsequent reconnections. 
+> **Note on Persistence:** This method is ideal for the initial sign-in. To allow users to stay logged in across sessions, you should store the connection details and use `Method 1` for subsequent reconnections.
 
 ### Parsing thread from any note based on NIP-10
 
