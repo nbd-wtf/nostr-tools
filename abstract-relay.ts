@@ -219,6 +219,7 @@ export class AbstractRelay {
         const sub = this.subscribe(
           [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
           {
+            label: 'forced-ping',
             oneose: () => {
               resolve(true)
               sub.close()
