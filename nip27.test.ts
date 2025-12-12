@@ -16,14 +16,14 @@ test('first: parse simple content with 1 url and 1 nostr uri', () => {
 })
 
 test('second: parse content with 3 urls of different types', () => {
-  const content = `:wss://oa.ao; this was a relay and now here's a video -> https://videos.com/video.mp4! and some music:
+  const content = `:wss://oa.ao/a/; this was a relay and now here's a video -> https://videos.com/video.mp4! and some music:
 http://music.com/song.mp3
 and a regular link: https://regular.com/page?ok=true. and now a broken link: https://kjxkxk and a broken nostr ref: nostr:nevent1qqsr0f9w78uyy09qwmjt0kv63j4l7sxahq33725lqyyp79whlfjurwspz4mhxue69uhh56nzv34hxcfwv9ehw6nyddhq0ag9xg and a fake nostr ref: nostr:llll ok but finally https://ok.com!`
   const blocks = Array.from(parse(content))
 
   expect(blocks).toEqual([
     { type: 'text', text: ':' },
-    { type: 'relay', url: 'wss://oa.ao/' },
+    { type: 'relay', url: 'wss://oa.ao/a/' },
     { type: 'text', text: "; this was a relay and now here's a video -> " },
     { type: 'video', url: 'https://videos.com/video.mp4' },
     { type: 'text', text: '! and some music:\n' },
@@ -112,4 +112,19 @@ test('emoji shortcodes are treated as text if no event tags', () => {
   const blocks = Array.from(parse('hello :alpaca:'))
 
   expect(blocks).toEqual([{ type: 'text', text: 'hello :alpaca:' }])
+})
+
+test("a thing that didn't work well in the wild", () => {
+  const blocks = Array.from(
+    parse(
+      `Crowdsourcing doesn't mean just users clicking, by the way (although that could be possible too), it means a bunch of machines competing: https://leaderboard.sbstats.uk/`,
+    ),
+  )
+  expect(blocks).toEqual([
+    {
+      type: 'text',
+      text: `Crowdsourcing doesn't mean just users clicking, by the way (although that could be possible too), it means a bunch of machines competing: `,
+    },
+    { type: 'url', url: 'https://leaderboard.sbstats.uk/' },
+  ])
 })

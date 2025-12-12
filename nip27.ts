@@ -41,7 +41,7 @@ export type Block =
     }
 
 const noCharacter = /\W/m
-const noURLCharacter = /\W |\W$|$|,| /m
+const noURLCharacter = /[^\w\/] |[^\w\/]$|$|,| /m
 const MAX_HASHTAG_LENGTH = 42
 
 export function* parse(content: string | NostrEvent): Iterable<Block> {
