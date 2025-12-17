@@ -96,8 +96,10 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
           case 'npub':
             pointer = { pubkey: data } as ProfilePointer
             break
-          case 'nsec':
           case 'note':
+            pointer = { id: data } as EventPointer
+            break
+          case 'nsec':
             // ignore this, treat it as not a valid uri
             index = end + 1
             continue
