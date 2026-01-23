@@ -87,31 +87,7 @@ export type NostrConnectParams = {
   image?: string
 }
 
-export type ParsedNostrConnectURI = {
-  protocol: 'nostrconnect'
-  clientPubkey: string
-  params: {
-    relays: string[]
-    secret: string
-    perms?: string[]
-    name?: string
-    url?: string
-    image?: string
-  }
-  originalString: string
-}
-
 export function createNostrConnectURI(params: NostrConnectParams): string {
-  if (!params.clientPubkey) {
-    throw new Error('clientPubkey is required.')
-  }
-  if (!params.relays || params.relays.length === 0) {
-    throw new Error('At least one relay is required.')
-  }
-  if (!params.secret) {
-    throw new Error('secret is required.')
-  }
-
   const queryParams = new URLSearchParams()
 
   params.relays.forEach(relay => {
@@ -134,55 +110,6 @@ export function createNostrConnectURI(params: NostrConnectParams): string {
   }
 
   return `nostrconnect://${params.clientPubkey}?${queryParams.toString()}`
-}
-
-export function parseNostrConnectURI(uri: string): ParsedNostrConnectURI {
-  if (!uri.startsWith('nostrconnect://')) {
-    throw new Error('Invalid nostrconnect URI: Must start with "nostrconnect://".')
-  }
-
-  const [protocolAndPubkey, queryString] = uri.split('?')
-  if (!protocolAndPubkey || !queryString) {
-    throw new Error('Invalid nostrconnect URI: Missing query string.')
-  }
-
-  const clientPubkey = protocolAndPubkey.substring('nostrconnect://'.length)
-  if (!clientPubkey) {
-    throw new Error('Invalid nostrconnect URI: Missing client-pubkey.')
-  }
-
-  const queryParams = new URLSearchParams(queryString)
-
-  const relays = queryParams.getAll('relay')
-  if (relays.length === 0) {
-    throw new Error('Invalid nostrconnect URI: Missing "relay" parameter.')
-  }
-
-  const secret = queryParams.get('secret')
-  if (!secret) {
-    throw new Error('Invalid nostrconnect URI: Missing "secret" parameter.')
-  }
-
-  const permsString = queryParams.get('perms')
-  const perms = permsString ? permsString.split(',') : undefined
-
-  const name = queryParams.get('name') || undefined
-  const url = queryParams.get('url') || undefined
-  const image = queryParams.get('image') || undefined
-
-  return {
-    protocol: 'nostrconnect',
-    clientPubkey,
-    params: {
-      relays,
-      secret,
-      perms,
-      name,
-      url,
-      image,
-    },
-    originalString: uri,
-  }
 }
 
 export type BunkerSignerParams = {
@@ -238,7 +165,7 @@ export class BunkerSigner implements Signer {
     params: BunkerSignerParams = {},
   ): BunkerSigner {
     if (bp.relays.length === 0) {
-      throw new Error('No relays specified for this bunker')
+      throw new Error('no relays specified for this bunker')
     }
 
     const signer = new BunkerSigner(clientSecretKey, params)
@@ -246,7 +173,7 @@ export class BunkerSigner implements Signer {
     signer.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
     signer.bp = bp
 
-    signer.setupSubscription(params)
+    signer.setupSubscription()
     return signer
   }
 
@@ -257,22 +184,22 @@ export class BunkerSigner implements Signer {
   public static async fromURI(
     clientSecretKey: Uint8Array,
     connectionURI: string,
-    params: BunkerSignerParams = {},
-    maxWait: number = 300_000,
+    bunkerParams: BunkerSignerParams = {},
+    maxWaitOrAbort: number | AbortSignal = 300_000,
   ): Promise<BunkerSigner> {
-    const signer = new BunkerSigner(clientSecretKey, params)
-    const parsedURI = parseNostrConnectURI(connectionURI)
+    const signer = new BunkerSigner(clientSecretKey, bunkerParams)
+    const uri = new URL(connectionURI)
     const clientPubkey = getPublicKey(clientSecretKey)
 
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        sub.close()
-        reject(new Error(`Connection timed out after ${maxWait / 1000} seconds`))
-      }, maxWait)
-
+      let success = false
       const sub = signer.pool.subscribe(
-        parsedURI.params.relays,
-        { kinds: [NostrConnect], '#p': [clientPubkey] },
+        uri.searchParams.getAll('relay'),
+        {
+          kinds: [NostrConnect],
+          '#p': [clientPubkey],
+          limit: 0,
+        },
         {
           onevent: async (event: NostrEvent) => {
             try {
@@ -281,41 +208,48 @@ export class BunkerSigner implements Signer {
 
               const response = JSON.parse(decryptedContent)
 
-              if (response.result === parsedURI.params.secret) {
-                clearTimeout(timer)
+              if (response.result === uri.searchParams.get('secret')) {
                 sub.close()
 
                 signer.bp = {
                   pubkey: event.pubkey,
-                  relays: parsedURI.params.relays,
-                  secret: parsedURI.params.secret,
+                  relays: uri.searchParams.getAll('relay'),
+                  secret: uri.searchParams.get('secret'),
                 }
                 signer.conversationKey = getConversationKey(clientSecretKey, event.pubkey)
-                signer.setupSubscription(params)
+                signer.setupSubscription()
+
+                success = true
+                await Promise.race([new Promise(resolve => setTimeout(resolve, 1000)), signer.switchRelays()])
                 resolve(signer)
               }
             } catch (e) {
-              console.warn('Failed to process potential connection event', e)
+              console.warn('failed to process potential connection event', e)
             }
           },
           onclose: () => {
-            clearTimeout(timer)
-            reject(new Error('Subscription closed before connection was established.'))
+            if (!success) reject(new Error('subscription closed before connection was established.'))
           },
-          maxWait,
+          maxWait: typeof maxWaitOrAbort === 'number' ? maxWaitOrAbort : undefined,
+          abort: typeof maxWaitOrAbort !== 'number' ? maxWaitOrAbort : undefined,
         },
       )
     })
   }
 
-  private setupSubscription(params: BunkerSignerParams) {
+  private setupSubscription() {
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
     const convKey = this.conversationKey
 
     this.subCloser = this.pool.subscribe(
       this.bp.relays,
-      { kinds: [NostrConnect], authors: [this.bp.pubkey], '#p': [getPublicKey(this.secretKey)] },
+      {
+        kinds: [NostrConnect],
+        authors: [this.bp.pubkey],
+        '#p': [getPublicKey(this.secretKey)],
+        limit: 0,
+      },
       {
         onevent: async (event: NostrEvent) => {
           const o = JSON.parse(decrypt(event.content, convKey))
@@ -324,8 +258,8 @@ export class BunkerSigner implements Signer {
           if (result === 'auth_url' && waitingForAuth[id]) {
             delete waitingForAuth[id]
 
-            if (params.onauth) {
-              params.onauth(error)
+            if (this.params.onauth) {
+              this.params.onauth(error)
             } else {
               console.warn(
                 `nostr-tools/nip46: remote signer ${this.bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
@@ -349,6 +283,27 @@ export class BunkerSigner implements Signer {
     this.isOpen = true
   }
 
+  async switchRelays(): Promise<boolean> {
+    try {
+      const switchResp = await this.sendRequest('switch_relays', [])
+      let relays = JSON.parse(switchResp) as string[] | null
+      if (!relays) return false
+      if (JSON.stringify(relays.sort()) === JSON.stringify(this.bp.relays)) return false
+
+      this.bp.relays = relays
+      let previousCloser = this.subCloser!
+      setTimeout(() => {
+        previousCloser.close()
+      }, 5000)
+
+      this.subCloser = undefined
+      this.setupSubscription()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
@@ -359,7 +314,7 @@ export class BunkerSigner implements Signer {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
-        if (!this.subCloser) this.setupSubscription(this.params)
+        if (!this.subCloser) this.setupSubscription()
 
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
@@ -469,7 +424,7 @@ export async function createAccount(
   email?: string,
   localSecretKey: Uint8Array = generateSecretKey(),
 ): Promise<BunkerSigner> {
-  if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
+  if (email && !EMAIL_REGEX.test(email)) throw new Error('invalid email')
 
   let rpc = BunkerSigner.fromBunker(localSecretKey, bunker.bunkerPointer, params)
 
