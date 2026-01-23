@@ -35,7 +35,6 @@ export class AbstractRelay {
   public onauth: undefined | ((evt: EventTemplate) => Promise<VerifiedEvent>)
 
   public baseEoseTimeout: number = 4400
-  public connectionTimeout: number = 4400
   public publishTimeout: number = 4400
   public pingFrequency: number = 29000
   public pingTimeout: number = 20000
@@ -43,7 +42,6 @@ export class AbstractRelay {
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
   public enableReconnect: boolean
-  private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
   private reconnectAttempts: number = 0
@@ -70,9 +68,12 @@ export class AbstractRelay {
     this.enableReconnect = opts.enableReconnect || false
   }
 
-  static async connect(url: string, opts: AbstractRelayConstructorOptions): Promise<AbstractRelay> {
+  static async connect(
+    url: string,
+    opts: AbstractRelayConstructorOptions & Parameters<AbstractRelay['connect']>[0],
+  ): Promise<AbstractRelay> {
     const relay = new AbstractRelay(url, opts)
-    await relay.connect()
+    await relay.connect(opts)
     return relay
   }
 
@@ -131,23 +132,31 @@ export class AbstractRelay {
     }
   }
 
-  public async connect(): Promise<void> {
+  public async connect(opts?: { timeout?: number; abort?: AbortSignal }): Promise<void> {
+    let connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+
     if (this.connectionPromise) return this.connectionPromise
 
     this.challenge = undefined
     this.authPromise = undefined
     this.connectionPromise = new Promise((resolve, reject) => {
-      this.connectionTimeoutHandle = setTimeout(() => {
-        reject('connection timed out')
-        this.connectionPromise = undefined
-        this.onclose?.()
-        this.closeAllSubscriptions('relay connection timed out')
-      }, this.connectionTimeout)
+      if (opts?.timeout) {
+        connectionTimeoutHandle = setTimeout(() => {
+          reject('connection timed out')
+          this.connectionPromise = undefined
+          this.onclose?.()
+          this.closeAllSubscriptions('relay connection timed out')
+        }, opts.timeout)
+      }
+
+      if (opts?.abort) {
+        opts.abort.onabort = reject
+      }
 
       try {
         this.ws = new this._WebSocket(this.url)
       } catch (err) {
-        clearTimeout(this.connectionTimeoutHandle)
+        clearTimeout(connectionTimeoutHandle)
         reject(err)
         return
       }
@@ -157,7 +166,7 @@ export class AbstractRelay {
           clearTimeout(this.reconnectTimeoutHandle)
           this.reconnectTimeoutHandle = undefined
         }
-        clearTimeout(this.connectionTimeoutHandle)
+        clearTimeout(connectionTimeoutHandle)
         this._connected = true
 
         const isReconnection = this.reconnectAttempts > 0
@@ -183,13 +192,13 @@ export class AbstractRelay {
       }
 
       this.ws.onerror = ev => {
-        clearTimeout(this.connectionTimeoutHandle)
+        clearTimeout(connectionTimeoutHandle)
         reject((ev as any).message || 'websocket error')
         this.handleHardClose('relay connection errored')
       }
 
       this.ws.onclose = ev => {
-        clearTimeout(this.connectionTimeoutHandle)
+        clearTimeout(connectionTimeoutHandle)
         reject((ev as any).message || 'websocket closed')
         this.handleHardClose('relay connection closed')
       }
@@ -437,6 +446,11 @@ export class AbstractRelay {
   ): Subscription {
     const sub = this.prepareSubscription(filters, params)
     sub.fire()
+
+    if (params.abort) {
+      params.abort.onabort = () => sub.close(String(params.abort!.reason || '<aborted>'))
+    }
+
     return sub
   }
 
@@ -563,6 +577,7 @@ export type SubscriptionParams = {
   alreadyHaveEvent?: (id: string) => boolean
   receivedEvent?: (relay: AbstractRelay, id: string) => void
   eoseTimeout?: number
+  abort?: AbortSignal
 }
 
 export type CountResolver = {

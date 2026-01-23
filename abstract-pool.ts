@@ -23,6 +23,7 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
+  abort?: AbortSignal
   onclose?: (reasons: string[]) => void
   onauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
@@ -50,7 +51,13 @@ export class AbstractSimplePool {
     this.automaticallyAuth = opts.automaticallyAuth
   }
 
-  async ensureRelay(url: string, params?: { connectionTimeout?: number }): Promise<AbstractRelay> {
+  async ensureRelay(
+    url: string,
+    params?: {
+      connectionTimeout?: number
+      abort?: AbortSignal
+    },
+  ): Promise<AbstractRelay> {
     url = normalizeURL(url)
 
     let relay = this.relays.get(url)
@@ -66,7 +73,6 @@ export class AbstractSimplePool {
           this.relays.delete(url)
         }
       }
-      if (params?.connectionTimeout) relay.connectionTimeout = params.connectionTimeout
       this.relays.set(url, relay)
     }
 
@@ -77,7 +83,10 @@ export class AbstractSimplePool {
       }
     }
 
-    await relay.connect()
+    await relay.connect({
+      timeout: params?.connectionTimeout,
+      abort: params?.abort,
+    })
 
     return relay
   }
@@ -176,6 +185,7 @@ export class AbstractSimplePool {
         try {
           relay = await this.ensureRelay(url, {
             connectionTimeout: params.maxWait ? Math.max(params.maxWait * 0.8, params.maxWait - 1000) : undefined,
+            abort: params.abort,
           })
         } catch (err) {
           handleClose(i, (err as any)?.message || String(err))
@@ -198,6 +208,7 @@ export class AbstractSimplePool {
                     },
                     alreadyHaveEvent: localAlreadyHaveEventHandler,
                     eoseTimeout: params.maxWait,
+                    abort: params.abort,
                   })
                 })
                 .catch(err => {
@@ -209,6 +220,7 @@ export class AbstractSimplePool {
           },
           alreadyHaveEvent: localAlreadyHaveEventHandler,
           eoseTimeout: params.maxWait,
+          abort: params.abort,
         })
 
         subs.push(subscription)
