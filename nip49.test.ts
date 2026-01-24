@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test'
 import { decrypt, encrypt } from './nip49.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 
 test('encrypt and decrypt', () => {
   for (let i = 0; i < vectors.length; i++) {

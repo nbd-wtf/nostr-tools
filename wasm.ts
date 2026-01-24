@@ -1,4 +1,4 @@
-import { bytesToHex } from '@noble/hashes/utils'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import { Nostr as NostrWasm } from 'nostr-wasm'
 import { EventTemplate, Event, Nostr, VerifiedEvent, verifiedSymbol } from './core.ts'
 

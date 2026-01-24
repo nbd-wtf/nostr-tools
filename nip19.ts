@@ -1,4 +1,4 @@
-import { bytesToHex, concatBytes, hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, concatBytes, hexToBytes } from '@noble/hashes/utils.js'
 import { bech32 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'

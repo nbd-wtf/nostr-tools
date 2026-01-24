@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test } from 'bun:test'
 import { SimplePool, useWebSocketImplementation } from './pool.ts'
 import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 
 useWebSocketImplementation(MockWebSocketClient)
 

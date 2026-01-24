@@ -1,4 +1,4 @@
-import { sha256 } from '@noble/hashes/sha256'
+import { sha256 } from '@noble/hashes/sha2.js'
 import { EventTemplate } from './core.ts'
 import { Signer } from './signer.ts'
 import { bytesToHex } from './utils.ts'

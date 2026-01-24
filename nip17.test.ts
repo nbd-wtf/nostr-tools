@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test'
 import { getPublicKey } from './pure.ts'
 import { decode } from './nip19.ts'
 import { wrapEvent, wrapManyEvents, unwrapEvent } from './nip17.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 
 const senderPrivateKey = decode(`nsec1p0ht6p3wepe47sjrgesyn4m50m6avk2waqudu9rl324cg2c4ufesyp6rdg`).data
 

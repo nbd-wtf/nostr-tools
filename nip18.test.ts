@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 import { EventTemplate, finalizeEvent, getPublicKey } from './pure.ts'
 import { GenericRepost, Repost, ShortTextNote, BadgeDefinition as BadgeDefinitionKind } from './kinds.ts'
 import { finishRepostEvent, getRepostedEventPointer, getRepostedEvent } from './nip18.ts'

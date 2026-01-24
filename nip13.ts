@@ -1,6 +1,6 @@
-import { bytesToHex } from '@noble/hashes/utils'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import { type UnsignedEvent, type Event } from './pure.ts'
-import { sha256 } from '@noble/hashes/sha256'
+import { sha256 } from '@noble/hashes/sha2.js'
 
 import { utf8Encoder } from './utils.ts'
 

@@ -1,13 +1,13 @@
-import { schnorr } from '@noble/curves/secp256k1'
-import { bytesToHex } from '@noble/hashes/utils'
+import { schnorr } from '@noble/curves/secp256k1.js'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 import { Nostr, Event, EventTemplate, UnsignedEvent, VerifiedEvent, verifiedSymbol, validateEvent } from './core.ts'
-import { sha256 } from '@noble/hashes/sha256'
+import { sha256 } from '@noble/hashes/sha2.js'
 
 import { utf8Encoder } from './utils.ts'
 
 class JS implements Nostr {
   generateSecretKey(): Uint8Array {
-    return schnorr.utils.randomPrivateKey()
+    return schnorr.utils.randomSecretKey()
   }
   getPublicKey(secretKey: Uint8Array): string {
     return bytesToHex(schnorr.getPublicKey(secretKey))
@@ -16,7 +16,7 @@ class JS implements Nostr {
     const event = t as VerifiedEvent
     event.pubkey = bytesToHex(schnorr.getPublicKey(secretKey))
     event.id = getEventHash(event)
-    event.sig = bytesToHex(schnorr.sign(getEventHash(event), secretKey))
+    event.sig = bytesToHex(schnorr.sign(hexToBytes(getEventHash(event)), secretKey))
     event[verifiedSymbol] = true
     return event
   }
@@ -30,7 +30,7 @@ class JS implements Nostr {
     }
 
     try {
-      const valid = schnorr.verify(event.sig, hash, event.pubkey)
+      const valid = schnorr.verify(hexToBytes(event.sig), hexToBytes(hash), hexToBytes(event.pubkey))
       event[verifiedSymbol] = valid
       return valid
     } catch (err) {

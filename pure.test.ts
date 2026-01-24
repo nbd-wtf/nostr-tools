@@ -11,7 +11,7 @@ import {
   generateSecretKey,
 } from './pure.ts'
 import { ShortTextNote } from './kinds.ts'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 
 test('private key generation', () => {
   expect(bytesToHex(generateSecretKey())).toMatch(/[a-f0-9]{64}/)

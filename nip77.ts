@@ -1,7 +1,7 @@
 import { bytesToHex, hexToBytes } from '@noble/ciphers/utils'
 import { Filter } from './filter.ts'
 import { AbstractRelay, Subscription } from './relay.ts'
-import { sha256 } from '@noble/hashes/sha256'
+import { sha256 } from '@noble/hashes/sha2.js'
 
 // Negentropy implementation by Doug Hoyte
 const PROTOCOL_VERSION = 0x61 // Version 1
