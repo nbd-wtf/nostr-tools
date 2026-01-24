@@ -1,13 +1,13 @@
-import { bytesToHex, randomBytes } from '@noble/hashes/utils'
-import { secp256k1 } from '@noble/curves/secp256k1'
+import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js'
+import { secp256k1 } from '@noble/curves/secp256k1.js'
 import { cbc } from '@noble/ciphers/aes'
 import { base64 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
 
 export function encrypt(secretKey: string | Uint8Array, pubkey: string, text: string): string {
-  const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
-  const key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
+  const privkey: Uint8Array = secretKey instanceof Uint8Array ? secretKey : hexToBytes(secretKey)
+  const key = secp256k1.getSharedSecret(privkey, hexToBytes('02' + pubkey))
   const normalizedKey = getNormalizedX(key)
 
   let iv = Uint8Array.from(randomBytes(16))
@@ -22,9 +22,9 @@ export function encrypt(secretKey: string | Uint8Array, pubkey: string, text: st
 }
 
 export function decrypt(secretKey: string | Uint8Array, pubkey: string, data: string): string {
-  const privkey: string = secretKey instanceof Uint8Array ? bytesToHex(secretKey) : secretKey
+  const privkey: Uint8Array = secretKey instanceof Uint8Array ? secretKey : hexToBytes(secretKey)
   let [ctb64, ivb64] = data.split('?iv=')
-  let key = secp256k1.getSharedSecret(privkey, '02' + pubkey)
+  let key = secp256k1.getSharedSecret(privkey, hexToBytes('02' + pubkey))
   let normalizedKey = getNormalizedX(key)
 
   let iv = base64.decode(ivb64)

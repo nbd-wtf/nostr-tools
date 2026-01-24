@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 import { getPublicKey } from './pure.ts'
 import * as Kind from './kinds.ts'
 import {

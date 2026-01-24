@@ -3,7 +3,7 @@ import type { Event } from './core.ts'
 export const utf8Decoder: TextDecoder = new TextDecoder('utf-8')
 export const utf8Encoder: TextEncoder = new TextEncoder()
 
-export { bytesToHex, hexToBytes } from '@noble/hashes/utils'
+export { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 
 export function normalizeURL(url: string): string {
   try {

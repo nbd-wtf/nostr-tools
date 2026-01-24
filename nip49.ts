@@ -1,6 +1,6 @@
-import { scrypt } from '@noble/hashes/scrypt'
+import { scrypt } from '@noble/hashes/scrypt.js'
 import { xchacha20poly1305 } from '@noble/ciphers/chacha'
-import { concatBytes, randomBytes } from '@noble/hashes/utils'
+import { concatBytes, randomBytes } from '@noble/hashes/utils.js'
 import { Bech32MaxSize, Ncryptsec, encodeBytes } from './nip19.ts'
 import { bech32 } from '@scure/base'
 

@@ -5,7 +5,7 @@ import {
   extendedKeysFromSeedWords,
   accountFromExtendedKey,
 } from './nip06.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 
 test('generate private key from a mnemonic', async () => {
   const mnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'

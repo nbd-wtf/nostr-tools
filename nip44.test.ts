@@ -1,8 +1,8 @@
 import { test, expect } from 'bun:test'
 import { v2 } from './nip44.js'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 import { default as vec } from './nip44.vectors.json' with { type: 'json' }
-import { schnorr } from '@noble/curves/secp256k1'
+import { schnorr } from '@noble/curves/secp256k1.js'
 const v2vec = vec.v2
 
 test('get_conversation_key', () => {
@@ -14,7 +14,7 @@ test('get_conversation_key', () => {
 
 test('encrypt_decrypt', () => {
   for (const v of v2vec.valid.encrypt_decrypt) {
-    const pub2 = bytesToHex(schnorr.getPublicKey(v.sec2))
+    const pub2 = bytesToHex(schnorr.getPublicKey(hexToBytes(v.sec2)))
     const key = v2.utils.getConversationKey(hexToBytes(v.sec1), pub2)
     expect(bytesToHex(key)).toEqual(v.conversation_key)
     const ciphertext = v2.encrypt(v.plaintext, key, hexToBytes(v.nonce))
@@ -40,7 +40,7 @@ test('decrypt', async () => {
 test('get_conversation_key', async () => {
   for (const v of v2vec.invalid.get_conversation_key) {
     expect(() => v2.utils.getConversationKey(hexToBytes(v.sec1), v.pub2)).toThrow(
-      /(Point is not on curve|Cannot find square root)/,
+      /(Point is not on curve|Cannot find square root|invalid field element)/,
     )
   }
 })
