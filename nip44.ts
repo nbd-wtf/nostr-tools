@@ -1,5 +1,5 @@
-import { chacha20 } from '@noble/ciphers/chacha'
-import { equalBytes } from '@noble/ciphers/utils'
+import { chacha20 } from '@noble/ciphers/chacha.js'
+import { equalBytes } from '@noble/ciphers/utils.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
 import { extract as hkdf_extract, expand as hkdf_expand } from '@noble/hashes/hkdf.js'
 import { hmac } from '@noble/hashes/hmac.js'

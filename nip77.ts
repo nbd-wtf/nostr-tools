@@ -1,4 +1,4 @@
-import { bytesToHex, hexToBytes } from '@noble/ciphers/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 import { Filter } from './filter.ts'
 import { AbstractRelay, Subscription } from './relay.ts'
 import { sha256 } from '@noble/hashes/sha2.js'

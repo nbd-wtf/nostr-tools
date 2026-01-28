@@ -1,6 +1,6 @@
-import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js'
+import { hexToBytes, randomBytes } from '@noble/hashes/utils.js'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { cbc } from '@noble/ciphers/aes'
+import { cbc } from '@noble/ciphers/aes.js'
 import { base64 } from '@scure/base'
 
 import { utf8Decoder, utf8Encoder } from './utils.ts'
