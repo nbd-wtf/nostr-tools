@@ -1,4 +1,4 @@
-# ![](https://img.shields.io/github/actions/workflow/status/nbd-wtf/nostr-tools/test.yml) [![JSR](https://jsr.io/badges/@nostr/tools)](https://jsr.io/@nostr/tools) nostr-tools
+# [![JSR](https://jsr.io/badges/@nostr/tools)](https://jsr.io/@nostr/tools) @nostr/tools
 
 Tools for developing [Nostr](https://github.com/fiatjaf/nostr) clients.
 
@@ -9,9 +9,6 @@ This package is only providing lower-level functionality. If you want higher-lev
 ## Installation
 
 ```bash
-# npm
-npm install --save nostr-tools
-
 # jsr
 npx jsr add @nostr/tools
 ```
@@ -27,7 +24,7 @@ https://jsr.io/@nostr/tools/doc
 ### Generating a private key and a public key
 
 ```js
-import { generateSecretKey, getPublicKey } from 'nostr-tools/pure'
+import { generateSecretKey, getPublicKey } from '@nostr/tools/pure'
 
 let sk = generateSecretKey() // `sk` is a Uint8Array
 let pk = getPublicKey(sk) // `pk` is a hex string
@@ -36,7 +33,7 @@ let pk = getPublicKey(sk) // `pk` is a hex string
 To get the secret key in hex format, use
 
 ```js
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils' // already an installed dependency
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js' // already an installed dependency
 
 let skHex = bytesToHex(sk)
 let backToBytes = hexToBytes(skHex)
@@ -45,7 +42,7 @@ let backToBytes = hexToBytes(skHex)
 ### Creating, signing and verifying events
 
 ```js
-import { finalizeEvent, verifyEvent } from 'nostr-tools/pure'
+import { finalizeEvent, verifyEvent } from '@nostr/tools/pure'
 
 let event = finalizeEvent({
   kind: 1,
@@ -62,8 +59,8 @@ let isGood = verifyEvent(event)
 Doesn't matter what you do, you always should be using a `SimplePool`:
 
 ```js
-import { finalizeEvent, generateSecretKey, getPublicKey } from 'nostr-tools/pure'
-import { SimplePool } from 'nostr-tools/pool'
+import { finalizeEvent, generateSecretKey, getPublicKey } from '@nostr/tools/pure'
+import { SimplePool } from '@nostr/tools/pool'
 
 const pool = new SimplePool()
 
@@ -126,8 +123,8 @@ relay.close()
 To use this on Node.js you first must install `ws` and call something like this:
 
 ```js
-import { useWebSocketImplementation } from 'nostr-tools/pool'
-// or import { useWebSocketImplementation } from 'nostr-tools/relay' if you're using the Relay directly
+import { useWebSocketImplementation } from '@nostr/tools/pool'
+// or import { useWebSocketImplementation } from '@nostr/tools/relay' if you're using the Relay directly
 
 import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
@@ -138,7 +135,7 @@ useWebSocketImplementation(WebSocket)
 You can enable regular pings of connected relays with the `enablePing` option. This will set up a heartbeat that closes the websocket if it doesn't receive a response in time. Some platforms, like Node.js, don't report websocket disconnections due to network issues, and enabling this can increase the reliability of the `onclose` event.
 
 ```js
-import { SimplePool } from 'nostr-tools/pool'
+import { SimplePool } from '@nostr/tools/pool'
 
 const pool = new SimplePool({ enablePing: true })
 ```
@@ -148,7 +145,7 @@ const pool = new SimplePool({ enablePing: true })
 You can also enable automatic reconnection with the `enableReconnect` option. This will make the pool try to reconnect to relays with an exponential backoff delay if the connection is lost unexpectedly.
 
 ```js
-import { SimplePool } from 'nostr-tools/pool'
+import { SimplePool } from '@nostr/tools/pool'
 
 const pool = new SimplePool({ enableReconnect: true })
 ```
@@ -331,7 +328,7 @@ for (let profile of refs.profiles) {
 ### Querying profile data from a NIP-05 address
 
 ```js
-import { queryProfile } from 'nostr-tools/nip05'
+import { queryProfile } from '@nostr/tools/nip05'
 
 let profile = await queryProfile('jb55.com')
 console.log(profile.pubkey)
@@ -343,13 +340,13 @@ console.log(profile.relays)
 To use this on Node.js < v18, you first must install `node-fetch@2` and call something like this:
 
 ```js
-import { useFetchImplementation } from 'nostr-tools/nip05'
+import { useFetchImplementation } from '@nostr/tools/nip05'
 useFetchImplementation(require('node-fetch'))
 ```
 
 ### Including NIP-07 types
 ```js
-import type { WindowNostr } from 'nostr-tools/nip07'
+import type { WindowNostr } from '@nostr/tools/nip07'
 
 declare global {
   interface Window {
@@ -361,8 +358,8 @@ declare global {
 ### Encoding and decoding NIP-19 codes
 
 ```js
-import { generateSecretKey, getPublicKey } from 'nostr-tools/pure'
-import * as nip19 from 'nostr-tools/nip19'
+import { generateSecretKey, getPublicKey } from '@nostr/tools/pure'
+import * as nip19 from '@nostr/tools/nip19'
 
 let sk = generateSecretKey()
 let nsec = nip19.nsecEncode(sk)
@@ -390,7 +387,7 @@ assert(data.relays.length === 2)
 [`nostr-wasm`](https://github.com/fiatjaf/nostr-wasm) is a thin wrapper over [libsecp256k1](https://github.com/bitcoin-core/secp256k1) compiled to WASM just for hashing, signing and verifying Nostr events.
 
 ```js
-import { setNostrWasm, generateSecretKey, finalizeEvent, verifyEvent } from 'nostr-tools/wasm'
+import { setNostrWasm, generateSecretKey, finalizeEvent, verifyEvent } from '@nostr/tools/wasm'
 import { initNostrWasm } from 'nostr-wasm'
 
 // make sure this promise resolves before your app starts calling finalizeEvent or verifyEvent
@@ -403,9 +400,9 @@ initNostrWasm().then(setNostrWasm)
 If you're going to use `Relay` and `SimplePool` you must also import `nostr-tools/abstract-relay` and/or `nostr-tools/abstract-pool` instead of the defaults and then instantiate them by passing the `verifyEvent`:
 
 ```js
-import { setNostrWasm, verifyEvent } from 'nostr-tools/wasm'
-import { AbstractRelay } from 'nostr-tools/abstract-relay'
-import { AbstractSimplePool } from 'nostr-tools/abstract-pool'
+import { setNostrWasm, verifyEvent } from '@nostr/tools/wasm'
+import { AbstractRelay } from '@nostr/tools/abstract-relay'
+import { AbstractSimplePool } from '@nostr/tools/abstract-pool'
 import { initNostrWasm } from 'nostr-wasm'
 
 initNostrWasm().then(setNostrWasm)
@@ -442,7 +439,7 @@ summary for relay read message and verify event
 
 ## Plumbing
 
-To develop `nostr-tools`, install [`just`](https://just.systems/) and run `just -l` to see commands available.
+To develop `@nostr/tools`, install [`just`](https://just.systems/) and run `just -l` to see commands available.
 
 ## License
 
