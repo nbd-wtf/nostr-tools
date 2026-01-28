@@ -42,18 +42,3 @@ esbuild
 
     console.log('cjs build success.')
   })
-
-esbuild
-  .build({
-    ...common,
-    entryPoints: ['index.ts'],
-    outfile: 'lib/nostr.bundle.js',
-    format: 'iife',
-    globalName: 'NostrTools',
-    define: {
-      window: 'self',
-      global: 'self',
-      process: '{"env": {}}',
-    },
-  })
-  .then(() => console.log('standalone build success.'))

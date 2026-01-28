@@ -2,7 +2,6 @@
   "name": "@nostr/tools",
   "version": "2.21.0",
   "exports": {
-    ".": "./index.ts",
     "./core": "./core.ts",
     "./pure": "./pure.ts",
     "./wasm": "./wasm.ts",
