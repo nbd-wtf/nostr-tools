@@ -110,7 +110,7 @@ export function decode(nip19: NPub): DecodedNpub
 export function decode(nip19: Note): DecodedNote
 export function decode(code: string): DecodedResult
 export function decode(code: string): DecodedResult {
-  let { prefix, words } = bech32.decode(code, Bech32MaxSize)
+  let { prefix, words } = bech32.decode(code as `${string}1${string}`, Bech32MaxSize)
   let data = new Uint8Array(bech32.fromWords(words))
 
   switch (prefix) {

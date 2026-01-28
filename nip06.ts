@@ -1,5 +1,5 @@
 import { bytesToHex } from '@noble/hashes/utils.js'
-import { wordlist } from '@scure/bip39/wordlists/english'
+import { wordlist } from '@scure/bip39/wordlists/english.js'
 import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from '@scure/bip39'
 import { HDKey } from '@scure/bip32'
 

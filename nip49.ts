@@ -22,7 +22,7 @@ export function encrypt(
 }
 
 export function decrypt(ncryptsec: string, password: string): Uint8Array {
-  let { prefix, words } = bech32.decode(ncryptsec, Bech32MaxSize)
+  let { prefix, words } = bech32.decode(ncryptsec as `${string}1${string}`, Bech32MaxSize)
   if (prefix !== 'ncryptsec') {
     throw new Error(`invalid prefix ${prefix}, expected 'ncryptsec'`)
   }

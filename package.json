@@ -236,12 +236,12 @@
   },
   "license": "Unlicense",
   "dependencies": {
-    "@noble/ciphers": "^2.1.1",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
-    "@scure/base": "^2.0.0",
-    "@scure/bip32": "^2.0.1",
-    "@scure/bip39": "^2.0.1",
+    "@noble/ciphers": "npm:@jsr/noble__ciphers@2.1.1",
+    "@noble/curves": "npm:@jsr/noble__curves@2.0.1",
+    "@noble/hashes": "npm:@jsr/noble__hashes@2.0.1",
+    "@scure/base": "npm:@jsr/scure__base@2.0.0",
+    "@scure/bip32": "npm:@jsr/scure__bip32@2.0.1",
+    "@scure/bip39": "npm:@jsr/scure__bip39@2.0.1",
     "nostr-wasm": "0.1.0"
   },
   "peerDependencies": {
