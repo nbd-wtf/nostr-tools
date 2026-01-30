@@ -11,6 +11,7 @@ import { normalizeURL } from './utils.ts'
 import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
+import { Relay } from './relay.ts'
 
 export type SubCloser = { close: (reason?: string) => void }
 
@@ -19,6 +20,11 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   // in case that relay shouldn't be authenticated against
   // or a function to sign the AUTH event template otherwise (that function may still throw in case of failure)
   automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
+  // onRelayConnectionFailure is called with the URL of a relay that failed the initial connection
+  onRelayConnectionFailure?: (url: string) => void
+  // allowConnectingToRelay takes a relay URL and the operation being performed
+  // return false to skip connecting to that relay
+  allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
 }
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
@@ -40,6 +46,8 @@ export class AbstractSimplePool {
   public enableReconnect: boolean
   public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   public trustedRelayURLs: Set<string> = new Set()
+  public onRelayConnectionFailure?: (url: string) => void
+  public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
 
   private _WebSocket?: typeof WebSocket
 
@@ -49,6 +57,8 @@ export class AbstractSimplePool {
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect || false
     this.automaticallyAuth = opts.automaticallyAuth
+    this.onRelayConnectionFailure = opts.onRelayConnectionFailure
+    this.allowConnectingToRelay = opts.allowConnectingToRelay
   }
 
   async ensureRelay(
@@ -181,6 +191,11 @@ export class AbstractSimplePool {
     // open a subscription in all given relays
     const allOpened = Promise.all(
       groupedRequests.map(async ({ url, filters }, i) => {
+        if (this.allowConnectingToRelay?.(url, ['read', filters]) === false) {
+          handleClose(i, 'connection skipped by allowConnectingToRelay')
+          return
+        }
+
         let relay: AbstractRelay
         try {
           relay = await this.ensureRelay(url, {
@@ -188,6 +203,7 @@ export class AbstractSimplePool {
             abort: params.abort,
           })
         } catch (err) {
+          this.onRelayConnectionFailure?.(url)
           handleClose(i, (err as any)?.message || String(err))
           return
         }
@@ -306,7 +322,18 @@ export class AbstractSimplePool {
         return Promise.reject('duplicate url')
       }
 
-      let r = await this.ensureRelay(url)
+      if (this.allowConnectingToRelay?.(url, ['write', event]) === false) {
+        return Promise.reject('connection skipped by allowConnectingToRelay')
+      }
+
+      let r: Relay
+      try {
+        r = await this.ensureRelay(url)
+      } catch (err) {
+        this.onRelayConnectionFailure?.(url)
+        return String('connection failure: ' + String(err))
+      }
+
       return r
         .publish(event)
         .catch(async err => {
