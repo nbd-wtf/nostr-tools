@@ -157,6 +157,7 @@ export class AbstractRelay {
         clearTimeout(connectionTimeoutHandle)
         reject('connection failed')
         this.connectionPromise = undefined
+        this.closedIntentionally = true // prevent reconnect attempts on initial connection failure
         this.onclose?.()
         this.handleHardClose('relay connection failed')
       }
