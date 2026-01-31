@@ -22,6 +22,8 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   // onRelayConnectionFailure is called with the URL of a relay that failed the initial connection
   onRelayConnectionFailure?: (url: string) => void
+  // onRelayConnectionSuccess is called with the URL of a relay that succeeds the initial connection
+  onRelayConnectionSuccess?: (url: string) => void
   // allowConnectingToRelay takes a relay URL and the operation being performed
   // return false to skip connecting to that relay
   allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
@@ -50,6 +52,7 @@ export class AbstractSimplePool {
   public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   public trustedRelayURLs: Set<string> = new Set()
   public onRelayConnectionFailure?: (url: string) => void
+  public onRelayConnectionSuccess?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
   public maxWaitForConnection: number
 
@@ -62,6 +65,7 @@ export class AbstractSimplePool {
     this.enableReconnect = opts.enableReconnect || false
     this.automaticallyAuth = opts.automaticallyAuth
     this.onRelayConnectionFailure = opts.onRelayConnectionFailure
+    this.onRelayConnectionSuccess = opts.onRelayConnectionSuccess
     this.allowConnectingToRelay = opts.allowConnectingToRelay
     this.maxWaitForConnection = opts.maxWaitForConnection || 3000
   }
@@ -215,6 +219,8 @@ export class AbstractSimplePool {
           handleClose(i, (err as any)?.message || String(err))
           return
         }
+
+        this.onRelayConnectionSuccess?.(url)
 
         let subscription = relay.subscribe(filters, {
           ...params,
