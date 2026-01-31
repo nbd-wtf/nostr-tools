@@ -45,7 +45,7 @@ export class AbstractRelay {
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
   private reconnectAttempts: number = 0
-  private closedIntentionally: boolean = false
+  private skipReconnection: boolean = false
 
   private connectionPromise: Promise<void> | undefined
   private openCountRequests = new Map<string, CountResolver>()
@@ -120,12 +120,9 @@ export class AbstractRelay {
     this._connected = false
     this.connectionPromise = undefined
 
-    const wasIntentional = this.closedIntentionally
-    this.closedIntentionally = false // reset for next time
-
     this.onclose?.()
 
-    if (this.enableReconnect && !wasIntentional) {
+    if (this.enableReconnect && !this.skipReconnection) {
       this.reconnect()
     } else {
       this.closeAllSubscriptions(reason)
@@ -139,11 +136,13 @@ export class AbstractRelay {
 
     this.challenge = undefined
     this.authPromise = undefined
+    this.skipReconnection = false
     this.connectionPromise = new Promise((resolve, reject) => {
       if (opts?.timeout) {
         connectionTimeoutHandle = setTimeout(() => {
           reject('connection timed out')
           this.connectionPromise = undefined
+          this.skipReconnection = true
           this.onclose?.()
           this.handleHardClose('relay connection timed out')
         }, opts.timeout)
@@ -153,18 +152,8 @@ export class AbstractRelay {
         opts.abort.onabort = reject
       }
 
-      const connectionFailed = () => {
-        clearTimeout(connectionTimeoutHandle)
-        reject('connection failed')
-        this.connectionPromise = undefined
-        this.closedIntentionally = true // prevent reconnect attempts on initial connection failure
-        this.onclose?.()
-        this.handleHardClose('relay connection failed')
-      }
-
       try {
         this.ws = new this._WebSocket(this.url)
-        this.ws.addEventListener('error', connectionFailed)
       } catch (err) {
         clearTimeout(connectionTimeoutHandle)
         reject(err)
@@ -172,8 +161,6 @@ export class AbstractRelay {
       }
 
       this.ws.onopen = () => {
-        this.ws?.removeEventListener('error', connectionFailed)
-
         if (this.reconnectTimeoutHandle) {
           clearTimeout(this.reconnectTimeoutHandle)
           this.reconnectTimeoutHandle = undefined
@@ -203,10 +190,13 @@ export class AbstractRelay {
         resolve()
       }
 
-      this.ws.onerror = ev => {
+      this.ws.onerror = () => {
         clearTimeout(connectionTimeoutHandle)
-        reject((ev as any).message || 'websocket error')
-        this.handleHardClose('relay connection errored')
+        reject('connection failed')
+        this.connectionPromise = undefined
+        this.skipReconnection = true
+        this.onclose?.()
+        this.handleHardClose('relay connection failed')
       }
 
       this.ws.onclose = ev => {
@@ -478,7 +468,7 @@ export class AbstractRelay {
   }
 
   public close() {
-    this.closedIntentionally = true
+    this.skipReconnection = true
     if (this.reconnectTimeoutHandle) {
       clearTimeout(this.reconnectTimeoutHandle)
       this.reconnectTimeoutHandle = undefined
