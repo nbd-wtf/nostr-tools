@@ -25,6 +25,9 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   // allowConnectingToRelay takes a relay URL and the operation being performed
   // return false to skip connecting to that relay
   allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
+  // maxWaitForConnection takes a number in milliseconds that will be given to ensureRelay such that we
+  // don't get stuck forever when attempting to connect to a relay, it is 3000 (3 seconds) by default
+  maxWaitForConnection: number
 }
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
@@ -48,6 +51,7 @@ export class AbstractSimplePool {
   public trustedRelayURLs: Set<string> = new Set()
   public onRelayConnectionFailure?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
+  public maxWaitForConnection: number
 
   private _WebSocket?: typeof WebSocket
 
@@ -59,6 +63,7 @@ export class AbstractSimplePool {
     this.automaticallyAuth = opts.automaticallyAuth
     this.onRelayConnectionFailure = opts.onRelayConnectionFailure
     this.allowConnectingToRelay = opts.allowConnectingToRelay
+    this.maxWaitForConnection = opts.maxWaitForConnection || 3000
   }
 
   async ensureRelay(
@@ -199,7 +204,10 @@ export class AbstractSimplePool {
         let relay: AbstractRelay
         try {
           relay = await this.ensureRelay(url, {
-            connectionTimeout: params.maxWait ? Math.max(params.maxWait * 0.8, params.maxWait - 1000) : undefined,
+            connectionTimeout:
+              this.maxWaitForConnection < (params.maxWait || 0)
+                ? Math.max(params.maxWait! * 0.8, params.maxWait! - 1000)
+                : this.maxWaitForConnection,
             abort: params.abort,
           })
         } catch (err) {
@@ -314,7 +322,11 @@ export class AbstractSimplePool {
   publish(
     relays: string[],
     event: Event,
-    options?: { onauth?: (evt: EventTemplate) => Promise<VerifiedEvent> },
+    params?: {
+      onauth?: (evt: EventTemplate) => Promise<VerifiedEvent>
+      maxWait?: number
+      abort?: AbortSignal
+    },
   ): Promise<string>[] {
     return relays.map(normalizeURL).map(async (url, i, arr) => {
       if (arr.indexOf(url) !== i) {
@@ -328,7 +340,13 @@ export class AbstractSimplePool {
 
       let r: Relay
       try {
-        r = await this.ensureRelay(url)
+        r = await this.ensureRelay(url, {
+          connectionTimeout:
+            this.maxWaitForConnection < (params?.maxWait || 0)
+              ? Math.max(params!.maxWait! * 0.8, params!.maxWait! - 1000)
+              : this.maxWaitForConnection,
+          abort: params?.abort,
+        })
       } catch (err) {
         this.onRelayConnectionFailure?.(url)
         return String('connection failure: ' + String(err))
@@ -337,8 +355,8 @@ export class AbstractSimplePool {
       return r
         .publish(event)
         .catch(async err => {
-          if (err instanceof Error && err.message.startsWith('auth-required: ') && options?.onauth) {
-            await r.auth(options.onauth)
+          if (err instanceof Error && err.message.startsWith('auth-required: ') && params?.onauth) {
+            await r.auth(params.onauth)
             return r.publish(event) // retry
           }
           throw err

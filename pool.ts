@@ -15,7 +15,7 @@ export function useWebSocketImplementation(websocketImplementation: any) {
 
 export class SimplePool extends AbstractSimplePool {
   constructor(options?: Pick<AbstractPoolConstructorOptions, 'enablePing' | 'enableReconnect'>) {
-    super({ verifyEvent, websocketImplementation: _WebSocket, ...options })
+    super({ verifyEvent, websocketImplementation: _WebSocket, maxWaitForConnection: 3000, ...options })
   }
 }
 
