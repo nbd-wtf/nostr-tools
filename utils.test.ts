@@ -6,6 +6,7 @@ import {
   insertEventIntoDescendingList,
   binarySearch,
   normalizeURL,
+  mergeReverseSortedLists,
 } from './utils.ts'
 
 import type { Event } from './core.ts'
@@ -268,6 +269,94 @@ test('binary search', () => {
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('c' < b ? -1 : 'c' === b ? 0 : 1))).toEqual([2, false])
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('a' < b ? -1 : 'a' === b ? 0 : 1))).toEqual([0, true])
   expect(binarySearch(['a', 'b', 'd', 'e'], b => ('[' < b ? -1 : '[' === b ? 0 : 1))).toEqual([0, false])
+})
+
+describe('mergeReverseSortedLists', () => {
+  test('merge empty lists', () => {
+    const list1: Event[] = []
+    const list2: Event[] = []
+    expect(mergeReverseSortedLists(list1, list2)).toHaveLength(0)
+  })
+
+  test('merge list with empty list', () => {
+    const list1 = [buildEvent({ id: 'a', created_at: 30 }), buildEvent({ id: 'b', created_at: 20 })]
+    const list2: Event[] = []
+    const result = mergeReverseSortedLists(list1, list2)
+    expect(result).toHaveLength(2)
+    expect(result.map(e => e.id)).toEqual(['a', 'b'])
+  })
+
+  test('merge two simple lists', () => {
+    const list1 = [
+      buildEvent({ id: 'a', created_at: 30 }),
+      buildEvent({ id: 'b', created_at: 10 }),
+      buildEvent({ id: 'f', created_at: 3 }),
+      buildEvent({ id: 'g', created_at: 2 }),
+    ]
+    const list2 = [
+      buildEvent({ id: 'c', created_at: 25 }),
+      buildEvent({ id: 'd', created_at: 5 }),
+      buildEvent({ id: 'e', created_at: 1 }),
+    ]
+    const result = mergeReverseSortedLists(list1, list2)
+    expect(result.map(e => e.id)).toEqual(['a', 'c', 'b', 'd', 'f', 'g', 'e'])
+  })
+
+  test('merge lists with same timestamps', () => {
+    const list1 = [
+      buildEvent({ id: 'a', created_at: 30 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'f', created_at: 10 }),
+    ]
+    const list2 = [
+      buildEvent({ id: 'c', created_at: 30 }),
+      buildEvent({ id: 'd', created_at: 20 }),
+      buildEvent({ id: 'e', created_at: 20 }),
+    ]
+    const result = mergeReverseSortedLists(list1, list2)
+    expect(result.map(e => e.id)).toEqual(['c', 'a', 'd', 'e', 'b', 'f'])
+  })
+
+  test('deduplicate events with same timestamp and id', () => {
+    const list1 = [
+      buildEvent({ id: 'a', created_at: 30 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'c', created_at: 20 }),
+      buildEvent({ id: 'd', created_at: 10 }),
+    ]
+    const list2 = [
+      buildEvent({ id: 'a', created_at: 30 }),
+      buildEvent({ id: 'c', created_at: 20 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'd', created_at: 10 }),
+      buildEvent({ id: 'e', created_at: 10 }),
+      buildEvent({ id: 'd', created_at: 10 }),
+    ]
+    console.log('==================')
+    const result = mergeReverseSortedLists(list1, list2)
+    console.log(
+      'result:',
+      result.map(e => e.id),
+    )
+    expect(result.map(e => e.id)).toEqual(['a', 'c', 'b', 'd', 'e'])
+  })
+
+  test('merge when one list is completely before the other', () => {
+    const list1 = [buildEvent({ id: 'a', created_at: 50 }), buildEvent({ id: 'b', created_at: 40 })]
+    const list2 = [buildEvent({ id: 'c', created_at: 30 }), buildEvent({ id: 'd', created_at: 20 })]
+    const result = mergeReverseSortedLists(list1, list2)
+    expect(result).toHaveLength(4)
+    expect(result.map(e => e.id)).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  test('merge when one list is completely after the other', () => {
+    const list1 = [buildEvent({ id: 'a', created_at: 10 }), buildEvent({ id: 'b', created_at: 5 })]
+    const list2 = [buildEvent({ id: 'c', created_at: 30 }), buildEvent({ id: 'd', created_at: 20 })]
+    const result = mergeReverseSortedLists(list1, list2)
+    expect(result).toHaveLength(4)
+    expect(result.map(e => e.id)).toEqual(['c', 'd', 'a', 'b'])
+  })
 })
 
 describe('normalizeURL', () => {
