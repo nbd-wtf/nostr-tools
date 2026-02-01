@@ -119,10 +119,14 @@ export class AbstractSimplePool {
 
   subscribe(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
     const request: { url: string; filter: Filter }[] = []
+    const uniqUrls: string[] = []
     for (let i = 0; i < relays.length; i++) {
       const url = normalizeURL(relays[i])
       if (!request.find(r => r.url === url)) {
-        request.push({ url, filter: filter })
+        if (uniqUrls.indexOf(url) === -1) {
+          uniqUrls.push(url)
+          request.push({ url, filter: filter })
+        }
       }
     }
 
@@ -130,17 +134,7 @@ export class AbstractSimplePool {
   }
 
   subscribeMany(relays: string[], filter: Filter, params: SubscribeManyParams): SubCloser {
-    const request: { url: string; filter: Filter }[] = []
-    const uniqUrls: string[] = []
-    for (let i = 0; i < relays.length; i++) {
-      const url = normalizeURL(relays[i])
-      if (uniqUrls.indexOf(url) === -1) {
-        uniqUrls.push(url)
-        request.push({ url, filter: filter })
-      }
-    }
-
-    return this.subscribeMap(request, params)
+    return this.subscribe(relays, filter, params)
   }
 
   subscribeMap(requests: { url: string; filter: Filter }[], params: SubscribeManyParams): SubCloser {
@@ -286,13 +280,7 @@ export class AbstractSimplePool {
     filter: Filter,
     params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
-    const subcloser = this.subscribeMany(relays, filter, {
-      ...params,
-      oneose() {
-        subcloser.close('closed automatically on eose')
-      },
-    })
-    return subcloser
+    return this.subscribeEose(relays, filter, params)
   }
 
   async querySync(
