@@ -342,16 +342,24 @@ export class AbstractRelay {
       this.ongoingOperations++
     }
 
-    this.serial++
-    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
-    const sub = new Subscription(this, id, filters, params)
-    this.openSubs.set(id, sub)
+    const sub = this.prepareSubscription(filters, params)
     sub.fire()
 
     if (params.abort) {
       params.abort.onabort = () => sub.close(String(params.abort!.reason || '<aborted>'))
     }
 
+    return sub
+  }
+
+  public prepareSubscription(
+    filters: Filter[],
+    params: Partial<SubscriptionParams> & { label?: string; id?: string },
+  ): Subscription {
+    this.serial++
+    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
+    const sub = new Subscription(this, id, filters, params)
+    this.openSubs.set(id, sub)
     return sub
   }
 
