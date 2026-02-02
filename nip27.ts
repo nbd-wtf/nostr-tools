@@ -69,7 +69,7 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
 
     if (u === -1 || (h >= 0 && h < u)) {
       // parse hashtag
-      if (h === 0 || content[h - 1] === ' ') {
+      if (h === 0 || content[h - 1].match(noCharacter)) {
         const m = content.slice(h + 1, h + MAX_HASHTAG_LENGTH).match(noCharacter)
         const end = m ? h + 1 + m.index! : max
         yield { type: 'text', text: content.slice(prevIndex, h) }

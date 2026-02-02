@@ -85,7 +85,7 @@ test('parse content with hashtags and emoji shortcodes', () => {
       ['emoji', 'alpaca', 'https://example.com/alpaca.png'],
     ],
     content:
-      'hey nostr:npub1hpslpc8c5sp3e2nhm2fr7swsfqpys5vyjar5dwpn7e7decps6r8qkcln63 check out :alpaca::alpaca: #alpaca at wss://alpaca.com! :star:',
+      'hey nostr:npub1hpslpc8c5sp3e2nhm2fr7swsfqpys5vyjar5dwpn7e7decps6r8qkcln63 check out :alpaca::alpaca: #alpaca at wss://alpaca.com! :star:\n\n#WORDS #486 5/6',
     created_at: 1234567890,
     pubkey: 'dummy',
     id: 'dummy',
@@ -105,6 +105,11 @@ test('parse content with hashtags and emoji shortcodes', () => {
     { type: 'relay', url: 'wss://alpaca.com/' },
     { type: 'text', text: '! ' },
     { type: 'emoji', shortcode: 'star', url: 'https://example.com/star.png' },
+    { type: 'text', text: '\n\n' },
+    { type: 'hashtag', value: 'WORDS' },
+    { type: 'text', text: ' ' },
+    { type: 'hashtag', value: '486' },
+    { type: 'text', text: ' 5/6' },
   ])
 })
 
