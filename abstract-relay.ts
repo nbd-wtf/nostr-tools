@@ -384,10 +384,10 @@ export class AbstractRelay {
 
   // this is the function assigned to this.ws.onmessage
   // it's exposed for testing and debugging purposes
-  public _onmessage(ev: MessageEvent<any>) {
+  public _onmessage(ev: MessageEvent<any>): void {
     const json = ev.data
     if (!json) {
-      return false
+      return
     }
 
     // shortcut EVENT sub
