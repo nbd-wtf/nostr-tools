@@ -41,6 +41,8 @@ export class AbstractRelay {
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
   public enableReconnect: boolean
+  public idleSince: number | undefined = Date.now() // when undefined that means it isn't idle
+  public ongoingOperations: number = 0 // used to compute idleness
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
   private reconnectAttempts: number = 0
@@ -116,12 +118,12 @@ export class AbstractRelay {
 
     this._connected = false
     this.connectionPromise = undefined
-
-    this.onclose?.()
+    this.idleSince = undefined
 
     if (this.enableReconnect && !this.skipReconnection) {
       this.reconnect()
     } else {
+      this.onclose?.()
       this.closeAllSubscriptions(reason)
     }
   }
@@ -227,7 +229,7 @@ export class AbstractRelay {
         const sub = this.subscribe(
           [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
           {
-            label: 'forced-ping',
+            label: '<forced-ping>',
             oneose: () => {
               resolve(true)
               sub.close()
@@ -299,6 +301,9 @@ export class AbstractRelay {
   }
 
   public async publish(event: Event): Promise<string> {
+    this.idleSince = undefined
+    this.ongoingOperations++
+
     const ret = new Promise<string>((resolve, reject) => {
       const timeout = setTimeout(() => {
         const ep = this.openEventPublishes.get(event.id) as EventPublishResolver
@@ -310,6 +315,11 @@ export class AbstractRelay {
       this.openEventPublishes.set(event.id, { resolve, reject, timeout })
     })
     this.send('["EVENT",' + JSON.stringify(event) + ']')
+
+    // compute idleness state
+    this.ongoingOperations--
+    if (this.ongoingOperations === 0) this.idleSince = Date.now()
+
     return ret
   }
 
@@ -327,7 +337,15 @@ export class AbstractRelay {
     filters: Filter[],
     params: Partial<SubscriptionParams> & { label?: string; id?: string },
   ): Subscription {
-    const sub = this.prepareSubscription(filters, params)
+    if (params.label !== '<forced-ping>') {
+      this.idleSince = undefined
+      this.ongoingOperations++
+    }
+
+    this.serial++
+    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
+    const sub = new Subscription(this, id, filters, params)
+    this.openSubs.set(id, sub)
     sub.fire()
 
     if (params.abort) {
@@ -335,17 +353,6 @@ export class AbstractRelay {
     }
 
     return sub
-  }
-
-  public prepareSubscription(
-    filters: Filter[],
-    params: Partial<SubscriptionParams> & { label?: string; id?: string },
-  ): Subscription {
-    this.serial++
-    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
-    const subscription = new Subscription(this, id, filters, params)
-    this.openSubs.set(id, subscription)
-    return subscription
   }
 
   public close() {
@@ -360,6 +367,7 @@ export class AbstractRelay {
     }
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
+    this.idleSince = undefined
     this.onclose?.()
     if (this.ws?.readyState === this._WebSocket.OPEN) {
       this.ws?.close()
@@ -549,6 +557,11 @@ export class Subscription {
       this.closed = true
     }
     this.relay.openSubs.delete(this.id)
+
+    // compute idleness state
+    this.relay.ongoingOperations--
+    if (this.relay.ongoingOperations === 0) this.relay.idleSince = Date.now()
+
     this.onclose?.(reason)
   }
 }

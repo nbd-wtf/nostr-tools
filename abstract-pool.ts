@@ -88,9 +88,7 @@ export class AbstractSimplePool {
         enableReconnect: this.enableReconnect,
       })
       relay.onclose = () => {
-        if (relay && !relay.enableReconnect) {
-          this.relays.delete(url)
-        }
+        this.relays.delete(url)
       }
       this.relays.set(url, relay)
     }
@@ -102,10 +100,15 @@ export class AbstractSimplePool {
       }
     }
 
-    await relay.connect({
-      timeout: params?.connectionTimeout,
-      abort: params?.abort,
-    })
+    try {
+      await relay.connect({
+        timeout: params?.connectionTimeout,
+        abort: params?.abort,
+      })
+    } catch (err) {
+      this.relays.delete(url)
+      throw err
+    }
 
     return relay
   }
@@ -379,5 +382,20 @@ export class AbstractSimplePool {
   destroy(): void {
     this.relays.forEach(conn => conn.close())
     this.relays = new Map()
+  }
+
+  pruneIdleRelays(idleThresholdMs: number = 10000): string[] {
+    const prunedUrls: string[] = []
+
+    // check each relay's idle status and prune if over threshold
+    for (const [url, relay] of this.relays) {
+      if (relay.idleSince && Date.now() - relay.idleSince >= idleThresholdMs) {
+        this.relays.delete(url)
+        prunedUrls.push(url)
+        relay.close()
+      }
+    }
+
+    return prunedUrls
   }
 }
