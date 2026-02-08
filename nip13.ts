@@ -21,6 +21,23 @@ export function getPow(hex: string): number {
   return count
 }
 
+/** Get POW difficulty directly from a Uint8Array hash. */
+function getPowFromBytes(hash: Uint8Array): number {
+  let count = 0
+
+  for (let i = 0; i < hash.length; i++) {
+    const byte = hash[i]
+    if (byte === 0) {
+      count += 8
+    } else {
+      count += Math.clz32(byte) - 24
+      break
+    }
+  }
+
+  return count
+}
+
 /**
  * Mine an event with the desired POW. This function mutates the event.
  * Note that this operation is synchronous and should be run in a worker context to avoid blocking the main thread.
@@ -43,18 +60,15 @@ export function minePow(unsigned: UnsignedEvent, difficulty: number): Omit<Event
 
     tag[1] = (++count).toString()
 
-    event.id = fastEventHash(event)
+    const hash = sha256(
+      utf8Encoder.encode(JSON.stringify([0, event.pubkey, event.created_at, event.kind, event.tags, event.content])),
+    )
 
-    if (getPow(event.id) >= difficulty) {
+    if (getPowFromBytes(hash) >= difficulty) {
+      event.id = bytesToHex(hash)
       break
     }
   }
 
   return event
-}
-
-export function fastEventHash(evt: UnsignedEvent): string {
-  return bytesToHex(
-    sha256(utf8Encoder.encode(JSON.stringify([0, evt.pubkey, evt.created_at, evt.kind, evt.tags, evt.content]))),
-  )
 }
