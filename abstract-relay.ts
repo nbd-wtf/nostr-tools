@@ -373,8 +373,8 @@ export class AbstractRelay {
       clearInterval(this.pingIntervalHandle)
       this.pingIntervalHandle = undefined
     }
-    this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
+    this.closeAllSubscriptions('relay connection closed by us')
     this.idleSince = undefined
     this.onclose?.()
     if (this.ws?.readyState === this._WebSocket.OPEN) {
