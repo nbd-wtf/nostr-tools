@@ -16,8 +16,7 @@ import { Relay } from './relay.ts'
 export type SubCloser = { close: (reason?: string) => void }
 
 export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
-  // automaticallyAuth takes a relay URL and should return null
-  // in case that relay shouldn't be authenticated against
+  // automaticallyAuth takes a relay URL and should return null in case that relay shouldn't be authenticated against
   // or a function to sign the AUTH event template otherwise (that function may still throw in case of failure)
   automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   // onRelayConnectionFailure is called with the URL of a relay that failed the initial connection
@@ -269,10 +268,13 @@ export class AbstractSimplePool {
     filter: Filter,
     params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
-    const subcloser = this.subscribe(relays, filter, {
+    let subcloser: SubCloser
+    subcloser = this.subscribe(relays, filter, {
       ...params,
       oneose() {
-        subcloser.close('closed automatically on eose')
+        const reason = 'closed automatically on eose'
+        if (subcloser) subcloser.close(reason)
+        else params.onclose?.(relays.map(_ => reason))
       },
     })
     return subcloser
