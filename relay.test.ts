@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test'
 import { Server } from 'mock-socket'
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
+import { NostrEvent } from './pure.ts'
 import { Relay, useWebSocketImplementation } from './relay.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
 
@@ -335,4 +336,60 @@ test('reconnect on disconnect', async () => {
 
   expect(relay.connected).toBeTrue()
   expect(closes).toBe(1) // should not have closed again
+})
+
+test('oninvalidevent is called for malformed events', async done => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url)
+  await relay.connect()
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], {
+    oninvalidevent(event) {
+      expect((event as any).kind).toBe('1')
+      sub.close()
+      relay.close()
+      done()
+    },
+  })
+
+  const sk = generateSecretKey()
+  const wrongFieldTypeEvent = [finalizeEvent(
+    {
+      kind: 1,
+      content: 'content',
+      created_at: 0,
+      tags: [],
+    },
+    sk
+  )].map(v => { (v as any).kind = '1'; return v })[0]
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
+})
+
+test('oninvalidevent is called for events that do not match subscription filters', async done => {
+  const mockRelay = new MockRelay()
+  const sk = generateSecretKey()
+  const relay = new Relay(mockRelay.url)
+  await relay.connect()
+
+  const sub = relay.prepareSubscription([{ kinds: [999] }], {
+    oninvalidevent(event) {
+      expect((event as NostrEvent).kind).toBe(1)
+      sub.close()
+      relay.close()
+      done()
+    },
+  })
+
+  const event = finalizeEvent(
+    {
+      kind: 1,
+      content: 'does not match filter',
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+    },
+    sk,
+  )
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, event]) } as MessageEvent)
 })
