@@ -266,7 +266,7 @@ export class AbstractSimplePool {
   subscribeEose(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'oninvalidevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
     let subcloser: SubCloser
     subcloser = this.subscribe(relays, filter, {
@@ -283,7 +283,7 @@ export class AbstractSimplePool {
   subscribeManyEose(
     relays: string[],
     filter: Filter,
-    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'onclose' | 'maxWait' | 'onauth'>,
+    params: Pick<SubscribeManyParams, 'label' | 'id' | 'onevent' | 'oninvalidevent' | 'onclose' | 'maxWait' | 'onauth'>,
   ): SubCloser {
     return this.subscribeEose(relays, filter, params)
   }
