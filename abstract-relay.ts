@@ -424,15 +424,7 @@ export class AbstractRelay {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as NostrEvent
-          let isVerified
-          try {
-            isVerified = this.verifyEvent(event)
-          } catch (err) {
-            console.warn('error verifying event:', err)
-            isVerified = false
-          }
-
-          if (isVerified && matchFilters(so.filters, event)) {
+          if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
           } else {
             so.oninvalidevent?.(event)
