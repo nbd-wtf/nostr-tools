@@ -23,13 +23,13 @@ class JS implements Nostr {
   verifyEvent(event: Event): event is VerifiedEvent {
     if (typeof event[verifiedSymbol] === 'boolean') return event[verifiedSymbol]
 
-    const hash = getEventHash(event)
-    if (hash !== event.id) {
-      event[verifiedSymbol] = false
-      return false
-    }
-
     try {
+      const hash = getEventHash(event)
+      if (hash !== event.id) {
+        event[verifiedSymbol] = false
+        return false
+      }
+
       const valid = schnorr.verify(hexToBytes(event.sig), hexToBytes(hash), hexToBytes(event.pubkey))
       event[verifiedSymbol] = valid
       return valid
