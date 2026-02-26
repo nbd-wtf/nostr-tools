@@ -393,3 +393,24 @@ test('track relays when publishing', async () => {
   await Promise.all(pool.publish(relayURLs, event2))
   expect(pool.seenOn.get(event2.id)).toBeUndefined()
 })
+
+test('oninvalidevent is called through the pool for invalid events', async done => {
+  const mockRelay = mockRelays[0]
+  const relay = await pool.ensureRelay(mockRelay.url)
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], {
+    oninvalidevent(event) {
+      expect((event as any).kind).toBe('1')
+      sub.close()
+      done()
+    },
+  })
+
+  const sk = generateSecretKey()
+  const wrongFieldTypeEvent = [finalizeEvent(
+    { kind: 1, content: 'hello', created_at: Math.floor(Date.now() / 1000), tags: [] },
+    sk,
+  )].map(v => { (v as any).kind = '1'; return v })[0]
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
+})

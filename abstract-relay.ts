@@ -426,6 +426,8 @@ export class AbstractRelay {
           const event = data[2] as NostrEvent
           if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
+          } else {
+            so.oninvalidevent?.(event)
           }
           if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
           return
@@ -504,6 +506,7 @@ export class Subscription {
   public receivedEvent: ((relay: AbstractRelay, id: string) => void) | undefined
 
   public onevent: (evt: Event) => void
+  public oninvalidevent: ((evt: unknown) => void) | undefined
   public oneose: (() => void) | undefined
   public onclose: ((reason: string) => void) | undefined
 
@@ -525,6 +528,7 @@ export class Subscription {
 
     this.oneose = params.oneose
     this.onclose = params.onclose
+    this.oninvalidevent = params.oninvalidevent
     this.onevent =
       params.onevent ||
       (event => {
@@ -576,6 +580,7 @@ export class Subscription {
 
 export type SubscriptionParams = {
   onevent?: (evt: Event) => void
+  oninvalidevent?: (evt: unknown) => void
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
