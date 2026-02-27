@@ -487,8 +487,12 @@ export class AbstractRelay {
         }
       }
     } catch (err) {
-      const [_, __, event] = JSON.parse(json)
-      ;(window as any).printer.maybe(event.pubkey, ':: caught err', event, this.url, err)
+      try {
+        const [_, __, event] = JSON.parse(json)
+        console.warn(`[nostr] relay ${this.url} error processing message:`, err, event)
+      } catch (_) {
+        console.warn(`[nostr] relay ${this.url} error processing message:`, err)
+      }
       return
     }
   }
