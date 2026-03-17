@@ -1,7 +1,8 @@
 import { bech32 } from '@scure/base'
 
-import { validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
+import { NostrEvent, validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
 import { utf8Decoder } from './utils.ts'
+import { isReplaceableKind, isAddressableKind } from './kinds.ts'
 
 var _fetch: any
 
@@ -17,13 +18,13 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   try {
     let lnurl: string = ''
     let { lud06, lud16 } = JSON.parse(metadata.content)
-    if (lud06) {
+    if (lud16) {
+      let [name, domain] = lud16.split('@')
+      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
+    } else if (lud06) {
       let { words } = bech32.decode(lud06, 1000)
       let data = bech32.fromWords(words)
       lnurl = utf8Decoder.decode(data)
-    } else if (lud16) {
-      let [name, domain] = lud16.split('@')
-      lnurl = new URL(`/.well-known/lnurlp/${name}`, `https://${domain}`).toString()
     } else {
       return null
     }
@@ -41,35 +42,44 @@ export async function getZapEndpoint(metadata: Event): Promise<null | string> {
   return null
 }
 
-export function makeZapRequest({
-  profile,
-  event,
-  amount,
-  relays,
-  comment = '',
-}: {
-  profile: string
-  event: string | null
+type ProfileZap = {
+  pubkey: string
   amount: number
-  comment: string
+  comment?: string
   relays: string[]
-}): EventTemplate {
-  if (!amount) throw new Error('amount not given')
-  if (!profile) throw new Error('profile not given')
+}
 
+type EventZap = {
+  event: NostrEvent
+  amount: number
+  comment?: string
+  relays: string[]
+}
+
+export function makeZapRequest(params: ProfileZap | EventZap): EventTemplate {
   let zr: EventTemplate = {
     kind: 9734,
     created_at: Math.round(Date.now() / 1000),
-    content: comment,
+    content: params.comment || '',
     tags: [
-      ['p', profile],
-      ['amount', amount.toString()],
-      ['relays', ...relays],
+      ['p', 'pubkey' in params ? params.pubkey : params.event.pubkey],
+      ['amount', params.amount.toString()],
+      ['relays', ...params.relays],
     ],
   }
 
-  if (event) {
-    zr.tags.push(['e', event])
+  if ('event' in params) {
+    zr.tags.push(['e', params.event.id])
+    if (isReplaceableKind(params.event.kind)) {
+      const a = ['a', `${params.event.kind}:${params.event.pubkey}:`]
+      zr.tags.push(a)
+    } else if (isAddressableKind(params.event.kind)) {
+      let d = params.event.tags.find(([t, v]) => t === 'd' && v)
+      if (!d) throw new Error('d tag not found or is empty')
+      const a = ['a', `${params.event.kind}:${params.event.pubkey}:${d[1]}`]
+      zr.tags.push(a)
+    }
+    zr.tags.push(['k', params.event.kind.toString()])
   }
 
   return zr
@@ -127,4 +137,53 @@ export function makeZapReceipt({
   }
 
   return zap
+}
+
+export function getSatoshisAmountFromBolt11(bolt11: string): number {
+  if (bolt11.length < 50) {
+    return 0
+  }
+  bolt11 = bolt11.substring(0, 50)
+  const idx = bolt11.lastIndexOf('1')
+  if (idx === -1) {
+    return 0
+  }
+  const hrp = bolt11.substring(0, idx)
+  if (!hrp.startsWith('lnbc')) {
+    return 0
+  }
+  const amount = hrp.substring(4) // equivalent to strings.CutPrefix
+
+  if (amount.length < 1) {
+    return 0
+  }
+
+  // if last character is a digit, then the amount can just be interpreted as BTC
+  const char = amount[amount.length - 1]
+  const digit = char.charCodeAt(0) - '0'.charCodeAt(0)
+  const isDigit = digit >= 0 && digit <= 9
+
+  let cutPoint = amount.length - 1
+  if (isDigit) {
+    cutPoint++
+  }
+
+  if (cutPoint < 1) {
+    return 0
+  }
+
+  const num = parseInt(amount.substring(0, cutPoint))
+
+  switch (char) {
+    case 'm':
+      return num * 100000
+    case 'u':
+      return num * 100
+    case 'n':
+      return num / 10
+    case 'p':
+      return num / 10000
+    default:
+      return num * 100000000
+  }
 }

@@ -1,5 +1,6 @@
-import { test, expect } from 'bun:test'
-import { classifyKind } from './kinds.ts'
+import { expect, test } from 'bun:test'
+import { classifyKind, isKind, Repost, ShortTextNote } from './kinds.ts'
+import { finalizeEvent, generateSecretKey } from './pure.ts'
 
 test('kind classification', () => {
   expect(classifyKind(1)).toBe('regular')
@@ -17,5 +18,24 @@ test('kind classification', () => {
   expect(classifyKind(30000)).toBe('parameterized')
   expect(classifyKind(39999)).toBe('parameterized')
   expect(classifyKind(40000)).toBe('unknown')
-  expect(classifyKind(255)).toBe('unknown')
+  expect(classifyKind(255)).toBe('regular')
+})
+
+test('kind type guard', () => {
+  const privateKey = generateSecretKey()
+  const repostedEvent = finalizeEvent(
+    {
+      kind: ShortTextNote,
+      tags: [
+        ['e', 'replied event id'],
+        ['p', 'replied event pubkey'],
+      ],
+      content: 'Replied to a post',
+      created_at: 1617932115,
+    },
+    privateKey,
+  )
+
+  expect(isKind(repostedEvent, ShortTextNote)).toBeTrue()
+  expect(isKind(repostedEvent, Repost)).toBeFalse()
 })

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test'
 
-import { SimplePool } from './pool.ts'
+import { SimplePool, useWebSocketImplementation } from './pool.ts'
 import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
-import { useWebSocketImplementation } from './relay.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
+import { hexToBytes } from '@noble/hashes/utils.js'
 
 useWebSocketImplementation(MockWebSocketClient)
 
@@ -35,14 +35,18 @@ test('removing duplicates when subscribing', async () => {
     priv,
   )
 
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
-    onevent(event: Event) {
-      // this should be called only once even though we're listening
-      // to multiple relays because the events will be caught and
-      // deduplicated efficiently (without even being parsed)
-      received.push(event)
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event: Event) {
+        // this should be called only once even though we're listening
+        // to multiple relays because the events will be caught and
+        // deduplicated efficiently (without even being parsed)
+        received.push(event)
+      },
     },
-  })
+  )
 
   await Promise.any(pool.publish(relayURLs, event))
   await new Promise(resolve => setTimeout(resolve, 200)) // wait for the new published event to be received
@@ -55,16 +59,24 @@ test('same with double subs', async () => {
   let priv = generateSecretKey()
   let pub = getPublicKey(priv)
 
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
-    onevent(event) {
-      received.push(event)
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event) {
+        received.push(event)
+      },
     },
-  })
-  pool.subscribeMany(relayURLs, [{ authors: [pub] }], {
-    onevent(event) {
-      received.push(event)
+  )
+  pool.subscribeMany(
+    relayURLs,
+    { authors: [pub] },
+    {
+      onevent(event) {
+        received.push(event)
+      },
     },
-  })
+  )
 
   let received: Event[] = []
 
@@ -84,16 +96,100 @@ test('same with double subs', async () => {
   expect(received).toHaveLength(2)
 })
 
+test('subscribe many map', async () => {
+  let priv = hexToBytes('8ea002840d413ccdd5be98df5dd89d799eaa566355ede83ca0bbdbb4b145e0d3')
+  let pub = getPublicKey(priv)
+
+  let received: Event[] = []
+  let event1 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test1',
+      kind: 20001,
+      tags: [],
+    },
+    priv,
+  )
+  let event2 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test2',
+      kind: 20002,
+      tags: [['t', 'biloba']],
+    },
+    priv,
+  )
+  let event3 = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test3',
+      kind: 20003,
+      tags: [['t', 'biloba']],
+    },
+    priv,
+  )
+
+  const [relayA, relayB, relayC] = relayURLs
+
+  pool.subscribeMap(
+    [
+      { url: relayA, filter: { authors: [pub], kinds: [20001] } },
+      { url: relayB, filter: { authors: [pub], kinds: [20002] } },
+      { url: relayC, filter: { kinds: [20003], '#t': ['biloba'] } },
+    ],
+    {
+      onevent(event: Event) {
+        received.push(event)
+      },
+    },
+  )
+
+  // publish the first
+  await Promise.all(pool.publish([relayA, relayB], event1))
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(1)
+  expect(received[0]).toEqual(event1)
+
+  // publish the second
+  await pool.publish([relayB], event2)[0]
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(2)
+  expect(received[1]).toEqual(event2)
+
+  // publish a events that shouldn't match our filters
+  await Promise.all([
+    ...pool.publish([relayA, relayB], event3),
+    ...pool.publish([relayA, relayB, relayC], event1),
+    pool.publish([relayA, relayB, relayC], event2),
+  ])
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(2)
+
+  // publsih the third
+  await pool.publish([relayC], event3)[0]
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  expect(received).toHaveLength(3)
+  expect(received[2]).toEqual(event3)
+})
+
 test('query a bunch of events and cancel on eose', async () => {
   let events = new Set<string>()
 
   await new Promise<void>(resolve => {
-    pool.subscribeManyEose(relayURLs, [{ kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 }], {
-      onevent(event) {
-        events.add(event.id)
+    pool.subscribeManyEose(
+      relayURLs,
+      { kinds: [0, 1, 2, 3, 4, 5, 6], limit: 40 },
+      {
+        onevent(event) {
+          events.add(event.id)
+        },
+        onclose: resolve as any,
       },
-      onclose: resolve as any,
-    })
+    )
   })
 
   expect(events.size).toBeGreaterThan(50)
@@ -124,4 +220,197 @@ test('get()', async () => {
 
   expect(event).not.toBeNull()
   expect(event).toHaveProperty('id', ids[0])
+})
+
+test('ping-pong timeout in pool', async () => {
+  const mockRelay = mockRelays[0]
+  pool = new SimplePool({ enablePing: true })
+  const relay = await pool.ensureRelay(mockRelay.url)
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+
+  let closed = false
+  const closedPromise = new Promise<void>(resolve => {
+    relay.onclose = () => {
+      closed = true
+      resolve()
+    }
+  })
+
+  expect(relay.connected).toBeTrue()
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closed).toBeFalse()
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail
+  await closedPromise
+
+  expect(relay.connected).toBeFalse()
+  expect(closed).toBeTrue()
+})
+
+test('reconnect on disconnect in pool', async () => {
+  const mockRelay = mockRelays[0]
+  pool = new SimplePool({ enablePing: true, enableReconnect: true })
+  const relay = await pool.ensureRelay(mockRelay.url)
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+  relay.resubscribeBackoff = [50, 100]
+
+  let closes = 0
+  relay.onclose = () => {
+    closes++
+  }
+
+  expect(relay.connected).toBeTrue()
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closes).toBe(0)
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail, which will trigger a close
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (closes > 0) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+  expect(closes).toBe(1)
+  expect(relay.connected).toBeFalse()
+
+  // now make it responsive again
+  mockRelay.unresponsive = false
+
+  // wait for reconnect
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+
+  expect(relay.connected).toBeTrue()
+  expect(closes).toBe(1)
+})
+
+test('reconnect with filter update in pool', async () => {
+  const mockRelay = mockRelays[0]
+  pool = new SimplePool({
+    enablePing: true,
+    enableReconnect: true,
+  })
+  const relay = await pool.ensureRelay(mockRelay.url)
+  relay.pingTimeout = 50
+  relay.pingFrequency = 50
+  relay.resubscribeBackoff = [50, 100]
+
+  let closes = 0
+  relay.onclose = () => {
+    closes++
+  }
+
+  expect(relay.connected).toBeTrue()
+
+  const sub = relay.subscribe([{ kinds: [1], since: 0 }], { onevent: () => {} })
+  expect(sub.filters[0].since).toBe(0)
+
+  // wait for the first ping to succeed
+  await new Promise(resolve => setTimeout(resolve, 75))
+  expect(closes).toBe(0)
+
+  // now make it unresponsive
+  mockRelay.unresponsive = true
+
+  // wait for the second ping to fail, which will trigger a close
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (closes > 0) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+  expect(closes).toBe(1)
+  expect(relay.connected).toBeFalse()
+
+  // now make it responsive again
+  mockRelay.unresponsive = false
+
+  // wait for reconnect
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearInterval(interval)
+        resolve(null)
+      }
+    }, 10)
+  })
+
+  expect(relay.connected).toBeTrue()
+  expect(closes).toBe(1)
+
+  // check if filter was updated
+  expect(sub.filters[0].since).toBeGreaterThan(1)
+})
+
+test('track relays when publishing', async () => {
+  let event1 = finalizeEvent(
+    {
+      kind: 1,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'hello',
+    },
+    generateSecretKey(),
+  )
+  let event2 = finalizeEvent(
+    {
+      kind: 1,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'hello',
+    },
+    generateSecretKey(),
+  )
+
+  pool.trackRelays = true
+  await Promise.all(pool.publish(relayURLs, event1))
+  expect(pool.seenOn.get(event1.id)).toBeDefined()
+  expect(Array.from(pool.seenOn.get(event1.id)!).map(r => r.url)).toEqual(expect.arrayContaining(relayURLs))
+
+  pool.trackRelays = false
+  await Promise.all(pool.publish(relayURLs, event2))
+  expect(pool.seenOn.get(event2.id)).toBeUndefined()
+})
+
+test('oninvalidevent is called through the pool for invalid events', async done => {
+  const mockRelay = mockRelays[0]
+  const relay = await pool.ensureRelay(mockRelay.url)
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], {
+    oninvalidevent(event) {
+      expect((event as any).kind).toBe('1')
+      sub.close()
+      done()
+    },
+  })
+
+  const sk = generateSecretKey()
+  const wrongFieldTypeEvent = [finalizeEvent(
+    { kind: 1, content: 'hello', created_at: Math.floor(Date.now() / 1000), tags: [] },
+    sk,
+  )].map(v => { (v as any).kind = '1'; return v })[0]
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
 })

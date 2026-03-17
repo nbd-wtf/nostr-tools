@@ -1,6 +1,6 @@
 {
   "name": "@nostr/tools",
-  "version": "2.3.2",
+  "version": "2.23.3",
   "exports": {
     ".": "./index.ts",
     "./core": "./core.ts",
@@ -16,9 +16,11 @@
     "./nip04": "./nip04.ts",
     "./nip05": "./nip05.ts",
     "./nip06": "./nip06.ts",
+    "./nip07": "./nip07.ts",
     "./nip10": "./nip10.ts",
     "./nip11": "./nip11.ts",
     "./nip13": "./nip13.ts",
+    "./nip17": "./nip17.ts",
     "./nip18": "./nip18.ts",
     "./nip19": "./nip19.ts",
     "./nip21": "./nip21.ts",
@@ -32,13 +34,17 @@
     "./nip44": "./nip44.ts",
     "./nip46": "./nip46.ts",
     "./nip49": "./nip49.ts",
+    "./nip54": "./nip54.ts",
     "./nip57": "./nip57.ts",
+    "./nip58": "./nip58.ts",
+    "./nip59": "./nip59.ts",
     "./nip75": "./nip75.ts",
     "./nip94": "./nip94.ts",
-    "./nip96": "./nip96.ts",
     "./nip98": "./nip98.ts",
     "./nip99": "./nip99.ts",
+    "./nipb7": "./nipb7.ts",
     "./fakejson": "./fakejson.ts",
-    "./utils": "./utils.ts"
+    "./utils": "./utils.ts",
+    "./signer": "./signer.ts"
   }
 }

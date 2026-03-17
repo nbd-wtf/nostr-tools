@@ -1,22 +1,22 @@
-import { expect, test } from 'bun:test'
-import { schnorr } from '@noble/curves/secp256k1'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
+import { test, expect } from 'bun:test'
 import { v2 } from './nip44.js'
-import vec from './nip44.vectors.json'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
+import { default as vec } from './nip44.vectors.json' with { type: 'json' }
+import { schnorr } from '@noble/curves/secp256k1.js'
 
 const v2vec = vec.v2
 
 test('get_conversation_key', () => {
   for (const v of v2vec.valid.get_conversation_key) {
-    const key = v2.utils.getConversationKey(v.sec1, v.pub2)
+    const key = v2.utils.getConversationKey(hexToBytes(v.sec1), v.pub2)
     expect(bytesToHex(key)).toEqual(v.conversation_key)
   }
 })
 
 test('encrypt_decrypt', () => {
   for (const v of v2vec.valid.encrypt_decrypt) {
-    const pub2 = bytesToHex(schnorr.getPublicKey(v.sec2))
-    const key = v2.utils.getConversationKey(v.sec1, pub2)
+    const pub2 = bytesToHex(schnorr.getPublicKey(hexToBytes(v.sec2)))
+    const key = v2.utils.getConversationKey(hexToBytes(v.sec1), pub2)
     expect(bytesToHex(key)).toEqual(v.conversation_key)
     const ciphertext = v2.encrypt(v.plaintext, key, hexToBytes(v.nonce))
     expect(ciphertext).toEqual(v.payload)
@@ -40,7 +40,9 @@ test('decrypt', async () => {
 
 test('get_conversation_key', async () => {
   for (const v of v2vec.invalid.get_conversation_key) {
-    expect(() => v2.utils.getConversationKey(v.sec1, v.pub2)).toThrow(/(Point is not on curve|Cannot find square root)/)
+    expect(() => v2.utils.getConversationKey(hexToBytes(v.sec1), v.pub2)).toThrow(
+      /(Point is not on curve|Cannot find square root|invalid field element)/,
+    )
   }
 })
 
@@ -87,8 +89,8 @@ test('pad/unpad boundary: 65537 bytes uses 6-byte extended prefix', () => {
 
 test('encrypt/decrypt round-trip with big payload (65536 bytes)', () => {
   const plaintext = 'x'.repeat(65536)
-  const sec1 = '0000000000000000000000000000000000000000000000000000000000000001'
-  const sec2 = '0000000000000000000000000000000000000000000000000000000000000002'
+  const sec1 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001')
+  const sec2 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000002')
   const pub2 = bytesToHex(schnorr.getPublicKey(sec2))
   const conversationKey = v2.utils.getConversationKey(sec1, pub2)
   const encrypted = v2.encrypt(plaintext, conversationKey)
@@ -98,8 +100,8 @@ test('encrypt/decrypt round-trip with big payload (65536 bytes)', () => {
 
 test('encrypt/decrypt round-trip with 100000 byte payload', () => {
   const plaintext = 'z'.repeat(100000)
-  const sec1 = '0000000000000000000000000000000000000000000000000000000000000001'
-  const sec2 = '0000000000000000000000000000000000000000000000000000000000000002'
+  const sec1 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001')
+  const sec2 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000002')
   const pub2 = bytesToHex(schnorr.getPublicKey(sec2))
   const conversationKey = v2.utils.getConversationKey(sec1, pub2)
   const encrypted = v2.encrypt(plaintext, conversationKey)
@@ -109,8 +111,6 @@ test('encrypt/decrypt round-trip with 100000 byte payload', () => {
 
 // Canonicality: reject non-canonical extended prefix for small lengths
 test('unpad rejects non-canonical extended prefix for length=1', () => {
-  // Craft a padded buffer that uses the 6-byte extended prefix for length=1
-  // This should be rejected because length < 65536 must use the 2-byte prefix
   const unpaddedLen = 1
   const calcPaddedLen = v2.utils.calcPaddedLen(unpaddedLen) // 32
   const buf = new Uint8Array(6 + calcPaddedLen) // 6-byte prefix + 32 bytes padded
@@ -125,7 +125,6 @@ test('unpad rejects non-canonical extended prefix for length=1', () => {
 })
 
 test('unpad rejects non-canonical extended prefix for length=1000', () => {
-  // Extended prefix encoding a length that fits in u16
   const unpaddedLen = 1000
   const calcPaddedLen = v2.utils.calcPaddedLen(unpaddedLen) // 1024
   const buf = new Uint8Array(6 + calcPaddedLen)
@@ -140,7 +139,6 @@ test('unpad rejects non-canonical extended prefix for length=1000', () => {
 })
 
 test('unpad rejects non-canonical extended prefix for length=65535', () => {
-  // 65535 is the max u16 value, must still use the 2-byte prefix
   const unpaddedLen = 65535
   const calcPaddedLen = v2.utils.calcPaddedLen(unpaddedLen) // 65536
   const buf = new Uint8Array(6 + calcPaddedLen)
@@ -156,7 +154,6 @@ test('unpad rejects non-canonical extended prefix for length=65535', () => {
 
 // Malformed extended prefix: buffer too short for the 6-byte header
 test('unpad rejects truncated extended prefix (buffer shorter than 6 bytes)', () => {
-  // 4 bytes: sentinel + only 2 of the 4 u32 bytes
   const buf = new Uint8Array([0x00, 0x00, 0x00, 0x01])
   expect(() => v2.utils.unpad(buf)).toThrow()
 })
@@ -204,8 +201,8 @@ test('pad/unpad with multi-byte UTF-8 near 65536 byte boundary', () => {
 
 test('encrypt/decrypt with multi-byte UTF-8 at 65536 bytes', () => {
   const plaintext = '\u00e9'.repeat(32768) // 65536 bytes
-  const sec1 = '0000000000000000000000000000000000000000000000000000000000000001'
-  const sec2 = '0000000000000000000000000000000000000000000000000000000000000002'
+  const sec1 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001')
+  const sec2 = hexToBytes('0000000000000000000000000000000000000000000000000000000000000002')
   const pub2 = bytesToHex(schnorr.getPublicKey(sec2))
   const conversationKey = v2.utils.getConversationKey(sec1, pub2)
   const encrypted = v2.encrypt(plaintext, conversationKey)

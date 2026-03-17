@@ -7,7 +7,6 @@ const entryPoints = fs
   .filter(
     file =>
       file.endsWith('.ts') &&
-      file !== 'core.ts' &&
       file !== 'test-helpers.ts' &&
       file !== 'helpers.ts' &&
       file !== 'benchmarks.ts' &&

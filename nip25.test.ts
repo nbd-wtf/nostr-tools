@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { hexToBytes } from '@noble/hashes/utils'
+import { hexToBytes } from '@noble/hashes/utils.js'
 import { finalizeEvent, getPublicKey } from './pure.ts'
 import { Reaction, ShortTextNote } from './kinds.ts'
 import { finishReactionEvent, getReactedEventPointer } from './nip25.ts'

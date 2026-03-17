@@ -1,6 +1,6 @@
-import { bytesToHex } from '@noble/hashes/utils'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import { Nostr as NostrWasm } from 'nostr-wasm'
-import { EventTemplate, Event, Nostr, VerifiedEvent, verifiedSymbol } from './core'
+import { EventTemplate, Event, Nostr, VerifiedEvent, verifiedSymbol } from './core.ts'
 
 let nw: NostrWasm
 
@@ -30,7 +30,7 @@ class Wasm implements Nostr {
   }
 }
 
-const i = new Wasm()
+const i: Wasm = new Wasm()
 export const generateSecretKey = i.generateSecretKey
 export const getPublicKey = i.getPublicKey
 export const finalizeEvent = i.finalizeEvent

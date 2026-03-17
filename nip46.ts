@@ -1,11 +1,11 @@
-import { NostrEvent, UnsignedEvent, VerifiedEvent } from './core.ts'
+import { EventTemplate, NostrEvent, VerifiedEvent } from './core.ts'
 import { generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { AbstractSimplePool, SubCloser } from './abstract-pool.ts'
-import { decrypt, encrypt } from './nip04.ts'
+import { getConversationKey, decrypt, encrypt } from './nip44.ts'
 import { NIP05_REGEX } from './nip05.ts'
 import { SimplePool } from './pool.ts'
 import { Handlerinformation, NostrConnect } from './kinds.ts'
-import { hexToBytes } from '@noble/hashes/utils'
+import { Signer } from './signer.ts'
 
 var _fetch: any
 
@@ -17,13 +17,24 @@ export function useFetchImplementation(fetchImplementation: any) {
   _fetch = fetchImplementation
 }
 
-export const BUNKER_REGEX = /^bunker:\/\/([0-9a-f]{64})\??([?\/\w:.=&%]*)$/
+export const BUNKER_REGEX = /^bunker:\/\/([0-9a-f]{64})\??([?\/\w:.=&%-]*)$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export type BunkerPointer = {
   relays: string[]
   pubkey: string
   secret: null | string
+}
+
+export function toBunkerURL(bunkerPointer: BunkerPointer): string {
+  let bunkerURL = new URL(`bunker://${bunkerPointer.pubkey}`)
+  bunkerPointer.relays.forEach(relay => {
+    bunkerURL.searchParams.append('relay', relay)
+  })
+  if (bunkerPointer.secret) {
+    bunkerURL.searchParams.set('secret', bunkerPointer.secret)
+  }
+  return bunkerURL.toString()
 }
 
 /** This takes either a bunker:// URL or a name@domain.com NIP-05 identifier
@@ -47,7 +58,7 @@ export async function parseBunkerInput(input: string): Promise<BunkerPointer | n
   return queryBunkerProfile(input)
 }
 
-async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
+export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> {
   const match = nip05.match(NIP05_REGEX)
   if (!match) return null
 
@@ -66,14 +77,50 @@ async function queryBunkerProfile(nip05: string): Promise<BunkerPointer | null> 
   }
 }
 
+export type NostrConnectParams = {
+  clientPubkey: string
+  relays: string[]
+  secret: string
+  perms?: string[]
+  name?: string
+  url?: string
+  image?: string
+}
+
+export function createNostrConnectURI(params: NostrConnectParams): string {
+  const queryParams = new URLSearchParams()
+
+  params.relays.forEach(relay => {
+    queryParams.append('relay', relay)
+  })
+
+  queryParams.append('secret', params.secret)
+
+  if (params.perms && params.perms.length > 0) {
+    queryParams.append('perms', params.perms.join(','))
+  }
+  if (params.name) {
+    queryParams.append('name', params.name)
+  }
+  if (params.url) {
+    queryParams.append('url', params.url)
+  }
+  if (params.image) {
+    queryParams.append('image', params.image)
+  }
+
+  return `nostrconnect://${params.clientPubkey}?${queryParams.toString()}`
+}
+
 export type BunkerSignerParams = {
   pool?: AbstractSimplePool
   onauth?: (url: string) => void
 }
 
-export class BunkerSigner {
+export class BunkerSigner implements Signer {
+  private params: BunkerSignerParams
   private pool: AbstractSimplePool
-  private subCloser: SubCloser
+  private subCloser: SubCloser | undefined
   private isOpen: boolean
   private serial: number
   private idPrefix: string
@@ -85,7 +132,11 @@ export class BunkerSigner {
   }
   private waitingForAuth: { [id: string]: boolean }
   private secretKey: Uint8Array
-  public bp: BunkerPointer
+  // If the client initiates the connection, the two variables below can be filled in later.
+  private conversationKey!: Uint8Array
+  public bp!: BunkerPointer
+
+  private cachedPubKey: string | undefined
 
   /**
    * Creates a new instance of the Nip46 class.
@@ -93,38 +144,125 @@ export class BunkerSigner {
    * @param remotePubkey - An optional remote public key. This is the key you want to sign as.
    * @param secretKey - An optional key pair.
    */
-  public constructor(clientSecretKey: Uint8Array, bp: BunkerPointer, params: BunkerSignerParams = {}) {
-    if (bp.relays.length === 0) {
-      throw new Error('no relays are specified for this bunker')
-    }
-
+  private constructor(clientSecretKey: Uint8Array, params: BunkerSignerParams) {
+    this.params = params
     this.pool = params.pool || new SimplePool()
     this.secretKey = clientSecretKey
-    this.bp = bp
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
     this.serial = 0
     this.listeners = {}
     this.waitingForAuth = {}
+  }
 
+  /**
+   * [Factory Method 1] Creates a Signer using bunker information (bunker:// URL or NIP-05).
+   * This method is used when the public key of the bunker is known in advance.
+   */
+  public static fromBunker(
+    clientSecretKey: Uint8Array,
+    bp: BunkerPointer,
+    params: BunkerSignerParams = {},
+  ): BunkerSigner {
+    if (bp.relays.length === 0) {
+      throw new Error('no relays specified for this bunker')
+    }
+
+    const signer = new BunkerSigner(clientSecretKey, params)
+
+    signer.conversationKey = getConversationKey(clientSecretKey, bp.pubkey)
+    signer.bp = bp
+
+    signer.setupSubscription()
+    return signer
+  }
+
+  /**
+   * [Factory Method 2] Creates a Signer using a nostrconnect:// URI generated by the client.
+   * In this method, the bunker initiates the connection by scanning the URI.
+   */
+  public static async fromURI(
+    clientSecretKey: Uint8Array,
+    connectionURI: string,
+    bunkerParams: BunkerSignerParams = {},
+    maxWaitOrAbort: number | AbortSignal = 300_000,
+  ): Promise<BunkerSigner> {
+    const signer = new BunkerSigner(clientSecretKey, bunkerParams)
+    const uri = new URL(connectionURI)
+    const clientPubkey = getPublicKey(clientSecretKey)
+
+    return new Promise((resolve, reject) => {
+      let success = false
+      const sub = signer.pool.subscribe(
+        uri.searchParams.getAll('relay'),
+        {
+          kinds: [NostrConnect],
+          '#p': [clientPubkey],
+          limit: 0,
+        },
+        {
+          onevent: async (event: NostrEvent) => {
+            try {
+              const tempConvKey = getConversationKey(clientSecretKey, event.pubkey)
+              const decryptedContent = decrypt(event.content, tempConvKey)
+
+              const response = JSON.parse(decryptedContent)
+
+              if (response.result === uri.searchParams.get('secret')) {
+                sub.close()
+
+                signer.bp = {
+                  pubkey: event.pubkey,
+                  relays: uri.searchParams.getAll('relay'),
+                  secret: uri.searchParams.get('secret'),
+                }
+                signer.conversationKey = getConversationKey(clientSecretKey, event.pubkey)
+                signer.setupSubscription()
+
+                success = true
+                await Promise.race([new Promise(resolve => setTimeout(resolve, 1000)), signer.switchRelays()])
+                resolve(signer)
+              }
+            } catch (e) {
+              console.warn('failed to process potential connection event', e)
+            }
+          },
+          onclose: () => {
+            if (!success) reject(new Error('subscription closed before connection was established.'))
+          },
+          maxWait: typeof maxWaitOrAbort === 'number' ? maxWaitOrAbort : undefined,
+          abort: typeof maxWaitOrAbort !== 'number' ? maxWaitOrAbort : undefined,
+        },
+      )
+    })
+  }
+
+  private setupSubscription() {
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
+    const convKey = this.conversationKey
 
-    this.subCloser = this.pool.subscribeMany(
+    this.subCloser = this.pool.subscribe(
       this.bp.relays,
-      [{ kinds: [NostrConnect], '#p': [getPublicKey(this.secretKey)] }],
       {
-        async onevent(event: NostrEvent) {
-          const { id, result, error } = JSON.parse(await decrypt(clientSecretKey, event.pubkey, event.content))
+        kinds: [NostrConnect],
+        authors: [this.bp.pubkey],
+        '#p': [getPublicKey(this.secretKey)],
+        limit: 0,
+      },
+      {
+        onevent: async (event: NostrEvent) => {
+          const o = JSON.parse(decrypt(event.content, convKey))
+          const { id, result, error } = o
 
           if (result === 'auth_url' && waitingForAuth[id]) {
             delete waitingForAuth[id]
 
-            if (params.onauth) {
-              params.onauth(error)
+            if (this.params.onauth) {
+              this.params.onauth(error)
             } else {
               console.warn(
-                `nostr-tools/nip46: remote signer ${bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
+                `nostr-tools/nip46: remote signer ${this.bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
               )
             }
             return
@@ -137,25 +275,51 @@ export class BunkerSigner {
             delete listeners[id]
           }
         },
+        onclose: () => {
+          this.subCloser = undefined
+        },
       },
     )
     this.isOpen = true
   }
 
+  async switchRelays(): Promise<boolean> {
+    try {
+      const switchResp = await this.sendRequest('switch_relays', [])
+      let relays = JSON.parse(switchResp) as string[] | null
+      if (!relays) return false
+      if (JSON.stringify(relays.sort()) === JSON.stringify(this.bp.relays)) return false
+
+      this.bp.relays = relays
+      let previousCloser = this.subCloser!
+      setTimeout(() => {
+        previousCloser.close()
+      }, 5000)
+
+      this.subCloser = undefined
+      this.setupSubscription()
+      return true
+    } catch {
+      return false
+    }
+  }
+
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
-    this.subCloser.close()
+    this.subCloser!.close()
   }
 
   async sendRequest(method: string, params: string[]): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
+        if (!this.subCloser) this.setupSubscription()
+
         this.serial++
         const id = `${this.idPrefix}-${this.serial}`
 
-        const encryptedContent = await encrypt(this.secretKey, this.bp.pubkey, JSON.stringify({ id, method, params }))
+        const encryptedContent = encrypt(JSON.stringify({ id, method, params }), this.conversationKey)
 
         // the request event
         const verifiedEvent: VerifiedEvent = finalizeEvent(
@@ -193,22 +357,20 @@ export class BunkerSigner {
    * Calls the "connect" method on the bunker.
    */
   async connect(): Promise<void> {
-    await this.sendRequest('connect', [getPublicKey(this.secretKey), this.bp.secret || ''])
+    await this.sendRequest('connect', [this.bp.pubkey, this.bp.secret || ''])
   }
 
   /**
-   * This was supposed to call the "get_public_key" method on the bunker,
-   * but instead we just returns the public key we already know.
+   * Calls the "get_public_key" method on the bunker.
+   * (before we would return the public key hardcoded in the bunker parameters, but
+   *  that is not correct as that may be the bunker pubkey and the actual signer
+   *  pubkey may be different.)
    */
   async getPublicKey(): Promise<string> {
-    return this.bp.pubkey
-  }
-
-  /**
-   * Calls the "get_relays" method on the bunker.
-   */
-  async getRelays(): Promise<{ [relay: string]: { read: boolean; write: boolean } }> {
-    return JSON.parse(await this.sendRequest('get_relays', []))
+    if (!this.cachedPubKey) {
+      this.cachedPubKey = await this.sendRequest('get_public_key', [])
+    }
+    return this.cachedPubKey
   }
 
   /**
@@ -216,10 +378,10 @@ export class BunkerSigner {
    * @param event - The event to sign.
    * @returns A Promise that resolves to the signed event.
    */
-  async signEvent(event: UnsignedEvent): Promise<VerifiedEvent> {
+  async signEvent(event: EventTemplate): Promise<VerifiedEvent> {
     let resp = await this.sendRequest('sign_event', [JSON.stringify(event)])
     let signed: NostrEvent = JSON.parse(resp)
-    if (signed.pubkey === this.bp.pubkey && verifyEvent(signed)) {
+    if (verifyEvent(signed)) {
       return signed
     } else {
       throw new Error(`event returned from bunker is improperly signed: ${JSON.stringify(signed)}`)
@@ -234,17 +396,12 @@ export class BunkerSigner {
     return await this.sendRequest('nip04_decrypt', [thirdPartyPubkey, ciphertext])
   }
 
-  async nip44GetKey(thirdPartyPubkey: string): Promise<Uint8Array> {
-    let resp = await this.sendRequest('nip44_get_key', [thirdPartyPubkey])
-    return hexToBytes(resp)
-  }
-
   async nip44Encrypt(thirdPartyPubkey: string, plaintext: string): Promise<string> {
     return await this.sendRequest('nip44_encrypt', [thirdPartyPubkey, plaintext])
   }
 
   async nip44Decrypt(thirdPartyPubkey: string, ciphertext: string): Promise<string> {
-    return await this.sendRequest('nip44_encrypt', [thirdPartyPubkey, ciphertext])
+    return await this.sendRequest('nip44_decrypt', [thirdPartyPubkey, ciphertext])
   }
 }
 
@@ -254,6 +411,8 @@ export class BunkerSigner {
  * @param username - The username for the account.
  * @param domain - The domain for the account.
  * @param email - The optional email for the account.
+ * @param localSecretKey - Optionally pass a local secret key that will be used to communicate with the bunker,
+                           this will default to generating a random key.
  * @throws Error if the email is present but invalid.
  * @returns A Promise that resolves to the auth_url that the client should follow to create an account.
  */
@@ -263,11 +422,11 @@ export async function createAccount(
   username: string,
   domain: string,
   email?: string,
+  localSecretKey: Uint8Array = generateSecretKey(),
 ): Promise<BunkerSigner> {
-  if (email && !EMAIL_REGEX.test(email)) throw new Error('Invalid email')
+  if (email && !EMAIL_REGEX.test(email)) throw new Error('invalid email')
 
-  let sk = generateSecretKey()
-  let rpc = new BunkerSigner(sk, bunker.bunkerPointer, params)
+  let rpc = BunkerSigner.fromBunker(localSecretKey, bunker.bunkerPointer, params)
 
   let pubkey = await rpc.sendRequest('create_account', [username, domain, email || ''])
 
@@ -278,9 +437,6 @@ export async function createAccount(
 
   return rpc
 }
-
-// @deprecated use fetchBunkerProviders instead
-export const fetchCustodialBunkers = fetchBunkerProviders
 
 /**
  * Fetches info on available providers that announce themselves using NIP-89 events.

@@ -1,20 +1,28 @@
 /* global WebSocket */
 
-import type { Event, EventTemplate, VerifiedEvent, Nostr } from './core.ts'
+import type { Event, EventTemplate, VerifiedEvent, Nostr, NostrEvent } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
-import { Queue, normalizeURL } from './utils.ts'
+import { normalizeURL } from './utils.ts'
 import { makeAuthEvent } from './nip42.ts'
-import { yieldThread } from './helpers.ts'
 
-var _WebSocket: typeof WebSocket
+type RelayWebSocket = WebSocket & {
+  ping?(): void
+  on?(event: 'pong', listener: () => void): any
+}
 
-try {
-  _WebSocket = WebSocket
-} catch {}
+export type AbstractRelayConstructorOptions = {
+  verifyEvent: Nostr['verifyEvent']
+  websocketImplementation?: typeof WebSocket
+  enablePing?: boolean
+  enableReconnect?: boolean
+}
 
-export function useWebSocketImplementation(websocketImplementation: any) {
-  _WebSocket = websocketImplementation
+export class SendingOnClosedConnection extends Error {
+  constructor(message: string, relay: string) {
+    super(`Tried to send message '${message} on a closed connection to ${relay}.`)
+    this.name = 'SendingOnClosedConnection'
+  }
 }
 
 export class AbstractRelay {
@@ -23,30 +31,48 @@ export class AbstractRelay {
 
   public onclose: (() => void) | null = null
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
+  public onauth: undefined | ((evt: EventTemplate) => Promise<VerifiedEvent>)
 
   public baseEoseTimeout: number = 4400
-  public connectionTimeout: number = 4400
+  public publishTimeout: number = 4400
+  public pingFrequency: number = 29000
+  public pingTimeout: number = 20000
+  public resubscribeBackoff: number[] = [10000, 10000, 10000, 20000, 20000, 30000, 60000]
   public openSubs: Map<string, Subscription> = new Map()
-  private connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  public enablePing: boolean | undefined
+  public enableReconnect: boolean
+  public idleSince: number | undefined = Date.now() // when undefined that means it isn't idle
+  public ongoingOperations: number = 0 // used to compute idleness
+  private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
+  private reconnectAttempts: number = 0
+  private skipReconnection: boolean = false
 
   private connectionPromise: Promise<void> | undefined
   private openCountRequests = new Map<string, CountResolver>()
   private openEventPublishes = new Map<string, EventPublishResolver>()
-  private ws: WebSocket | undefined
-  private incomingMessageQueue = new Queue<string>()
-  private queueRunning = false
+  private ws: RelayWebSocket | undefined
   private challenge: string | undefined
+  private authPromise: Promise<string> | undefined
   private serial: number = 0
   private verifyEvent: Nostr['verifyEvent']
 
-  constructor(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }) {
+  private _WebSocket: typeof WebSocket
+
+  constructor(url: string, opts: AbstractRelayConstructorOptions) {
     this.url = normalizeURL(url)
     this.verifyEvent = opts.verifyEvent
+    this._WebSocket = opts.websocketImplementation || WebSocket
+    this.enablePing = opts.enablePing
+    this.enableReconnect = opts.enableReconnect || false
   }
 
-  static async connect(url: string, opts: { verifyEvent: Nostr['verifyEvent'] }): Promise<AbstractRelay> {
+  static async connect(
+    url: string,
+    opts: AbstractRelayConstructorOptions & Parameters<AbstractRelay['connect']>[0],
+  ): Promise<AbstractRelay> {
     const relay = new AbstractRelay(url, opts)
-    await relay.connect()
+    await relay.connect(opts)
     return relay
   }
 
@@ -71,48 +97,111 @@ export class AbstractRelay {
     return this._connected
   }
 
-  public async connect(): Promise<void> {
+  private async reconnect(): Promise<void> {
+    const backoff = this.resubscribeBackoff[Math.min(this.reconnectAttempts, this.resubscribeBackoff.length - 1)]
+    this.reconnectAttempts++
+
+    this.reconnectTimeoutHandle = setTimeout(async () => {
+      try {
+        await this.connect()
+      } catch (err) {
+        // this will be called again through onclose/onerror
+      }
+    }, backoff)
+  }
+
+  private handleHardClose(reason: string) {
+    if (this.pingIntervalHandle) {
+      clearInterval(this.pingIntervalHandle)
+      this.pingIntervalHandle = undefined
+    }
+
+    this._connected = false
+    this.connectionPromise = undefined
+    this.idleSince = undefined
+
+    if (this.enableReconnect && !this.skipReconnection) {
+      this.reconnect()
+    } else {
+      this.onclose?.()
+      this.closeAllSubscriptions(reason)
+    }
+  }
+
+  public async connect(opts?: { timeout?: number; abort?: AbortSignal }): Promise<void> {
+    let connectionTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+
     if (this.connectionPromise) return this.connectionPromise
 
     this.challenge = undefined
+    this.authPromise = undefined
+    this.skipReconnection = false
     this.connectionPromise = new Promise((resolve, reject) => {
-      this.connectionTimeoutHandle = setTimeout(() => {
-        reject('connection timed out')
-        this.connectionPromise = undefined
-        this.onclose?.()
-        this.closeAllSubscriptions('relay connection timed out')
-      }, this.connectionTimeout)
+      if (opts?.timeout) {
+        connectionTimeoutHandle = setTimeout(() => {
+          reject('connection timed out')
+          this.connectionPromise = undefined
+          this.skipReconnection = true
+          this.onclose?.()
+          this.handleHardClose('relay connection timed out')
+        }, opts.timeout)
+      }
+
+      if (opts?.abort) {
+        opts.abort.onabort = reject
+      }
 
       try {
-        this.ws = new _WebSocket(this.url)
+        this.ws = new this._WebSocket(this.url)
       } catch (err) {
+        clearTimeout(connectionTimeoutHandle)
         reject(err)
         return
       }
 
       this.ws.onopen = () => {
-        clearTimeout(this.connectionTimeoutHandle)
+        if (this.reconnectTimeoutHandle) {
+          clearTimeout(this.reconnectTimeoutHandle)
+          this.reconnectTimeoutHandle = undefined
+        }
+        clearTimeout(connectionTimeoutHandle)
         this._connected = true
+
+        const isReconnection = this.reconnectAttempts > 0
+        this.reconnectAttempts = 0
+
+        // resubscribe to all open subscriptions
+        for (const sub of this.openSubs.values()) {
+          sub.eosed = false
+          if (isReconnection) {
+            for (let f = 0; f < sub.filters.length; f++) {
+              if (sub.lastEmitted) {
+                sub.filters[f].since = sub.lastEmitted + 1
+              }
+            }
+          }
+          sub.fire()
+        }
+
+        if (this.enablePing) {
+          this.pingIntervalHandle = setInterval(() => this.pingpong(), this.pingFrequency)
+        }
         resolve()
       }
 
-      this.ws.onerror = ev => {
-        reject((ev as any).message)
-        if (this._connected) {
-          this._connected = false
-          this.connectionPromise = undefined
-          this.onclose?.()
-          this.closeAllSubscriptions('relay connection errored')
-        }
+      this.ws.onerror = () => {
+        clearTimeout(connectionTimeoutHandle)
+        reject('connection failed')
+        this.connectionPromise = undefined
+        this.skipReconnection = true
+        this.onclose?.()
+        this.handleHardClose('relay connection failed')
       }
 
-      this.ws.onclose = async () => {
-        if (this._connected) {
-          this._connected = false
-          this.connectionPromise = undefined
-          this.onclose?.()
-          this.closeAllSubscriptions('relay connection closed')
-        }
+      this.ws.onclose = ev => {
+        clearTimeout(connectionTimeoutHandle)
+        reject((ev as any).message || 'websocket closed')
+        this.handleHardClose('relay connection closed')
       }
 
       this.ws.onmessage = this._onmessage.bind(this)
@@ -121,23 +210,187 @@ export class AbstractRelay {
     return this.connectionPromise
   }
 
-  private async runQueue() {
-    this.queueRunning = true
-    while (true) {
-      if (false === this.handleNext()) {
-        break
-      }
-      await yieldThread()
-    }
-    this.queueRunning = false
+  private waitForPingPong() {
+    return new Promise(resolve => {
+      // listen for pong
+      ;(this.ws as any).once('pong', () => resolve(true))
+      // send a ping
+      this.ws!.ping!()
+    })
   }
 
-  private handleNext(): undefined | false {
-    const json = this.incomingMessageQueue.dequeue()
-    if (!json) {
-      return false
+  private waitForDummyReq() {
+    return new Promise((resolve, reject) => {
+      if (!this.connectionPromise) return reject(new Error(`no connection to ${this.url}, can't ping`))
+
+      // make a dummy request with expected empty eose reply
+      // ["REQ", "_", {"ids":["aaaa...aaaa"], "limit": 0}]
+      try {
+        const sub = this.subscribe(
+          [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
+          {
+            label: '<forced-ping>',
+            oneose: () => {
+              resolve(true)
+              sub.close()
+            },
+            onclose() {
+              // if we get a CLOSED it's because the relay is alive
+              resolve(true)
+            },
+            eoseTimeout: this.pingTimeout + 1000,
+          },
+        )
+      } catch (err) {
+        reject(err)
+      }
+    })
+  }
+
+  // nodejs requires this magic here to ensure connections are closed when internet goes off and stuff
+  // in browsers it's done automatically. see https://github.com/nbd-wtf/nostr-tools/issues/491
+  private async pingpong() {
+    // if the websocket is connected
+    if (this.ws?.readyState === 1) {
+      // wait for either a ping-pong reply or a timeout
+      const result = await Promise.any([
+        // browsers don't have ping so use a dummy req
+        this.ws && this.ws.ping && (this.ws as any).once ? this.waitForPingPong() : this.waitForDummyReq(),
+        new Promise(res => setTimeout(() => res(false), this.pingTimeout)),
+      ])
+
+      if (!result) {
+        // pingpong closing socket
+        if (this.ws?.readyState === this._WebSocket.OPEN) {
+          this.ws?.close()
+        }
+      }
+    }
+  }
+
+  public async send(message: string) {
+    if (!this.connectionPromise) throw new SendingOnClosedConnection(message, this.url)
+
+    this.connectionPromise.then(() => {
+      this.ws?.send(message)
+    })
+  }
+
+  public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
+    const challenge = this.challenge
+    if (!challenge) throw new Error("can't perform auth, no challenge was received")
+    if (this.authPromise) return this.authPromise
+
+    this.authPromise = new Promise<string>(async (resolve, reject) => {
+      try {
+        let evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
+        let timeout = setTimeout(() => {
+          let ep = this.openEventPublishes.get(evt.id) as EventPublishResolver
+          if (ep) {
+            ep.reject(new Error('auth timed out'))
+            this.openEventPublishes.delete(evt.id)
+          }
+        }, this.publishTimeout)
+        this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
+        this.send('["AUTH",' + JSON.stringify(evt) + ']')
+      } catch (err) {
+        console.warn('subscribe auth function failed:', err)
+      }
+    })
+    return this.authPromise
+  }
+
+  public async publish(event: Event): Promise<string> {
+    this.idleSince = undefined
+    this.ongoingOperations++
+
+    const ret = new Promise<string>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        const ep = this.openEventPublishes.get(event.id) as EventPublishResolver
+        if (ep) {
+          ep.reject(new Error('publish timed out'))
+          this.openEventPublishes.delete(event.id)
+        }
+      }, this.publishTimeout)
+      this.openEventPublishes.set(event.id, { resolve, reject, timeout })
+    })
+    this.send('["EVENT",' + JSON.stringify(event) + ']')
+
+    // compute idleness state
+    this.ongoingOperations--
+    if (this.ongoingOperations === 0) this.idleSince = Date.now()
+
+    return ret
+  }
+
+  public async count(filters: Filter[], params: { id?: string | null }): Promise<number> {
+    this.serial++
+    const id = params?.id || 'count:' + this.serial
+    const ret = new Promise<number>((resolve, reject) => {
+      this.openCountRequests.set(id, { resolve, reject })
+    })
+    this.send('["COUNT","' + id + '",' + JSON.stringify(filters).substring(1))
+    return ret
+  }
+
+  public subscribe(
+    filters: Filter[],
+    params: Partial<SubscriptionParams> & { label?: string; id?: string },
+  ): Subscription {
+    if (params.label !== '<forced-ping>') {
+      this.idleSince = undefined
+      this.ongoingOperations++
     }
 
+    const sub = this.prepareSubscription(filters, params)
+    sub.fire()
+
+    if (params.abort) {
+      params.abort.onabort = () => sub.close(String(params.abort!.reason || '<aborted>'))
+    }
+
+    return sub
+  }
+
+  public prepareSubscription(
+    filters: Filter[],
+    params: Partial<SubscriptionParams> & { label?: string; id?: string },
+  ): Subscription {
+    this.serial++
+    const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
+    const sub = new Subscription(this, id, filters, params)
+    this.openSubs.set(id, sub)
+    return sub
+  }
+
+  public close() {
+    this.skipReconnection = true
+    if (this.reconnectTimeoutHandle) {
+      clearTimeout(this.reconnectTimeoutHandle)
+      this.reconnectTimeoutHandle = undefined
+    }
+    if (this.pingIntervalHandle) {
+      clearInterval(this.pingIntervalHandle)
+      this.pingIntervalHandle = undefined
+    }
+    this.closeAllSubscriptions('relay connection closed by us')
+    this._connected = false
+    this.idleSince = undefined
+    this.onclose?.()
+    if (this.ws?.readyState === this._WebSocket.OPEN) {
+      this.ws?.close()
+    }
+  }
+
+  // this is the function assigned to this.ws.onmessage
+  // it's exposed for testing and debugging purposes
+  public _onmessage(ev: MessageEvent<any>): void {
+    const json = ev.data
+    if (!json) {
+      return
+    }
+
+    // shortcut EVENT sub
     const subid = getSubscriptionId(json)
     if (subid) {
       const so = this.openSubs.get(subid as string)
@@ -170,10 +423,13 @@ export class AbstractRelay {
       switch (data[0]) {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
-          const event = data[2] as Event
+          const event = data[2] as NostrEvent
           if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
             so.onevent(event)
+          } else {
+            so.oninvalidevent?.(event)
           }
+          if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
           return
         }
         case 'COUNT': {
@@ -197,9 +453,12 @@ export class AbstractRelay {
           const ok: boolean = data[2]
           const reason: string = data[3]
           const ep = this.openEventPublishes.get(id) as EventPublishResolver
-          if (ok) ep.resolve(reason)
-          else ep.reject(new Error(reason))
-          this.openEventPublishes.delete(id)
+          if (ep) {
+            clearTimeout(ep.timeout)
+            if (ok) ep.resolve(reason)
+            else ep.reject(new Error(reason))
+            this.openEventPublishes.delete(id)
+          }
           return
         }
         case 'CLOSED': {
@@ -210,81 +469,31 @@ export class AbstractRelay {
           so.close(data[2] as string)
           return
         }
-        case 'NOTICE':
+        case 'NOTICE': {
           this.onnotice(data[1] as string)
           return
+        }
         case 'AUTH': {
           this.challenge = data[1] as string
+          if (this.onauth) {
+            this.auth(this.onauth)
+          }
+          return
+        }
+        default: {
+          const so = this.openSubs.get(data[1])
+          so?.oncustom?.(data)
           return
         }
       }
     } catch (err) {
+      try {
+        const [_, __, event] = JSON.parse(json)
+        console.warn(`[nostr] relay ${this.url} error processing message:`, err, event)
+      } catch (_) {
+        console.warn(`[nostr] relay ${this.url} error processing message:`, err)
+      }
       return
-    }
-  }
-
-  public async send(message: string) {
-    if (!this.connectionPromise) throw new Error('sending on closed connection')
-
-    this.connectionPromise.then(() => {
-      this.ws?.send(message)
-    })
-  }
-
-  public async auth(signAuthEvent: (evt: EventTemplate) => Promise<VerifiedEvent>): Promise<string> {
-    if (!this.challenge) throw new Error("can't perform auth, no challenge was received")
-    const evt = await signAuthEvent(makeAuthEvent(this.url, this.challenge))
-    const ret = new Promise<string>((resolve, reject) => {
-      this.openEventPublishes.set(evt.id, { resolve, reject })
-    })
-    this.send('["AUTH",' + JSON.stringify(evt) + ']')
-    return ret
-  }
-
-  public async publish(event: Event): Promise<string> {
-    const ret = new Promise<string>((resolve, reject) => {
-      this.openEventPublishes.set(event.id, { resolve, reject })
-    })
-    this.send('["EVENT",' + JSON.stringify(event) + ']')
-    return ret
-  }
-
-  public async count(filters: Filter[], params: { id?: string | null }): Promise<number> {
-    this.serial++
-    const id = params?.id || 'count:' + this.serial
-    const ret = new Promise<number>((resolve, reject) => {
-      this.openCountRequests.set(id, { resolve, reject })
-    })
-    this.send('["COUNT","' + id + '",' + JSON.stringify(filters) + ']')
-    return ret
-  }
-
-  public subscribe(filters: Filter[], params: Partial<SubscriptionParams>): Subscription {
-    const subscription = this.prepareSubscription(filters, params)
-    subscription.fire()
-    return subscription
-  }
-
-  public prepareSubscription(filters: Filter[], params: Partial<SubscriptionParams> & { id?: string }): Subscription {
-    this.serial++
-    const id = params.id || 'sub:' + this.serial
-    const subscription = new Subscription(this, id, filters, params)
-    this.openSubs.set(id, subscription)
-    return subscription
-  }
-
-  public close() {
-    this.closeAllSubscriptions('relay connection closed by us')
-    this._connected = false
-    this.ws?.close()
-  }
-
-  // this is the function assigned to this.ws.onmessage
-  // it's exposed for testing and debugging purposes
-  public _onmessage(ev: MessageEvent<any>) {
-    this.incomingMessageQueue.enqueue(ev.data as string)
-    if (!this.queueRunning) {
-      this.runQueue()
     }
   }
 }
@@ -293,6 +502,7 @@ export class Subscription {
   public readonly relay: AbstractRelay
   public readonly id: string
 
+  public lastEmitted: number | undefined
   public closed: boolean = false
   public eosed: boolean = false
   public filters: Filter[]
@@ -300,13 +510,19 @@ export class Subscription {
   public receivedEvent: ((relay: AbstractRelay, id: string) => void) | undefined
 
   public onevent: (evt: Event) => void
+  public oninvalidevent: ((evt: unknown) => void) | undefined
   public oneose: (() => void) | undefined
   public onclose: ((reason: string) => void) | undefined
+
+  // will get any messages that have this subscription id as their second item and are not default standard
+  public oncustom: ((msg: string[]) => void) | undefined
 
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
+    if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
+
     this.relay = relay
     this.filters = filters
     this.id = id
@@ -316,6 +532,7 @@ export class Subscription {
 
     this.oneose = params.oneose
     this.onclose = params.onclose
+    this.oninvalidevent = params.oninvalidevent
     this.onevent =
       params.onevent ||
       (event => {
@@ -344,21 +561,36 @@ export class Subscription {
     if (!this.closed && this.relay.connected) {
       // if the connection was closed by the user calling .close() we will send a CLOSE message
       // otherwise this._open will be already set to false so we will skip this
-      this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
+      try {
+        this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
+      } catch (err) {
+        if (err instanceof SendingOnClosedConnection) {
+          /* doesn't matter, it's ok */
+        } else {
+          throw err
+        }
+      }
       this.closed = true
     }
     this.relay.openSubs.delete(this.id)
+
+    // compute idleness state
+    this.relay.ongoingOperations--
+    if (this.relay.ongoingOperations === 0) this.relay.idleSince = Date.now()
+
     this.onclose?.(reason)
   }
 }
 
 export type SubscriptionParams = {
   onevent?: (evt: Event) => void
+  oninvalidevent?: (evt: unknown) => void
   oneose?: () => void
   onclose?: (reason: string) => void
   alreadyHaveEvent?: (id: string) => boolean
   receivedEvent?: (relay: AbstractRelay, id: string) => void
   eoseTimeout?: number
+  abort?: AbortSignal
 }
 
 export type CountResolver = {
@@ -369,4 +601,5 @@ export type CountResolver = {
 export type EventPublishResolver = {
   resolve: (reason: string) => void
   reject: (err: Error) => void
+  timeout: ReturnType<typeof setTimeout>
 }

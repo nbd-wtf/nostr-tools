@@ -1,5 +1,5 @@
 import { Event } from './core.ts'
-import { isReplaceableKind } from './kinds.ts'
+import { isAddressableKind, isReplaceableKind } from './kinds.ts'
 
 export type Filter = {
   ids?: string[]
@@ -14,15 +14,13 @@ export type Filter = {
 
 export function matchFilter(filter: Filter, event: Event): boolean {
   if (filter.ids && filter.ids.indexOf(event.id) === -1) {
-    if (!filter.ids.some(prefix => event.id.startsWith(prefix))) {
-      return false
-    }
+    return false
   }
-  if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) return false
+  if (filter.kinds && filter.kinds.indexOf(event.kind) === -1) {
+    return false
+  }
   if (filter.authors && filter.authors.indexOf(event.pubkey) === -1) {
-    if (!filter.authors.some(prefix => event.pubkey.startsWith(prefix))) {
-      return false
-    }
+    return false
   }
 
   for (let f in filter) {
@@ -41,7 +39,9 @@ export function matchFilter(filter: Filter, event: Event): boolean {
 
 export function matchFilters(filters: Filter[], event: Event): boolean {
   for (let i = 0; i < filters.length; i++) {
-    if (matchFilter(filters[i], event)) return true
+    if (matchFilter(filters[i], event)) {
+      return true
+    }
   }
   return false
 }
@@ -72,17 +72,34 @@ export function mergeFilters(...filters: Filter[]): Filter {
   return result
 }
 
-/** Calculate the intrinsic limit of a filter. This function may return `Infinity`. */
+/**
+ * Calculate the intrinsic limit of a filter.
+ * This function returns a positive integer, or `Infinity` if there is no intrinsic limit.
+ */
 export function getFilterLimit(filter: Filter): number {
   if (filter.ids && !filter.ids.length) return 0
   if (filter.kinds && !filter.kinds.length) return 0
   if (filter.authors && !filter.authors.length) return 0
 
+  for (const [key, value] of Object.entries(filter)) {
+    if (key[0] === '#' && Array.isArray(value) && !value.length) return 0
+  }
+
   return Math.min(
+    // The `limit` property creates an artificial limit.
     Math.max(0, filter.limit ?? Infinity),
+
+    // There can only be one event per `id`.
     filter.ids?.length ?? Infinity,
+
+    // Replaceable events are limited by the number of authors and kinds.
     filter.authors?.length && filter.kinds?.every(kind => isReplaceableKind(kind))
       ? filter.authors.length * filter.kinds.length
+      : Infinity,
+
+    // Parameterized replaceable events are limited by the number of authors, kinds, and "d" tags.
+    filter.authors?.length && filter.kinds?.every(kind => isAddressableKind(kind)) && filter['#d']?.length
+      ? filter.authors.length * filter.kinds.length * filter['#d'].length
       : Infinity,
   )
 }

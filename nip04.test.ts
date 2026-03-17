@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test'
 
 import { encrypt, decrypt } from './nip04.ts'
 import { getPublicKey, generateSecretKey } from './pure.ts'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 
 test('encrypt and decrypt message', async () => {
   let sk1 = generateSecretKey()

@@ -8,7 +8,7 @@ export interface Nostr {
 /** Designates a verified event signature. */
 export const verifiedSymbol = Symbol('verified')
 
-export interface Event {
+export type NostrEvent = {
   kind: number
   tags: string[][]
   content: string
@@ -19,7 +19,7 @@ export interface Event {
   [verifiedSymbol]?: boolean
 }
 
-export type NostrEvent = Event
+export type Event = NostrEvent
 export type EventTemplate = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at'>
 export type UnsignedEvent = Pick<Event, 'kind' | 'tags' | 'content' | 'created_at' | 'pubkey'>
 
@@ -43,9 +43,23 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
     let tag = event.tags[i]
     if (!Array.isArray(tag)) return false
     for (let j = 0; j < tag.length; j++) {
-      if (typeof tag[j] === 'object') return false
+      if (typeof tag[j] !== 'string') return false
     }
   }
 
   return true
+}
+
+/**
+ * Sort events in reverse-chronological order by the `created_at` timestamp,
+ * and then by the event `id` (lexicographically) in case of ties.
+ * This mutates the array.
+ */
+export function sortEvents(events: Event[]): Event[] {
+  return events.sort((a: NostrEvent, b: NostrEvent): number => {
+    if (a.created_at !== b.created_at) {
+      return b.created_at - a.created_at
+    }
+    return a.id.localeCompare(b.id)
+  })
 }

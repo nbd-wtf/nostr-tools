@@ -9,8 +9,8 @@ interface NWCConnection {
 }
 
 export function parseConnectionString(connectionString: string): NWCConnection {
-  const { pathname, searchParams } = new URL(connectionString)
-  const pubkey = pathname
+  const { host, pathname, searchParams } = new URL(connectionString)
+  const pubkey = pathname || host
   const relay = searchParams.get('relay')
   const secret = searchParams.get('secret')
 
@@ -32,7 +32,7 @@ export async function makeNwcRequestEvent(
       invoice,
     },
   }
-  const encryptedContent = await encrypt(secretKey, pubkey, JSON.stringify(content))
+  const encryptedContent = encrypt(secretKey, pubkey, JSON.stringify(content))
   const eventTemplate = {
     kind: NWCWalletRequest,
     created_at: Math.round(Date.now() / 1000),

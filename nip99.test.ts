@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 
-import { Event } from './core'
-import { ClassifiedListing, DraftClassifiedListing } from './kinds'
-import { ClassifiedListingObject, generateEventTemplate, parseEvent, validateEvent } from './nip99'
-import { finalizeEvent, generateSecretKey } from './pure'
+import { Event } from './core.ts'
+import { ClassifiedListing, DraftClassifiedListing } from './kinds.ts'
+import { ClassifiedListingObject, generateEventTemplate, parseEvent, validateEvent } from './nip99.ts'
+import { finalizeEvent, generateSecretKey } from './pure.ts'
 
 describe('validateEvent', () => {
   test('should return true for a valid classified listing event', () => {

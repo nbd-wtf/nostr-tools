@@ -1,4 +1,4 @@
-import { BECH32_REGEX, decode, type DecodeResult } from './nip19.ts'
+import { AddressPointer, BECH32_REGEX, decode, EventPointer, ProfilePointer } from './nip19.ts'
 
 /** Nostr URI regex, eg `nostr:npub1...` */
 export const NOSTR_URI_REGEX: RegExp = new RegExp(`nostr:(${BECH32_REGEX.source})`)
@@ -15,7 +15,31 @@ export interface NostrURI {
   /** The bech32-encoded data (eg `npub1...`). */
   value: string
   /** Decoded bech32 string, according to NIP-19. */
-  decoded: DecodeResult
+  decoded:
+    | {
+        type: 'nevent'
+        data: EventPointer
+      }
+    | {
+        type: 'nprofile'
+        data: ProfilePointer
+      }
+    | {
+        type: 'naddr'
+        data: AddressPointer
+      }
+    | {
+        type: 'npub'
+        data: string
+      }
+    | {
+        type: 'nsec'
+        data: Uint8Array
+      }
+    | {
+        type: 'note'
+        data: string
+      }
 }
 
 /** Parse and decode a Nostr URI. */
