@@ -5,20 +5,21 @@ import { encrypt } from './nip04.ts'
 interface NWCConnection {
   pubkey: string
   relay: string
+  relays: string[]
   secret: string
 }
 
 export function parseConnectionString(connectionString: string): NWCConnection {
   const { host, pathname, searchParams } = new URL(connectionString)
   const pubkey = pathname || host
-  const relay = searchParams.get('relay')
+  const relays = searchParams.getAll('relay')
   const secret = searchParams.get('secret')
 
-  if (!pubkey || !relay || !secret) {
+  if (!pubkey || relays.length === 0 || !secret) {
     throw new Error('invalid connection string')
   }
 
-  return { pubkey, relay, secret }
+  return { pubkey, relay: relays[0], relays, secret }
 }
 
 export async function makeNwcRequestEvent(
