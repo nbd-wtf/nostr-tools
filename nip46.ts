@@ -115,6 +115,8 @@ export function createNostrConnectURI(params: NostrConnectParams): string {
 export type BunkerSignerParams = {
   pool?: AbstractSimplePool
   onauth?: (url: string) => void
+  /** Skip automatic switchRelays() call in fromURI. Useful when you want to call it manually at your own pace. */
+  skipSwitchRelays?: boolean
 }
 
 export class BunkerSigner implements Signer {
@@ -220,7 +222,9 @@ export class BunkerSigner implements Signer {
                 signer.setupSubscription()
 
                 success = true
-                await Promise.race([new Promise(resolve => setTimeout(resolve, 1000)), signer.switchRelays()])
+                if (!bunkerParams.skipSwitchRelays) {
+                  await Promise.race([new Promise(resolve => setTimeout(resolve, 1000)), signer.switchRelays()])
+                }
                 resolve(signer)
               }
             } catch (e) {
