@@ -476,7 +476,14 @@ export class AbstractRelay {
         case 'AUTH': {
           this.challenge = data[1] as string
           if (this.onauth) {
-            this.auth(this.onauth)
+            this.auth(this.onauth).catch(err => {
+              // If the connection closed before auth could be sent, just ignore it.
+              // This is a race condition when relays close connections quickly
+              // (e.g., WoT-enforced relays that reject unknown pubkeys).
+              if (!(err instanceof SendingOnClosedConnection)) {
+                throw err // re-throw other errors
+              }
+            })
           }
           return
         }
