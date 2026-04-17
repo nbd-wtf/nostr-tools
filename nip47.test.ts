@@ -25,6 +25,26 @@ describe('parseConnectionString', () => {
     expect(secret).toBe('71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c')
   })
 
+  test('returns all relays when multiple relay params are present', () => {
+    const connectionString =
+      'nostr+walletconnect://b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4?relay=wss%3A%2F%2Frelay1.damus.io&relay=wss%3A%2F%2Frelay2.damus.io&secret=71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
+    const { pubkey, relay, relays, secret } = parseConnectionString(connectionString)
+
+    expect(pubkey).toBe('b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4')
+    expect(relay).toBe('wss://relay1.damus.io')
+    expect(relays).toEqual(['wss://relay1.damus.io', 'wss://relay2.damus.io'])
+    expect(secret).toBe('71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c')
+  })
+
+  test('returns relay and relays with single relay for backward compatibility', () => {
+    const connectionString =
+      'nostr+walletconnect://b889ff5b1513b641e2a139f661a661364979c5beee91842f8f0ef42ab558e9d4?relay=wss%3A%2F%2Frelay.damus.io&secret=71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
+    const { relay, relays } = parseConnectionString(connectionString)
+
+    expect(relay).toBe('wss://relay.damus.io')
+    expect(relays).toEqual(['wss://relay.damus.io'])
+  })
+
   test('throws an error if no pubkey in connection string', async () => {
     const connectionString =
       'nostr+walletconnect:relay=wss%3A%2F%2Frelay.damus.io&secret=71a8c14c1407c113601079c4302dab36460f0ccd0ad506f1f2dc73b5100e4f3c'
