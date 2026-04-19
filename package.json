@@ -93,6 +93,12 @@
       "require": "./lib/cjs/nip05.js",
       "types": "./lib/types/nip05.d.ts"
     },
+    "./nip05namecoin": {
+      "source": "./nip05namecoin.ts",
+      "import": "./lib/esm/nip05namecoin.js",
+      "require": "./lib/cjs/nip05namecoin.js",
+      "types": "./lib/types/nip05namecoin.d.ts"
+    },
     "./nip06": {
       "source": "./nip06.ts",
       "import": "./lib/esm/nip06.js",
