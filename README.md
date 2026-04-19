@@ -344,6 +344,45 @@ import { useFetchImplementation } from '@nostr/tools/nip05'
 useFetchImplementation(require('node-fetch'))
 ```
 
+### Resolving `.bit` (Namecoin) NIP-05 addresses
+
+The `nip05namecoin` module resolves identifiers rooted in the Namecoin blockchain — `alice@example.bit`, `example.bit`, `d/example`, or `id/alice` — by querying a public ElectrumX server over WSS. Its API mirrors `nip05` so you can chain them:
+
+```js
+import * as namecoin from '@nostr/tools/nip05namecoin'
+import * as nip05 from '@nostr/tools/nip05'
+
+async function resolve(input) {
+  return namecoin.isValidIdentifier(input)
+    ? await namecoin.queryProfile(input)
+    : await nip05.queryProfile(input)
+}
+
+await resolve('testls.bit')
+// → { pubkey: '460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c' }
+```
+
+The default ElectrumX endpoints currently serve self-signed TLS certs, so browser use requires an operator with a CA-issued cert (or a proxy).
+
+In Node the easier path is the companion `nip05namecoin-node` module, which ships the pinned certs inline and uses `ws` + `node:tls` to verify them by SHA-256 fingerprint:
+
+```js
+import { queryProfile, install } from '@nostr/tools/nip05namecoin-node'
+
+await install() // once at startup
+
+await queryProfile('testls.bit')
+// → { pubkey: '460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c' }
+```
+
+The `ws` package is an optional peer dependency — install it only if you plan to use the Node module:
+
+```bash
+npm install ws
+```
+
+The Node module refuses to connect to hostnames outside its pinned set; see its docstring for how to register a private ElectrumX server.
+
 ### Including NIP-07 types
 ```js
 import type { WindowNostr } from '@nostr/tools/nip07'
