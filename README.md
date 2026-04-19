@@ -362,23 +362,26 @@ await resolve('testls.bit')
 // → { pubkey: '460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c' }
 ```
 
-The default ElectrumX endpoints currently serve self-signed TLS certs, so browser use requires an operator with a CA-issued cert (or a proxy). In Node you can pin the certs via a custom WebSocket implementation:
+The default ElectrumX endpoints currently serve self-signed TLS certs, so browser use requires an operator with a CA-issued cert (or a proxy).
+
+In Node the easier path is the companion `nip05namecoin-node` module, which ships the pinned certs inline and uses `ws` + `node:tls` to verify them by SHA-256 fingerprint:
 
 ```js
-import WebSocket from 'ws'
-import https from 'node:https'
-import { useWebSocketImplementation } from '@nostr/tools/nip05namecoin'
+import { queryProfile, install } from '@nostr/tools/nip05namecoin-node'
 
-const agent = new https.Agent({
-  ca: [/* PEM of the pinned ElectrumX cert */],
-})
-class PinnedWebSocket extends WebSocket {
-  constructor(url, protocols) {
-    super(url, protocols, { agent })
-  }
-}
-useWebSocketImplementation(PinnedWebSocket)
+await install() // once at startup
+
+await queryProfile('testls.bit')
+// → { pubkey: '460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c' }
 ```
+
+The `ws` package is an optional peer dependency — install it only if you plan to use the Node module:
+
+```bash
+npm install ws
+```
+
+The Node module refuses to connect to hostnames outside its pinned set; see its docstring for how to register a private ElectrumX server.
 
 ### Including NIP-07 types
 ```js

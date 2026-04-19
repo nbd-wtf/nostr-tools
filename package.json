@@ -99,6 +99,12 @@
       "require": "./lib/cjs/nip05namecoin.js",
       "types": "./lib/types/nip05namecoin.d.ts"
     },
+    "./nip05namecoin-node": {
+      "source": "./nip05namecoin-node.ts",
+      "import": "./lib/esm/nip05namecoin-node.js",
+      "require": "./lib/cjs/nip05namecoin-node.js",
+      "types": "./lib/types/nip05namecoin-node.d.ts"
+    },
     "./nip06": {
       "source": "./nip06.ts",
       "import": "./lib/esm/nip06.js",
@@ -294,10 +300,14 @@
     "nostr-wasm": "0.1.0"
   },
   "peerDependencies": {
-    "typescript": ">=5.0.0"
+    "typescript": ">=5.0.0",
+    "ws": ">=8.0.0"
   },
   "peerDependenciesMeta": {
     "typescript": {
+      "optional": true
+    },
+    "ws": {
       "optional": true
     }
   },
@@ -311,6 +321,7 @@
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@types/node-fetch": "^2.6.3",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
     "bun-types": "^1.0.18",
@@ -322,7 +333,8 @@
     "mock-socket": "^9.3.1",
     "node-fetch": "^2.6.9",
     "prettier": "^3.0.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "ws": "^8.20.0"
   },
   "scripts": {
     "prepublish": "just build"
