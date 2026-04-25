@@ -224,10 +224,15 @@ test('get()', async () => {
 
 test('ping-pong timeout in pool', async () => {
   const mockRelay = mockRelays[0]
-  pool = new SimplePool({ enablePing: true })
+  pool = new SimplePool({ enablePing: true, enableReconnect: false })
   const relay = await pool.ensureRelay(mockRelay.url)
+
+  // ensureRelay() calls connect() internally, which starts the ping interval
+  // with the default frequency (29s). We need to restart it with our test values.
   relay.pingTimeout = 50
   relay.pingFrequency = 50
+  clearInterval((relay as any).pingIntervalHandle)
+  ;(relay as any).pingIntervalHandle = setInterval(() => (relay as any).pingpong(), relay.pingFrequency)
 
   let closed = false
   const closedPromise = new Promise<void>(resolve => {
@@ -257,34 +262,33 @@ test('reconnect on disconnect in pool', async () => {
   const mockRelay = mockRelays[0]
   pool = new SimplePool({ enablePing: true, enableReconnect: true })
   const relay = await pool.ensureRelay(mockRelay.url)
+
+  // Restart ping interval with test-friendly timing (see ping-pong test above)
   relay.pingTimeout = 50
   relay.pingFrequency = 50
   relay.resubscribeBackoff = [50, 100]
-
-  let closes = 0
-  relay.onclose = () => {
-    closes++
-  }
+  clearInterval((relay as any).pingIntervalHandle)
+  ;(relay as any).pingIntervalHandle = setInterval(() => (relay as any).pingpong(), relay.pingFrequency)
 
   expect(relay.connected).toBeTrue()
 
   // wait for the first ping to succeed
   await new Promise(resolve => setTimeout(resolve, 75))
-  expect(closes).toBe(0)
 
   // now make it unresponsive
   mockRelay.unresponsive = true
 
-  // wait for the second ping to fail, which will trigger a close
+  // wait for disconnect (relay.connected becomes false)
+  // note: onclose is NOT called when enableReconnect is true — the relay
+  // goes straight to reconnection instead of signaling a permanent close
   await new Promise(resolve => {
     const interval = setInterval(() => {
-      if (closes > 0) {
+      if (!relay.connected) {
         clearInterval(interval)
         resolve(null)
       }
     }, 10)
   })
-  expect(closes).toBe(1)
   expect(relay.connected).toBeFalse()
 
   // now make it responsive again
@@ -301,7 +305,6 @@ test('reconnect on disconnect in pool', async () => {
   })
 
   expect(relay.connected).toBeTrue()
-  expect(closes).toBe(1)
 })
 
 test('reconnect with filter update in pool', async () => {
@@ -311,14 +314,13 @@ test('reconnect with filter update in pool', async () => {
     enableReconnect: true,
   })
   const relay = await pool.ensureRelay(mockRelay.url)
+
+  // Restart ping interval with test-friendly timing (see ping-pong test above)
   relay.pingTimeout = 50
   relay.pingFrequency = 50
   relay.resubscribeBackoff = [50, 100]
-
-  let closes = 0
-  relay.onclose = () => {
-    closes++
-  }
+  clearInterval((relay as any).pingIntervalHandle)
+  ;(relay as any).pingIntervalHandle = setInterval(() => (relay as any).pingpong(), relay.pingFrequency)
 
   expect(relay.connected).toBeTrue()
 
@@ -327,21 +329,19 @@ test('reconnect with filter update in pool', async () => {
 
   // wait for the first ping to succeed
   await new Promise(resolve => setTimeout(resolve, 75))
-  expect(closes).toBe(0)
 
   // now make it unresponsive
   mockRelay.unresponsive = true
 
-  // wait for the second ping to fail, which will trigger a close
+  // wait for disconnect (relay.connected becomes false)
   await new Promise(resolve => {
     const interval = setInterval(() => {
-      if (closes > 0) {
+      if (!relay.connected) {
         clearInterval(interval)
         resolve(null)
       }
     }, 10)
   })
-  expect(closes).toBe(1)
   expect(relay.connected).toBeFalse()
 
   // now make it responsive again
@@ -358,7 +358,6 @@ test('reconnect with filter update in pool', async () => {
   })
 
   expect(relay.connected).toBeTrue()
-  expect(closes).toBe(1)
 
   // check if filter was updated
   expect(sub.filters[0].since).toBeGreaterThan(1)
