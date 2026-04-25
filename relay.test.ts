@@ -353,15 +353,20 @@ test('oninvalidevent is called for malformed events', async done => {
   })
 
   const sk = generateSecretKey()
-  const wrongFieldTypeEvent = [finalizeEvent(
-    {
-      kind: 1,
-      content: 'content',
-      created_at: 0,
-      tags: [],
-    },
-    sk
-  )].map(v => { (v as any).kind = '1'; return v })[0]
+  const wrongFieldTypeEvent = [
+    finalizeEvent(
+      {
+        kind: 1,
+        content: 'content',
+        created_at: 0,
+        tags: [],
+      },
+      sk,
+    ),
+  ].map(v => {
+    ;(v as any).kind = '1'
+    return v
+  })[0]
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
 })
