@@ -23,6 +23,11 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   onRelayConnectionFailure?: (url: string) => void
   // onRelayConnectionSuccess is called with the URL of a relay that succeeds the initial connection
   onRelayConnectionSuccess?: (url: string) => void
+  // onRelayDisconnect is called when a relay disconnects during an active session
+  // (useful for monitoring connection health in long-running subscriptions)
+  onRelayDisconnect?: (url: string) => void
+  // onRelayReconnect is called when a relay successfully reconnects after a disconnection
+  onRelayReconnect?: (url: string) => void
   // allowConnectingToRelay takes a relay URL and the operation being performed
   // return false to skip connecting to that relay
   allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
@@ -52,6 +57,8 @@ export class AbstractSimplePool {
   public trustedRelayURLs: Set<string> = new Set()
   public onRelayConnectionFailure?: (url: string) => void
   public onRelayConnectionSuccess?: (url: string) => void
+  public onRelayDisconnect?: (url: string) => void
+  public onRelayReconnect?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
   public maxWaitForConnection: number
 
@@ -61,10 +68,12 @@ export class AbstractSimplePool {
     this.verifyEvent = opts.verifyEvent
     this._WebSocket = opts.websocketImplementation
     this.enablePing = opts.enablePing
-    this.enableReconnect = opts.enableReconnect || false
+    this.enableReconnect = opts.enableReconnect ?? true
     this.automaticallyAuth = opts.automaticallyAuth
     this.onRelayConnectionFailure = opts.onRelayConnectionFailure
     this.onRelayConnectionSuccess = opts.onRelayConnectionSuccess
+    this.onRelayDisconnect = opts.onRelayDisconnect
+    this.onRelayReconnect = opts.onRelayReconnect
     this.allowConnectingToRelay = opts.allowConnectingToRelay
     this.maxWaitForConnection = opts.maxWaitForConnection || 3000
   }
@@ -87,7 +96,11 @@ export class AbstractSimplePool {
         enableReconnect: this.enableReconnect,
       })
       relay.onclose = () => {
+        this.onRelayDisconnect?.(url)
         this.relays.delete(url)
+      }
+      relay.onreconnect = () => {
+        this.onRelayReconnect?.(url)
       }
       this.relays.set(url, relay)
     }
