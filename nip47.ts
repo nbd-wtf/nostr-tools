@@ -4,6 +4,7 @@ import { encrypt } from './nip04.ts'
 
 interface NWCConnection {
   pubkey: string
+  /** @deprecated Use `relays` instead. This returns only the first relay. */
   relay: string
   relays: string[]
   secret: string
