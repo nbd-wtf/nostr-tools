@@ -407,10 +407,12 @@ test('oninvalidevent is called through the pool for invalid events', async done 
   })
 
   const sk = generateSecretKey()
-  const wrongFieldTypeEvent = [finalizeEvent(
-    { kind: 1, content: 'hello', created_at: Math.floor(Date.now() / 1000), tags: [] },
-    sk,
-  )].map(v => { (v as any).kind = '1'; return v })[0]
+  const wrongFieldTypeEvent = [
+    finalizeEvent({ kind: 1, content: 'hello', created_at: Math.floor(Date.now() / 1000), tags: [] }, sk),
+  ].map(v => {
+    ;(v as any).kind = '1'
+    return v
+  })[0]
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
 })
