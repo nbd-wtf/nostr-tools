@@ -3,6 +3,7 @@ import { v2 } from './nip44.js'
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js'
 import { default as vec } from './nip44.vectors.json' with { type: 'json' }
 import { schnorr } from '@noble/curves/secp256k1.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 
 const v2vec = vec.v2
 
@@ -216,8 +217,7 @@ test('spec test vectors: SHA-256 of payload at 65535/65536/65537', async () => {
   const nonce = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001')
 
   async function sha256hex(data: Uint8Array): Promise<string> {
-    const hash = await crypto.subtle.digest('SHA-256', data)
-    return bytesToHex(new Uint8Array(hash))
+    return bytesToHex(sha256(data))
   }
 
   const vectors = [
