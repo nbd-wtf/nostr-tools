@@ -1,6 +1,6 @@
 {
   "name": "@nostr/tools",
-  "version": "2.23.5",
+  "version": "2.23.6",
   "exports": {
     ".": "./index.ts",
     "./core": "./core.ts",
@@ -24,6 +24,7 @@
     "./nip18": "./nip18.ts",
     "./nip19": "./nip19.ts",
     "./nip21": "./nip21.ts",
+    "./nip22": "./nip22.ts",
     "./nip25": "./nip25.ts",
     "./nip27": "./nip27.ts",
     "./nip28": "./nip28.ts",
