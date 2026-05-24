@@ -276,6 +276,153 @@ test('queryProfile: returns null for non-namecoin identifiers', async () => {
   expect(got).toBeNull()
 })
 
+/**
+ * Multi-name variant of {@link startFakeElectrumX}: serves any of the
+ * registered (name → value) pairs by looking up which scripthash the
+ * client asked for. Used to exercise the ifa-0001 `import` chain
+ * end-to-end through {@link queryProfile}.
+ */
+function startMultiNameFakeElectrumX(port: number, records: Record<string, string>, pickHeight = 800_000) {
+  const url = `wss://mock-electrumx.example:${port}`
+  const server = new Server(url)
+
+  // Pre-compute scripthash → name index. The client builds the
+  // scripthash from the on-chain name-index script; we mirror that
+  // here using the same helpers as the production code path.
+  // Cheaper trick: just round-robin a single name per RPC call by
+  // tracking which scripthash arrived last. Mock-socket replays the
+  // request id so we can correlate get_history -> transaction.get.
+  const nameToHex: Record<string, string> = {}
+  for (const [name, value] of Object.entries(records)) {
+    nameToHex[name] = buildNameUpdateHex(name, value)
+  }
+
+  // Track which name each session last queried so transaction.get can
+  // return the matching script. We key by scripthash (the request param
+  // is unique per name).
+  const scriptHashToName: Record<string, string> = {}
+
+  server.on('connection', socket => {
+    let lastName: string | null = null
+    socket.on('message', (raw: any) => {
+      let req: { id?: number; method?: string; params?: unknown[] }
+      try {
+        req = JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw))
+      } catch {
+        return
+      }
+      const id = req.id
+      const method = req.method
+      let result: unknown = null
+      switch (method) {
+        case 'server.version':
+          result = ['ElectrumX 1.16.0', '1.4']
+          break
+        case 'blockchain.scripthash.get_history': {
+          // Resolve scripthash → name by matching against our index.
+          // We compute names' scripthashes lazily on first call from
+          // a session by walking the registered map. To keep things
+          // simple: store a name per scripthash on first sight.
+          const sh = String((req.params as string[])[0])
+          if (!scriptHashToName[sh]) {
+            // Assume the client iterates names in the same order we
+            // were registered with; pick the first not-yet-seen name.
+            for (const n of Object.keys(records)) {
+              if (!Object.values(scriptHashToName).includes(n)) {
+                scriptHashToName[sh] = n
+                break
+              }
+            }
+          }
+          lastName = scriptHashToName[sh] ?? null
+          if (lastName === null) {
+            result = []
+          } else {
+            result = [{ tx_hash: '0'.repeat(64), height: pickHeight }]
+          }
+          break
+        }
+        case 'blockchain.transaction.get':
+          if (lastName === null) {
+            result = { txid: '0'.repeat(64), vout: [] }
+          } else {
+            result = {
+              txid: '0'.repeat(64),
+              vout: [
+                { scriptPubKey: { hex: '76a914' + '0'.repeat(40) + '88ac' } },
+                { scriptPubKey: { hex: nameToHex[lastName] } },
+              ],
+            }
+          }
+          break
+        case 'blockchain.headers.subscribe':
+          result = { height: pickHeight + 10, hex: '' }
+          break
+      }
+      socket.send(JSON.stringify({ jsonrpc: '2.0', id, result }))
+    })
+  })
+
+  return { server, url, stop: () => server.stop() }
+}
+
+test('queryProfile: resolves through ifa-0001 import chain (importer has no nostr, imported provides it)', async () => {
+  const pk = 'b'.repeat(64)
+  // d/importer has only an import pointing at d/lib; d/lib carries the
+  // nostr block. Without import expansion this would resolve to null.
+  const importerValue = JSON.stringify({ import: 'd/lib' })
+  const libValue = JSON.stringify({ nostr: pk })
+  const port = 51005
+  const fake = startMultiNameFakeElectrumX(port, {
+    'd/importer': importerValue,
+    'd/lib': libValue,
+  })
+  try {
+    const got = await queryProfile('importer.bit', [
+      { host: 'mock-electrumx.example', port },
+    ])
+    expect(got).toEqual({ pubkey: pk })
+  } finally {
+    fake.stop()
+  }
+})
+
+test('queryProfile: importer nostr field wins over imported one', async () => {
+  const pkLocal = 'c'.repeat(64)
+  const pkImported = 'd'.repeat(64)
+  const importerValue = JSON.stringify({ import: 'd/lib', nostr: pkLocal })
+  const libValue = JSON.stringify({ nostr: pkImported })
+  const port = 51006
+  const fake = startMultiNameFakeElectrumX(port, {
+    'd/importer2': importerValue,
+    'd/lib': libValue,
+  })
+  try {
+    const got = await queryProfile('importer2.bit', [
+      { host: 'mock-electrumx.example', port },
+    ])
+    expect(got).toEqual({ pubkey: pkLocal })
+  } finally {
+    fake.stop()
+  }
+})
+
+test('queryProfile: a record without `import` triggers zero extra lookups', async () => {
+  // Regression: the import path must short-circuit when there's no
+  // `import` key. Use a fake server that fails any second name lookup.
+  const pk = 'e'.repeat(64)
+  const port = 51007
+  const fake = startFakeElectrumX(port, 'd/standalone', JSON.stringify({ nostr: pk }))
+  try {
+    const got = await queryProfile('standalone.bit', [
+      { host: 'mock-electrumx.example', port },
+    ])
+    expect(got).toEqual({ pubkey: pk })
+  } finally {
+    fake.stop()
+  }
+})
+
 test('queryProfile: falls back to the second server on transport error', async () => {
   const pk = 'a'.repeat(64)
   const name = 'd/examplethree'
