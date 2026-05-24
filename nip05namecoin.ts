@@ -50,6 +50,7 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
 
+import { expandImports, type NameValueFetcher } from './nip05namecoin-import.ts'
 import { ProfilePointer } from './nip19.ts'
 
 /** A pluggable WebSocket implementation. Must match the browser API. */
@@ -193,7 +194,30 @@ export async function queryProfile(
   const valueJSON = await nameShowWithFallback(parsed.namecoinName, servers)
   if (!valueJSON) return null
 
-  const extracted = extractNostrFromValue(valueJSON, parsed)
+  // Parse the on-chain value, then expand any ifa-0001 `import` items
+  // by fetching the referenced names through the same server pool.
+  // Records without `"import"` short-circuit inside expandImports (no
+  // extra I/O), so this is free for the common case.
+  let parsedRoot: Record<string, unknown>
+  try {
+    parsedRoot = JSON.parse(valueJSON) as Record<string, unknown>
+  } catch {
+    return null
+  }
+  if (typeof parsedRoot !== 'object' || parsedRoot === null) return null
+
+  const importFetcher: NameValueFetcher = async (importedName: string) => {
+    try {
+      return await nameShowWithFallback(importedName, servers)
+    } catch {
+      // Best-effort: import failures contribute nothing (matches
+      // Amethyst's NamecoinNameResolver.expandImportsIfPresent).
+      return null
+    }
+  }
+  const merged = await expandImports(parsedRoot, importFetcher)
+
+  const extracted = extractNostrFromObject(merged, parsed)
   if (!extracted) return null
 
   const { pubkey, relays } = extracted
@@ -533,7 +557,18 @@ export function extractNostrFromValue(
     return null
   }
   if (typeof root !== 'object' || root === null) return null
+  return extractNostrFromObject(root, parsed)
+}
 
+/**
+ * Same as {@link extractNostrFromValue} but takes a pre-parsed object.
+ * Internal: used by the resolver after expanding ifa-0001 `import`
+ * chains, so we don't re-stringify and re-parse the merged record.
+ */
+function extractNostrFromObject(
+  root: Record<string, unknown>,
+  parsed: ParsedIdentifier,
+): { pubkey: string; relays?: string[] } | null {
   const nostrField = root['nostr']
   if (nostrField === undefined || nostrField === null) return null
 

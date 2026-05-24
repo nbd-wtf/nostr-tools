@@ -383,6 +383,8 @@ npm install ws
 
 The Node module refuses to connect to hostnames outside its pinned set; see its docstring for how to register a private ElectrumX server.
 
+Both modules transparently follow [ifa-0001](https://github.com/namecoin/proposals/blob/master/ifa-0001.md) `import` chains: if a `.bit` record's value JSON has an `"import"` item (string shorthand or canonical array-of-arrays, with optional subdomain selector), the resolver fetches the referenced names through the same server pool, recursively up to 4 levels deep, then merges the imported items with the importing object's items taking precedence. Cycles are broken automatically; failed imports contribute nothing without aborting the lookup. Records without an `"import"` key short-circuit — no extra I/O.
+
 ### Including NIP-07 types
 ```js
 import type { WindowNostr } from '@nostr/tools/nip07'
