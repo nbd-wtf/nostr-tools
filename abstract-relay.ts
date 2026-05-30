@@ -30,6 +30,7 @@ export class AbstractRelay {
   private _connected: boolean = false
 
   public onclose: (() => void) | null = null
+  public onreconnect: (() => void) | null = null
   public onnotice: (msg: string) => void = msg => console.debug(`NOTICE from ${this.url}: ${msg}`)
   public onauth: undefined | ((evt: EventTemplate) => Promise<VerifiedEvent>)
 
@@ -169,6 +170,10 @@ export class AbstractRelay {
 
         const isReconnection = this.reconnectAttempts > 0
         this.reconnectAttempts = 0
+
+        if (isReconnection) {
+          this.onreconnect?.()
+        }
 
         // resubscribe to all open subscriptions
         for (const sub of this.openSubs.values()) {
