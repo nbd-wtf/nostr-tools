@@ -311,7 +311,8 @@ export class BunkerSigner implements Signer {
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
-    this.subCloser!.close()
+    this.subCloser?.close()
+    this.subCloser = undefined
   }
 
   async sendRequest(method: string, params: string[]): Promise<string> {
@@ -362,6 +363,16 @@ export class BunkerSigner implements Signer {
    */
   async connect(): Promise<void> {
     await this.sendRequest('connect', [this.bp.pubkey, this.bp.secret || ''])
+  }
+
+  /**
+   * Calls the "logout" method on the bunker and closes the local session.
+   * The client secret key should be discarded by the caller after this.
+   */
+  async logout(): Promise<void> {
+    let resp = await this.sendRequest('logout', [])
+    if (resp !== 'ack') throw new Error(`result is not ack: ${resp}`)
+    await this.close()
   }
 
   /**
