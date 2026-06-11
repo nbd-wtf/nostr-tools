@@ -130,34 +130,56 @@ import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
 ```
 
-#### enablePing
+### Authenticating with relays (NIP-42)
 
-You can enable regular pings of connected relays with the `enablePing` option. This will set up a heartbeat that closes the websocket if it doesn't receive a response in time. Some platforms, like Node.js, don't report websocket disconnections due to network issues, and enabling this can increase the reliability of the `onclose` event.
+Some relays will return a `CLOSED` message with an `"auth-required:"` prefix in order to signal that such request requires authentication.
 
-```js
-import { SimplePool } from '@nostr/tools/pool'
+Upon receiving that you're supposed to send an `AUTH` message and restart the subscription.
 
-const pool = new SimplePool({ enablePing: true })
-```
+**Using `SimplePool`:**
 
-#### enableReconnect
-
-You can also enable automatic reconnection with the `enableReconnect` option. This will make the pool try to reconnect to relays with an exponential backoff delay if the connection is lost unexpectedly.
+`subscribeMany`, `subscribeManyEose` and `subscribeEose` accept `onauth` option. It signs challenge and resubscribes automatically for you:
 
 ```js
 import { SimplePool } from '@nostr/tools/pool'
 
-const pool = new SimplePool({ enableReconnect: true })
+const pool = new SimplePool()
+
+pool.subscribeMany(
+  ['wss://myrelay.com'],
+  [{ '#t': ['restricted'] }],
+  {
+    onevent(event) { console.log('got event:', event) },
+    onauth: (eventTemplate) => window.nostr.signEvent(eventTemplate),
+  }
+)
 ```
 
-Using both `enablePing: true` and `enableReconnect: true` is recommended as it will improve the reliability and timeliness of the reconnection (at the expense of slighly higher bandwidth due to the ping messages).
+**Using `Relay` directly:**
+
+Unrecommended unless you really need fine-grained control over each `Relay` object:
 
 ```js
-// on Node.js
-const pool = new SimplePool({ enablePing: true, enableReconnect: true })
-```
+import { Relay } from '@nostr/tools/relay'
 
-When reconnecting, all existing subscriptions will have their filters automatically updated with `since:` set to the timestamp of the last event received on them `+1`, then restarted.
+const relay = await Relay.connect('wss://myrelay.com')
+let alreadyAuthenticatedOnce = false
+const subscribe = () => {
+  relay.subscribe([{ '#t': ['restricted'] }], {
+    onevent(event) { console.log(event) },
+    onclose(reason) {
+      if (reason.startsWith('auth-required:')) {
+        if (alreadyAuthenticatedOnce) return
+        await relay.auth((eventTemplate) = window.nostr.signEvent(eventTemplate))
+        alreadyAuthenticatedOnce = true
+        subscribe()
+      }
+    }
+  })
+}
+
+subscribe()
+```
 
 ### Parsing references (mentions) from a content based on NIP-27
 
