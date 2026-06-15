@@ -137,6 +137,10 @@ test('decode naddr from habla.news', () => {
   expect(pointer.identifier).toEqual('references')
 })
 
+test('decode malformed nevent should throw instead of infinite loop', () => {
+  expect(() => decode('nevent1qq5v4rkz')).toThrow()
+})
+
 test('decode naddr from go-nostr with different TLV ordering', () => {
   let { type, data } = decode(
     'naddr1qqrxyctwv9hxzq3q80cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsxpqqqp65wqfwwaehxw309aex2mrp0yhxummnw3ezuetcv9khqmr99ekhjer0d4skjm3wv4uxzmtsd3jjucm0d5q3vamnwvaz7tmwdaehgu3wvfskuctwvyhxxmmd0zfmwx',
