@@ -141,7 +141,11 @@ export class AbstractRelay {
         connectionTimeoutHandle = setTimeout(() => {
           reject('connection timed out')
           this.connectionPromise = undefined
-          this.skipReconnection = true
+          // Only give up on the initial connect; a slow reconnect
+          // should fall through to the next backoff slot.
+          if (this.reconnectAttempts === 0) {
+            this.skipReconnection = true
+          }
           this.onclose?.()
           this.handleHardClose('relay connection timed out')
         }, opts.timeout)
@@ -193,7 +197,12 @@ export class AbstractRelay {
         clearTimeout(connectionTimeoutHandle)
         reject('connection failed')
         this.connectionPromise = undefined
-        this.skipReconnection = true
+        // Only give up on the initial connect. A failed reconnect
+        // attempt must fall through so the next backoff slot fires;
+        // otherwise one failed retry tears down every subscription.
+        if (this.reconnectAttempts === 0) {
+          this.skipReconnection = true
+        }
         this.onclose?.()
         this.handleHardClose('relay connection failed')
       }
