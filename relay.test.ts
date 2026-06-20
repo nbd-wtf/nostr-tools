@@ -338,6 +338,45 @@ test('reconnect on disconnect', async () => {
   expect(closes).toBe(1) // should not have closed again
 })
 
+test('reconnect survives a failed reconnect attempt and recovers when the relay returns', async () => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url, { enableReconnect: true })
+  relay.resubscribeBackoff = [50, 50, 100, 100] // short backoff for testing
+
+  await relay.connect()
+  expect(relay.connected).toBeTrue()
+
+  relay.subscribe([{ kinds: [1] }], { onevent: () => {} })
+  expect(relay.openSubs.size).toBe(1)
+
+  // Drop server + close live socket so the scheduled reconnect fails.
+  ;(mockRelay as any)._server.stop()
+  ;(relay as any).ws?.close()
+
+  // Past one failed reconnect attempt: the sub must still be alive
+  // (buggy code clears openSubs here via skipReconnection).
+  await new Promise(resolve => setTimeout(resolve, 300))
+  expect(relay.connected).toBeFalse()
+  expect(relay.openSubs.size).toBe(1)
+
+  // Bring the relay back; the next backoff slot must reconnect.
+  new MockRelay(mockRelay.url)
+
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearTimeout(deadline)
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  })
+  expect(relay.openSubs.size).toBe(1)
+
+  relay.close()
+})
+
 test('oninvalidevent is called for malformed events', async done => {
   const mockRelay = new MockRelay()
   const relay = new Relay(mockRelay.url)
