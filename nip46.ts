@@ -77,15 +77,18 @@ export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer |
   }
 }
 
+export type ClientMetadata = {
+  name?: string
+  url?: string
+  image?: string
+}
+
 export type NostrConnectParams = {
   clientPubkey: string
   relays: string[]
   secret: string
   perms?: string[]
-  name?: string
-  url?: string
-  image?: string
-}
+} & ClientMetadata
 
 export function createNostrConnectURI(params: NostrConnectParams): string {
   const queryParams = new URLSearchParams()
@@ -361,8 +364,13 @@ export class BunkerSigner implements Signer {
   /**
    * Calls the "connect" method on the bunker.
    */
-  async connect(): Promise<void> {
-    await this.sendRequest('connect', [this.bp.pubkey, this.bp.secret || ''])
+  async connect(clientMetadata?: ClientMetadata): Promise<void> {
+    const params = [this.bp.pubkey, this.bp.secret || '']
+    if (clientMetadata) {
+      params.push('')
+      params.push(JSON.stringify(clientMetadata))
+    }
+    await this.sendRequest('connect', params)
   }
 
   /**
