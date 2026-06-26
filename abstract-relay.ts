@@ -323,7 +323,15 @@ export class AbstractRelay {
       }, this.publishTimeout)
       this.openEventPublishes.set(event.id, { resolve, reject, timeout })
     })
-    this.send('["EVENT",' + JSON.stringify(event) + ']')
+    try {
+      await this.send('["EVENT",' + JSON.stringify(event) + ']')
+    } catch (err) {
+      const ep = this.openEventPublishes.get(event.id)
+      if (ep) {
+        ep.reject(err as Error)
+        this.openEventPublishes.delete(event.id)
+      }
+    }
 
     // compute idleness state
     this.ongoingOperations--
@@ -338,7 +346,15 @@ export class AbstractRelay {
     const ret = new Promise<number>((resolve, reject) => {
       this.openCountRequests.set(id, { resolve, reject })
     })
-    this.send('["COUNT","' + id + '",' + JSON.stringify(filters).substring(1))
+    try {
+      await this.send('["COUNT","' + id + '",' + JSON.stringify(filters).substring(1))
+    } catch (err) {
+      const cr = this.openCountRequests.get(id)
+      if (cr) {
+        cr.reject(err as Error)
+        this.openCountRequests.delete(id)
+      }
+    }
     return ret
   }
 
