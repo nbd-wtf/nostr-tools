@@ -341,9 +341,16 @@ export class AbstractRelay {
   }
 
   public async count(filters: Filter[], params: { id?: string | null }): Promise<number> {
+    return (await this.countWithHLL(filters, params)).count
+  }
+
+  public async countWithHLL(
+    filters: Filter[],
+    params: { id?: string | null },
+  ): Promise<{ count: number; hll?: string }> {
     this.serial++
     const id = params?.id || 'count:' + this.serial
-    const ret = new Promise<number>((resolve, reject) => {
+    const ret = new Promise<{ count: number; hll?: string }>((resolve, reject) => {
       this.openCountRequests.set(id, { resolve, reject })
     })
     try {
@@ -459,10 +466,10 @@ export class AbstractRelay {
         }
         case 'COUNT': {
           const id: string = data[1]
-          const payload = data[2] as { count: number }
+          const payload = data[2] as { count: number; hll?: string }
           const cr = this.openCountRequests.get(id) as CountResolver
           if (cr) {
-            cr.resolve(payload.count)
+            cr.resolve(payload)
             this.openCountRequests.delete(id)
           }
           return
@@ -626,7 +633,7 @@ export type SubscriptionParams = {
 }
 
 export type CountResolver = {
-  resolve: (count: number) => void
+  resolve: (payload: { count: number; hll?: string }) => void
   reject: (err: Error) => void
 }
 
