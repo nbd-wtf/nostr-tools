@@ -11,6 +11,7 @@ import { normalizeURL } from './utils.ts'
 import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
 import { alwaysTrue } from './helpers.ts'
+import { getCountManyFilter, hllDecode, hllEncode, mergeHll, type CountManyDirective } from './nip45.ts'
 import { Relay } from './relay.ts'
 
 export type SubCloser = { close: (reason?: string) => void }
@@ -316,6 +317,63 @@ export class AbstractSimplePool {
     const events = await this.querySync(relays, filter, params)
     events.sort((a, b) => b.created_at - a.created_at)
     return events[0] || null
+  }
+
+  async countMany(
+    relays: string[],
+    target: string,
+    directive: CountManyDirective,
+    params?: { id?: string | null; maxWait?: number; abort?: AbortSignal },
+  ): Promise<{ count: number; hll?: string }> {
+    const filter = getCountManyFilter(target, directive)
+    const urls: string[] = []
+
+    for (let i = 0; i < relays.length; i++) {
+      const url = normalizeURL(relays[i])
+      if (urls.indexOf(url) === -1) urls.push(url)
+    }
+
+    const responses = await Promise.all(
+      urls.map(async url => {
+        if (this.allowConnectingToRelay?.(url, ['read', [filter]]) === false) return null
+
+        let relay: AbstractRelay
+        try {
+          relay = await this.ensureRelay(url, {
+            connectionTimeout:
+              this.maxWaitForConnection < (params?.maxWait || 0)
+                ? Math.max(params!.maxWait! * 0.8, params!.maxWait! - 1000)
+                : this.maxWaitForConnection,
+            abort: params?.abort,
+          })
+        } catch (err) {
+          this.onRelayConnectionFailure?.(url)
+          return null
+        }
+
+        this.onRelayConnectionSuccess?.(url)
+
+        return relay.countWithHLL([filter], { id: params?.id }).catch(() => null)
+      }),
+    )
+
+    let count = 0
+    let hll: Uint8Array | undefined
+
+    for (const response of responses) {
+      if (!response) continue
+
+      if (response.count > count) count = response.count
+
+      if (!response.hll || response.hll.length !== 512) continue
+
+      const registers = hllDecode(response.hll)
+      if (!registers) continue
+
+      hll = mergeHll(hll || new Uint8Array(0), registers)
+    }
+
+    return hll ? { count, hll: hllEncode(hll) } : { count }
   }
 
   publish(

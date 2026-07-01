@@ -496,7 +496,14 @@ export class AbstractRelay {
         case 'CLOSED': {
           const id: string = data[1]
           const so = this.openSubs.get(id)
-          if (!so) return
+          if (!so) {
+            const cr = this.openCountRequests.get(id) as CountResolver
+            if (cr) {
+              cr.reject(new Error(data[2] as string))
+              this.openCountRequests.delete(id)
+            }
+            return
+          }
           so.closed = true
           so.close(data[2] as string)
           return

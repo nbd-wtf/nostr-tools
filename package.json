@@ -198,6 +198,12 @@
       "require": "./lib/cjs/nip44.js",
       "types": "./lib/types/nip44.d.ts"
     },
+    "./nip45": {
+      "source": "./nip45.ts",
+      "import": "./lib/esm/nip45.js",
+      "require": "./lib/cjs/nip45.js",
+      "types": "./lib/types/nip45.d.ts"
+    },
     "./nip46": {
       "source": "./nip46.ts",
       "import": "./lib/esm/nip46.js",
