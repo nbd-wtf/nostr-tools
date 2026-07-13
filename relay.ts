@@ -14,13 +14,16 @@ export function useWebSocketImplementation(websocketImplementation: any) {
 }
 
 export class Relay extends AbstractRelay {
-  constructor(url: string, options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect'>) {
+  constructor(
+    url: string,
+    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect' | 'idleTimeout'>,
+  ) {
     super(url, { verifyEvent, websocketImplementation: _WebSocket, ...options })
   }
 
   static async connect(
     url: string,
-    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect'>,
+    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect' | 'idleTimeout'>,
   ): Promise<Relay> {
     const relay = new Relay(url, options)
     await relay.connect()

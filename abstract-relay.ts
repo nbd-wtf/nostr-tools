@@ -16,6 +16,7 @@ export type AbstractRelayConstructorOptions = {
   websocketImplementation?: typeof WebSocket
   enablePing?: boolean
   enableReconnect?: boolean
+  idleTimeout?: number
 }
 
 export class SendingOnClosedConnection extends Error {
@@ -41,12 +42,14 @@ export class AbstractRelay {
   public openSubs: Map<string, Subscription> = new Map()
   public enablePing: boolean | undefined
   public enableReconnect: boolean
+  public idleTimeout: number = 0 // auto-close after ms of inactivity, 0 = disabled
   public idleSince: number | undefined = Date.now() // when undefined that means it isn't idle
   public ongoingOperations: number = 0 // used to compute idleness
   private reconnectTimeoutHandle: ReturnType<typeof setTimeout> | undefined
   private pingIntervalHandle: ReturnType<typeof setInterval> | undefined
   private reconnectAttempts: number = 0
   private skipReconnection: boolean = false
+  private idleTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
   private connectionPromise: Promise<void> | undefined
   private openCountRequests = new Map<string, CountResolver>()
@@ -65,6 +68,7 @@ export class AbstractRelay {
     this._WebSocket = opts.websocketImplementation || WebSocket
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect || false
+    if (opts.idleTimeout) this.idleTimeout = opts.idleTimeout
   }
 
   static async connect(
@@ -97,6 +101,24 @@ export class AbstractRelay {
     return this._connected
   }
 
+  private clearIdleTimeout() {
+    if (this.idleTimeoutHandle) {
+      clearTimeout(this.idleTimeoutHandle)
+      this.idleTimeoutHandle = undefined
+    }
+  }
+
+  public scheduleIdleClose() {
+    this.clearIdleTimeout()
+    if (this.idleTimeout > 0) {
+      this.idleTimeoutHandle = setTimeout(() => {
+        if (this.ongoingOperations === 0 && this.idleSince) {
+          this.close()
+        }
+      }, this.idleTimeout)
+    }
+  }
+
   private async reconnect(): Promise<void> {
     const backoff = this.resubscribeBackoff[Math.min(this.reconnectAttempts, this.resubscribeBackoff.length - 1)]
     this.reconnectAttempts++
@@ -119,6 +141,7 @@ export class AbstractRelay {
     this._connected = false
     this.connectionPromise = undefined
     this.idleSince = undefined
+    this.clearIdleTimeout()
 
     if (this.enableReconnect && !this.skipReconnection) {
       this.reconnect()
@@ -311,6 +334,7 @@ export class AbstractRelay {
 
   public async publish(event: Event): Promise<string> {
     this.idleSince = undefined
+    this.clearIdleTimeout()
     this.ongoingOperations++
 
     const ret = new Promise<string>((resolve, reject) => {
@@ -335,7 +359,10 @@ export class AbstractRelay {
 
     // compute idleness state
     this.ongoingOperations--
-    if (this.ongoingOperations === 0) this.idleSince = Date.now()
+    if (this.ongoingOperations === 0) {
+      this.idleSince = Date.now()
+      this.scheduleIdleClose()
+    }
 
     return ret
   }
@@ -371,6 +398,7 @@ export class AbstractRelay {
   ): Subscription {
     if (params.label !== '<forced-ping>') {
       this.idleSince = undefined
+      this.clearIdleTimeout()
       this.ongoingOperations++
     }
 
@@ -408,6 +436,7 @@ export class AbstractRelay {
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
     this.idleSince = undefined
+    this.clearIdleTimeout()
     this.onclose?.()
     if (this.ws?.readyState === this._WebSocket.OPEN) {
       this.ws?.close()
@@ -622,7 +651,10 @@ export class Subscription {
 
     // compute idleness state
     this.relay.ongoingOperations--
-    if (this.relay.ongoingOperations === 0) this.relay.idleSince = Date.now()
+    if (this.relay.ongoingOperations === 0) {
+      this.relay.idleSince = Date.now()
+      this.relay.scheduleIdleClose()
+    }
 
     this.onclose?.(reason)
   }

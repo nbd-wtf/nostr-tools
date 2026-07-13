@@ -49,6 +49,7 @@ export class AbstractSimplePool {
   public verifyEvent: Nostr['verifyEvent']
   public enablePing: boolean | undefined
   public enableReconnect: boolean
+  public idleTimeout: number = 20000
   public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
   public trustedRelayURLs: Set<string> = new Set()
   public onRelayConnectionFailure?: (url: string) => void
@@ -63,6 +64,7 @@ export class AbstractSimplePool {
     this._WebSocket = opts.websocketImplementation
     this.enablePing = opts.enablePing
     this.enableReconnect = opts.enableReconnect || false
+    if (opts.idleTimeout) this.idleTimeout = opts.idleTimeout
     this.automaticallyAuth = opts.automaticallyAuth
     this.onRelayConnectionFailure = opts.onRelayConnectionFailure
     this.onRelayConnectionSuccess = opts.onRelayConnectionSuccess
@@ -86,6 +88,7 @@ export class AbstractSimplePool {
         websocketImplementation: this._WebSocket,
         enablePing: this.enablePing,
         enableReconnect: this.enableReconnect,
+        idleTimeout: this.idleTimeout,
       })
       relay.onclose = () => {
         this.relays.delete(url)
