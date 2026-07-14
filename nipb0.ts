@@ -393,7 +393,10 @@ export async function uploadBlob(server: string, blob: Blob | File, opts?: Uploa
   const url = new URL('/upload', server).toString()
   const sha256 = await computeBlobSha256(blob)
 
-  const headers: Record<string, string> = { 'X-SHA-256': sha256 }
+  const headers: Record<string, string> = {
+    'X-SHA-256': sha256,
+    'Content-Type': getBlobType(blob) || 'application/octet-stream',
+  }
 
   if (opts?.auth) {
     const authEvent = typeof opts.auth === 'boolean' ? await opts.onAuth?.(server, sha256) : opts.auth
