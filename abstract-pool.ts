@@ -35,7 +35,7 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
   maxWait?: number
   abort?: AbortSignal
-  onclose?: (reasons: string[]) => void
+  onclose?: (reasons: { url: string; reason: string }[]) => void
   onauth?: (event: EventTemplate) => Promise<VerifiedEvent>
   id?: string
   label?: string
@@ -177,11 +177,11 @@ export class AbstractSimplePool {
       }
     }
     // batch all closes into a single
-    const closesReceived: string[] = []
-    let handleClose = (i: number, reason: string) => {
+    const closesReceived: { url: string; reason: string }[] = []
+    let handleClose = (i: number, url: string, reason: string) => {
       if (closesReceived[i]) return // do not act twice for the same relay
       handleEose(i)
-      closesReceived[i] = reason
+      closesReceived[i] = { url, reason }
       if (closesReceived.filter(a => a).length === groupedRequests.length) {
         params.onclose?.(closesReceived)
         handleClose = () => {}
@@ -201,7 +201,7 @@ export class AbstractSimplePool {
     const allOpened = Promise.all(
       groupedRequests.map(async ({ url, filters }, i) => {
         if (this.allowConnectingToRelay?.(url, ['read', filters]) === false) {
-          handleClose(i, 'connection skipped by allowConnectingToRelay')
+          handleClose(i, url, 'connection skipped by allowConnectingToRelay')
           return
         }
 
@@ -216,7 +216,7 @@ export class AbstractSimplePool {
           })
         } catch (err) {
           this.onRelayConnectionFailure?.(url)
-          handleClose(i, (err as any)?.message || String(err))
+          handleClose(i, url, (err as any)?.message || String(err))
           return
         }
 
@@ -234,7 +234,7 @@ export class AbstractSimplePool {
                     ...params,
                     oneose: () => handleEose(i),
                     onclose: reason => {
-                      handleClose(i, reason) // the second time we won't try to auth anymore
+                      handleClose(i, url, reason) // the second time we won't try to auth anymore
                     },
                     alreadyHaveEvent: localAlreadyHaveEventHandler,
                     eoseTimeout: params.maxWait,
@@ -242,10 +242,10 @@ export class AbstractSimplePool {
                   })
                 })
                 .catch(err => {
-                  handleClose(i, `auth was required and attempted, but failed with: ${err}`)
+                  handleClose(i, url, `auth was required and attempted, but failed with: ${err}`)
                 })
             } else {
-              handleClose(i, reason)
+              handleClose(i, url, reason)
             }
           },
           alreadyHaveEvent: localAlreadyHaveEventHandler,
@@ -278,7 +278,7 @@ export class AbstractSimplePool {
       oneose() {
         const reason = 'closed automatically on eose'
         if (subcloser) subcloser.close(reason)
-        else params.onclose?.(relays.map(_ => reason))
+        else params.onclose?.(relays.map(url => ({ url, reason })))
       },
     })
     return subcloser
@@ -304,7 +304,7 @@ export class AbstractSimplePool {
         onevent(event: Event) {
           events.push(event)
         },
-        onclose(_: string[]) {
+        onclose(_: { url: string; reason: string }[]) {
           resolve(events)
         },
       })
