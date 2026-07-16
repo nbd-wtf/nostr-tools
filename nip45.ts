@@ -3,6 +3,7 @@ import { bytesToHex } from '@noble/hashes/utils.js'
 
 import type { Event } from './core.ts'
 import type { Filter } from './filter.ts'
+import { isHex32 } from './utils.ts'
 
 const M = 256
 const HLL_HEX_LENGTH = M * 2
@@ -32,7 +33,7 @@ export function newHll(): Uint8Array {
 }
 
 export function hllDecode(hex: string): Uint8Array | undefined {
-  if (hex.length !== HLL_HEX_LENGTH || !/^[0-9a-fA-F]+$/.test(hex)) return undefined
+  if (hex.length !== HLL_HEX_LENGTH || !/^[0-9a-f]+$/.test(hex)) return undefined
 
   const registers = new Uint8Array(M)
   for (let i = 0; i < M; i++) {
@@ -54,9 +55,9 @@ export function hllEncode(registers: Uint8Array): string {
 export function computeOffset(filterFirstTagValue: string): number {
   let hex = filterFirstTagValue
 
-  if (!isHex64(hex)) {
+  if (!isHex32(hex)) {
     const parts = hex.split(':')
-    if (parts.length === 3 && isHex64(parts[1])) {
+    if (parts.length === 3 && isHex32(parts[1])) {
       hex = parts[1]
     } else {
       hex = bytesToHex(sha256(utf8Encoder.encode(filterFirstTagValue)))
@@ -79,7 +80,7 @@ export function getFilterFirstTagValue(filter: Filter): string | undefined {
 
 export function feedPubkey(hll: Uint8Array, pubkey: string, offset: number): Uint8Array {
   if (offset < 0 || offset > 24) throw new Error(`invalid offset ${offset}`)
-  if (!isHex64(pubkey)) throw new Error('pubkey must be 32-byte hex')
+  if (!isHex32(pubkey)) throw new Error('pubkey must be 32-byte hex')
 
   if (hll.length === 0) hll = newHll()
   if (hll.length !== M) throw new Error(`invalid number of registers ${hll.length}`)
@@ -121,10 +122,6 @@ export function estimateCount(hll: Uint8Array): number {
   if (estimate <= M * 3 && v !== 0) return Math.floor(linearCounting(M, v))
 
   return Math.floor(estimate)
-}
-
-function isHex64(value: string): boolean {
-  return /^[0-9a-fA-F]{64}$/.test(value)
 }
 
 function countLeadingZeroBitsAfterOffset(pubkey: string, offset: number): number {

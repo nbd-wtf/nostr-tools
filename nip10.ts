@@ -1,7 +1,6 @@
 import type { Event } from './core.ts'
 import type { EventPointer, ProfilePointer } from './nip19.ts'
-
-const HEX64 = /^[0-9a-fA-F]{64}$/
+import { isHex32 } from './utils.ts'
 
 export function parse(event: Pick<Event, 'tags'>): {
   /**
@@ -43,7 +42,7 @@ export function parse(event: Pick<Event, 'tags'>): {
   for (let i = event.tags.length - 1; i >= 0; i--) {
     const tag = event.tags[i]
 
-    if (tag[0] === 'e' && tag[1] && HEX64.test(tag[1])) {
+    if (tag[0] === 'e' && tag[1] && isHex32(tag[1])) {
       const [_, eTagEventId, eTagRelayUrl, eTagMarker, eTagAuthor] = tag as [
         string,
         string,
@@ -55,7 +54,7 @@ export function parse(event: Pick<Event, 'tags'>): {
       const eventPointer: EventPointer = {
         id: eTagEventId,
         relays: eTagRelayUrl ? [eTagRelayUrl] : [],
-        author: eTagAuthor && HEX64.test(eTagAuthor) ? eTagAuthor : undefined,
+        author: eTagAuthor && isHex32(eTagAuthor) ? eTagAuthor : undefined,
       }
 
       if (eTagMarker === 'root') {
@@ -83,7 +82,7 @@ export function parse(event: Pick<Event, 'tags'>): {
       continue
     }
 
-    if (tag[0] === 'q' && tag[1] && HEX64.test(tag[1])) {
+    if (tag[0] === 'q' && tag[1] && isHex32(tag[1])) {
       const [_, eTagEventId, eTagRelayUrl] = tag as [string, string, undefined | string]
       result.quotes.push({
         id: eTagEventId,
@@ -91,7 +90,7 @@ export function parse(event: Pick<Event, 'tags'>): {
       })
     }
 
-    if (tag[0] === 'p' && tag[1] && HEX64.test(tag[1])) {
+    if (tag[0] === 'p' && tag[1] && isHex32(tag[1])) {
       result.profiles.push({
         pubkey: tag[1],
         relays: tag[2] ? [tag[2]] : [],

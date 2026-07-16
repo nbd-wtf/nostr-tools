@@ -1,7 +1,6 @@
 import type { Event } from './core.ts'
 import type { AddressPointer, EventPointer, ProfilePointer } from './nip19.ts'
-
-const HEX64 = /^[0-9a-fA-F]{64}$/
+import { isHex32 } from './utils.ts'
 
 export type ExternalPointer = {
   value: string
@@ -22,7 +21,7 @@ function parseAddressPointer(value: string, relayUrl?: string): AddressPointer |
   if (Number.isNaN(kind)) return undefined
 
   const pubkey = value.slice(idx + 1, idx2)
-  if (!HEX64.test(pubkey)) return undefined
+  if (!isHex32(pubkey)) return undefined
 
   return {
     kind,
@@ -36,11 +35,11 @@ function parsePointer(tag: string[]): EventPointer | AddressPointer | ExternalPo
   switch (tag[0]) {
     case 'E':
     case 'e':
-      if (!tag[1] || !HEX64.test(tag[1])) return undefined
+      if (!tag[1] || !isHex32(tag[1])) return undefined
       return {
         id: tag[1],
         relays: tag[2] ? [tag[2]] : [],
-        author: tag[3] && HEX64.test(tag[3]) ? tag[3] : undefined,
+        author: tag[3] && isHex32(tag[3]) ? tag[3] : undefined,
       }
     case 'A':
     case 'a':
@@ -63,12 +62,12 @@ function parseQuote(tag: string[]): EventPointer | AddressPointer | ExternalPoin
     return parseAddressPointer(tag[1], tag[2])
   }
 
-  if (!HEX64.test(tag[1])) return undefined
+  if (!isHex32(tag[1])) return undefined
 
   return {
     id: tag[1],
     relays: tag[2] ? [tag[2]] : [],
-    author: tag[3] && HEX64.test(tag[3]) ? tag[3] : undefined,
+    author: tag[3] && isHex32(tag[3]) ? tag[3] : undefined,
   }
 }
 
@@ -179,7 +178,7 @@ export function parse(event: Pick<Event, 'tags'>): {
       continue
     }
 
-    if ((tag[0] === 'P' || tag[0] === 'p') && tag[1] && HEX64.test(tag[1])) {
+    if ((tag[0] === 'P' || tag[0] === 'p') && tag[1] && isHex32(tag[1])) {
       result.profiles.push({
         pubkey: tag[1],
         relays: tag[2] ? [tag[2]] : [],

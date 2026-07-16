@@ -123,3 +123,16 @@ export function mergeReverseSortedLists(list1: NostrEvent[], list2: NostrEvent[]
 
   return result
 }
+
+/**
+ * Checks if a string is a 64-char lowercase hex string as most Nostr ids and pubkeys.
+ */
+export function isHex32(input: string): boolean {
+  for (let i = 0; i < 64; i++) {
+    let cc = input.charCodeAt(i)
+    if (isNaN(cc) || cc < 48 || cc > 102 || (cc > 57 && cc < 97)) {
+      return false
+    }
+  }
+  return true
+}

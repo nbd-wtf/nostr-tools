@@ -3,6 +3,7 @@ import { bytesToHex } from '@noble/hashes/utils.js'
 import type { EventTemplate } from './core.ts'
 import type { Signer } from './signer.ts'
 import { kinds } from './index.ts'
+import { isHex32 } from './utils.ts'
 
 export type BlobDescriptor = {
   url: string
@@ -25,10 +26,6 @@ export type AuthEventOptions = {
   servers?: string | string[]
   message?: string
   expiration?: number
-}
-
-export function isSha256(str: string): boolean {
-  return /^[0-9a-f]{64}$/i.test(str)
 }
 
 export function getBlobSize(blob: UploadType): number {
@@ -213,7 +210,7 @@ export function parseBlossomURI(uri: string): BlossomURI {
   if (dotIndex === -1) throw new Error('Invalid blossom URI: missing file extension')
   const sha256 = path.slice(0, dotIndex)
   const ext = path.slice(dotIndex + 1)
-  if (!isSha256(sha256)) throw new Error('Invalid blossom URI: invalid sha256 hash')
+  if (!isHex32(sha256)) throw new Error('Invalid blossom URI: invalid sha256 hash')
   if (!ext) throw new Error('Invalid blossom URI: empty file extension')
   const params = new URLSearchParams(query)
   const servers = params.getAll('xs')
@@ -250,7 +247,7 @@ export function blossomURIFromURL(url: URL): BlossomURI {
   if (dotIndex === -1) throw new Error('Invalid blossom URL: missing file extension')
   const sha256 = path.slice(0, dotIndex)
   const ext = path.slice(dotIndex + 1)
-  if (!isSha256(sha256)) throw new Error('Invalid blossom URL: invalid sha256 hash')
+  if (!isHex32(sha256)) throw new Error('Invalid blossom URL: invalid sha256 hash')
   if (!ext) throw new Error('Invalid blossom URL: empty file extension')
   const servers = url.searchParams.getAll('xs')
   const authors = url.searchParams.getAll('as')
@@ -743,7 +740,7 @@ export class BlossomClient {
   }
 
   async check(hash: string): Promise<void> {
-    if (!isSha256(hash)) throw new Error(`${hash} is not valid 32-byte hex`)
+    if (!isHex32(hash)) throw new Error(`${hash} is not valid 32-byte hex`)
     await this.httpCall('HEAD', hash)
   }
 

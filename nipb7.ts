@@ -1,7 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js'
 import { EventTemplate } from './core.ts'
 import { Signer } from './signer.ts'
-import { bytesToHex } from './utils.ts'
+import { bytesToHex, isHex32 } from './utils.ts'
 
 export type BlobDescriptor = {
   url: string
@@ -84,12 +84,8 @@ export class BlossomClient {
     }
   }
 
-  private isValid32ByteHex(hash: string): boolean {
-    return /^[a-f0-9]{64}$/i.test(hash)
-  }
-
   async check(hash: string): Promise<void> {
-    if (!this.isValid32ByteHex(hash)) {
+    if (!isHex32(hash)) {
       throw new Error(`${hash} is not a valid 32-byte hex string`)
     }
 
@@ -125,7 +121,7 @@ export class BlossomClient {
   }
 
   async download(hash: string): Promise<ArrayBuffer> {
-    if (!this.isValid32ByteHex(hash)) {
+    if (!isHex32(hash)) {
       throw new Error(`${hash} is not a valid 32-byte hex string`)
     }
 
@@ -156,7 +152,7 @@ export class BlossomClient {
   async list(): Promise<BlobDescriptor[]> {
     const pubkey = await this.signer.getPublicKey()
 
-    if (!this.isValid32ByteHex(pubkey)) {
+    if (!isHex32(pubkey)) {
       throw new Error(`pubkey ${pubkey} is not valid`)
     }
 
@@ -179,7 +175,7 @@ export class BlossomClient {
   }
 
   async delete(hash: string): Promise<void> {
-    if (!this.isValid32ByteHex(hash)) {
+    if (!isHex32(hash)) {
       throw new Error(`${hash} is not a valid 32-byte hex string`)
     }
 

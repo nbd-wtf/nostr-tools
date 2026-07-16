@@ -1,7 +1,7 @@
 import { bech32 } from '@scure/base'
 
 import { NostrEvent, validateEvent, verifyEvent, type Event, type EventTemplate } from './pure.ts'
-import { utf8Decoder } from './utils.ts'
+import { isHex32, utf8Decoder } from './utils.ts'
 import { isReplaceableKind, isAddressableKind } from './kinds.ts'
 
 var _fetch: any
@@ -100,10 +100,10 @@ export function validateZapRequest(zapRequestString: string): string | null {
 
   let p = zapRequest.tags.find(([t, v]) => t === 'p' && v)
   if (!p) return "Zap request doesn't have a 'p' tag."
-  if (!p[1].match(/^[a-f0-9]{64}$/)) return "Zap request 'p' tag is not valid hex."
+  if (!isHex32(p[1])) return "Zap request 'p' tag is not valid hex."
 
   let e = zapRequest.tags.find(([t, v]) => t === 'e' && v)
-  if (e && !e[1].match(/^[a-f0-9]{64}$/)) return "Zap request 'e' tag is not valid hex."
+  if (e && !isHex32(e[1])) return "Zap request 'e' tag is not valid hex."
 
   let relays = zapRequest.tags.find(([t, v]) => t === 'relays' && v)
   if (!relays) return "Zap request doesn't have a 'relays' tag."

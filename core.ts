@@ -1,3 +1,5 @@
+import { isHex32 } from './utils.ts'
+
 export interface Nostr {
   generateSecretKey(): Uint8Array
   getPublicKey(secretKey: Uint8Array): string
@@ -36,7 +38,7 @@ export function validateEvent<T>(event: T): event is T & UnsignedEvent {
   if (typeof event.content !== 'string') return false
   if (typeof event.created_at !== 'number') return false
   if (typeof event.pubkey !== 'string') return false
-  if (!event.pubkey.match(/^[a-f0-9]{64}$/)) return false
+  if (!isHex32(event.pubkey)) return false
 
   if (!Array.isArray(event.tags)) return false
   for (let i = 0; i < event.tags.length; i++) {
