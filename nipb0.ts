@@ -373,13 +373,26 @@ export function getServersFromServerListEvent(event: { tags: string[][] }): URL[
 }
 
 export function getHashFromURL(url: string | URL): string | null {
-  try {
-    if (typeof url === 'string') url = new URL(url)
-    const hashes = Array.from(url.pathname.matchAll(/[0-9a-f]{64}/gi))
-    return hashes.length > 0 ? hashes[hashes.length - 1][0] : null
-  } catch (_err) {
-    return null
+  // strip fragment, then query string
+  const path = typeof url === 'string' ? url.split('#', 1)[0].split('?', 1)[0] : url.pathname
+
+  // get the last path segment
+  const lastSlash = path.lastIndexOf('/')
+  let segment = lastSlash === -1 ? path : path.slice(lastSlash + 1)
+
+  // if there is an extension it should start at exactly the 64th character
+  const dotIndex = segment.indexOf('.')
+  if (dotIndex !== -1 && dotIndex !== 64) return null
+
+  // the first 64 characters must be all lowercase hex
+  for (let i = 0; i < 64; i++) {
+    const c = segment.charCodeAt(i)
+    const isDigit = c >= 48 && c <= 57 // '0'-'9'
+    const isLowerHex = c >= 97 && c <= 102 // 'a'-'f'
+    if (!isDigit && !isLowerHex) return null
   }
+
+  return segment.slice(0, 64)
 }
 
 export type UploadOptions = {
