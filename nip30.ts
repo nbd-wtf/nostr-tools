@@ -42,7 +42,7 @@ export function* matchAll(content: string): Iterable<CustomEmojiMatch> {
 
 /** Replace all emoji shortcodes in the content. */
 export function replaceAll(content: string, replacer: (match: CustomEmoji) => string): string {
-  return content.replaceAll(regex(), (shortcode, name) => {
+  return content.replaceAll(regex(), (shortcode: string, name: string) => {
     return replacer({
       shortcode: shortcode as `:${string}:`,
       name,
