@@ -8,9 +8,8 @@ import {
 } from './abstract-relay.ts'
 import { normalizeURL } from './utils.ts'
 
-import type { Event, EventTemplate, Nostr, VerifiedEvent } from './core.ts'
+import type { Event, EventTemplate, VerifiedEvent } from './core.ts'
 import { type Filter } from './filter.ts'
-import { alwaysTrue } from './helpers.ts'
 import { getCountManyFilter, hllDecode, hllEncode, mergeHll, type CountManyDirective } from './nip45.ts'
 import { Relay } from './relay.ts'
 
@@ -46,12 +45,11 @@ export class AbstractSimplePool {
   public seenOn: Map<string, Set<AbstractRelay>> = new Map()
   public trackRelays: boolean = false
 
-  public verifyEvent: Nostr['verifyEvent']
+  public verifyEvent: (event: Event, url: string) => boolean
   public enablePing: boolean | undefined
   public enableReconnect: boolean
   public idleTimeout: number = 20000
   public automaticallyAuth?: (relayURL: string) => null | ((event: EventTemplate) => Promise<VerifiedEvent>)
-  public trustedRelayURLs: Set<string> = new Set()
   public onRelayConnectionFailure?: (url: string) => void
   public onRelayConnectionSuccess?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
@@ -84,7 +82,7 @@ export class AbstractSimplePool {
     let relay = this.relays.get(url)
     if (!relay) {
       relay = new AbstractRelay(url, {
-        verifyEvent: this.trustedRelayURLs.has(url) ? alwaysTrue : this.verifyEvent,
+        verifyEvent: this.verifyEvent,
         websocketImplementation: this._WebSocket,
         enablePing: this.enablePing,
         enableReconnect: this.enableReconnect,

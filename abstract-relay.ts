@@ -1,6 +1,6 @@
 /* global WebSocket */
 
-import type { Event, EventTemplate, VerifiedEvent, Nostr, NostrEvent } from './core.ts'
+import type { Event, EventTemplate, VerifiedEvent, NostrEvent } from './core.ts'
 import { matchFilters, type Filter } from './filter.ts'
 import { getHex64, getSubscriptionId } from './fakejson.ts'
 import { normalizeURL } from './utils.ts'
@@ -12,7 +12,7 @@ type RelayWebSocket = WebSocket & {
 }
 
 export type AbstractRelayConstructorOptions = {
-  verifyEvent: Nostr['verifyEvent']
+  verifyEvent: (event: Event, url: string) => boolean
   websocketImplementation?: typeof WebSocket
   enablePing?: boolean
   enableReconnect?: boolean
@@ -58,7 +58,7 @@ export class AbstractRelay {
   private challenge: string | undefined
   private authPromise: Promise<string> | undefined
   private serial: number = 0
-  private verifyEvent: Nostr['verifyEvent']
+  private verifyEvent: (event: Event, url: string) => boolean
 
   private _WebSocket: typeof WebSocket
 
@@ -485,7 +485,7 @@ export class AbstractRelay {
         case 'EVENT': {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as NostrEvent
-          if (this.verifyEvent(event) && matchFilters(so.filters, event)) {
+          if (matchFilters(so.filters, event) && this.verifyEvent(event, this.url)) {
             so.onevent(event)
           } else {
             so.oninvalidevent?.(event)

@@ -5,7 +5,6 @@ import { finalizeEvent, generateSecretKey } from './pure.ts'
 import { setNostrWasm, verifyEvent } from './wasm.ts'
 import { AbstractRelay } from './abstract-relay.ts'
 import { Relay as PureRelay } from './relay.ts'
-import { alwaysTrue } from './helpers.ts'
 
 // benchmarking relay reads with verifyEvent
 const EVENTS = 200
@@ -28,7 +27,7 @@ for (let i = 0; i < EVENTS; i++) {
 setNostrWasm(await initNostrWasm())
 
 const pureRelay = new PureRelay('wss://pure.com/')
-const trustedRelay = new AbstractRelay('wss://trusted.com/', { verifyEvent: alwaysTrue })
+const trustedRelay = new AbstractRelay('wss://trusted.com/', { verifyEvent: () => true })
 const wasmRelay = new AbstractRelay('wss://wasm.com/', { verifyEvent })
 
 const runWith = (relay: AbstractRelay) => async () => {
