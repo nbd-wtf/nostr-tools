@@ -3,6 +3,7 @@ import { Server } from 'mock-socket'
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { NostrEvent } from './pure.ts'
 import { Relay, useWebSocketImplementation } from './relay.ts'
+import { AbstractSimplePool } from './abstract-pool.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
 
 useWebSocketImplementation(MockWebSocketClient)
@@ -309,33 +310,43 @@ test('reconnect on disconnect', async () => {
   // now make it unresponsive
   mockRelay.unresponsive = true
 
-  // wait for the second ping to fail, which will trigger a close
-  await new Promise(resolve => {
+  // wait for the second ping to fail, which will drop the connection (but schedule a reconnect)
+  let sawDisconnect = false
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never disconnected')), 2000)
     const interval = setInterval(() => {
-      if (closes > 0) {
+      if (!relay.connected) {
+        sawDisconnect = true
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
-  expect(closes).toBe(1)
+  expect(sawDisconnect).toBeTrue()
   expect(relay.connected).toBeFalse()
+  // a transient drop that is going to reconnect must NOT fire onclose
+  expect(closes).toBe(0)
 
   // now make it responsive again
   mockRelay.unresponsive = false
 
   // wait for reconnect
-  await new Promise(resolve => {
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
     const interval = setInterval(() => {
       if (relay.connected) {
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
 
   expect(relay.connected).toBeTrue()
-  expect(closes).toBe(1) // should not have closed again
+  expect(closes).toBe(0) // reconnecting must never fire onclose
+
+  relay.close()
 })
 
 test('reconnect survives a failed reconnect attempt and recovers when the relay returns', async () => {
@@ -436,4 +447,80 @@ test('oninvalidevent is called for events that do not match subscription filters
   )
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, event]) } as MessageEvent)
+})
+
+test('a failing-then-succeeding reconnect never orphans or duplicates the relay in the pool map', async () => {
+  const url = 'wss://reconnect.leak.test/1'
+  let phase: 'up' | 'down' = 'up'
+
+  class FlakyWS extends EventTarget {
+    static OPEN = 1
+    static CLOSED = 3
+    readyState = 0
+    onopen: any
+    onclose: any
+    onerror: any
+    onmessage: any
+    constructor(public url: string) {
+      super()
+      setTimeout(() => {
+        if (phase === 'up') {
+          this.readyState = 1
+          this.onopen?.()
+        } else {
+          this.onerror?.(new Event('error'))
+        }
+      }, 5)
+    }
+    send() {}
+    close() {
+      this.readyState = 3
+      this.onclose?.({})
+    }
+  }
+
+  const pool = new AbstractSimplePool({
+    verifyEvent: () => true,
+    enableReconnect: true,
+    websocketImplementation: FlakyWS as any,
+    maxWaitForConnection: 3000,
+  })
+  const relay = await pool.ensureRelay(url)
+  relay.resubscribeBackoff = [30, 30, 30, 30]
+  relay.subscribe([{ kinds: [1] }], { onevent: () => {} })
+  expect(relay.openSubs.size).toBe(1)
+
+  const map = (pool as any).relays as Map<string, any>
+  expect(map.get(url)).toBe(relay)
+
+  // go down and drop the live socket -> schedules a reconnect whose attempt will error via onerror
+  phase = 'down'
+  ;(relay as any).ws.close()
+
+  // let at least one reconnect attempt FAIL via onerror (the previously-leaky path)
+  await new Promise(r => setTimeout(r, 150))
+  expect(relay.connected).toBeFalse()
+  // INVARIANT: still the SAME tracked relay, no orphan, no duplicate
+  expect(map.get(url)).toBe(relay)
+  expect(map.size).toBe(1)
+  expect(relay.openSubs.size).toBe(1)
+
+  // bring it back; next backoff slot reconnects successfully
+  phase = 'up'
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('never reconnected')), 1500)
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearTimeout(deadline)
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  })
+  expect(relay.connected).toBeTrue()
+  expect(map.get(url)).toBe(relay)
+  expect(map.size).toBe(1)
+  expect(relay.openSubs.size).toBe(1)
+
+  relay.close()
 })

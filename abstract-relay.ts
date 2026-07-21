@@ -133,6 +133,17 @@ export class AbstractRelay {
   }
 
   private handleHardClose(reason: string) {
+    // browsers and the node `ws` library fire BOTH onerror and onclose on a
+    // failed/abnormal socket. detach the handlers on the first invocation so the
+    // error->close pair collapses into a single terminal action -- otherwise
+    // onclose would fire twice (terminal paths) and reconnect() would be
+    // scheduled twice (reconnect paths, skipping a backoff slot).
+    if (this.ws) {
+      this.ws.onopen = null
+      this.ws.onerror = null
+      this.ws.onclose = null
+    }
+
     if (this.pingIntervalHandle) {
       clearInterval(this.pingIntervalHandle)
       this.pingIntervalHandle = undefined
@@ -164,12 +175,11 @@ export class AbstractRelay {
         connectionTimeoutHandle = setTimeout(() => {
           reject('connection timed out')
           this.connectionPromise = undefined
-          // Only give up on the initial connect; a slow reconnect
+          // only give up on the initial connect; a slow reconnect
           // should fall through to the next backoff slot.
           if (this.reconnectAttempts === 0) {
             this.skipReconnection = true
           }
-          this.onclose?.()
           this.handleHardClose('relay connection timed out')
         }, opts.timeout)
       }
@@ -220,13 +230,12 @@ export class AbstractRelay {
         clearTimeout(connectionTimeoutHandle)
         reject('connection failed')
         this.connectionPromise = undefined
-        // Only give up on the initial connect. A failed reconnect
+        // only give up on the initial connect. a failed reconnect
         // attempt must fall through so the next backoff slot fires;
         // otherwise one failed retry tears down every subscription.
         if (this.reconnectAttempts === 0) {
           this.skipReconnection = true
         }
-        this.onclose?.()
         this.handleHardClose('relay connection failed')
       }
 
@@ -435,11 +444,22 @@ export class AbstractRelay {
     }
     this.closeAllSubscriptions('relay connection closed by us')
     this._connected = false
+    this.connectionPromise = undefined
     this.idleSince = undefined
     this.clearIdleTimeout()
     this.onclose?.()
-    if (this.ws?.readyState === this._WebSocket.OPEN) {
-      this.ws?.close()
+    if (this.ws) {
+      // detach the handlers before closing so the resulting ws.onclose doesn't
+      // route into handleHardClose and fire onclose / closeAllSubscriptions a
+      // second time -- this user-initiated close() is the single owner of that.
+      this.ws.onopen = null
+      this.ws.onerror = null
+      this.ws.onclose = null
+      // close the socket unless it's already closing/closed; this also aborts a
+      // still-CONNECTING socket so it can't open and linger untracked.
+      if (this.ws.readyState !== this._WebSocket.CLOSING && this.ws.readyState !== this._WebSocket.CLOSED) {
+        this.ws.close()
+      }
     }
   }
 

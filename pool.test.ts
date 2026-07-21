@@ -255,10 +255,8 @@ test('ping-pong timeout in pool', async () => {
 
 test('reconnect on disconnect in pool', async () => {
   const mockRelay = mockRelays[0]
-  pool = new SimplePool({ enablePing: true, enableReconnect: true })
+  pool = new SimplePool({ enableReconnect: true })
   const relay = await pool.ensureRelay(mockRelay.url)
-  relay.pingTimeout = 50
-  relay.pingFrequency = 50
   relay.resubscribeBackoff = [50, 100]
 
   let closes = 0
@@ -268,51 +266,46 @@ test('reconnect on disconnect in pool', async () => {
 
   expect(relay.connected).toBeTrue()
 
-  // wait for the first ping to succeed
-  await new Promise(resolve => setTimeout(resolve, 75))
-  expect(closes).toBe(0)
+  // drop the live socket, which schedules a reconnect (but must not fire onclose)
+  ;(relay as any).ws?.close()
 
-  // now make it unresponsive
-  mockRelay.unresponsive = true
-
-  // wait for the second ping to fail, which will trigger a close
-  await new Promise(resolve => {
+  // wait for the connection to drop
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never disconnected')), 2000)
     const interval = setInterval(() => {
-      if (closes > 0) {
+      if (!relay.connected) {
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
-  expect(closes).toBe(1)
   expect(relay.connected).toBeFalse()
+  // a transient drop that is going to reconnect must NOT fire onclose
+  expect(closes).toBe(0)
 
-  // now make it responsive again
-  mockRelay.unresponsive = false
-
-  // wait for reconnect
-  await new Promise(resolve => {
+  // wait for reconnect (the mock relay server is still running)
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
     const interval = setInterval(() => {
       if (relay.connected) {
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
 
   expect(relay.connected).toBeTrue()
-  expect(closes).toBe(1)
+  expect(closes).toBe(0)
 })
 
 test('reconnect with filter update in pool', async () => {
   const mockRelay = mockRelays[0]
   pool = new SimplePool({
-    enablePing: true,
     enableReconnect: true,
   })
   const relay = await pool.ensureRelay(mockRelay.url)
-  relay.pingTimeout = 50
-  relay.pingFrequency = 50
   relay.resubscribeBackoff = [50, 100]
 
   let closes = 0
@@ -325,40 +318,42 @@ test('reconnect with filter update in pool', async () => {
   const sub = relay.subscribe([{ kinds: [1], since: 0 }], { onevent: () => {} })
   expect(sub.filters[0].since).toBe(0)
 
-  // wait for the first ping to succeed
-  await new Promise(resolve => setTimeout(resolve, 75))
+  // wait for events to arrive so lastEmitted gets set (used to bump `since` on reconnect)
+  await new Promise(resolve => setTimeout(resolve, 50))
   expect(closes).toBe(0)
 
-  // now make it unresponsive
-  mockRelay.unresponsive = true
+  // drop the live socket, which schedules a reconnect (but must not fire onclose)
+  ;(relay as any).ws?.close()
 
-  // wait for the second ping to fail, which will trigger a close
-  await new Promise(resolve => {
+  // wait for the connection to drop
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never disconnected')), 2000)
     const interval = setInterval(() => {
-      if (closes > 0) {
+      if (!relay.connected) {
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
-  expect(closes).toBe(1)
   expect(relay.connected).toBeFalse()
+  // a transient drop that is going to reconnect must NOT fire onclose
+  expect(closes).toBe(0)
 
-  // now make it responsive again
-  mockRelay.unresponsive = false
-
-  // wait for reconnect
-  await new Promise(resolve => {
+  // wait for reconnect (the mock relay server is still running)
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
     const interval = setInterval(() => {
       if (relay.connected) {
+        clearTimeout(deadline)
         clearInterval(interval)
-        resolve(null)
+        resolve()
       }
     }, 10)
   })
 
   expect(relay.connected).toBeTrue()
-  expect(closes).toBe(1)
+  expect(closes).toBe(0)
 
   // check if filter was updated
   expect(sub.filters[0].since).toBeGreaterThan(1)
