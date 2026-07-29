@@ -670,10 +670,12 @@ export class Subscription {
     this.relay.openSubs.delete(this.id)
 
     // compute idleness state
-    this.relay.ongoingOperations--
-    if (this.relay.ongoingOperations === 0) {
-      this.relay.idleSince = Date.now()
-      this.relay.scheduleIdleClose()
+    if (!this.id.startsWith('<forced-ping>')) {
+      this.relay.ongoingOperations--
+      if (this.relay.ongoingOperations === 0) {
+        this.relay.idleSince = Date.now()
+        this.relay.scheduleIdleClose()
+      }
     }
 
     this.onclose?.(reason)
