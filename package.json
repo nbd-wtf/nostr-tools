@@ -300,6 +300,7 @@
     "@noble/ciphers": "2.1.1",
     "@noble/curves": "2.0.1",
     "@noble/hashes": "2.0.1",
+    "@noble/post-quantum": "0.6.1",
     "@scure/base": "2.0.0",
     "@scure/bip32": "2.0.1",
     "@scure/bip39": "2.0.1",
