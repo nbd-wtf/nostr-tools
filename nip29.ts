@@ -24,9 +24,16 @@ export type GroupMetadata = {
   pubkey: string
   name?: string
   picture?: string
+  banner?: string
   about?: string
-  isPublic?: boolean
-  isOpen?: boolean
+  isPrivate?: boolean
+  isRestricted?: boolean
+  isHidden?: boolean
+  isClosed?: boolean
+  hasLiveKit?: boolean
+  supportedKinds?: string[]
+  parent?: string
+  children?: string[]
 }
 
 /**
@@ -73,6 +80,30 @@ export enum GroupAdminPermission {
   CreateGroup = 'create-group',
   DeleteGroup = 'delete-group',
   CreateInvite = 'create-invite',
+  UpdatePinList = 'update-pin-list',
+}
+
+function buildGroupMetadataTags(metadata: GroupMetadata): string[][] {
+  const tags: string[][] = []
+  metadata.name && tags.push(['name', metadata.name])
+  metadata.picture && tags.push(['picture', metadata.picture])
+  metadata.banner && tags.push(['banner', metadata.banner])
+  metadata.about && tags.push(['about', metadata.about])
+  metadata.isPrivate && tags.push(['private'])
+  metadata.isRestricted && tags.push(['restricted'])
+  metadata.isHidden && tags.push(['hidden'])
+  metadata.isClosed && tags.push(['closed'])
+  metadata.hasLiveKit && tags.push(['livekit'])
+  metadata.supportedKinds &&
+    metadata.supportedKinds.length > 0 &&
+    tags.push(['supported_kinds', ...metadata.supportedKinds])
+  metadata.parent && tags.push(['parent', metadata.parent])
+  metadata.children &&
+    metadata.children.forEach(child => {
+      tags.push(['child', child])
+    })
+
+  return tags
 }
 
 /**
@@ -82,18 +113,11 @@ export enum GroupAdminPermission {
  * @returns An event template with the generated group metadata that can be signed later.
  */
 export function generateGroupMetadataEventTemplate(group: Group): EventTemplate {
-  const tags: string[][] = [['d', group.metadata.id]]
-  group.metadata.name && tags.push(['name', group.metadata.name])
-  group.metadata.picture && tags.push(['picture', group.metadata.picture])
-  group.metadata.about && tags.push(['about', group.metadata.about])
-  group.metadata.isPublic && tags.push(['public'])
-  group.metadata.isOpen && tags.push(['open'])
-
   return {
     content: '',
     created_at: Math.floor(Date.now() / 1000),
     kind: 39000,
-    tags,
+    tags: [['d', group.metadata.id], ...buildGroupMetadataTags(group.metadata)],
   }
 }
 
@@ -295,17 +319,38 @@ export function parseGroupMetadataEvent(event: Event): GroupMetadata {
       case 'picture':
         metadata.picture = value
         break
+      case 'banner':
+        metadata.banner = value
+        break
       case 'about':
         metadata.about = value
         break
-      case 'public':
-        metadata.isPublic = true
+      case 'private':
+        metadata.isPrivate = true
         break
-      case 'open':
-        metadata.isOpen = true
+      case 'restricted':
+        metadata.isRestricted = true
+        break
+      case 'hidden':
+        metadata.isHidden = true
+        break
+      case 'closed':
+        metadata.isClosed = true
+        break
+      case 'livekit':
+        metadata.hasLiveKit = true
+        break
+      case 'parent':
+        metadata.parent = value
         break
     }
   }
+
+  const supportedKinds = event.tags.filter(([tag]) => tag === 'supported_kinds').flatMap(([, ...values]) => values)
+  if (supportedKinds.length > 0) metadata.supportedKinds = supportedKinds
+
+  const children = event.tags.filter(([tag]) => tag === 'child').map(([, value]) => value)
+  if (children.length > 0) metadata.children = children
 
   return metadata
 }
@@ -422,6 +467,131 @@ export async function fetchGroupMembersEvent({
 }
 
 /**
+ * Fetches the group roles event from the specified pool.
+ *
+ * @param {Object} options - The options object.
+ * @param {AbstractSimplePool} options.pool - The pool object.
+ * @param {GroupReference} options.groupReference - The group reference object.
+ * @param {string} [options.normalizedRelayURL] - The normalized relay URL.
+ * @param {RelayInformation} [options.relayInformation] - The relay information object.
+ * @returns {Promise<Event>} The group roles event that can be parsed later to get the group roles object.
+ * @throws {Error} If the group roles event is not found.
+ */
+export async function fetchGroupRolesEvent({
+  pool,
+  groupReference,
+  relayInformation,
+  normalizedRelayURL,
+}: {
+  pool: AbstractSimplePool
+  groupReference: GroupReference
+  normalizedRelayURL?: string
+  relayInformation?: RelayInformation
+}): Promise<Event> {
+  if (!normalizedRelayURL) {
+    normalizedRelayURL = getNormalizedRelayURLByGroupReference(groupReference)
+  }
+
+  if (!relayInformation) {
+    relayInformation = await fetchRelayInformation(normalizedRelayURL)
+  }
+
+  const groupRolesEvent = await pool.get([normalizedRelayURL], {
+    kinds: [39003],
+    authors: [relayInformation.pubkey],
+    '#d': [groupReference.id],
+  })
+
+  if (!groupRolesEvent) throw new Error(`roles for group '${groupReference.id}' not found on ${normalizedRelayURL}`)
+
+  return groupRolesEvent
+}
+
+/**
+ * Fetches the group livekit participants event from the specified pool.
+ *
+ * @param {Object} options - The options object.
+ * @param {AbstractSimplePool} options.pool - The pool object.
+ * @param {GroupReference} options.groupReference - The group reference object.
+ * @param {string} [options.normalizedRelayURL] - The normalized relay URL.
+ * @param {RelayInformation} [options.relayInformation] - The relay information object.
+ * @returns {Promise<Event>} The group livekit participants event that can be parsed later to get the participants.
+ * @throws {Error} If the group livekit participants event is not found.
+ */
+export async function fetchGroupLivekitParticipantsEvent({
+  pool,
+  groupReference,
+  relayInformation,
+  normalizedRelayURL,
+}: {
+  pool: AbstractSimplePool
+  groupReference: GroupReference
+  normalizedRelayURL?: string
+  relayInformation?: RelayInformation
+}): Promise<Event> {
+  if (!normalizedRelayURL) {
+    normalizedRelayURL = getNormalizedRelayURLByGroupReference(groupReference)
+  }
+
+  if (!relayInformation) {
+    relayInformation = await fetchRelayInformation(normalizedRelayURL)
+  }
+
+  const groupLivekitParticipantsEvent = await pool.get([normalizedRelayURL], {
+    kinds: [39004],
+    authors: [relayInformation.pubkey],
+    '#d': [groupReference.id],
+  })
+
+  if (!groupLivekitParticipantsEvent)
+    throw new Error(`livekit participants for group '${groupReference.id}' not found on ${normalizedRelayURL}`)
+
+  return groupLivekitParticipantsEvent
+}
+
+/**
+ * Fetches the group pinned events event from the specified pool.
+ *
+ * @param {Object} options - The options object.
+ * @param {AbstractSimplePool} options.pool - The pool object.
+ * @param {GroupReference} options.groupReference - The group reference object.
+ * @param {string} [options.normalizedRelayURL] - The normalized relay URL.
+ * @param {RelayInformation} [options.relayInformation] - The relay information object.
+ * @returns {Promise<Event>} The group pinned events event that can be parsed later to get the pinned events.
+ * @throws {Error} If the group pinned events event is not found.
+ */
+export async function fetchGroupPinnedEventsEvent({
+  pool,
+  groupReference,
+  relayInformation,
+  normalizedRelayURL,
+}: {
+  pool: AbstractSimplePool
+  groupReference: GroupReference
+  normalizedRelayURL?: string
+  relayInformation?: RelayInformation
+}): Promise<Event> {
+  if (!normalizedRelayURL) {
+    normalizedRelayURL = getNormalizedRelayURLByGroupReference(groupReference)
+  }
+
+  if (!relayInformation) {
+    relayInformation = await fetchRelayInformation(normalizedRelayURL)
+  }
+
+  const groupPinnedEventsEvent = await pool.get([normalizedRelayURL], {
+    kinds: [39005],
+    authors: [relayInformation.pubkey],
+    '#d': [groupReference.id],
+  })
+
+  if (!groupPinnedEventsEvent)
+    throw new Error(`pinned events for group '${groupReference.id}' not found on ${normalizedRelayURL}`)
+
+  return groupPinnedEventsEvent
+}
+
+/**
  * Parses a group members event and returns an array of GroupMember objects.
  * @param event - The event to parse.
  * @returns An array of GroupMember objects.
@@ -442,6 +612,406 @@ export function parseGroupMembersEvent(event: Event): GroupMember[] {
   }
 
   return members
+}
+
+/**
+ * Represents a NIP29 group role.
+ */
+export type GroupRole = {
+  name: string
+  description?: string
+}
+
+/**
+ * Generates an event template for the roles supported by a group.
+ *
+ * @param group - The group object.
+ * @param roles - An array of group roles.
+ * @returns The generated event template with the group roles that can be signed later.
+ */
+export function generateGroupRolesEventTemplate(group: Group, roles: GroupRole[]): EventTemplate {
+  const tags: string[][] = [['d', group.metadata.id]]
+  for (const role of roles) {
+    const tag = ['role', role.name]
+    role.description && tag.push(role.description)
+    tags.push(tag)
+  }
+
+  return {
+    content: '',
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 39003,
+    tags,
+  }
+}
+
+/**
+ * Validates a group roles event.
+ *
+ * @param event - The event to validate.
+ * @returns True if the event is a valid group roles event, false otherwise.
+ */
+export function validateGroupRolesEvent(event: Event): boolean {
+  if (event.kind !== 39003) return false
+
+  const requiredTags = ['d'] as const
+  for (const tag of requiredTags) {
+    if (!event.tags.find(([t]) => t == tag)) return false
+  }
+
+  return true
+}
+
+/**
+ * Parses a group roles event and returns an array of GroupRole objects.
+ *
+ * @param event - The event to parse.
+ * @returns An array of GroupRole objects.
+ * @throws Throws an error if the group roles event is invalid.
+ */
+export function parseGroupRolesEvent(event: Event): GroupRole[] {
+  if (!validateGroupRolesEvent(event)) throw new Error('invalid group roles event')
+
+  const roles: GroupRole[] = []
+
+  for (const [tag, name, description] of event.tags) {
+    if (tag !== 'role') continue
+
+    roles.push({ name, description })
+  }
+
+  return roles
+}
+
+/**
+ * Generates an event template for the livekit participants of a group.
+ *
+ * @param group - The group object.
+ * @param participants - An array of pubkeys currently live in the group's AV rooms.
+ * @returns The generated event template with the livekit participants that can be signed later.
+ */
+export function generateGroupLivekitParticipantsEventTemplate(group: Group, participants: string[]): EventTemplate {
+  const tags: string[][] = [['d', group.metadata.id]]
+  participants.forEach(pubkey => {
+    tags.push(['participant', pubkey])
+  })
+
+  return {
+    content: '',
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 39004,
+    tags,
+  }
+}
+
+/**
+ * Validates a group livekit participants event.
+ *
+ * @param event - The event to validate.
+ * @returns True if the event is a valid group livekit participants event, false otherwise.
+ */
+export function validateGroupLivekitParticipantsEvent(event: Event): boolean {
+  if (event.kind !== 39004) return false
+
+  const requiredTags = ['d'] as const
+  for (const tag of requiredTags) {
+    if (!event.tags.find(([t]) => t == tag)) return false
+  }
+
+  return true
+}
+
+/**
+ * Parses a group livekit participants event and returns an array of participant pubkeys.
+ *
+ * @param event - The event to parse.
+ * @returns An array of participant pubkeys.
+ * @throws Throws an error if the group livekit participants event is invalid.
+ */
+export function parseGroupLivekitParticipantsEvent(event: Event): string[] {
+  if (!validateGroupLivekitParticipantsEvent(event)) throw new Error('invalid group livekit participants event')
+
+  return event.tags.filter(([tag]) => tag === 'participant').map(([, pubkey]) => pubkey)
+}
+
+/**
+ * Represents a reference to a pinned event in a NIP29 group.
+ */
+export type GroupPinnedEvent = {
+  type: 'e' | 'a'
+  value: string
+}
+
+/**
+ * Generates an event template for the events pinned in a group.
+ *
+ * @param group - The group object.
+ * @param pinnedEvents - An array of references to pinned events, in display order.
+ * @returns The generated event template with the pinned events that can be signed later.
+ */
+export function generateGroupPinnedEventsEventTemplate(group: Group, pinnedEvents: GroupPinnedEvent[]): EventTemplate {
+  const tags: string[][] = [['d', group.metadata.id]]
+  pinnedEvents.forEach(pinnedEvent => {
+    tags.push([pinnedEvent.type, pinnedEvent.value])
+  })
+
+  return {
+    content: '',
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 39005,
+    tags,
+  }
+}
+
+/**
+ * Validates a group pinned events event.
+ *
+ * @param event - The event to validate.
+ * @returns True if the event is a valid group pinned events event, false otherwise.
+ */
+export function validateGroupPinnedEventsEvent(event: Event): boolean {
+  if (event.kind !== 39005) return false
+
+  const requiredTags = ['d'] as const
+  for (const tag of requiredTags) {
+    if (!event.tags.find(([t]) => t == tag)) return false
+  }
+
+  return true
+}
+
+/**
+ * Parses a group pinned events event and returns an array of GroupPinnedEvent objects.
+ *
+ * @param event - The event to parse.
+ * @returns An array of GroupPinnedEvent objects.
+ * @throws Throws an error if the group pinned events event is invalid.
+ */
+export function parseGroupPinnedEventsEvent(event: Event): GroupPinnedEvent[] {
+  if (!validateGroupPinnedEventsEvent(event)) throw new Error('invalid group pinned events event')
+
+  const pinnedEvents: GroupPinnedEvent[] = []
+
+  for (const [tag, value] of event.tags) {
+    if (tag !== 'e' && tag !== 'a') continue
+
+    pinnedEvents.push({ type: tag, value })
+  }
+
+  return pinnedEvents
+}
+
+/**
+ * Generates a group moderation event template. These events require the `h` tag and
+ * may optionally carry timeline references in `previous` tags.
+ */
+function generateGroupModerationEventTemplate(
+  kind: number,
+  groupId: string,
+  content: string,
+  tags: string[][],
+  previous?: string[],
+): EventTemplate {
+  const allTags: string[][] = [['h', groupId], ...tags]
+  previous && previous.length > 0 && allTags.push(['previous', ...previous])
+
+  return {
+    content,
+    created_at: Math.floor(Date.now() / 1000),
+    kind,
+    tags: allTags,
+  }
+}
+
+/**
+ * Generates a `put-user` (kind:9000) moderation event template.
+ *
+ * @param groupId - The id of the group.
+ * @param pubkey - The pubkey of the user to add or update.
+ * @param roles - Optional roles to assign to the user.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generatePutUserEventTemplate(
+  groupId: string,
+  pubkey: string,
+  roles?: string[],
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  return generateGroupModerationEventTemplate(9000, groupId, reason || '', [['p', pubkey, ...(roles || [])]], previous)
+}
+
+/**
+ * Generates a `remove-user` (kind:9001) moderation event template.
+ *
+ * @param groupId - The id of the group.
+ * @param pubkey - The pubkey of the user to remove.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateRemoveUserEventTemplate(
+  groupId: string,
+  pubkey: string,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  return generateGroupModerationEventTemplate(9001, groupId, reason || '', [['p', pubkey]], previous)
+}
+
+/**
+ * Generates an `edit-metadata` (kind:9002) moderation event template carrying
+ * all the metadata fields of the group.
+ *
+ * @param group - The group object with the updated metadata.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateEditGroupMetadataEventTemplate(
+  group: Group,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  return generateGroupModerationEventTemplate(
+    9002,
+    group.metadata.id,
+    reason || '',
+    buildGroupMetadataTags(group.metadata),
+    previous,
+  )
+}
+
+/**
+ * Generates a `delete-event` (kind:9005) moderation event template.
+ *
+ * @param groupId - The id of the group.
+ * @param eventId - The id of the event to delete.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateDeleteEventEventTemplate(
+  groupId: string,
+  eventId: string,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  return generateGroupModerationEventTemplate(9005, groupId, reason || '', [['e', eventId]], previous)
+}
+
+/**
+ * Generates a `create-group` (kind:9007) moderation event template.
+ *
+ * @param groupId - The id of the group to create.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateCreateGroupEventTemplate(groupId: string, reason?: string, previous?: string[]): EventTemplate {
+  return generateGroupModerationEventTemplate(9007, groupId, reason || '', [], previous)
+}
+
+/**
+ * Generates a `delete-group` (kind:9008) moderation event template.
+ *
+ * @param groupId - The id of the group to delete.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateDeleteGroupEventTemplate(groupId: string, reason?: string, previous?: string[]): EventTemplate {
+  return generateGroupModerationEventTemplate(9008, groupId, reason || '', [], previous)
+}
+
+/**
+ * Generates a `create-invite` (kind:9009) moderation event template.
+ *
+ * @param groupId - The id of the group.
+ * @param code - An arbitrary invite code.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateCreateInviteEventTemplate(
+  groupId: string,
+  code: string,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  return generateGroupModerationEventTemplate(9009, groupId, reason || '', [['code', code]], previous)
+}
+
+/**
+ * Generates an `update-pin-list` (kind:9010) moderation event template.
+ *
+ * @param groupId - The id of the group.
+ * @param pinnedEvents - The full ordered list of pinned events.
+ * @param reason - Optional reason for the action.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateUpdatePinListEventTemplate(
+  groupId: string,
+  pinnedEvents: GroupPinnedEvent[],
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  const tags = pinnedEvents.map(pinnedEvent => [pinnedEvent.type, pinnedEvent.value])
+  return generateGroupModerationEventTemplate(9010, groupId, reason || '', tags, previous)
+}
+
+/**
+ * Generates a group join request (kind:9021) event template.
+ *
+ * @param groupId - The id of the group.
+ * @param inviteCode - Optional invite code to be preauthorized by the relay.
+ * @param reason - Optional reason for the request.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateGroupJoinRequestEventTemplate(
+  groupId: string,
+  inviteCode?: string,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  const tags: string[][] = [['h', groupId]]
+  inviteCode && tags.push(['code', inviteCode])
+  previous && previous.length > 0 && tags.push(['previous', ...previous])
+
+  return {
+    content: reason || '',
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 9021,
+    tags,
+  }
+}
+
+/**
+ * Generates a group leave request (kind:9022) event template.
+ *
+ * @param groupId - The id of the group.
+ * @param reason - Optional reason for the request.
+ * @param previous - Optional timeline references.
+ * @returns The generated event template that can be signed later.
+ */
+export function generateGroupLeaveRequestEventTemplate(
+  groupId: string,
+  reason?: string,
+  previous?: string[],
+): EventTemplate {
+  const tags: string[][] = [['h', groupId]]
+  previous && previous.length > 0 && tags.push(['previous', ...previous])
+
+  return {
+    content: reason || '',
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 9022,
+    tags,
+  }
 }
 
 /**
