@@ -389,6 +389,32 @@ test('track relays when publishing', async () => {
   expect(pool.seenOn.get(event2.id)).toBeUndefined()
 })
 
+test('publish() rejects (does not resolve) when a relay is unreachable', async () => {
+  // ensureRelay()'s failure was previously swallowed and turned into a
+  // *resolved* string ("connection failure: ..."), so callers using the
+  // documented `Promise.any(pool.publish(...))` pattern (or any other
+  // fulfilled-vs-rejected check) would see success even when every relay
+  // was unreachable. It must reject like the pool's other early failure
+  // paths (duplicate url, allowConnectingToRelay) already do.
+  let event = finalizeEvent(
+    {
+      kind: 1,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      content: 'hello',
+    },
+    generateSecretKey(),
+  )
+
+  const unreachable = 'wss://nobody-is-listening.invalid.mock/nothing'
+  const [settled] = await Promise.allSettled(pool.publish([unreachable], event))
+
+  expect(settled.status).toBe('rejected')
+  if (settled.status === 'rejected') {
+    expect(String(settled.reason)).toContain('connection failure')
+  }
+})
+
 test('oninvalidevent is called through the pool for invalid events', async done => {
   const mockRelay = mockRelays[0]
   const relay = await pool.ensureRelay(mockRelay.url)

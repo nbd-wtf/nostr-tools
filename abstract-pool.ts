@@ -407,7 +407,7 @@ export class AbstractSimplePool {
         })
       } catch (err) {
         this.onRelayConnectionFailure?.(url)
-        return String('connection failure: ' + String(err))
+        return Promise.reject('connection failure: ' + String(err))
       }
 
       return r
