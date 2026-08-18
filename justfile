@@ -5,6 +5,9 @@ build:
   bun run build.js
   tsc
 
+watch:
+  watchexec -e ts just build
+
 test:
   bun test --timeout 20000
 
