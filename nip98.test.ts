@@ -136,6 +136,17 @@ describe('validateToken', () => {
     expect(isTokenValid).rejects.toThrow(Error)
   })
 
+  test('throws an error for an event timestamp in the future', async () => {
+    const sk = generateSecretKey()
+    const invalidToken = await getToken('http://test.com', 'get', e => {
+      e.created_at = Math.round(Date.now() / 1000) + 3600
+      return finalizeEvent(e, sk)
+    })
+    const isTokenValid = validateToken(invalidToken, 'http://test.com', 'get')
+
+    expect(isTokenValid).rejects.toThrow(Error)
+  })
+
   test('throws an error for invalid url', async () => {
     const sk = generateSecretKey()
     const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk))
@@ -235,6 +246,16 @@ describe('validateEventTimestamp', () => {
     const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
     const unpackedEvent: Event = await unpackEventFromToken(token)
     unpackedEvent.created_at = 0
+    const isEventTimestampValid = validateEventTimestamp(unpackedEvent)
+
+    expect(isEventTimestampValid).toBe(false)
+  })
+
+  test('returns false for a timestamp in the future', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'get', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+    unpackedEvent.created_at = Math.round(Date.now() / 1000) + 3600
     const isEventTimestampValid = validateEventTimestamp(unpackedEvent)
 
     expect(isEventTimestampValid).toBe(false)
