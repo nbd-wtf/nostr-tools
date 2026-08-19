@@ -192,8 +192,17 @@ export class BunkerSigner implements Signer {
     bunkerParams: BunkerSignerParams = {},
     maxWaitOrAbort: number | AbortSignal = 300_000,
   ): Promise<BunkerSigner> {
-    const signer = new BunkerSigner(clientSecretKey, bunkerParams)
     const uri = new URL(connectionURI)
+
+    // the secret is what tells the bunker we asked for apart from anyone else who
+    // saw the URI on the relay. without it there is nothing to compare the response
+    // against, and any pubkey that answers would be accepted as our signer.
+    const secret = uri.searchParams.get('secret')
+    if (!secret) {
+      throw new Error('nostrconnect:// URI has no secret')
+    }
+
+    const signer = new BunkerSigner(clientSecretKey, bunkerParams)
     const clientPubkey = getPublicKey(clientSecretKey)
 
     return new Promise((resolve, reject) => {
@@ -213,13 +222,13 @@ export class BunkerSigner implements Signer {
 
               const response = JSON.parse(decryptedContent)
 
-              if (response.result === uri.searchParams.get('secret')) {
+              if (response.result === secret) {
                 sub.close()
 
                 signer.bp = {
                   pubkey: event.pubkey,
                   relays: uri.searchParams.getAll('relay'),
-                  secret: uri.searchParams.get('secret'),
+                  secret,
                 }
                 signer.conversationKey = getConversationKey(clientSecretKey, event.pubkey)
                 signer.setupSubscription()
