@@ -87,14 +87,16 @@ export async function unpackEventFromToken(token: string): Promise<Event> {
 /**
  * Validates the timestamp of an event.
  * @param event - The event object to validate.
- * @returns A boolean indicating whether the event timestamp is within the last 60 seconds.
+ * @returns A boolean indicating whether the event timestamp is within 60 seconds of now.
  */
 export function validateEventTimestamp(event: Event): boolean {
   if (!event.created_at) {
     return false
   }
 
-  return Math.round(new Date().getTime() / 1000) - event.created_at < 60
+  // the comparison has to be absolute: a `created_at` in the future produces a
+  // negative difference, which would otherwise satisfy the check forever.
+  return Math.abs(Math.round(new Date().getTime() / 1000) - event.created_at) < 60
 }
 
 /**
