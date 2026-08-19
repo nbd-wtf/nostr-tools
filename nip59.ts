@@ -1,6 +1,6 @@
 import { EventTemplate, UnsignedEvent, NostrEvent } from './core.ts'
 import { getConversationKey, decrypt, encrypt } from './nip44.ts'
-import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey } from './pure.ts'
+import { getEventHash, generateSecretKey, finalizeEvent, getPublicKey, verifyEvent } from './pure.ts'
 import { Seal, GiftWrap } from './kinds.ts'
 
 type Rumor = UnsignedEvent & { id: string }
@@ -90,15 +90,42 @@ export function wrapManyEvents(
 }
 
 export function unwrapEvent(wrap: NostrEvent, recipientPrivateKey: Uint8Array): Rumor {
-  const unwrappedSeal = nip44Decrypt(wrap, recipientPrivateKey)
-  return nip44Decrypt(unwrappedSeal, recipientPrivateKey)
+  if (wrap.kind !== GiftWrap) {
+    throw new Error(`unexpected wrap kind ${wrap.kind}, expected ${GiftWrap}`)
+  }
+
+  const seal = nip44Decrypt(wrap, recipientPrivateKey) as NostrEvent
+
+  // the seal is the only thing that proves authorship: the wrap is signed by a
+  // throwaway key, and the rumor isn't signed at all. so the seal must be a real
+  // signed event, and the rumor it carries must claim the seal's author -- otherwise
+  // anyone could seal a rumor bearing someone else's pubkey and have it attributed
+  // to them.
+  if (seal.kind !== Seal) {
+    throw new Error(`unexpected seal kind ${seal.kind}, expected ${Seal}`)
+  }
+  if (!verifyEvent(seal)) {
+    throw new Error('seal signature is invalid')
+  }
+
+  const rumor = nip44Decrypt(seal, recipientPrivateKey) as Rumor
+  if (rumor.pubkey !== seal.pubkey) {
+    throw new Error(`rumor pubkey ${rumor.pubkey} does not match seal pubkey ${seal.pubkey}`)
+  }
+
+  return rumor
 }
 
 export function unwrapManyEvents(wrappedEvents: NostrEvent[], recipientPrivateKey: Uint8Array): Rumor[] {
   let unwrappedEvents: Rumor[] = []
 
   wrappedEvents.forEach(e => {
-    unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
+    try {
+      unwrappedEvents.push(unwrapEvent(e, recipientPrivateKey))
+    } catch (_err) {
+      // wraps that can't be unwrapped or fail the checks above are skipped: anyone
+      // can send us a gift wrap, so one bad event must not discard the whole batch
+    }
   })
 
   unwrappedEvents.sort((a, b) => a.created_at - b.created_at)

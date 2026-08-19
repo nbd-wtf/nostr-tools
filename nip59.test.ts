@@ -1,7 +1,15 @@
 import { test, expect } from 'bun:test'
-import { wrapEvent, wrapManyEvents, unwrapEvent, unwrapManyEvents } from './nip59.ts'
+import {
+  wrapEvent,
+  wrapManyEvents,
+  unwrapEvent,
+  unwrapManyEvents,
+  createRumor,
+  createSeal,
+  createWrap,
+} from './nip59.ts'
 import { decode } from './nip19.ts'
-import { NostrEvent, getPublicKey } from './pure.ts'
+import { NostrEvent, getEventHash, generateSecretKey, getPublicKey } from './pure.ts'
 import { SimplePool } from './pool.ts'
 import { GiftWrap } from './kinds.ts'
 import { hexToBytes } from '@noble/hashes/utils.js'
@@ -78,6 +86,46 @@ test('unwrapEvent', () => {
   expect(result.content).toEqual(expected.content)
   expect(result.pubkey).toEqual(expected.pubkey)
   expect(result.tags).toEqual(expected.tags)
+})
+
+function forgeWrap(impersonatedPublicKey: string): NostrEvent {
+  // an attacker seals a rumor that names someone else as its author. the seal is
+  // signed by the attacker and encrypted to the recipient, so it decrypts fine.
+  const forgedRumor = {
+    created_at: Math.round(Date.now() / 1000),
+    kind: 14,
+    tags: [],
+    content: 'trust me, I really am the sender',
+    pubkey: impersonatedPublicKey,
+  } as any
+  forgedRumor.id = getEventHash(forgedRumor)
+
+  return createWrap(createSeal(forgedRumor, generateSecretKey(), recipientPublicKey), recipientPublicKey)
+}
+
+test('unwrapEvent rejects a rumor whose pubkey does not match the seal', () => {
+  const wrap = forgeWrap(getPublicKey(senderPrivateKey))
+
+  expect(() => unwrapEvent(wrap, recipientPrivateKey)).toThrow(/does not match seal pubkey/)
+})
+
+test('unwrapEvent rejects a seal with an invalid signature', () => {
+  const rumor = createRumor(event, senderPrivateKey)
+  const seal = createSeal(rumor, senderPrivateKey, recipientPublicKey)
+  const wrap = createWrap({ ...seal, created_at: seal.created_at + 1 }, recipientPublicKey)
+
+  expect(() => unwrapEvent(wrap, recipientPrivateKey)).toThrow(/seal signature is invalid/)
+})
+
+test('unwrapEvent rejects a wrap of the wrong kind', () => {
+  expect(() => unwrapEvent({ ...wrappedEvent, kind: 1 }, recipientPrivateKey)).toThrow(/unexpected wrap kind/)
+})
+
+test('unwrapManyEvents skips wraps that fail to unwrap', () => {
+  const results = unwrapManyEvents([forgeWrap(getPublicKey(senderPrivateKey)), wrappedEvent], recipientPrivateKey)
+
+  expect(results.length).toEqual(1)
+  expect(results[0].pubkey).toEqual(getPublicKey(senderPrivateKey))
 })
 
 test('getWrappedEvents and unwrapManyEvents', async () => {
