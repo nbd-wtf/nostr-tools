@@ -23,10 +23,11 @@ export class Relay extends AbstractRelay {
 
   static async connect(
     url: string,
-    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect' | 'idleTimeout'>,
+    options?: Pick<AbstractRelayConstructorOptions, 'enablePing' | 'enableReconnect' | 'idleTimeout'> &
+      Parameters<AbstractRelay['connect']>[0],
   ): Promise<Relay> {
     const relay = new Relay(url, options)
-    await relay.connect()
+    await relay.connect(options)
     return relay
   }
 }
