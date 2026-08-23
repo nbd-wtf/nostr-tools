@@ -1,6 +1,6 @@
 {
   "name": "@nostr/tools",
-  "version": "2.24.3",
+  "version": "2.25.0",
   "exports": {
     ".": "./index.ts",
     "./core": "./core.ts",
@@ -44,7 +44,6 @@
     "./nip94": "./nip94.ts",
     "./nip98": "./nip98.ts",
     "./nip99": "./nip99.ts",
-    "./nipb0": "./nipb0.ts",
     "./nipb7": "./nipb7.ts",
     "./fakejson": "./fakejson.ts",
     "./utils": "./utils.ts",
