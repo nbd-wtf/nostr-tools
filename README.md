@@ -459,6 +459,29 @@ summary for relay read message and verify event
 </script>
 ```
 
+### Using it with React Native
+
+React Native requires polyfills:
+
+```sh
+npm install react-native-get-random-values text-encoding-polyfill react-native-url-polyfill
+```
+
+Import the polyfills at the very top of your entry file (`index.js`), **before** anything that imports `nostr-tools`:
+
+```js
+import 'react-native-get-random-values'
+import 'text-encoding-polyfill'
+import 'react-native-url-polyfill/auto'
+
+import { AppRegistry } from 'react-native'
+// ...
+```
+
+Future versions of React Native may implement these features natively, allowing the polyfills to be removed.
+
+Note: `nostr-tools/wasm` will not work with React Native because it does not have WebAssembly support.
+
 ## Plumbing
 
 To develop `@nostr/tools`, install [`just`](https://just.systems/) and run `just -l` to see commands available.
