@@ -7,11 +7,21 @@ test('first: parse simple content with 1 url and 1 nostr uri', () => {
   const blocks = Array.from(parse(content))
 
   expect(blocks).toEqual([
-    { type: 'reference', pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' } },
-    { type: 'text', text: ' check out my profile:' },
-    { type: 'reference', pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' } },
-    { type: 'text', text: '; and this cool image ' },
-    { type: 'image', url: 'https://images.com/image.jpg' },
+    {
+      type: 'reference',
+      pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' },
+      start: 0,
+      end: 69,
+    },
+    { type: 'text', text: ' check out my profile:', start: 69, end: 91 },
+    {
+      type: 'reference',
+      pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' },
+      start: 91,
+      end: 160,
+    },
+    { type: 'text', text: '; and this cool image ', start: 160, end: 182 },
+    { type: 'image', url: 'https://images.com/image.jpg', start: 182, end: 210 },
   ])
 })
 
@@ -22,20 +32,22 @@ and a regular link: https://regular.com/page?ok=true. and now a broken link: htt
   const blocks = Array.from(parse(content))
 
   expect(blocks).toEqual([
-    { type: 'text', text: ':' },
-    { type: 'relay', url: 'wss://oa.ao/a/' },
-    { type: 'text', text: "; this was a relay and now here's a video -> " },
-    { type: 'video', url: 'https://videos.com/video.mp4' },
-    { type: 'text', text: '! and some music:\n' },
-    { type: 'audio', url: 'http://music.com/song.mp3' },
-    { type: 'text', text: '\nand a regular link: ' },
-    { type: 'url', url: 'https://regular.com/page?ok=true' },
+    { type: 'text', text: ':', start: 0, end: 1 },
+    { type: 'relay', url: 'wss://oa.ao/a/', start: 1, end: 15 },
+    { type: 'text', text: "; this was a relay and now here's a video -> ", start: 15, end: 60 },
+    { type: 'video', url: 'https://videos.com/video.mp4', start: 60, end: 88 },
+    { type: 'text', text: '! and some music:\n', start: 88, end: 106 },
+    { type: 'audio', url: 'http://music.com/song.mp3', start: 106, end: 131 },
+    { type: 'text', text: '\nand a regular link: ', start: 131, end: 152 },
+    { type: 'url', url: 'https://regular.com/page?ok=true', start: 152, end: 184 },
     {
       type: 'text',
       text: '. and now a broken link: https://kjxkxk and a broken nostr ref: nostr:nevent1qqsr0f9w78uyy09qwmjt0kv63j4l7sxahq33725lqyyp79whlfjurwspz4mhxue69uhh56nzv34hxcfwv9ehw6nyddhq0ag9xg and a fake nostr ref: nostr:llll ok but finally ',
+      start: 184,
+      end: 408,
     },
-    { type: 'url', url: 'https://ok.com/' },
-    { type: 'text', text: '!' },
+    { type: 'url', url: 'https://ok.com/', start: 408, end: 422 },
+    { type: 'text', text: '!', start: 422, end: 423 },
   ])
 })
 
@@ -46,17 +58,24 @@ test('third: parse complex content with 4 nostr uris and 3 urls', () => {
   const blocks = Array.from(parse(content))
 
   expect(blocks).toEqual([
-    { type: 'text', text: 'Look at these profiles ' },
-    { type: 'reference', pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' } },
-    { type: 'text', text: ' ' },
+    { type: 'text', text: 'Look at these profiles ', start: 0, end: 23 },
+    {
+      type: 'reference',
+      pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' },
+      start: 23,
+      end: 92,
+    },
+    { type: 'text', text: ' ', start: 92, end: 93 },
     {
       type: 'reference',
       pointer: {
         pubkey: '71550e6c83a9381f35c568d1a80e11fa3e0efc97dfd0e0f17492a2edb64c37a9',
         relays: ['wss://qwieu.com'],
       },
+      start: 93,
+      end: 196,
     },
-    { type: 'text', text: ' check this event ' },
+    { type: 'text', text: ' check this event ', start: 196, end: 214 },
     {
       type: 'reference',
       pointer: {
@@ -65,15 +84,22 @@ test('third: parse complex content with 4 nostr uris and 3 urls', () => {
         author: undefined,
         kind: undefined,
       },
+      start: 214,
+      end: 325,
     },
-    { type: 'text', text: "\n    here's an image " },
-    { type: 'image', url: 'https://example.com/pic.png' },
-    { type: 'text', text: ' and another profile ' },
-    { type: 'reference', pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' } },
-    { type: 'text', text: '\n    with a video ' },
-    { type: 'video', url: 'https://example.com/vid.webm' },
-    { type: 'text', text: ' and finally ' },
-    { type: 'url', url: 'https://example.com/docs' },
+    { type: 'text', text: "\n    here's an image ", start: 325, end: 346 },
+    { type: 'image', url: 'https://example.com/pic.png', start: 346, end: 373 },
+    { type: 'text', text: ' and another profile ', start: 373, end: 394 },
+    {
+      type: 'reference',
+      pointer: { pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245' },
+      start: 394,
+      end: 463,
+    },
+    { type: 'text', text: '\n    with a video ', start: 463, end: 481 },
+    { type: 'video', url: 'https://example.com/vid.webm', start: 481, end: 509 },
+    { type: 'text', text: ' and finally ', start: 509, end: 522 },
+    { type: 'url', url: 'https://example.com/docs', start: 522, end: 546 },
   ])
 })
 
@@ -94,29 +120,34 @@ test('parse content with hashtags and emoji shortcodes', () => {
   const blocks = Array.from(parse(event))
 
   expect(blocks).toEqual([
-    { type: 'text', text: 'hey ' },
-    { type: 'reference', pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' } },
-    { type: 'text', text: ' check out ' },
-    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png' },
-    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png' },
-    { type: 'text', text: ' ' },
-    { type: 'hashtag', value: 'alpaca' },
-    { type: 'text', text: ' at ' },
-    { type: 'relay', url: 'wss://alpaca.com/' },
-    { type: 'text', text: '! ' },
-    { type: 'emoji', shortcode: 'star', url: 'https://example.com/star.png' },
-    { type: 'text', text: '\n\n' },
-    { type: 'hashtag', value: 'WORDS' },
-    { type: 'text', text: ' ' },
-    { type: 'hashtag', value: '486' },
-    { type: 'text', text: ' 5/6' },
+    { type: 'text', text: 'hey ', start: 0, end: 4 },
+    {
+      type: 'reference',
+      pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' },
+      start: 4,
+      end: 73,
+    },
+    { type: 'text', text: ' check out ', start: 73, end: 84 },
+    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png', start: 84, end: 92 },
+    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png', start: 92, end: 100 },
+    { type: 'text', text: ' ', start: 100, end: 101 },
+    { type: 'hashtag', value: 'alpaca', start: 101, end: 108 },
+    { type: 'text', text: ' at ', start: 108, end: 112 },
+    { type: 'relay', url: 'wss://alpaca.com/', start: 112, end: 128 },
+    { type: 'text', text: '! ', start: 128, end: 130 },
+    { type: 'emoji', shortcode: 'star', url: 'https://example.com/star.png', start: 130, end: 136 },
+    { type: 'text', text: '\n\n', start: 136, end: 138 },
+    { type: 'hashtag', value: 'WORDS', start: 138, end: 144 },
+    { type: 'text', text: ' ', start: 144, end: 145 },
+    { type: 'hashtag', value: '486', start: 145, end: 149 },
+    { type: 'text', text: ' 5/6', start: 149, end: 153 },
   ])
 })
 
 test('emoji shortcodes are treated as text if no event tags', () => {
   const blocks = Array.from(parse('hello :alpaca:'))
 
-  expect(blocks).toEqual([{ type: 'text', text: 'hello :alpaca:' }])
+  expect(blocks).toEqual([{ type: 'text', text: 'hello :alpaca:', start: 0, end: 14 }])
 })
 
 test("a thing that didn't work well in the wild", () => {
@@ -129,7 +160,9 @@ test("a thing that didn't work well in the wild", () => {
     {
       type: 'text',
       text: `Crowdsourcing doesn't mean just users clicking, by the way (although that could be possible too), it means a bunch of machines competing: `,
+      start: 0,
+      end: 138,
     },
-    { type: 'url', url: 'https://leaderboard.sbstats.uk/' },
+    { type: 'url', url: 'https://leaderboard.sbstats.uk/', start: 138, end: 169 },
   ])
 })
