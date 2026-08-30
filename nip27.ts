@@ -5,39 +5,57 @@ export type Block =
   | {
       type: 'text'
       text: string
+      start: number
+      end: number
     }
   | {
       type: 'reference'
       pointer: ProfilePointer | AddressPointer | EventPointer
+      start: number
+      end: number
     }
   | {
       type: 'url'
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'relay'
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'image'
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'video'
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'audio'
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'emoji'
       shortcode: string
       url: string
+      start: number
+      end: number
     }
   | {
       type: 'hashtag'
       value: string
+      start: number
+      end: number
     }
 
 const noCharacter = /\W/m
@@ -72,8 +90,8 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
       if (h === 0 || content[h - 1].match(noCharacter)) {
         const m = content.slice(h + 1, h + MAX_HASHTAG_LENGTH).match(noCharacter)
         const end = m ? h + 1 + m.index! : max
-        yield { type: 'text', text: content.slice(prevIndex, h) }
-        yield { type: 'hashtag', value: content.slice(h + 1, end) }
+        yield { type: 'text', text: content.slice(prevIndex, h), start: prevIndex, end: h }
+        yield { type: 'hashtag', value: content.slice(h + 1, end), start: h, end }
         index = end
         prevIndex = index
         continue mainloop
@@ -108,9 +126,9 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         }
 
         if (prevIndex !== u - 5) {
-          yield { type: 'text', text: content.slice(prevIndex, u - 5) }
+          yield { type: 'text', text: content.slice(prevIndex, u - 5), start: prevIndex, end: u - 5 }
         }
-        yield { type: 'reference', pointer }
+        yield { type: 'reference', pointer, start: u - 5, end }
         index = end
         prevIndex = index
         continue mainloop
@@ -130,29 +148,34 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         }
 
         if (prevIndex !== u - prefixLen) {
-          yield { type: 'text', text: content.slice(prevIndex, u - prefixLen) }
+          yield {
+            type: 'text',
+            text: content.slice(prevIndex, u - prefixLen),
+            start: prevIndex,
+            end: u - prefixLen,
+          }
         }
 
         if (/\.(png|jpe?g|gif|webp|heic|svg)$/i.test(url.pathname)) {
-          yield { type: 'image', url: url.toString() }
+          yield { type: 'image', url: url.toString(), start: u - prefixLen, end }
           index = end
           prevIndex = index
           continue mainloop
         }
         if (/\.(mp4|avi|webm|mkv|mov)$/i.test(url.pathname)) {
-          yield { type: 'video', url: url.toString() }
+          yield { type: 'video', url: url.toString(), start: u - prefixLen, end }
           index = end
           prevIndex = index
           continue mainloop
         }
         if (/\.(mp3|aac|ogg|opus|wav|flac)$/i.test(url.pathname)) {
-          yield { type: 'audio', url: url.toString() }
+          yield { type: 'audio', url: url.toString(), start: u - prefixLen, end }
           index = end
           prevIndex = index
           continue mainloop
         }
 
-        yield { type: 'url', url: url.toString() }
+        yield { type: 'url', url: url.toString(), start: u - prefixLen, end }
         index = end
         prevIndex = index
         continue mainloop
@@ -172,9 +195,14 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         }
 
         if (prevIndex !== u - prefixLen) {
-          yield { type: 'text', text: content.slice(prevIndex, u - prefixLen) }
+          yield {
+            type: 'text',
+            text: content.slice(prevIndex, u - prefixLen),
+            start: prevIndex,
+            end: u - prefixLen,
+          }
         }
-        yield { type: 'relay', url: url.toString() }
+        yield { type: 'relay', url: url.toString(), start: u - prefixLen, end }
         index = end
         prevIndex = index
         continue mainloop
@@ -193,9 +221,9 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         ) {
           // found an emoji
           if (prevIndex !== u) {
-            yield { type: 'text', text: content.slice(prevIndex, u) }
+            yield { type: 'text', text: content.slice(prevIndex, u), start: prevIndex, end: u }
           }
-          yield emoji
+          yield { ...emoji, start: u, end: u + emoji.shortcode.length + 2 }
           index = u + emoji.shortcode.length + 2
           prevIndex = index
           continue mainloop
@@ -209,6 +237,6 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
   }
 
   if (prevIndex !== max) {
-    yield { type: 'text', text: content.slice(prevIndex) }
+    yield { type: 'text', text: content.slice(prevIndex), start: prevIndex, end: max }
   }
 }
