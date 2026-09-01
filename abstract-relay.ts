@@ -265,10 +265,10 @@ export class AbstractRelay {
       if (!this.connectionPromise) return reject(new Error(`no connection to ${this.url}, can't ping`))
 
       // make a dummy request with expected empty eose reply
-      // ["REQ", "_", {"ids":["aaaa...aaaa"], "limit": 0}]
+      // ["REQ", "_", {"ids":["aaaa...aaaa"], "limit": 1}]
       try {
         const sub = this.subscribe(
-          [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 0 }],
+          [{ ids: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'], limit: 1 }],
           {
             label: '<forced-ping>',
             oneose: () => {
