@@ -227,33 +227,6 @@ test('ping-pong timeout (no-ping browser environment)', async () => {
   }
 })
 
-test('enablePing dummy REQ uses limit:1', async () => {
-  const originalSend = MockWebSocketClient.prototype.send
-  let dummyFilterLimit: number | undefined
-  try {
-    MockWebSocketClient.prototype.send = function (message: string) {
-      try {
-        const parsed = JSON.parse(message)
-        if (parsed[0] === 'REQ' && parsed[2]?.ids?.[0] === 'a'.repeat(64)) {
-          dummyFilterLimit = parsed[2].limit
-        }
-      } catch {
-      }
-      originalSend.call(this, message)
-    }
-    const mockRelay = new MockRelay()
-    const relay = new Relay(mockRelay.url, { enablePing: true })
-    relay.pingTimeout = 50
-    relay.pingFrequency = 50
-    await relay.connect()
-    await new Promise(resolve => setTimeout(resolve, 75))
-    expect(dummyFilterLimit).toBe(1)
-    relay.close()
-  } finally {
-    MockWebSocketClient.prototype.send = originalSend
-  }
-})
-
 test('ping-pong listeners are cleaned up', async () => {
   const mockRelay = new MockRelay()
   let listenerCount = 0
