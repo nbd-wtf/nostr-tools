@@ -180,6 +180,7 @@ export class AbstractRelay {
           if (this.reconnectAttempts === 0) {
             this.skipReconnection = true
           }
+          this.ws?.close?.()
           this.handleHardClose('relay connection timed out')
         }, opts.timeout)
       }
@@ -236,6 +237,7 @@ export class AbstractRelay {
         if (this.reconnectAttempts === 0) {
           this.skipReconnection = true
         }
+        this.ws?.close?.()
         this.handleHardClose('relay connection failed')
       }
 
