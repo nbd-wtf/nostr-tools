@@ -38,11 +38,22 @@ function getPowFromBytes(hash: Uint8Array): number {
   return count
 }
 
+export type MinePowOptions = {
+  /**
+   * By default the miner refreshes `created_at` to the current second while it works and restarts the
+   * nonce whenever the second changes, so a long mining run still yields a fresh timestamp. Set this
+   * to `true` to leave `created_at` exactly as given. NIP-59 gift wraps and seals must carry a
+   * randomized timestamp (up to two days in the past), and any other caller that has already chosen a
+   * `created_at` needs it to survive mining.
+   */
+  keepCreatedAt?: boolean
+}
+
 /**
  * Mine an event with the desired POW. This function mutates the event.
  * Note that this operation is synchronous and should be run in a worker context to avoid blocking the main thread.
  */
-export function minePow(unsigned: UnsignedEvent, difficulty: number): Omit<Event, 'sig'> {
+export function minePow(unsigned: UnsignedEvent, difficulty: number, options: MinePowOptions = {}): Omit<Event, 'sig'> {
   let count = 0
 
   const event = unsigned as Omit<Event, 'sig'>
@@ -51,11 +62,13 @@ export function minePow(unsigned: UnsignedEvent, difficulty: number): Omit<Event
   event.tags.push(tag)
 
   while (true) {
-    const now = Math.floor(new Date().getTime() / 1000)
+    if (!options.keepCreatedAt) {
+      const now = Math.floor(new Date().getTime() / 1000)
 
-    if (now !== event.created_at) {
-      count = 0
-      event.created_at = now
+      if (now !== event.created_at) {
+        count = 0
+        event.created_at = now
+      }
     }
 
     tag[1] = (++count).toString()
