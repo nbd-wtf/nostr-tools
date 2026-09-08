@@ -28,3 +28,23 @@ test('mines POW for an event', async () => {
 
   expect(getPow(event.id)).toBeGreaterThanOrEqual(difficulty)
 })
+
+test('keeps a caller-chosen created_at when asked', async () => {
+  const difficulty = 10
+  const createdAt = 1700000000 // a fixed, past timestamp, as NIP-59 wraps use
+
+  const event = minePow(
+    {
+      kind: 1,
+      tags: [],
+      content: 'Hello, world!',
+      created_at: createdAt,
+      pubkey: '79c2cae114ea28a981e7559b4fe7854a473521a8d22a66bbab9fa248eb820ff6',
+    },
+    difficulty,
+    { keepCreatedAt: true },
+  )
+
+  expect(event.created_at).toEqual(createdAt)
+  expect(getPow(event.id)).toBeGreaterThanOrEqual(difficulty)
+})
