@@ -302,13 +302,16 @@
     "@noble/hashes": "2.0.1",
     "@scure/base": "2.0.0",
     "@scure/bip32": "2.0.1",
-    "@scure/bip39": "2.0.1",
-    "nostr-wasm": "0.1.0"
+    "@scure/bip39": "2.0.1"
   },
   "peerDependencies": {
+    "nostr-wasm": "0.1.0",
     "typescript": ">=5.0.0"
   },
   "peerDependenciesMeta": {
+    "nostr-wasm": {
+      "optional": true
+    },
     "typescript": {
       "optional": true
     }
@@ -333,6 +336,7 @@
     "mitata": "^0.1.6",
     "mock-socket": "^9.3.1",
     "node-fetch": "^2.6.9",
+    "nostr-wasm": "0.1.0",
     "prettier": "^3.0.3",
     "typescript": "^5.8.2"
   },
