@@ -130,6 +130,34 @@ import WebSocket from 'ws'
 useWebSocketImplementation(WebSocket)
 ```
 
+### Counting events (NIP-45)
+
+Relays that support NIP-45 answer `COUNT` requests instead of sending the events. `relay.count()` resolves to the number; `relay.countWithHLL()` also returns the HyperLogLog registers when the relay includes them, and `pool.countMany()` merges those registers across relays, so the same event seen on several relays is not counted twice.
+
+```js
+import { Relay } from '@nostr/tools/relay'
+
+const relay = await Relay.connect('wss://relay.example.com')
+
+// how many notes has this pubkey published, according to this relay
+const notes = await relay.count([{ kinds: [1], authors: ['<hex pubkey>'] }])
+
+// the same with the HLL registers, if the relay sends them
+const { count, hll } = await relay.countWithHLL([{ kinds: [1], authors: ['<hex pubkey>'] }])
+```
+
+Across a pool, `countMany` builds the filter for you from a target and a directive, one of `'reactions'`, `'reposts'`, `'quotes'`, `'replies'`, `'comments'` or `'followers'`:
+
+```js
+// followers of a pubkey, merged across relays
+const { count } = await pool.countMany(relays, '<hex pubkey>', 'followers')
+
+// reactions to a note
+const reactions = await pool.countMany(relays, '<hex event id>', 'reactions', { maxWait: 3000 })
+```
+
+Relays that don't support `COUNT` are skipped by `countMany`; a single `relay.count()` against one of them rejects.
+
 ### Authenticating with relays (NIP-42)
 
 Some relays will return a `CLOSED` message with an `"auth-required:"` prefix in order to signal that such request requires authentication.
