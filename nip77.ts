@@ -589,7 +589,7 @@ export class NegentropySync {
           break
         }
         case 'NEG-ERR': {
-          params.onclose?.()
+          params.onclose?.(data[2])
         }
       }
     }

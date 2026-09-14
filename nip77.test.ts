@@ -1,7 +1,11 @@
 import { describe, test, expect } from 'bun:test'
+import { Server } from 'mock-socket'
 import { NegentropySync, NegentropyStorageVector } from './nip77.ts'
 import { Relay } from './relay.ts'
 import { NostrEvent } from './core.ts'
+import { AbstractRelay } from './abstract-relay.ts'
+import { verifyEvent } from './pure.ts'
+import { MockWebSocketClient } from './test-helpers.ts'
 
 // const RELAY = 'ws://127.0.0.1:10547'
 const RELAY = 'wss://relay.damus.io'
@@ -110,5 +114,42 @@ describe('NegentropySync', () => {
     expect(ids3.sort()).toEqual(removedEvents.sort())
 
     sync3.close()
+  })
+
+  test('NEG-ERR passes the reason to onclose', async () => {
+    const url = 'wss://negentropy.mock.relay/neg-err'
+    const server = new Server(url, { mock: false })
+    server.on('connection', (socket: any) => {
+      socket.on('message', (message: string) => {
+        const data = JSON.parse(message)
+        if (data[0] === 'NEG-OPEN') {
+          socket.send(JSON.stringify(['NEG-ERR', data[1], 'blocked: negentropy is disabled']))
+        }
+      })
+    })
+
+    const relay = new AbstractRelay(url, { verifyEvent, websocketImplementation: MockWebSocketClient })
+    await relay.connect()
+
+    const storage = new NegentropyStorageVector()
+    storage.seal()
+    const filter = { kinds: [1] }
+
+    let reason: string | undefined
+    const done = Promise.withResolvers<void>()
+    const sync = new NegentropySync(relay, storage, filter, {
+      onclose: err => {
+        reason = err
+        done.resolve()
+      },
+    })
+
+    await sync.start()
+    await done.promise
+
+    expect(reason).toBe('blocked: negentropy is disabled')
+
+    relay.close()
+    server.stop()
   })
 })
