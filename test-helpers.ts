@@ -27,6 +27,8 @@ export class MockRelay {
   public secretKeys: Uint8Array[]
   public preloadedEvents: Event[]
   public unresponsive: boolean = false
+  public authRequired: boolean = false
+  public challenge: string = 'mock-challenge'
 
   constructor(url?: string | undefined) {
     serial++
@@ -47,15 +49,31 @@ export class MockRelay {
     this._server = new Server(this.url)
     this._server.on('connection', (conn: any) => {
       let subs: { [subId: string]: { conn: any; filters: Filter[] } } = {}
+      let authenticated = false
+      if (this.authRequired) conn.send(JSON.stringify(['AUTH', this.challenge]))
 
       conn.on('message', (message: string) => {
         if (this.unresponsive) return
         const data = JSON.parse(message)
 
         switch (data[0]) {
+          case 'AUTH': {
+            let event = data[1]
+            const ok =
+              event.kind === 22242 && event.tags.some((t: string[]) => t[0] === 'challenge' && t[1] === this.challenge)
+            if (ok) authenticated = true
+            conn.send(JSON.stringify(['OK', event.id, ok, ok ? '' : 'auth-required: bad challenge']))
+
+            break
+          }
           case 'REQ': {
             let subId = data[1]
             let filters = data.slice(2)
+            if (this.authRequired && !authenticated) {
+              conn.send(JSON.stringify(['CLOSED', subId, 'auth-required: you need to authenticate']))
+
+              break
+            }
             subs[subId] = { conn, filters }
 
             this.preloadedEvents.forEach(event => {
