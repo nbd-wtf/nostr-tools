@@ -324,7 +324,7 @@ export class AbstractRelay {
     if (!challenge) throw new Error("can't perform auth, no challenge was received")
     if (this.authPromise) return this.authPromise
 
-    this.authPromise = new Promise<string>(async (resolve, reject) => {
+    const attempt = new Promise<string>(async (resolve, reject) => {
       try {
         let evt = await signAuthEvent(makeAuthEvent(this.url, challenge))
         let timeout = setTimeout(() => {
@@ -337,10 +337,15 @@ export class AbstractRelay {
         this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
         this.send('["AUTH",' + JSON.stringify(evt) + ']')
       } catch (err) {
-        console.warn('subscribe auth function failed:', err)
+        reject(err)
       }
     })
-    return this.authPromise
+    // a failed attempt is dropped so the next call retries
+    attempt.catch(() => {
+      if (this.authPromise === attempt) this.authPromise = undefined
+    })
+    this.authPromise = attempt
+    return attempt
   }
 
   public async publish(event: Event): Promise<string> {
@@ -570,9 +575,7 @@ export class AbstractRelay {
               // If the connection closed before auth could be sent, just ignore it.
               // This is a race condition when relays close connections quickly
               // (e.g., WoT-enforced relays that reject unknown pubkeys).
-              if (!(err instanceof SendingOnClosedConnection)) {
-                throw err // re-throw other errors
-              }
+              if (!(err instanceof SendingOnClosedConnection)) console.warn('automatic auth failed:', err)
             })
           }
           return
