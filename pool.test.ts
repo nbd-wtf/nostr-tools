@@ -152,6 +152,68 @@ test('known ids are bounded per subscription', async () => {
   expect(received).toHaveLength(2)
 })
 
+test.each([0, -1, 1.5, NaN, Infinity, -Infinity])('rejects invalid maxKnownIds in constructor: %s', maxKnownIds => {
+  expect(() => new SimplePool({ maxKnownIds })).toThrow(RangeError)
+})
+
+test.each([0, -1, 1.5, NaN, Infinity, -Infinity])('rejects invalid maxKnownIds assignment: %s', maxKnownIds => {
+  pool.maxKnownIds = 2
+  expect(() => {
+    pool.maxKnownIds = maxKnownIds
+  }).toThrow(RangeError)
+  expect(pool.maxKnownIds).toBe(2)
+})
+
+test('lowering maxKnownIds shrinks an open subscription on the next new id', async () => {
+  const priv = generateSecretKey()
+  const events = Array.from({ length: 6 }, (_, i) =>
+    finalizeEvent({ created_at: i, content: String(i), kind: 22347, tags: [] }, priv),
+  )
+  const received: string[] = []
+  pool.maxKnownIds = 5
+  const relay = await pool.ensureRelay(relayURLs[0])
+  await new Promise<void>(resolve => {
+    pool.subscribeMany(
+      [relayURLs[0]],
+      { authors: [getPublicKey(priv)] },
+      {
+        id: 'resize',
+        onevent: event => received.push(event.content),
+        oneose: resolve,
+      },
+    )
+  })
+  const deliver = (event: Event) =>
+    relay._onmessage({ data: JSON.stringify(['EVENT', 'resize', event]) } as MessageEvent)
+  events.slice(0, 5).forEach(deliver)
+  pool.maxKnownIds = 1
+  deliver(events[5])
+  deliver(events[5]) // the latest id is still deduplicated
+  deliver(events[4]) // every older id must have been evicted
+  expect(received).toEqual(['0', '1', '2', '3', '4', '5', '4'])
+
+  // Repeated eviction at capacity one must never exhaust the live iterator.
+  for (let i = 0; i < 100; i++) {
+    deliver(events[i % 2])
+    deliver(events[i % 2])
+  }
+  expect(received).toHaveLength(107)
+})
+
+test('querySync keeps unique results after the known-id cache fills', async () => {
+  const priv = generateSecretKey()
+  const events = Array.from({ length: 3 }, (_, i) =>
+    finalizeEvent({ created_at: i, content: String(i), kind: 22347, tags: [] }, priv),
+  )
+  for (const relay of mockRelays.slice(0, 2)) {
+    relay.secretKeys = []
+    relay.preloadedEvents = events
+  }
+  pool = new SimplePool({ maxKnownIds: 2 })
+  const received = await pool.querySync(relayURLs.slice(0, 2), { authors: [getPublicKey(priv)] })
+  expect(received.map(event => event.content)).toEqual(['0', '1', '2'])
+})
+
 test('subscribe many map', async () => {
   let priv = hexToBytes('8ea002840d413ccdd5be98df5dd89d799eaa566355ede83ca0bbdbb4b145e0d3')
   let pub = getPublicKey(priv)

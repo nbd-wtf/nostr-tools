@@ -120,6 +120,18 @@ await Promise.any(pool.publish(['wss://a.com', 'wss://b.com'], signedEvent))
 relay.close()
 ```
 
+Pool subscriptions remember the most recent 20,000 distinct event IDs for deduplication. Set
+`new SimplePool({ maxKnownIds: 50000 })` to choose a different capacity. The value must be a
+positive safe integer; zero, negative, fractional, and non-finite values throw `RangeError`,
+both in the constructor and when assigning `pool.maxKnownIds`. Changes apply to open
+subscriptions: lowering the capacity trims each cache when it next receives a new ID.
+
+An event can be delivered again after its ID is evicted. IDs are remembered before parsing,
+filtering, or signature verification, so invalid events also consume capacity. Applications
+that need longer deduplication can supply `alreadyHaveEvent` to `subscribe`, `subscribeMany`,
+or `subscribeMap`. `querySync()` always returns unique events, even when its result exceeds
+the cache capacity. Relay tracking via `trackRelays` has a separate, unbounded `seenOn` map.
+
 To use this on Node.js you first must install `ws` and call something like this:
 
 ```js
