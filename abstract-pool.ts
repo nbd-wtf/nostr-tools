@@ -160,7 +160,10 @@ export class AbstractSimplePool {
         let set = this.seenOn.get(id)
         if (!set) {
           set = new Set()
-          this.seenOn.set(id, set)
+          // the id is a slice of the raw message (see getHex64()) and a slice keeps its whole parent string
+          // alive for as long as it is retained, so keep a copy instead: a JSON round trip, since
+          // (' ' + id).slice(1) unpins it on V8 but not on JavaScriptCore
+          this.seenOn.set(JSON.parse(JSON.stringify(id)), set)
         }
         set.add(relay)
       }
@@ -206,7 +209,8 @@ export class AbstractSimplePool {
           if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
           _knownIds.delete(_oldestKnownId.next().value!)
         }
-        _knownIds.add(id)
+        // keep a copy so the set doesn't retain the message the id was sliced from (see receivedEvent above)
+        _knownIds.add(JSON.parse(JSON.stringify(id)))
       }
       return have
     }
