@@ -29,6 +29,9 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   // maxWaitForConnection takes a number in milliseconds that will be given to ensureRelay such that we
   // don't get stuck forever when attempting to connect to a relay, it is 3000 (3 seconds) by default
   maxWaitForConnection: number
+  // maxKnownIds is how many event ids each subscription remembers in order to deduplicate the same event
+  // arriving from multiple relays, once it is full the oldest ids are forgotten, it is 20000 by default
+  maxKnownIds?: number
 }
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
@@ -54,6 +57,7 @@ export class AbstractSimplePool {
   public onRelayConnectionSuccess?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
   public maxWaitForConnection: number
+  public maxKnownIds: number = 20000
 
   private _WebSocket?: typeof WebSocket
 
@@ -68,6 +72,7 @@ export class AbstractSimplePool {
     this.onRelayConnectionSuccess = opts.onRelayConnectionSuccess
     this.allowConnectingToRelay = opts.allowConnectingToRelay
     this.maxWaitForConnection = opts.maxWaitForConnection || 3000
+    if (opts.maxKnownIds) this.maxKnownIds = opts.maxKnownIds
   }
 
   async ensureRelay(
@@ -162,6 +167,10 @@ export class AbstractSimplePool {
     }
 
     const _knownIds = new Set<string>()
+    // a live iterator stays at the oldest id still in the set, so forgetting that one is cheap: a fresh
+    // _knownIds.values().next() would have to skip over every id deleted before it. it is only created
+    // once the set is full because until then it would keep alive the tables the set has outgrown
+    let _oldestKnownId: Iterator<string> | undefined
     const subs: Subscription[] = []
 
     // batch all EOSEs into a single
@@ -191,7 +200,14 @@ export class AbstractSimplePool {
         return true
       }
       const have = _knownIds.has(id)
-      _knownIds.add(id)
+      if (!have) {
+        // a relay can send us any number of ids, so forget the oldest one to keep this bounded
+        if (_knownIds.size >= this.maxKnownIds) {
+          if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
+          _knownIds.delete(_oldestKnownId.next().value!)
+        }
+        _knownIds.add(id)
+      }
       return have
     }
 

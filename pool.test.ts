@@ -96,6 +96,62 @@ test('same with double subs', async () => {
   expect(received).toHaveLength(2)
 })
 
+test('known ids are bounded per subscription', async () => {
+  let priv = generateSecretKey()
+  let pub = getPublicKey(priv)
+  let received: Event[] = []
+  let event = finalizeEvent(
+    {
+      created_at: Math.round(Date.now() / 1000),
+      content: 'test',
+      kind: 22347,
+      tags: [],
+    },
+    priv,
+  )
+
+  const [relayA, relayB] = relayURLs
+  pool.maxKnownIds = 5
+  await new Promise<void>(resolve => {
+    pool.subscribeMany(
+      [relayA, relayB],
+      { authors: [pub] },
+      {
+        onevent(event: Event) {
+          received.push(event)
+        },
+        oneose: resolve, // wait for the stored events of both relays so they don't interfere
+      },
+    )
+  })
+
+  await pool.publish([relayA], event)[0]
+  await new Promise(resolve => setTimeout(resolve, 200))
+  expect(received).toHaveLength(1)
+
+  // the relay forwards these because they match the filter, but they have a bad signature
+  // so they are never delivered: the subscription still remembers their ids
+  const junk = Array.from({ length: 5 }, (_, i) => ({
+    ...finalizeEvent({ created_at: i, content: 'junk', kind: 22347, tags: [] }, priv),
+    sig: '00'.repeat(64),
+  }))
+
+  for (let i = 0; i < 4; i++) await pool.publish([relayA], junk[i])[0]
+  await new Promise(resolve => setTimeout(resolve, 200))
+  expect(received).toHaveLength(1)
+
+  // 4 other ids since then, still under the limit, so the same event from another relay is deduplicated
+  await pool.publish([relayB], event)[0]
+  await new Promise(resolve => setTimeout(resolve, 200))
+  expect(received).toHaveLength(1)
+
+  // the 5th other id pushes the original one out, so now the same event is delivered again
+  await pool.publish([relayA], junk[4])[0]
+  await pool.publish([relayB], event)[0]
+  await new Promise(resolve => setTimeout(resolve, 200))
+  expect(received).toHaveLength(2)
+})
+
 test('subscribe many map', async () => {
   let priv = hexToBytes('8ea002840d413ccdd5be98df5dd89d799eaa566355ede83ca0bbdbb4b145e0d3')
   let pub = getPublicKey(priv)
