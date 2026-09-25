@@ -29,6 +29,10 @@ export type AbstractPoolConstructorOptions = AbstractRelayConstructorOptions & {
   // maxWaitForConnection takes a number in milliseconds that will be given to ensureRelay such that we
   // don't get stuck forever when attempting to connect to a relay, it is 3000 (3 seconds) by default
   maxWaitForConnection: number
+  // maxKnownIds is how many event ids each subscription remembers in order to deduplicate the same event
+  // arriving from multiple relays, once it is full the oldest ids are forgotten, it is 20000 by default
+  // must be a positive integer; older events can be delivered again after eviction
+  maxKnownIds?: number
 }
 
 export type SubscribeManyParams = Omit<SubscriptionParams, 'onclose'> & {
@@ -54,6 +58,19 @@ export class AbstractSimplePool {
   public onRelayConnectionSuccess?: (url: string) => void
   public allowConnectingToRelay?: (url: string, operation: ['read', Filter[]] | ['write', Event]) => boolean
   public maxWaitForConnection: number
+  private _maxKnownIds: number = 20000
+
+  /** Maximum ids remembered per subscription. Lowering it trims the cache on the next new id. */
+  public get maxKnownIds(): number {
+    return this._maxKnownIds
+  }
+
+  public set maxKnownIds(value: number) {
+    if (!Number.isSafeInteger(value) || value < 1) {
+      throw new RangeError('maxKnownIds must be a positive safe integer')
+    }
+    this._maxKnownIds = value
+  }
 
   private _WebSocket?: typeof WebSocket
 
@@ -68,6 +85,7 @@ export class AbstractSimplePool {
     this.onRelayConnectionSuccess = opts.onRelayConnectionSuccess
     this.allowConnectingToRelay = opts.allowConnectingToRelay
     this.maxWaitForConnection = opts.maxWaitForConnection || 3000
+    if (opts.maxKnownIds !== undefined) this.maxKnownIds = opts.maxKnownIds
   }
 
   async ensureRelay(
@@ -155,13 +173,20 @@ export class AbstractSimplePool {
         let set = this.seenOn.get(id)
         if (!set) {
           set = new Set()
-          this.seenOn.set(id, set)
+          // the id is a slice of the raw message (see getHex64()) and a slice keeps its whole parent string
+          // alive for as long as it is retained, so keep a copy instead: a JSON round trip, since
+          // (' ' + id).slice(1) unpins it on V8 but not on JavaScriptCore
+          this.seenOn.set(JSON.parse(JSON.stringify(id)), set)
         }
         set.add(relay)
       }
     }
 
     const _knownIds = new Set<string>()
+    // a live iterator stays at the oldest id still in the set, so forgetting that one is cheap: a fresh
+    // _knownIds.values().next() would have to skip over every id deleted before it. it is only created
+    // once the set is full because until then it would keep alive the tables the set has outgrown
+    let _oldestKnownId: Iterator<string> | undefined
     const subs: Subscription[] = []
 
     // batch all EOSEs into a single
@@ -190,9 +215,32 @@ export class AbstractSimplePool {
       if (params.alreadyHaveEvent?.(id)) {
         return true
       }
-      const have = _knownIds.has(id)
-      _knownIds.add(id)
-      return have
+      // Only look up here: this id has not been verified. Remembering it would let a
+      // forged event on one relay suppress the genuine event arriving from another.
+      return _knownIds.has(id)
+    }
+
+    const pool = this
+    const onevent = params.onevent
+    function localOneventHandler(this: Subscription, event: Event) {
+      // The relay calls this only after matching filters and verifying the event.
+      // Recheck the parsed id because the raw-message fast extractor may miss it.
+      // Do not call the user's alreadyHaveEvent again: receivedEvent may have updated its state.
+      if (_knownIds.has(event.id)) return
+      while (_knownIds.size >= pool.maxKnownIds) {
+        if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
+        _knownIds.delete(_oldestKnownId.next().value!)
+      }
+      // Copy retained ids, and remember them before calling user code, which can throw or reenter.
+      _knownIds.add(JSON.parse(JSON.stringify(event.id)))
+      if (onevent) {
+        onevent.call(this, event)
+      } else {
+        console.warn(
+          `onevent() callback not defined for subscription '${this.id}' in relay ${this.relay.url}. event received:`,
+          event,
+        )
+      }
     }
 
     // open a subscription in all given relays
@@ -222,14 +270,17 @@ export class AbstractSimplePool {
 
         let subscription = relay.subscribe(filters, {
           ...params,
+          onevent: localOneventHandler,
           oneose: () => handleEose(i),
           onclose: reason => {
             if (reason.startsWith('auth-required: ') && params.onauth) {
               relay
                 .auth(params.onauth)
                 .then(() => {
-                  relay.subscribe(filters, {
+                  // Reconnect may have advanced this subscription's own filters.
+                  relay.subscribe(subscription.filters, {
                     ...params,
+                    onevent: localOneventHandler,
                     oneose: () => handleEose(i),
                     onclose: reason => {
                       handleClose(i, url, reason) // the second time we won't try to auth anymore
@@ -296,14 +347,15 @@ export class AbstractSimplePool {
     params?: Pick<SubscribeManyParams, 'label' | 'id' | 'maxWait'>,
   ): Promise<Event[]> {
     return new Promise(async resolve => {
-      const events: Event[] = []
+      const events = new Map<string, Event>()
       this.subscribeEose(relays, filter, {
         ...params,
         onevent(event: Event) {
-          events.push(event)
+          // Streaming deduplication can forget older ids, but finite queries return each event once.
+          if (!events.has(event.id)) events.set(event.id, event)
         },
         onclose(_: { url: string; reason: string }[]) {
-          resolve(events)
+          resolve(Array.from(events.values()))
         },
       })
     })

@@ -120,6 +120,26 @@ await Promise.any(pool.publish(['wss://a.com', 'wss://b.com'], signedEvent))
 relay.close()
 ```
 
+Pool subscriptions remember the most recent 20,000 accepted event IDs for deduplication. Set
+`new SimplePool({ maxKnownIds: 50000 })` to choose a different capacity. The value must be a
+positive safe integer; zero, negative, fractional, and non-finite values throw `RangeError`,
+both in the constructor and when assigning `pool.maxKnownIds`. Changes apply to open
+subscriptions: lowering the capacity trims each cache when it next receives a new ID.
+
+An event can be delivered again after its ID is evicted. IDs are remembered only after the
+event matches its subscription filters and passes verification. A forged event therefore
+cannot reserve an ID in the pool's cache and suppress the genuine event from another relay. Known accepted IDs
+are still checked before JSON parsing; rejected events are checked again if replayed. Applications
+that need longer deduplication can supply `alreadyHaveEvent` to `subscribe`, `subscribeMany`,
+or `subscribeMap`. `querySync()` always returns unique events, even when its result exceeds
+the cache capacity. Relay tracking via `trackRelays` has a separate, unbounded `seenOn` map.
+The caller's `alreadyHaveEvent` and `receivedEvent` callbacks still run before verification;
+only return `true` from `alreadyHaveEvent` for IDs your application already trusts.
+
+Reconnect progress advances only for accepted events. Each relay subscription keeps its own
+filter objects, so reconnecting one relay cannot advance another relay's `since` or change
+the filter object supplied by the caller.
+
 To use this on Node.js you first must install `ws` and call something like this:
 
 ```js
