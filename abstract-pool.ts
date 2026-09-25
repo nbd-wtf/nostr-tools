@@ -215,17 +215,32 @@ export class AbstractSimplePool {
       if (params.alreadyHaveEvent?.(id)) {
         return true
       }
-      const have = _knownIds.has(id)
-      if (!have) {
-        // a relay can send us any number of ids, so forget the oldest one to keep this bounded
-        while (_knownIds.size >= this.maxKnownIds) {
-          if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
-          _knownIds.delete(_oldestKnownId.next().value!)
-        }
-        // keep a copy so the set doesn't retain the message the id was sliced from (see receivedEvent above)
-        _knownIds.add(JSON.parse(JSON.stringify(id)))
+      // Only look up here: this id has not been verified. Remembering it would let a
+      // forged event on one relay suppress the genuine event arriving from another.
+      return _knownIds.has(id)
+    }
+
+    const pool = this
+    const onevent = params.onevent
+    function localOneventHandler(this: Subscription, event: Event) {
+      // The relay calls this only after matching filters and verifying the event.
+      // Recheck the parsed id because the raw-message fast extractor may miss it.
+      // Do not call the user's alreadyHaveEvent again: receivedEvent may have updated its state.
+      if (_knownIds.has(event.id)) return
+      while (_knownIds.size >= pool.maxKnownIds) {
+        if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
+        _knownIds.delete(_oldestKnownId.next().value!)
       }
-      return have
+      // Copy retained ids, and remember them before calling user code, which can throw or reenter.
+      _knownIds.add(JSON.parse(JSON.stringify(event.id)))
+      if (onevent) {
+        onevent.call(this, event)
+      } else {
+        console.warn(
+          `onevent() callback not defined for subscription '${this.id}' in relay ${this.relay.url}. event received:`,
+          event,
+        )
+      }
     }
 
     // open a subscription in all given relays
@@ -255,14 +270,17 @@ export class AbstractSimplePool {
 
         let subscription = relay.subscribe(filters, {
           ...params,
+          onevent: localOneventHandler,
           oneose: () => handleEose(i),
           onclose: reason => {
             if (reason.startsWith('auth-required: ') && params.onauth) {
               relay
                 .auth(params.onauth)
                 .then(() => {
-                  relay.subscribe(filters, {
+                  // Reconnect may have advanced this subscription's own filters.
+                  relay.subscribe(subscription.filters, {
                     ...params,
+                    onevent: localOneventHandler,
                     oneose: () => handleEose(i),
                     onclose: reason => {
                       handleClose(i, url, reason) // the second time we won't try to auth anymore

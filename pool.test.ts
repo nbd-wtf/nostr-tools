@@ -1,7 +1,10 @@
-import { afterEach, beforeEach, expect, test } from 'bun:test'
+import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test'
 
 import { SimplePool, useWebSocketImplementation } from './pool.ts'
-import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
+import { finalizeEvent, generateSecretKey, getPublicKey, verifyEvent, type Event } from './pure.ts'
+import type { SubscribeManyParams } from './abstract-pool.ts'
+import type { Subscription } from './abstract-relay.ts'
+import type { Filter } from './filter.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
 import { hexToBytes } from '@noble/hashes/utils.js'
 
@@ -129,27 +132,250 @@ test('known ids are bounded per subscription', async () => {
   await new Promise(resolve => setTimeout(resolve, 200))
   expect(received).toHaveLength(1)
 
-  // the relay forwards these because they match the filter, but they have a bad signature
-  // so they are never delivered: the subscription still remembers their ids
-  const junk = Array.from({ length: 5 }, (_, i) => ({
-    ...finalizeEvent({ created_at: i, content: 'junk', kind: 22347, tags: [] }, priv),
-    sig: '00'.repeat(64),
-  }))
+  const otherEvents = Array.from({ length: 5 }, (_, i) =>
+    finalizeEvent({ created_at: i, content: 'other', kind: 22347, tags: [] }, priv),
+  )
 
-  for (let i = 0; i < 4; i++) await pool.publish([relayA], junk[i])[0]
+  for (let i = 0; i < 4; i++) await pool.publish([relayA], otherEvents[i])[0]
   await new Promise(resolve => setTimeout(resolve, 200))
-  expect(received).toHaveLength(1)
+  expect(received).toHaveLength(5)
 
   // 4 other ids since then, still under the limit, so the same event from another relay is deduplicated
   await pool.publish([relayB], event)[0]
   await new Promise(resolve => setTimeout(resolve, 200))
-  expect(received).toHaveLength(1)
+  expect(received).toHaveLength(5)
 
   // the 5th other id pushes the original one out, so now the same event is delivered again
-  await pool.publish([relayA], junk[4])[0]
+  await pool.publish([relayA], otherEvents[4])[0]
   await pool.publish([relayB], event)[0]
   await new Promise(resolve => setTimeout(resolve, 200))
-  expect(received).toHaveLength(2)
+  expect(received).toHaveLength(7)
+})
+
+async function openDedupSubscription(filter: Filter, params: SubscribeManyParams) {
+  const urls = relayURLs.slice(0, 2)
+  for (const relay of mockRelays.slice(0, 2)) {
+    relay.secretKeys = []
+    relay.preloadedEvents = []
+  }
+  await new Promise<void>(resolve => {
+    pool.subscribeMany(urls, filter, { ...params, id: 'dedup', oneose: resolve })
+  })
+  return Promise.all(urls.map(url => pool.ensureRelay(url)))
+}
+
+test.each([false, true])('forged ids cannot suppress genuine events, with auth retry: %s', async authRequired => {
+  mockRelays.slice(0, 2).forEach(relay => (relay.authRequired = authRequired))
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const received: Event[] = []
+  let invalid = 0
+  let verifications = 0
+  pool.verifyEvent = event => {
+    verifications++
+    return verifyEvent(event)
+  }
+  const relays = await openDedupSubscription(
+    { authors: [event.pubkey] },
+    {
+      onevent: event => received.push(event),
+      oninvalidevent: () => invalid++,
+      alreadyHaveEvent: () => false,
+      onauth: async template => finalizeEvent(template, priv),
+    },
+  )
+  const send = (relay: (typeof relays)[number], value: Event) =>
+    relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', value]) } as MessageEvent)
+  // A hostile relay can copy an ID without being able to sign its event.
+  const beforeInvalid = invalid
+  send(relays[0], { ...event, sig: '00'.repeat(64) })
+  send(relays[1], event)
+  expect(invalid).toBe(beforeInvalid + 1)
+  expect(received.map(event => event.id)).toEqual([event.id])
+  expect(verifications).toBe(2)
+  const parse = spyOn(JSON, 'parse')
+  try {
+    send(relays[0], event)
+    expect(received).toHaveLength(1)
+    expect(verifications).toBe(2)
+    expect(parse).not.toHaveBeenCalled() // accepted duplicates still bypass JSON parsing too
+  } finally {
+    parse.mockRestore()
+  }
+})
+
+test('invalid ids do not evict accepted ids', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const received: Event[] = []
+  pool.maxKnownIds = 2
+  const [relay] = await openDedupSubscription({ authors: [event.pubkey] }, { onevent: event => received.push(event) })
+  const send = (value: Event) => relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', value]) } as MessageEvent)
+  send(event)
+  for (let i = 0; i < 10; i++) send({ ...event, id: i.toString(16).padStart(64, '0') })
+  send(event)
+  expect(received.map(event => event.id)).toEqual([event.id])
+})
+
+test('receivedEvent can update the caller lookup without suppressing the first event', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const seen = new Set<string>()
+  const calls: string[] = []
+  const [relay] = await openDedupSubscription(
+    { authors: [event.pubkey] },
+    {
+      alreadyHaveEvent: id => {
+        calls.push('lookup')
+        return seen.has(id)
+      },
+      receivedEvent: (_, id) => {
+        calls.push('received')
+        seen.add(id)
+      },
+      onevent: function (this: Subscription) {
+        calls.push(this.id)
+      },
+    },
+  )
+  relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+  expect(calls).toEqual(['lookup', 'received', 'dedup'])
+})
+
+test('an open subscription keeps its event callback when params are reused', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const calls: string[] = []
+  const params: SubscribeManyParams = { id: 'capture', onevent: () => calls.push('original') }
+  await new Promise<void>(resolve => {
+    params.oneose = resolve
+    pool.subscribeMany([relayURLs[0]], { authors: [event.pubkey] }, params)
+  })
+  params.onevent = () => calls.push('replacement')
+  const relay = await pool.ensureRelay(relayURLs[0])
+  relay._onmessage({ data: JSON.stringify(['EVENT', 'capture', event]) } as MessageEvent)
+  expect(calls).toEqual(['original'])
+})
+
+test('deduplication rechecks parsed ids when the fast extractor misses JSON whitespace', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const received: Event[] = []
+  const [relay] = await openDedupSubscription({ authors: [event.pubkey] }, { onevent: event => received.push(event) })
+  const raw = JSON.stringify(['EVENT', 'dedup', event])
+  relay._onmessage({ data: raw } as MessageEvent)
+  relay._onmessage({ data: raw.replace('"id":', '"id" :') } as MessageEvent)
+  expect(received).toHaveLength(1)
+})
+
+test('accepted ids and reconnect progress are recorded before user callbacks', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  let calls = 0
+  const relays = await openDedupSubscription(
+    { authors: [event.pubkey] },
+    {
+      onevent: () => {
+        calls++
+        if (calls === 1) {
+          relays[1]._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+          throw new Error('consumer failed')
+        }
+      },
+    },
+  )
+  const warn = spyOn(console, 'warn').mockImplementation(() => {})
+  try {
+    relays[0]._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+  } finally {
+    warn.mockRestore()
+  }
+  expect(calls).toBe(1)
+  expect(relays[0].openSubs.get('dedup')!.lastEmitted).toBe(100)
+})
+
+test('events rejected by one relay filter do not suppress delivery through another', async () => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const received: Event[] = []
+  await new Promise<void>(resolve =>
+    pool.subscribeMap(
+      [
+        { url: relayURLs[0], filter: { authors: [event.pubkey], kinds: [1] } },
+        { url: relayURLs[1], filter: { authors: [event.pubkey], kinds: [22347] } },
+      ],
+      { id: 'dedup', onevent: event => received.push(event), oneose: resolve },
+    ),
+  )
+  for (const url of relayURLs.slice(0, 2)) {
+    const relay = await pool.ensureRelay(url)
+    relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+  }
+  expect(received.map(event => event.id)).toEqual([event.id])
+})
+
+test.each(['signature', 'filter'])('reconnect progress ignores events rejected by %s', async rejection => {
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 100, content: 'genuine', kind: 22347, tags: [] }, priv)
+  const [relay] = await openDedupSubscription({ authors: [event.pubkey] }, { onevent() {} })
+  const invalid =
+    rejection === 'signature'
+      ? { ...event, id: 'a'.repeat(64), created_at: 2000000000, sig: '00'.repeat(64) }
+      : finalizeEvent({ created_at: 2000000000, content: 'wrong author', kind: 22347, tags: [] }, generateSecretKey())
+  relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+  relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', invalid]) } as MessageEvent)
+  expect(relay.openSubs.get('dedup')!.lastEmitted).toBe(100)
+})
+
+test('reconnecting a relay does not advance sibling or caller filters', async () => {
+  pool = new SimplePool({ enableReconnect: true })
+  const priv = generateSecretKey()
+  const newer = finalizeEvent({ created_at: 200, content: 'newer', kind: 22347, tags: [] }, priv)
+  const older = finalizeEvent({ created_at: 100, content: 'older', kind: 22347, tags: [] }, priv)
+  const filter = { authors: [newer.pubkey], since: 0 }
+  const received: string[] = []
+  const [relayA, relayB] = await openDedupSubscription(filter, { onevent: event => received.push(event.content) })
+  relayA._onmessage({ data: JSON.stringify(['EVENT', 'dedup', newer]) } as MessageEvent)
+  relayA.resubscribeBackoff = [1]
+  const oldSocket = (relayA as any).ws
+  oldSocket.close()
+  for (let i = 0; i < 200 && (!relayA.connected || (relayA as any).ws === oldSocket); i++) {
+    await new Promise(resolve => setTimeout(resolve, 5))
+  }
+  expect(relayA.connected).toBeTrue()
+  expect((relayA as any).ws).not.toBe(oldSocket)
+  expect(relayA.openSubs.get('dedup')!.filters[0].since).toBe(201)
+  expect(filter.since).toBe(0)
+  expect(relayB.openSubs.get('dedup')!.filters[0].since).toBe(0)
+  relayB._onmessage({ data: JSON.stringify(['EVENT', 'dedup', older]) } as MessageEvent)
+  expect(received).toEqual(['newer', 'older'])
+})
+
+test('auth retry after reconnect preserves the relay-local cursor', async () => {
+  pool = new SimplePool({ enableReconnect: true })
+  const priv = generateSecretKey()
+  const event = finalizeEvent({ created_at: 200, content: 'accepted', kind: 22347, tags: [] }, priv)
+  const [relay] = await openDedupSubscription(
+    { authors: [event.pubkey], since: 0 },
+    {
+      onevent() {},
+      onauth: async template => finalizeEvent(template, priv),
+    },
+  )
+  relay._onmessage({ data: JSON.stringify(['EVENT', 'dedup', event]) } as MessageEvent)
+  const original = relay.openSubs.get('dedup')!
+  mockRelays[0].authRequired = true
+  relay.resubscribeBackoff = [1]
+  ;(relay as any).ws.close()
+  for (let i = 0; i < 200; i++) {
+    const retry = relay.openSubs.get('dedup')
+    if (retry && retry !== original) break
+    await new Promise(resolve => setTimeout(resolve, 5))
+  }
+  const retry = relay.openSubs.get('dedup')!
+  expect(retry).toBeDefined()
+  expect(retry).not.toBe(original)
+  expect(retry.filters[0].since).toBe(201)
 })
 
 test.each([0, -1, 1.5, NaN, Infinity, -Infinity])('rejects invalid maxKnownIds in constructor: %s', maxKnownIds => {
