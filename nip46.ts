@@ -120,6 +120,21 @@ export type BunkerSignerParams = {
   onauth?: (url: string) => void
   /** Skip automatic switchRelays() call in fromURI. Useful when you want to call it manually at your own pace. */
   skipSwitchRelays?: boolean
+  /** How long (in ms) to wait for a response before rejecting the request. Defaults to 30s. Set to 0 to wait forever. */
+  timeout?: number
+  /** Like timeout, but applied while waiting for the user to complete the `onauth()` flow. Defaults to 5 minutes. */
+  authTimeout?: number
+}
+
+const DEFAULT_TIMEOUT = 30_000
+const DEFAULT_AUTH_TIMEOUT = 300_000
+
+function describeError(err: any): string {
+  if (Array.isArray(err?.errors)) {
+    if (!err.errors.length) return 'no relay was tried'
+    return err.errors.map((e: any) => String(e?.message || e)).join('; ')
+  }
+  return String(err?.message || err)
 }
 
 export class BunkerSigner implements Signer {
@@ -129,10 +144,15 @@ export class BunkerSigner implements Signer {
   private isOpen: boolean
   private serial: number
   private idPrefix: string
+  private subGeneration: number
   private listeners: {
     [id: string]: {
+      method: string
+      /** which subscription was active when this request was sent */
+      generation: number
+      timeout: ReturnType<typeof setTimeout> | undefined
       resolve: (_: string) => void
-      reject: (_: string) => void
+      reject: (_: Error) => void
     }
   }
   private waitingForAuth: { [id: string]: boolean }
@@ -156,6 +176,7 @@ export class BunkerSigner implements Signer {
     this.isOpen = false
     this.idPrefix = Math.random().toString(36).substring(7)
     this.serial = 0
+    this.subGeneration = 0
     this.listeners = {}
     this.waitingForAuth = {}
   }
@@ -257,6 +278,7 @@ export class BunkerSigner implements Signer {
     const listeners = this.listeners
     const waitingForAuth = this.waitingForAuth
     const convKey = this.conversationKey
+    const generation = ++this.subGeneration
 
     this.subCloser = this.pool.subscribe(
       this.bp.relays,
@@ -268,35 +290,91 @@ export class BunkerSigner implements Signer {
       },
       {
         onevent: async (event: NostrEvent) => {
-          const o = JSON.parse(decrypt(event.content, convKey))
+          let o: { id?: string; result?: string; error?: string }
+          try {
+            o = JSON.parse(decrypt(event.content, convKey))
+          } catch (_err) {
+            // not a NIP-46 payload for this conversation (i.e. another signer instance using a
+            // different conversation key, or garbage) -- it is not an answer to any of our requests
+            return
+          }
           const { id, result, error } = o
+          if (!id) return
 
           if (result === 'auth_url' && waitingForAuth[id]) {
             delete waitingForAuth[id]
 
             if (this.params.onauth) {
-              this.params.onauth(error)
+              // the user may take a while to log in, so give this request more time
+              this.armTimeout(id, this.params.authTimeout ?? DEFAULT_AUTH_TIMEOUT)
+              this.params.onauth(error ?? '')
             } else {
-              console.warn(
-                `nostr-tools/nip46: remote signer ${this.bp.pubkey} tried to send an "auth_url"='${error}' but there was no onauth() callback configured.`,
+              this.rejectListener(
+                id,
+                new Error(
+                  `nostr-tools/nip46: remote signer ${this.bp.pubkey} requires auth to answer "${listeners[id]?.method}" but there was no onauth() callback configured`,
+                ),
               )
             }
             return
           }
 
-          let handler = listeners[id]
-          if (handler) {
-            if (error) handler.reject(error)
-            else if (result) handler.resolve(result)
-            delete listeners[id]
+          if (error !== undefined && error !== null) {
+            this.rejectListener(id, new Error(error))
+          } else if (result !== undefined && result !== null) {
+            this.resolveListener(id, result)
+          } else {
+            this.rejectListener(id, new Error('nostr-tools/nip46: remote signer response has neither result nor error'))
           }
         },
         onclose: () => {
-          this.subCloser = undefined
+          if (this.subGeneration === generation) this.subCloser = undefined
+          // the subscription this request was sent on is gone, so its answer will never arrive
+          this.rejectAll(new Error('nostr-tools/nip46: subscription to the remote signer was closed'), generation)
         },
       },
     )
     this.isOpen = true
+  }
+
+  /** schedule a rejection of the request `id` if its answer doesn't arrive in `ms` milliseconds */
+  private armTimeout(id: string, ms: number) {
+    const handler = this.listeners[id]
+    if (!handler) return
+    if (handler.timeout) clearTimeout(handler.timeout)
+    if (!Number.isFinite(ms) || ms <= 0) return
+    const timer: any = setTimeout(() => {
+      this.rejectListener(id, new Error(`nostr-tools/nip46: timeout after ${ms}ms waiting for "${handler.method}"`))
+    }, ms)
+    timer?.unref?.()
+    handler.timeout = timer
+  }
+
+  /** settle the request `id`, cleaning up its listener and timer. a no-op if already settled. */
+  private finishRequest(id: string, result: string | Error) {
+    const handler = this.listeners[id]
+    if (!handler) return
+    delete this.listeners[id]
+    delete this.waitingForAuth[id]
+    if (handler.timeout) clearTimeout(handler.timeout)
+    if (result instanceof Error) handler.reject(result)
+    else handler.resolve(result)
+  }
+
+  private resolveListener(id: string, result: string) {
+    this.finishRequest(id, result)
+  }
+
+  private rejectListener(id: string, error: Error) {
+    this.finishRequest(id, error instanceof Error ? error : new Error(String(error)))
+  }
+
+  /** reject every pending request, optionally only those sent on subscription `generation` */
+  private rejectAll(error: Error, generation?: number) {
+    for (const id of Object.keys(this.listeners)) {
+      if (generation !== undefined && this.listeners[id].generation !== generation) continue
+      this.rejectListener(id, error)
+    }
   }
 
   async switchRelays(): Promise<boolean> {
@@ -323,41 +401,44 @@ export class BunkerSigner implements Signer {
   // closes the subscription -- this object can't be used anymore after this
   async close() {
     this.isOpen = false
+    this.rejectAll(new Error('nostr-tools/nip46: signer was closed'))
     this.subCloser?.close()
     this.subCloser = undefined
   }
 
   async sendRequest(method: string, params: string[]): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
-        if (!this.subCloser) this.setupSubscription()
+    if (!this.isOpen) throw new Error('this signer is not open anymore, create a new one')
+    if (!this.subCloser) this.setupSubscription()
 
-        this.serial++
-        const id = `${this.idPrefix}-${this.serial}`
+    this.serial++
+    const id = `${this.idPrefix}-${this.serial}`
 
-        const encryptedContent = encrypt(JSON.stringify({ id, method, params }), this.conversationKey)
+    const encryptedContent = encrypt(JSON.stringify({ id, method, params }), this.conversationKey)
 
-        // the request event
-        const verifiedEvent: VerifiedEvent = finalizeEvent(
-          {
-            kind: NostrConnect,
-            tags: [['p', this.bp.pubkey]],
-            content: encryptedContent,
-            created_at: Math.floor(Date.now() / 1000),
-          },
-          this.secretKey,
+    // the request event
+    const verifiedEvent: VerifiedEvent = finalizeEvent(
+      {
+        kind: NostrConnect,
+        tags: [['p', this.bp.pubkey]],
+        content: encryptedContent,
+        created_at: Math.floor(Date.now() / 1000),
+      },
+      this.secretKey,
+    )
+
+    return new Promise<string>((resolve, reject) => {
+      // setup callback listener
+      this.listeners[id] = { method, generation: this.subGeneration, timeout: undefined, resolve, reject }
+      this.waitingForAuth[id] = true
+      this.armTimeout(id, this.params.timeout ?? DEFAULT_TIMEOUT)
+
+      // publish the event
+      Promise.any(this.pool.publish(this.bp.relays, verifiedEvent)).catch((err: any) => {
+        this.rejectListener(
+          id,
+          new Error(`nostr-tools/nip46: failed to send "${method}" to any relay: ${describeError(err)}`),
         )
-
-        // setup callback listener
-        this.listeners[id] = { resolve, reject }
-        this.waitingForAuth[id] = true
-
-        // publish the event
-        await Promise.any(this.pool.publish(this.bp.relays, verifiedEvent))
-      } catch (err) {
-        reject(err)
-      }
+      })
     })
   }
 
