@@ -55,5 +55,13 @@ const i: JS = new JS()
 export const generateSecretKey = i.generateSecretKey
 export const getPublicKey = i.getPublicKey
 export const finalizeEvent = i.finalizeEvent
+/**
+ * Checks the event `id` and `sig`.
+ *
+ * The result is cached on the event object, and `finalizeEvent()` marks the event as verified.
+ * After that, `verifyEvent()` returns the cached result and does not see changes made to the event.
+ * A `{ ...event }` copy keeps the cached result too.
+ * To check an event again, pass a new object with only the event fields.
+ */
 export const verifyEvent = i.verifyEvent
 export * from './core.ts'

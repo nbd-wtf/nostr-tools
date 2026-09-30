@@ -54,6 +54,8 @@ let event = finalizeEvent({
 let isGood = verifyEvent(event)
 ```
 
+`verifyEvent()` caches the result on the event object, and `finalizeEvent()` marks the event as verified. After that, `verifyEvent()` returns the cached result and does not see changes made to the event. A `{ ...event }` copy keeps the cached result too. To check an event again, pass a new object with only the event fields: `id`, `pubkey`, `created_at`, `kind`, `tags`, `content` and `sig`.
+
 ### Interacting with one or multiple relays
 
 Doesn't matter what you do, you always should be using a `SimplePool`:
