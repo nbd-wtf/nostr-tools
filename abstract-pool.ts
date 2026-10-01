@@ -198,14 +198,16 @@ export class AbstractSimplePool {
       }
       const have = _knownIds.has(id)
       if (!have) {
-        // a relay can send us any number of ids, so forget the oldest one to keep this bounded
-        if (_knownIds.size >= 20000) {
-          if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
-          _knownIds.delete(_oldestKnownId.next().value!)
-        }
         // Split/join copies the characters in tested V8/JavaScriptCore versions.
         // id + '' can reuse the slice and retain the entire raw message.
         _knownIds.add(id.split('').join(''))
+        // At 20500 ids, forget the oldest 500 while retaining the newest 20000.
+        if (_knownIds.size >= 20500) {
+          if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
+          for (let i = 0; i < 500; i++) {
+            _knownIds.delete(_oldestKnownId.next().value!)
+          }
+        }
       }
       return have
     }
