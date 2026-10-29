@@ -59,8 +59,15 @@ export type Block =
     }
 
 const noCharacter = /\W/m
-const noURLCharacter = /[^\w\/] |[^\w\/]$|$| /m
 const MAX_HASHTAG_LENGTH = 42
+
+// URLs go until the next whitespace, but trailing dots, commas and one other punctuation character are excluded
+function urlEnd(content: string, from: number): number {
+  const ws = content.slice(from).search(/\s/)
+  const end = ws === -1 ? content.length : from + ws
+  const trailing = content.slice(from, end).match(/[.,]*[^\w\/]?[.,]*$/)!
+  return end - trailing[0].length
+}
 
 export function* parse(content: string | NostrEvent): Iterable<Block> {
   let emojis: { type: 'emoji'; shortcode: string; url: string }[] = []
@@ -138,8 +145,7 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         continue mainloop
       }
     } else if (content.slice(u - 5, u) === 'https' || content.slice(u - 4, u) === 'http') {
-      const m = content.slice(u + 4).match(noURLCharacter)
-      const end = m ? u + 4 + m.index! : max
+      const end = urlEnd(content, u + 4)
       const prefixLen = content[u - 1] === 's' ? 5 : 4
       try {
         let url = new URL(content.slice(u - prefixLen, end))
@@ -185,8 +191,7 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         continue mainloop
       }
     } else if (content.slice(u - 3, u) === 'wss' || content.slice(u - 2, u) === 'ws') {
-      const m = content.slice(u + 4).match(noURLCharacter)
-      const end = m ? u + 4 + m.index! : max
+      const end = urlEnd(content, u + 4)
       const prefixLen = content[u - 1] === 's' ? 3 : 2
       try {
         let url = new URL(content.slice(u - prefixLen, end))

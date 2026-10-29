@@ -178,3 +178,17 @@ test('urls with commas in them', () => {
     { type: 'text', text: ',', start: 67, end: 68 },
   ])
 })
+
+test('urls with dots and trailing dots or commas', () => {
+  const content = `go to https://example.com/a.b,c.d., or https://example.com/x.y... and wss://relay.example.com.`
+  const blocks = Array.from(parse(content))
+  expect(blocks).toEqual([
+    { type: 'text', text: 'go to ', start: 0, end: 6 },
+    { type: 'url', url: 'https://example.com/a.b,c.d', start: 6, end: 33 },
+    { type: 'text', text: '., or ', start: 33, end: 39 },
+    { type: 'url', url: 'https://example.com/x.y', start: 39, end: 62 },
+    { type: 'text', text: '... and ', start: 62, end: 70 },
+    { type: 'relay', url: 'wss://relay.example.com/', start: 70, end: 93 },
+    { type: 'text', text: '.', start: 93, end: 94 },
+  ])
+})
