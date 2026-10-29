@@ -166,3 +166,15 @@ test("a thing that didn't work well in the wild", () => {
     { type: 'url', url: 'https://leaderboard.sbstats.uk/', start: 138, end: 169 },
   ])
 })
+
+test('urls with commas in them', () => {
+  const content = `see https://example.com/a,b?c=1,2, and also https://example.com/x,y,`
+  const blocks = Array.from(parse(content))
+  expect(blocks).toEqual([
+    { type: 'text', text: 'see ', start: 0, end: 4 },
+    { type: 'url', url: 'https://example.com/a,b?c=1,2', start: 4, end: 33 },
+    { type: 'text', text: ', and also ', start: 33, end: 44 },
+    { type: 'url', url: 'https://example.com/x,y', start: 44, end: 67 },
+    { type: 'text', text: ',', start: 67, end: 68 },
+  ])
+})
