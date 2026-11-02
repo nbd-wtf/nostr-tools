@@ -77,6 +77,37 @@ test('wrapManyEvents', () => {
   })
 })
 
+test('wrapEvent reuses the rumor id when createdAt is passed', () => {
+  const createdAt = 1728537932
+
+  const first = wrapEvent(senderPrivateKey, recipients[0], message, conversationTitle, replyTo, createdAt)
+  const second = wrapEvent(senderPrivateKey, recipients[0], message, conversationTitle, replyTo, createdAt)
+
+  const firstRumor = unwrapEvent(first, sk1)
+  const secondRumor = unwrapEvent(second, sk1)
+
+  expect(firstRumor.created_at).toEqual(createdAt)
+  expect(secondRumor.id).toEqual(firstRumor.id)
+})
+
+test('wrapManyEvents uses the same createdAt for every copy and keeps ids on retry', () => {
+  const createdAt = 1729581521
+  const recipientKeys = [senderPrivateKey, sk1, sk2]
+
+  const unwrapAll = (wrappedEvents: ReturnType<typeof wrapManyEvents>) =>
+    wrappedEvents.map((wrappedEvent, index) => unwrapEvent(wrappedEvent, recipientKeys[index]))
+
+  const firstRumors = unwrapAll(
+    wrapManyEvents(senderPrivateKey, recipients, message, conversationTitle, replyTo, createdAt),
+  )
+  const secondRumors = unwrapAll(
+    wrapManyEvents(senderPrivateKey, recipients, message, conversationTitle, replyTo, createdAt),
+  )
+
+  firstRumors.forEach(rumor => expect(rumor.created_at).toEqual(createdAt))
+  expect(secondRumors.map(rumor => rumor.id)).toEqual(firstRumors.map(rumor => rumor.id))
+})
+
 test('unwrapEvent', () => {
   const expected = {
     kind: 14,

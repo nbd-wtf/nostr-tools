@@ -80,10 +80,14 @@ export function wrapManyEvents(
 
   const senderPublicKey = getPublicKey(senderPrivateKey)
 
-  const wrappeds = [wrapEvent(event, senderPrivateKey, senderPublicKey)]
+  // create the rumor once so every copy has the same id, even when `event`
+  // doesn't include an explicit `created_at`
+  const rumor = createRumor(event, senderPrivateKey)
+
+  const wrappeds = [createWrap(createSeal(rumor, senderPrivateKey, senderPublicKey), senderPublicKey)]
 
   recipientsPublicKeys.forEach(recipientPublicKey => {
-    wrappeds.push(wrapEvent(event, senderPrivateKey, recipientPublicKey))
+    wrappeds.push(createWrap(createSeal(rumor, senderPrivateKey, recipientPublicKey), recipientPublicKey))
   })
 
   return wrappeds

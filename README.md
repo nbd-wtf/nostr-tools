@@ -247,6 +247,17 @@ for (let block of nip27.parse(evt.content)) {
 }
 ```
 
+### Sending private direct messages (NIP-17)
+
+```js
+import * as nip17 from '@nostr/tools/nip17'
+
+const createdAt = Math.floor(Date.now() / 1000)
+const wrap = nip17.wrapEvent(sk, { publicKey: recipientPublicKey }, 'hello', undefined, undefined, createdAt)
+```
+
+The rumor id is derived from `createdAt`, so pass the same value when retrying a failed send and receivers will see one message instead of two. If you already have a stored rumor, wrap it directly with `nip59.createSeal()` and `nip59.createWrap()` instead.
+
 ### Connecting to a bunker using NIP-46
 
 `BunkerSigner` allows your application to request signatures and other actions from a remote NIP-46 signer, often called a "bunker". There are two primary ways to establish a connection, depending on whether the client or the bunker initiates the connection.

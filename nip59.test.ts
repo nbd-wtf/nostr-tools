@@ -73,6 +73,16 @@ test('wrapManyEvent', () => {
   })
 })
 
+test('wrapManyEvents wraps the same rumor for the sender and every recipient', () => {
+  const wrappedEvents = wrapManyEvents(event, senderPrivateKey, [recipientPublicKey])
+
+  const senderRumor = unwrapEvent(wrappedEvents[0], senderPrivateKey)
+  const recipientRumor = unwrapEvent(wrappedEvents[1], recipientPrivateKey)
+
+  expect(recipientRumor.id).toEqual(senderRumor.id)
+  expect(recipientRumor.created_at).toEqual(senderRumor.created_at)
+})
+
 test('unwrapEvent', () => {
   const expected = {
     kind: 1,
