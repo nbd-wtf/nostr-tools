@@ -211,12 +211,20 @@ export class AbstractRelay {
         // resubscribe to all open subscriptions
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
-          if (isReconnection && sub.lastEmitted) {
+          const since = isReconnection ? sub.lastEmitted : undefined
+          if (since !== undefined) {
             // don't let a future-dated event push the cursor past now and make the relay
             // skip everything until that date
-            sub.updateFiltersSince(Math.min(Math.floor(Date.now() / 1000), sub.lastEmitted))
+            sub.updateFiltersSince(Math.min(Math.floor(Date.now() / 1000), since))
           }
           sub.fire()
+          if (since !== undefined) {
+            // we told the relay we only want events newer than `since`, but the same
+            // filters are used for local matching, so remove it now that the REQ was
+            // sent: a relay may still send us backdated live events later, and those
+            // must not be filtered out locally.
+            sub.removeFiltersSince()
+          }
         }
 
         if (this.enablePing) {
@@ -664,6 +672,18 @@ export class Subscription {
     }
     for (const filter of this.filters) {
       filter.since = since
+    }
+  }
+
+  /**
+   * Drop the temporary `since` added by updateFiltersSince() after the REQ has
+   * been sent. It only tells the relay what we may have missed, while locally we
+   * still want to accept backdated live events that arrive afterwards.
+   */
+  public removeFiltersSince() {
+    if (!this.ownsFilters) return
+    for (const filter of this.filters) {
+      delete filter.since
     }
   }
 

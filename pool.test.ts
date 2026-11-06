@@ -322,6 +322,14 @@ test('reconnect with filter update in pool', async () => {
   await new Promise(resolve => setTimeout(resolve, 50))
   expect(closes).toBe(0)
 
+  // capture the filters we send on reconnect
+  const sentReqs: string[] = []
+  const originalSend = relay.send.bind(relay)
+  relay.send = async (message: string) => {
+    if (message.startsWith('["REQ"')) sentReqs.push(message)
+    return originalSend(message)
+  }
+
   // drop the live socket, which schedules a reconnect (but must not fire onclose)
   ;(relay as any).ws?.close()
 
@@ -355,8 +363,12 @@ test('reconnect with filter update in pool', async () => {
   expect(relay.connected).toBeTrue()
   expect(closes).toBe(0)
 
-  // check if filter was updated
-  expect(sub.filters[0].since).toBeGreaterThan(1)
+  // the reconnect REQ carries the updated cursor...
+  const reconnectFilters = JSON.parse(sentReqs[sentReqs.length - 1]).slice(2)
+  expect(reconnectFilters[0].since).toBeGreaterThan(1)
+
+  // ...but locally it is removed again so backdated live events aren't filtered out
+  expect(sub.filters[0].since).toBeUndefined()
 })
 
 test('track relays when publishing', async () => {
@@ -482,6 +494,14 @@ test("a reconnect moves only that relay's own filters", async () => {
   expect(flakySub.filters[0]).toBe(filter)
   expect(steadySub.filters[0]).toBe(filter)
 
+  // capture the filters the reconnecting relay sends
+  const sentReqs: string[] = []
+  const originalSend = flaky.send.bind(flaky)
+  flaky.send = async (message: string) => {
+    if (message.startsWith('["REQ"')) sentReqs.push(message)
+    return originalSend(message)
+  }
+
   flaky.resubscribeBackoff = [50]
   ;(flaky as any).ws?.close()
 
@@ -498,9 +518,13 @@ test("a reconnect moves only that relay's own filters", async () => {
     }, 10)
   })
 
-  // the reconnecting relay now has a private copy, everyone else still shares the original
+  // the reconnecting relay now has a private copy with the updated cursor sent...
+  const reconnectFilters = JSON.parse(sentReqs[sentReqs.length - 1]).slice(2)
+  expect(reconnectFilters[0].since).toBeGreaterThan(0)
+
+  // ...but the temporary `since` is removed locally, and everyone else is untouched
   expect(flakySub.filters[0]).not.toBe(filter)
-  expect(flakySub.filters[0].since).toBeGreaterThan(0)
+  expect(flakySub.filters[0].since).toBeUndefined()
   expect(steadySub.filters[0]).toBe(filter)
   expect(steadySub.filters[0].since).toBe(0)
   expect(filter.since).toBe(0)

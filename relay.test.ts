@@ -551,6 +551,15 @@ test('a future-dated event does not push the reconnect since past now', async ()
   await relay.connect()
 
   const sub = relay.prepareSubscription([{ kinds: [1] }], { onevent: () => {} })
+
+  // capture the filters we send on reconnect
+  const sentReqs: string[] = []
+  const originalSend = relay.send.bind(relay)
+  relay.send = async (message: string) => {
+    if (message.startsWith('["REQ"')) sentReqs.push(message)
+    return originalSend(message)
+  }
+
   const futureCreatedAt = Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 3600
   const event = finalizeEvent({ kind: 1, content: '', created_at: futureCreatedAt, tags: [] }, generateSecretKey())
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, event]) } as MessageEvent)
@@ -581,8 +590,13 @@ test('a future-dated event does not push the reconnect since past now', async ()
     }, 10)
   })
 
-  expect(sub.filters[0].since).toBeLessThanOrEqual(Math.floor(Date.now() / 1000))
-  expect(sub.filters[0].since).toBeLessThan(futureCreatedAt)
+  // the cursor sent to the relay is clamped to now...
+  const reconnectFilters = JSON.parse(sentReqs[sentReqs.length - 1]).slice(2)
+  expect(reconnectFilters[0].since).toBeLessThanOrEqual(Math.floor(Date.now() / 1000))
+  expect(reconnectFilters[0].since).toBeLessThan(futureCreatedAt)
+
+  // ...but it is removed locally so backdated live events aren't filtered out
+  expect(sub.filters[0].since).toBeUndefined()
 
   relay.close()
 })
