@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test'
 
-import { SimplePool, useWebSocketImplementation } from './pool.ts'
+import { SimplePool, type SubCloser, useWebSocketImplementation } from './pool.ts'
 import { finalizeEvent, generateSecretKey, getPublicKey, type Event } from './pure.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
 import { hexToBytes } from '@noble/hashes/utils.js'
@@ -436,4 +436,113 @@ test('oninvalidevent is called through the pool for invalid events', async done 
   })[0]
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
+})
+
+test('a relay CLOSED on querySync() does not take down other subscriptions on that relay', async () => {
+  const mockRelay = mockRelays[0]
+  pool.idleTimeout = 50
+  const relay = await pool.ensureRelay(mockRelay.url)
+
+  let liveSubCloses = 0
+  pool.subscribeMany(
+    [mockRelay.url],
+    { kinds: [1] },
+    {
+      onevent() {},
+      onclose() {
+        liveSubCloses++
+      },
+    },
+  )
+
+  // answer the query's REQ with CLOSED instead of passing it on to the relay
+  const send = relay.send.bind(relay)
+  relay.send = async (message: string) => {
+    if (message.startsWith('["REQ","query:1"')) {
+      setTimeout(() => {
+        relay._onmessage({ data: JSON.stringify(['CLOSED', 'query:1', 'rate-limited: slow down']) } as MessageEvent)
+      }, 0)
+      return
+    }
+    return send(message)
+  }
+
+  await pool.querySync([mockRelay.url], { kinds: [1] }, { id: 'query:1' })
+
+  await new Promise(resolve => setTimeout(resolve, 150))
+  expect(relay.ongoingOperations).toBe(1)
+  expect(liveSubCloses).toBe(0)
+  expect(relay.connected).toBeTrue()
+})
+
+test('closing a subscription closes the one reopened after auth', async () => {
+  const mockRelay = mockRelays[0]
+  mockRelay.authRequired = true
+  const relay = await pool.ensureRelay(mockRelay.url)
+
+  const sent: string[] = []
+  const send = relay.send.bind(relay)
+  relay.send = async (message: string) => {
+    sent.push(message)
+    return send(message)
+  }
+
+  const sk = generateSecretKey()
+  let sub: SubCloser
+  await new Promise<void>(resolve => {
+    sub = pool.subscribeMany(
+      [mockRelay.url],
+      { kinds: [1] },
+      {
+        onevent() {},
+        oneose: resolve,
+        onauth: async evt => finalizeEvent(evt, sk),
+      },
+    )
+  })
+  await sub!.close()
+
+  const reqIds = sent.filter(m => m.startsWith('["REQ"')).map(m => JSON.parse(m)[1])
+  expect(reqIds).toHaveLength(2)
+  expect(sent).toContain(JSON.stringify(['CLOSE', reqIds[1]]))
+  expect(relay.openSubs.size).toBe(0)
+  expect(relay.ongoingOperations).toBe(0)
+})
+
+test('closing a subscription while it authenticates does not reopen it', async () => {
+  const mockRelay = mockRelays[0]
+  mockRelay.authRequired = true
+  const relay = await pool.ensureRelay(mockRelay.url)
+
+  const sk = generateSecretKey()
+  let authStarted!: () => void
+  const authStartedPromise = new Promise<void>(resolve => (authStarted = resolve))
+  let finishAuth!: () => void
+  const finishAuthPromise = new Promise<void>(resolve => (finishAuth = resolve))
+
+  let closes = 0
+  const sub = pool.subscribeMany(
+    [mockRelay.url],
+    { kinds: [1] },
+    {
+      onevent() {},
+      onclose() {
+        closes++
+      },
+      onauth: async evt => {
+        authStarted()
+        await finishAuthPromise
+        return finalizeEvent(evt, sk)
+      },
+    },
+  )
+
+  await authStartedPromise
+  await sub.close()
+  finishAuth()
+  await new Promise(resolve => setTimeout(resolve, 50))
+
+  expect(relay.openSubs.size).toBe(0)
+  expect(relay.ongoingOperations).toBe(0)
+  expect(closes).toBe(1)
 })

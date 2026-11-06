@@ -524,3 +524,102 @@ test('a failing-then-succeeding reconnect never orphans or duplicates the relay 
 
   relay.close()
 })
+
+// a relay that idle-closes quickly, with a long-lived subscription that must survive whatever
+// happens to the other subscriptions on the same relay
+async function relayWithLiveSub(opts: { enablePing?: boolean } = {}) {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url, { idleTimeout: 50, ...opts })
+  relay.pingFrequency = 20
+  relay.pingTimeout = 50
+  await relay.connect()
+
+  let liveSubCloses = 0
+  relay.subscribe([{ kinds: [1] }], {
+    onevent() {},
+    onclose() {
+      liveSubCloses++
+    },
+  })
+
+  return { relay, liveSubCloses: () => liveSubCloses }
+}
+
+async function expectLiveSubSurvives(relay: Relay, liveSubCloses: () => number) {
+  await new Promise(resolve => setTimeout(resolve, 150))
+  expect(relay.ongoingOperations).toBe(1)
+  expect(liveSubCloses()).toBe(0)
+  expect(relay.connected).toBeTrue()
+  relay.close()
+}
+
+test('closing a subscription twice releases it once', async () => {
+  const { relay, liveSubCloses } = await relayWithLiveSub()
+
+  let closes = 0
+  const sub = relay.subscribe([{ kinds: [1] }], {
+    onevent() {},
+    onclose() {
+      closes++
+    },
+  })
+  sub.close()
+  sub.close()
+
+  await expectLiveSubSurvives(relay, liveSubCloses)
+  expect(closes).toBe(1)
+})
+
+test('closing a subscription the relay already CLOSED releases it once', async () => {
+  const { relay, liveSubCloses } = await relayWithLiveSub()
+
+  let closes = 0
+  const sub = relay.subscribe([{ kinds: [1] }], {
+    id: 'a',
+    onevent() {},
+    onclose() {
+      closes++
+    },
+  })
+  relay._onmessage({ data: JSON.stringify(['CLOSED', 'a', 'rate-limited: x']) } as MessageEvent)
+  sub.close()
+
+  await expectLiveSubSurvives(relay, liveSubCloses)
+  expect(closes).toBe(1)
+})
+
+test('closing an aborted subscription releases it once', async () => {
+  const { relay, liveSubCloses } = await relayWithLiveSub()
+
+  let closes = 0
+  const abort = new AbortController()
+  const sub = relay.subscribe([{ kinds: [1] }], {
+    onevent() {},
+    onclose() {
+      closes++
+    },
+    abort: abort.signal,
+  })
+  abort.abort()
+  sub.close()
+
+  await expectLiveSubSurvives(relay, liveSubCloses)
+  expect(closes).toBe(1)
+})
+
+test('a prepared subscription is counted while open', async () => {
+  const { relay, liveSubCloses } = await relayWithLiveSub()
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], {})
+  expect(relay.ongoingOperations).toBe(2)
+  sub.close()
+
+  await expectLiveSubSurvives(relay, liveSubCloses)
+})
+
+test('the forced-ping subscription is not counted', async () => {
+  const { relay, liveSubCloses } = await relayWithLiveSub({ enablePing: true })
+
+  // several pings go out (and get closed) within this window
+  await expectLiveSubSurvives(relay, liveSubCloses)
+})

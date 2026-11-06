@@ -163,6 +163,7 @@ export class AbstractSimplePool {
 
     const _knownIds = new Set<string>()
     const subs: Subscription[] = []
+    let closedByCaller = false
 
     // batch all EOSEs into a single
     const eosesReceived: boolean[] = []
@@ -228,7 +229,13 @@ export class AbstractSimplePool {
               relay
                 .auth(params.onauth)
                 .then(() => {
-                  relay.subscribe(filters, {
+                  // closed while we were authenticating, don't reopen it
+                  if (closedByCaller) {
+                    handleClose(i, url, reason)
+                    return
+                  }
+
+                  const retry = relay.subscribe(filters, {
                     ...params,
                     oneose: () => handleEose(i),
                     onclose: reason => {
@@ -238,6 +245,7 @@ export class AbstractSimplePool {
                     eoseTimeout: params.maxWait,
                     abort: params.abort,
                   })
+                  subs.push(retry)
                 })
                 .catch(err => {
                   handleClose(i, url, `auth was required and attempted, but failed with: ${err}`)
@@ -257,6 +265,7 @@ export class AbstractSimplePool {
 
     return {
       async close(reason?: string) {
+        closedByCaller = true
         await allOpened
         subs.forEach(sub => {
           sub.close(reason)

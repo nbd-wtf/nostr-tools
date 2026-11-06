@@ -412,12 +412,6 @@ export class AbstractRelay {
     filters: Filter[],
     params: Partial<SubscriptionParams> & { label?: string; id?: string },
   ): Subscription {
-    if (params.label !== '<forced-ping>') {
-      this.idleSince = undefined
-      this.clearIdleTimeout()
-      this.ongoingOperations++
-    }
-
     const sub = this.prepareSubscription(filters, params)
     sub.fire()
 
@@ -436,6 +430,14 @@ export class AbstractRelay {
     const id = params.id || (params.label ? params.label + ':' : 'sub:') + this.serial
     const sub = new Subscription(this, id, filters, params)
     this.openSubs.set(id, sub)
+
+    if (params.label !== '<forced-ping>') {
+      this.idleSince = undefined
+      this.clearIdleTimeout()
+      this.ongoingOperations++
+      sub.countsAsOperation = true
+    }
+
     return sub
   }
 
@@ -620,6 +622,10 @@ export class Subscription {
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
 
+  // set by the relay when this subscription is counted in ongoingOperations
+  public countsAsOperation: boolean = false
+  private finished: boolean = false
+
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
 
@@ -658,6 +664,9 @@ export class Subscription {
   }
 
   public close(reason: string = 'closed by caller') {
+    if (this.finished) return
+    this.finished = true
+
     if (!this.closed && this.relay.connected) {
       // if the connection was closed by the user calling .close() we will send a CLOSE message
       // otherwise this._open will be already set to false so we will skip this
@@ -675,7 +684,8 @@ export class Subscription {
     this.relay.openSubs.delete(this.id)
 
     // compute idleness state
-    if (!this.id.startsWith('<forced-ping>')) {
+    if (this.countsAsOperation) {
+      this.countsAsOperation = false
       this.relay.ongoingOperations--
       if (this.relay.ongoingOperations === 0) {
         this.relay.idleSince = Date.now()
