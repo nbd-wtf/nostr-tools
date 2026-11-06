@@ -151,7 +151,7 @@ export function getSatoshisAmountFromBolt11(bolt11: string): number {
     return 0
   }
   const hrp = bolt11.substring(0, idx)
-  if (!hrp.startsWith('lnbc')) {
+  if (!hrp.startsWith('lnbc') || hrp.startsWith('lnbcrt')) {
     return 0
   }
   const amount = hrp.substring(4) // equivalent to strings.CutPrefix

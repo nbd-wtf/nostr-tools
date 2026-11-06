@@ -254,4 +254,5 @@ test('parses the amount from bolt11 invoices', () => {
       'lnbc899640n1p5zcuavpp5w72fqrf09286lq33vw364qryrq5nw60z4dhdx56f8w05xkx4massdq9tfpygcqzzsxqzjcsp5qrqn4kpvem5jwpl63kj5pfdlqxg2plaffz0prz7vaqjy29uc66us9qxpqysgqlhzzqmn2jxd2476404krm8nvrarymwq7nj2zecl92xug54ek0mfntdxvxwslf756m8kq0r7jtpantm52fmewc72r5lfmd85505jnemgqw5j0pc',
     ),
   ).toEqual(89964)
+  expect(getSatoshisAmountFromBolt11('lnbcrt10u1p5zcarnpp5djng98r73nxu66nxp6gndjkw24q7rdzgp7p8')).toEqual(0)
 })
