@@ -190,9 +190,27 @@ export class AbstractSimplePool {
       if (params.alreadyHaveEvent?.(id)) {
         return true
       }
-      const have = _knownIds.has(id)
-      _knownIds.add(id)
-      return have
+      // Only look up here: this id has not been verified. Remembering it would let a
+      // forged event on one relay suppress the genuine event arriving from another.
+      return _knownIds.has(id)
+    }
+
+    const onevent = params.onevent
+    function localOneventHandler(this: Subscription, event: Event) {
+      // The relay calls this only after matching filters and verifying the event.
+      // Recheck the parsed id because the raw-message fast extractor may miss it.
+      // Do not call the user's alreadyHaveEvent again: receivedEvent may have updated its state.
+      if (_knownIds.has(event.id)) return
+      // Remember accepted ids before user callbacks, which can throw or reenter.
+      _knownIds.add(event.id)
+      if (onevent) {
+        onevent.call(this, event)
+      } else {
+        console.warn(
+          `onevent() callback not defined for subscription '${this.id}' in relay ${this.relay.url}. event received:`,
+          event,
+        )
+      }
     }
 
     // open a subscription in all given relays
@@ -222,14 +240,17 @@ export class AbstractSimplePool {
 
         let subscription = relay.subscribe(filters, {
           ...params,
+          onevent: localOneventHandler,
           oneose: () => handleEose(i),
           onclose: reason => {
             if (reason.startsWith('auth-required: ') && params.onauth) {
               relay
                 .auth(params.onauth)
                 .then(() => {
-                  relay.subscribe(filters, {
+                  // Reconnect may have advanced this subscription's own filters.
+                  relay.subscribe(subscription.filters, {
                     ...params,
+                    onevent: localOneventHandler,
                     oneose: () => handleEose(i),
                     onclose: reason => {
                       handleClose(i, url, reason) // the second time we won't try to auth anymore

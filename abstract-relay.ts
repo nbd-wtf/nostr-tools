@@ -513,11 +513,13 @@ export class AbstractRelay {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as NostrEvent
           if (matchFilters(so.filters, event) && this.verifyEvent(event, this.url)) {
+            // Rejected messages must not move the reconnect cursor past genuine events.
+            // Update before user code, which may throw or reconnect synchronously.
+            if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
             so.onevent(event)
           } else {
             so.oninvalidevent?.(event)
           }
-          if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
           return
         }
         case 'COUNT': {
@@ -624,7 +626,9 @@ export class Subscription {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
 
     this.relay = relay
-    this.filters = filters
+    // Reconnect changes `since`; each subscription must own that state rather than
+    // advancing the caller's filters or another relay's subscription.
+    this.filters = filters.map(filter => ({ ...filter }))
     this.id = id
     this.alreadyHaveEvent = params.alreadyHaveEvent
     this.receivedEvent = params.receivedEvent
