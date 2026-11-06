@@ -624,7 +624,9 @@ export class Subscription {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
 
     this.relay = relay
-    this.filters = filters
+    // copied because a reconnect writes `since` into them, and the caller and other
+    // relays' subscriptions may hold the same objects
+    this.filters = filters.map(filter => ({ ...filter }))
     this.id = id
     this.alreadyHaveEvent = params.alreadyHaveEvent
     this.receivedEvent = params.receivedEvent
