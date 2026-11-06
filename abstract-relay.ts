@@ -8,7 +8,7 @@ import { makeAuthEvent } from './nip42.ts'
 
 type RelayWebSocket = WebSocket & {
   ping?(): void
-  on?(event: 'pong', listener: () => void): any
+  on?(event: 'pong' | 'error', listener: (...args: any[]) => void): any
 }
 
 export type AbstractRelayConstructorOptions = {
@@ -142,6 +142,12 @@ export class AbstractRelay {
       this.ws.onopen = null
       this.ws.onerror = null
       this.ws.onclose = null
+      // Node `ws` still emits 'error' on nextTick after close() of a CONNECTING
+      // socket. The onerror property assignment above removed the only listener,
+      // which turns that emit into an unhandled EventEmitter error and crashes
+      // the process. Keep a no-op EE listener so the deferred emit is absorbed.
+      // See https://github.com/nbd-wtf/nostr-tools/issues/557
+      this.ws.on?.('error', () => {})
     }
 
     if (this.pingIntervalHandle) {
@@ -462,6 +468,7 @@ export class AbstractRelay {
       this.ws.onopen = null
       this.ws.onerror = null
       this.ws.onclose = null
+      this.ws.on?.('error', () => {})
       // close the socket unless it's already closing/closed; this also aborts a
       // still-CONNECTING socket so it can't open and linger untracked.
       if (this.ws.readyState !== this._WebSocket.CLOSING && this.ws.readyState !== this._WebSocket.CLOSED) {
