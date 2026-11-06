@@ -155,13 +155,19 @@ export class AbstractSimplePool {
         let set = this.seenOn.get(id)
         if (!set) {
           set = new Set()
-          this.seenOn.set(id, set)
+          // Split/join copies the characters in tested V8/JavaScriptCore versions.
+          // id + '' can reuse the slice and retain the entire raw message.
+          this.seenOn.set(id.split('').join(''), set)
         }
         set.add(relay)
       }
     }
 
     const _knownIds = new Set<string>()
+    // a live iterator stays at the oldest id still in the set, so forgetting that one is cheap: a fresh
+    // _knownIds.values().next() would have to skip over every id deleted before it. it is only created
+    // once the set is full because until then it would keep alive the tables the set has outgrown
+    let _oldestKnownId: Iterator<string> | undefined
     const subs: Subscription[] = []
 
     // batch all EOSEs into a single
@@ -191,7 +197,18 @@ export class AbstractSimplePool {
         return true
       }
       const have = _knownIds.has(id)
-      _knownIds.add(id)
+      if (!have) {
+        // Split/join copies the characters in tested V8/JavaScriptCore versions.
+        // id + '' can reuse the slice and retain the entire raw message.
+        _knownIds.add(id.split('').join(''))
+        // At 20500 ids, forget the oldest 500 while retaining the newest 20000.
+        if (_knownIds.size >= 20500) {
+          if (!_oldestKnownId) _oldestKnownId = _knownIds.values()
+          for (let i = 0; i < 500; i++) {
+            _knownIds.delete(_oldestKnownId.next().value!)
+          }
+        }
+      }
       return have
     }
 
@@ -296,14 +313,15 @@ export class AbstractSimplePool {
     params?: Pick<SubscribeManyParams, 'label' | 'id' | 'maxWait'>,
   ): Promise<Event[]> {
     return new Promise(async resolve => {
-      const events: Event[] = []
+      const events = new Map<string, Event>()
       this.subscribeEose(relays, filter, {
         ...params,
         onevent(event: Event) {
-          events.push(event)
+          // Streaming deduplication can forget older ids, but finite queries return each event once.
+          if (!events.has(event.id)) events.set(event.id, event)
         },
         onclose(_: { url: string; reason: string }[]) {
-          resolve(events)
+          resolve(Array.from(events.values()))
         },
       })
     })
