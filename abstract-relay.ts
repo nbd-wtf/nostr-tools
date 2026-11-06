@@ -211,12 +211,8 @@ export class AbstractRelay {
         // resubscribe to all open subscriptions
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
-          if (isReconnection) {
-            for (let f = 0; f < sub.filters.length; f++) {
-              if (sub.lastEmitted) {
-                sub.filters[f].since = sub.lastEmitted + 1
-              }
-            }
+          if (isReconnection && sub.lastEmitted) {
+            sub.updateFiltersSince(sub.lastEmitted + 1)
           }
           sub.fire()
         }
@@ -620,6 +616,9 @@ export class Subscription {
 
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
+  // filters are shared with the caller and with the subscriptions of other relays,
+  // so we only take our own copy once we're about to modify them
+  private ownsFilters: boolean = false
 
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
@@ -649,6 +648,21 @@ export class Subscription {
 
     // only now we start counting the eoseTimeout
     this.eoseTimeoutHandle = setTimeout(this.receivedEose.bind(this), this.eoseTimeout)
+  }
+
+  /**
+   * Called when we reconnect and only want to ask for what we may have missed.
+   * The filters are initially shared with the caller and with the other relays'
+   * subscriptions, so copy them on the first write instead of mutating everyone's.
+   */
+  public updateFiltersSince(since: number) {
+    if (!this.ownsFilters) {
+      this.filters = this.filters.map(filter => ({ ...filter }))
+      this.ownsFilters = true
+    }
+    for (const filter of this.filters) {
+      filter.since = since
+    }
   }
 
   public receivedEose() {
