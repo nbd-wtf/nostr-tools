@@ -438,6 +438,36 @@ test('oninvalidevent is called through the pool for invalid events', async done 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
 })
 
+test('a forged copy from one relay does not hide the genuine event from another', async () => {
+  const sk = generateSecretKey()
+  const genuine = finalizeEvent(
+    { kind: 1, content: 'genuine', created_at: Math.floor(Date.now() / 1000), tags: [] },
+    sk,
+  )
+  const forged = { ...genuine, content: 'forged' }
+
+  const received: Event[] = []
+  const invalid: unknown[] = []
+  pool.subscribeMany(
+    relayURLs.slice(0, 2),
+    { authors: [getPublicKey(sk)] },
+    {
+      id: 'forged',
+      onevent: event => received.push(event),
+      oninvalidevent: event => invalid.push(event),
+    },
+  )
+  await new Promise(resolve => setTimeout(resolve, 50))
+
+  const [liar, honest] = await Promise.all(relayURLs.slice(0, 2).map(url => pool.ensureRelay(url)))
+  liar._onmessage({ data: JSON.stringify(['EVENT', 'forged', forged]) } as MessageEvent)
+  honest._onmessage({ data: JSON.stringify(['EVENT', 'forged', genuine]) } as MessageEvent)
+  liar._onmessage({ data: JSON.stringify(['EVENT', 'forged', genuine]) } as MessageEvent)
+
+  expect(invalid.filter(event => (event as Event).content === 'forged')).toHaveLength(1)
+  expect(received).toEqual([genuine])
+})
+
 test("a reconnect moves only that relay's own filters", async () => {
   pool = new SimplePool({ enableReconnect: true })
   const filter = { kinds: [1], since: 0 }

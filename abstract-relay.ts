@@ -509,11 +509,12 @@ export class AbstractRelay {
           const so = this.openSubs.get(data[1] as string) as Subscription
           const event = data[2] as NostrEvent
           if (matchFilters(so.filters, event) && this.verifyEvent(event, this.url)) {
+            // a reconnect resumes from lastEmitted, so only accepted events may move it
+            if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
             so.onevent(event)
           } else {
             so.oninvalidevent?.(event)
           }
-          if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
           return
         }
         case 'COUNT': {

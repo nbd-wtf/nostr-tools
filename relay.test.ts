@@ -524,3 +524,23 @@ test('a failing-then-succeeding reconnect never orphans or duplicates the relay 
 
   relay.close()
 })
+
+test('a rejected event does not move the reconnect cursor', async () => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url)
+  await relay.connect()
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], { onevent: () => {} })
+  const sk = generateSecretKey()
+  const now = Math.floor(Date.now() / 1000)
+  const valid = finalizeEvent({ kind: 1, content: 'ok', created_at: now, tags: [] }, sk)
+  const forged = { ...valid, created_at: now + 10 * 365 * 24 * 3600 }
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, forged]) } as MessageEvent)
+  expect(sub.lastEmitted).toBeUndefined()
+
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, valid]) } as MessageEvent)
+  expect(sub.lastEmitted).toBe(now)
+
+  relay.close()
+})
