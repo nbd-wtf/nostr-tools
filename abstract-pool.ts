@@ -186,8 +186,6 @@ export class AbstractSimplePool {
       }
     }
 
-    // runs before the event is verified, so it only looks the id up: recording it here
-    // would let a forged copy from one relay hide the genuine event from another
     const localAlreadyHaveEventHandler = (id: string) => {
       if (params.alreadyHaveEvent?.(id)) {
         return true
