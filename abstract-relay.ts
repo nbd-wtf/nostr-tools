@@ -213,7 +213,9 @@ export class AbstractRelay {
           sub.eosed = false
           if (isReconnection) {
             for (let f = 0; f < sub.filters.length; f++) {
-              if (sub.lastEmitted) {
+              // NIP-59 backdates gift wraps (kind 1059) at random, so a newer one can be
+              // dated before the last one received
+              if (sub.lastEmitted && !sub.filters[f].kinds?.includes(1059)) {
                 sub.filters[f].since = sub.lastEmitted + 1
               }
             }
@@ -517,7 +519,11 @@ export class AbstractRelay {
           } else {
             so.oninvalidevent?.(event)
           }
-          if (!so.lastEmitted || so.lastEmitted < event.created_at) so.lastEmitted = event.created_at
+          // a reconnect resumes from lastEmitted, so a future-dated event would make it
+          // skip everything until that date
+          if (event.created_at * 1000 <= Date.now() && (!so.lastEmitted || so.lastEmitted < event.created_at)) {
+            so.lastEmitted = event.created_at
+          }
           return
         }
         case 'COUNT': {
