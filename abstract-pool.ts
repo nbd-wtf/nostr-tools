@@ -186,13 +186,21 @@ export class AbstractSimplePool {
       }
     }
 
+    // runs before the event is verified, so it only looks the id up: recording it here
+    // would let a forged copy from one relay hide the genuine event from another
     const localAlreadyHaveEventHandler = (id: string) => {
       if (params.alreadyHaveEvent?.(id)) {
         return true
       }
-      const have = _knownIds.has(id)
-      _knownIds.add(id)
-      return have
+      return _knownIds.has(id)
+    }
+
+    // called only for verified events, so the id is recorded here. the lookup repeats
+    // because the id read from the raw message before parsing may not be the real one
+    const localOneventHandler = function (this: Subscription, event: Event) {
+      if (_knownIds.has(event.id)) return
+      _knownIds.add(event.id)
+      params.onevent?.call(this, event)
     }
 
     // open a subscription in all given relays
@@ -234,6 +242,7 @@ export class AbstractSimplePool {
                     onclose: reason => {
                       handleClose(i, url, reason) // the second time we won't try to auth anymore
                     },
+                    onevent: params.onevent && localOneventHandler,
                     alreadyHaveEvent: localAlreadyHaveEventHandler,
                     eoseTimeout: params.maxWait,
                     abort: params.abort,
@@ -246,6 +255,7 @@ export class AbstractSimplePool {
               handleClose(i, url, reason)
             }
           },
+          onevent: params.onevent && localOneventHandler,
           alreadyHaveEvent: localAlreadyHaveEventHandler,
           eoseTimeout: params.maxWait,
           abort: params.abort,
