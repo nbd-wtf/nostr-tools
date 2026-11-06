@@ -437,3 +437,41 @@ test('oninvalidevent is called through the pool for invalid events', async done 
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, wrongFieldTypeEvent]) } as MessageEvent)
 })
+
+test("a reconnect moves only that relay's own filters", async () => {
+  pool = new SimplePool({ enableReconnect: true })
+  const filter = { kinds: [1], since: 0 }
+  pool.subscribeMany(relayURLs.slice(0, 2), filter, { onevent: () => {} })
+  await new Promise(resolve => setTimeout(resolve, 50))
+
+  const [flaky, steady] = await Promise.all(relayURLs.slice(0, 2).map(url => pool.ensureRelay(url)))
+  const [flakySub] = flaky.openSubs.values()
+  const [steadySub] = steady.openSubs.values()
+
+  // nothing has been written yet, so the filters are still shared
+  expect(flakySub.filters[0]).toBe(filter)
+  expect(steadySub.filters[0]).toBe(filter)
+
+  flaky.resubscribeBackoff = [50]
+  ;(flaky as any).ws?.close()
+
+  let dropped = false
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
+    const interval = setInterval(() => {
+      if (!flaky.connected) dropped = true
+      if (dropped && flaky.connected) {
+        clearTimeout(deadline)
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  })
+
+  // the reconnecting relay now has a private copy, everyone else still shares the original
+  expect(flakySub.filters[0]).not.toBe(filter)
+  expect(flakySub.filters[0].since).toBeGreaterThan(0)
+  expect(steadySub.filters[0]).toBe(filter)
+  expect(steadySub.filters[0].since).toBe(0)
+  expect(filter.since).toBe(0)
+})
