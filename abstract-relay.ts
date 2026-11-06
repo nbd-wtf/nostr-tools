@@ -212,7 +212,9 @@ export class AbstractRelay {
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
           if (isReconnection && sub.lastEmitted) {
-            sub.updateFiltersSince(sub.lastEmitted + 1)
+            // don't let a future-dated event push the cursor past now and make the relay
+            // skip everything until that date
+            sub.updateFiltersSince(Math.min(Math.floor(Date.now() / 1000), sub.lastEmitted))
           }
           sub.fire()
         }

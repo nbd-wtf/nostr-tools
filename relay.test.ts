@@ -541,6 +541,48 @@ test('a rejected event does not move the reconnect cursor', async () => {
 
   relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, valid]) } as MessageEvent)
   expect(sub.lastEmitted).toBe(now)
+  relay.close()
+})
+
+test('a future-dated event does not push the reconnect since past now', async () => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url, { enableReconnect: true })
+  relay.resubscribeBackoff = [50]
+  await relay.connect()
+
+  const sub = relay.prepareSubscription([{ kinds: [1] }], { onevent: () => {} })
+  const futureCreatedAt = Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 3600
+  const event = finalizeEvent({ kind: 1, content: '', created_at: futureCreatedAt, tags: [] }, generateSecretKey())
+  relay._onmessage({ data: JSON.stringify(['EVENT', sub.id, event]) } as MessageEvent)
+  expect(sub.lastEmitted).toBe(futureCreatedAt)
+
+  // drop the live socket
+  ;(relay as any).ws?.close()
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never disconnected')), 2000)
+    const interval = setInterval(() => {
+      if (!relay.connected) {
+        clearTimeout(deadline)
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  })
+
+  // then wait for the reconnect it schedules
+  await new Promise<void>((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error('relay never reconnected')), 2000)
+    const interval = setInterval(() => {
+      if (relay.connected) {
+        clearTimeout(deadline)
+        clearInterval(interval)
+        resolve()
+      }
+    }, 10)
+  })
+
+  expect(sub.filters[0].since).toBeLessThanOrEqual(Math.floor(Date.now() / 1000))
+  expect(sub.filters[0].since).toBeLessThan(futureCreatedAt)
 
   relay.close()
 })
