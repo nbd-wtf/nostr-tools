@@ -195,10 +195,8 @@ export class AbstractSimplePool {
       return _knownIds.has(id)
     }
 
-    // called only for verified events, so the id is recorded here. the lookup repeats
-    // because the id read from the raw message before parsing may not be the real one
+    // called only for verified events, so the id is recorded here
     const localOneventHandler = function (this: Subscription, event: Event) {
-      if (_knownIds.has(event.id)) return
       _knownIds.add(event.id)
       params.onevent?.call(this, event)
     }
