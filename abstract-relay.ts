@@ -212,18 +212,31 @@ export class AbstractRelay {
         for (const sub of this.openSubs.values()) {
           sub.eosed = false
           const since = isReconnection ? sub.lastEmitted : undefined
+
+          // copy the filters and save their original since before sending a cursor
+          let originalSince: (number | undefined)[] | undefined
           if (since !== undefined) {
-            // don't let a future-dated event push the cursor past now and make the relay
-            // skip everything until that date
-            sub.updateFiltersSince(Math.min(Math.floor(Date.now() / 1000), since))
+            originalSince = sub.filters.map(filter => filter.since)
+            sub.filters = sub.filters.map(filter => ({ ...filter }))
+            const cursor = Math.min(Math.floor(Date.now() / 1000), since)
+            for (const filter of sub.filters) {
+              // don't let a future-dated event push the cursor past now
+              filter.since = cursor
+            }
           }
+
           sub.fire()
-          if (since !== undefined) {
-            // the updated `since` was only for the relay, telling it we just want
-            // events newer than that. restore the filters' original value now that
-            // the REQ was sent, so backdated live events the relay sends us later
-            // are still accepted locally.
-            sub.restoreFiltersSince()
+
+          if (originalSince) {
+            // restore the original since so backdated live events still match locally
+            for (let i = 0; i < sub.filters.length; i++) {
+              const value = originalSince[i]
+              if (value === undefined) {
+                delete sub.filters[i].since
+              } else {
+                sub.filters[i].since = value
+              }
+            }
           }
         }
 
@@ -626,12 +639,6 @@ export class Subscription {
 
   public eoseTimeout: number
   private eoseTimeoutHandle: ReturnType<typeof setTimeout> | undefined
-  // filters are shared with the caller and with the subscriptions of other relays,
-  // so we only take our own copy once we're about to modify them
-  private ownsFilters: boolean = false
-  // the `since` values from before the first copy-on-write, to restore after
-  // temporarily sending an updated cursor on reconnect
-  private originalSince: (number | undefined)[] | undefined
 
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
@@ -661,40 +668,6 @@ export class Subscription {
 
     // only now we start counting the eoseTimeout
     this.eoseTimeoutHandle = setTimeout(this.receivedEose.bind(this), this.eoseTimeout)
-  }
-
-  /**
-   * Called when we reconnect and only want to ask for what we may have missed.
-   * The filters are initially shared with the caller and with the other relays'
-   * subscriptions, so copy them on the first write instead of mutating everyone's.
-   */
-  public updateFiltersSince(since: number) {
-    if (!this.ownsFilters) {
-      this.originalSince = this.filters.map(filter => filter.since)
-      this.filters = this.filters.map(filter => ({ ...filter }))
-      this.ownsFilters = true
-    }
-    for (const filter of this.filters) {
-      filter.since = since
-    }
-  }
-
-  /**
-   * Put back the `since` values that were present before updateFiltersSince()
-   * temporarily replaced them. The updated cursor only tells the relay what we
-   * may have missed; locally we still want to accept backdated live events.
-   */
-  public restoreFiltersSince() {
-    const originalSince = this.originalSince
-    if (!this.ownsFilters || !originalSince) return
-    this.filters.forEach((filter, index) => {
-      const since = originalSince[index]
-      if (since === undefined) {
-        delete filter.since
-      } else {
-        filter.since = since
-      }
-    })
   }
 
   public receivedEose() {
