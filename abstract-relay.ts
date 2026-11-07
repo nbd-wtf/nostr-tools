@@ -219,11 +219,11 @@ export class AbstractRelay {
           }
           sub.fire()
           if (since !== undefined) {
-            // we told the relay we only want events newer than `since`, but the same
-            // filters are used for local matching, so remove it now that the REQ was
-            // sent: a relay may still send us backdated live events later, and those
-            // must not be filtered out locally.
-            sub.removeFiltersSince()
+            // the updated `since` was only for the relay, telling it we just want
+            // events newer than that. restore the filters' original value now that
+            // the REQ was sent, so backdated live events the relay sends us later
+            // are still accepted locally.
+            sub.restoreFiltersSince()
           }
         }
 
@@ -629,6 +629,9 @@ export class Subscription {
   // filters are shared with the caller and with the subscriptions of other relays,
   // so we only take our own copy once we're about to modify them
   private ownsFilters: boolean = false
+  // the `since` values from before the first copy-on-write, to restore after
+  // temporarily sending an updated cursor on reconnect
+  private originalSince: (number | undefined)[] | undefined
 
   constructor(relay: AbstractRelay, id: string, filters: Filter[], params: SubscriptionParams) {
     if (filters.length === 0) throw new Error("subscription can't be created with zero filters")
@@ -667,6 +670,7 @@ export class Subscription {
    */
   public updateFiltersSince(since: number) {
     if (!this.ownsFilters) {
+      this.originalSince = this.filters.map(filter => filter.since)
       this.filters = this.filters.map(filter => ({ ...filter }))
       this.ownsFilters = true
     }
@@ -676,15 +680,21 @@ export class Subscription {
   }
 
   /**
-   * Drop the temporary `since` added by updateFiltersSince() after the REQ has
-   * been sent. It only tells the relay what we may have missed, while locally we
-   * still want to accept backdated live events that arrive afterwards.
+   * Put back the `since` values that were present before updateFiltersSince()
+   * temporarily replaced them. The updated cursor only tells the relay what we
+   * may have missed; locally we still want to accept backdated live events.
    */
-  public removeFiltersSince() {
-    if (!this.ownsFilters) return
-    for (const filter of this.filters) {
-      delete filter.since
-    }
+  public restoreFiltersSince() {
+    const originalSince = this.originalSince
+    if (!this.ownsFilters || !originalSince) return
+    this.filters.forEach((filter, index) => {
+      const since = originalSince[index]
+      if (since === undefined) {
+        delete filter.since
+      } else {
+        filter.since = since
+      }
+    })
   }
 
   public receivedEose() {

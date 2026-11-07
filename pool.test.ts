@@ -367,8 +367,8 @@ test('reconnect with filter update in pool', async () => {
   const reconnectFilters = JSON.parse(sentReqs[sentReqs.length - 1]).slice(2)
   expect(reconnectFilters[0].since).toBeGreaterThan(1)
 
-  // ...but locally it is removed again so backdated live events aren't filtered out
-  expect(sub.filters[0].since).toBeUndefined()
+  // ...but the original value is restored locally so backdated live events aren't filtered out
+  expect(sub.filters[0].since).toBe(0)
 })
 
 test('track relays when publishing', async () => {
@@ -522,9 +522,9 @@ test("a reconnect moves only that relay's own filters", async () => {
   const reconnectFilters = JSON.parse(sentReqs[sentReqs.length - 1]).slice(2)
   expect(reconnectFilters[0].since).toBeGreaterThan(0)
 
-  // ...but the temporary `since` is removed locally, and everyone else is untouched
+  // ...but the original `since` is restored locally, and everyone else is untouched
   expect(flakySub.filters[0]).not.toBe(filter)
-  expect(flakySub.filters[0].since).toBeUndefined()
+  expect(flakySub.filters[0].since).toBe(0)
   expect(steadySub.filters[0]).toBe(filter)
   expect(steadySub.filters[0].since).toBe(0)
   expect(filter.since).toBe(0)

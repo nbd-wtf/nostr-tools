@@ -595,7 +595,8 @@ test('a future-dated event does not push the reconnect since past now', async ()
   expect(reconnectFilters[0].since).toBeLessThanOrEqual(Math.floor(Date.now() / 1000))
   expect(reconnectFilters[0].since).toBeLessThan(futureCreatedAt)
 
-  // ...but it is removed locally so backdated live events aren't filtered out
+  // ...but the filters' original (absent) value is restored locally so backdated
+  // live events aren't filtered out
   expect(sub.filters[0].since).toBeUndefined()
 
   relay.close()
