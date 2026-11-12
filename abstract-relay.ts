@@ -354,7 +354,14 @@ export class AbstractRelay {
           }
         }, this.publishTimeout)
         this.openEventPublishes.set(evt.id, { resolve, reject, timeout })
-        this.send('["AUTH",' + JSON.stringify(evt) + ']')
+        try {
+          await this.send('["AUTH",' + JSON.stringify(evt) + ']')
+        } catch (err) {
+          // the connection closed while signing: this attempt fails now instead of waiting for its timeout
+          clearTimeout(timeout)
+          this.openEventPublishes.delete(evt.id)
+          throw err
+        }
       } catch (err) {
         reject(err)
       }
@@ -664,7 +671,11 @@ export class Subscription {
   }
 
   public fire() {
-    this.relay.send('["REQ","' + this.id + '",' + JSON.stringify(this.filters).substring(1))
+    this.relay.send('["REQ","' + this.id + '",' + JSON.stringify(this.filters).substring(1)).catch(() => {
+      // send() fails only when the connection is already closed: this subscription never reached the relay
+      clearTimeout(this.eoseTimeoutHandle)
+      this.close('relay connection closed')
+    })
 
     // only now we start counting the eoseTimeout
     this.eoseTimeoutHandle = setTimeout(this.receivedEose.bind(this), this.eoseTimeout)
@@ -681,15 +692,10 @@ export class Subscription {
     if (!this.closed && this.relay.connected) {
       // if the connection was closed by the user calling .close() we will send a CLOSE message
       // otherwise this._open will be already set to false so we will skip this
-      try {
-        this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']')
-      } catch (err) {
-        if (err instanceof SendingOnClosedConnection) {
-          /* doesn't matter, it's ok */
-        } else {
-          throw err
-        }
-      }
+      // send() is async, so a connection that closed in between shows up as a rejection, not a throw
+      this.relay.send('["CLOSE",' + JSON.stringify(this.id) + ']').catch(err => {
+        if (!(err instanceof SendingOnClosedConnection)) console.warn('sending CLOSE failed:', err)
+      })
       this.closed = true
     }
     this.relay.openSubs.delete(this.id)

@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test'
 import { Server } from 'mock-socket'
 import { finalizeEvent, generateSecretKey, getPublicKey } from './pure.ts'
 import { NostrEvent } from './pure.ts'
-import { Relay, useWebSocketImplementation } from './relay.ts'
+import { Relay, SendingOnClosedConnection, useWebSocketImplementation } from './relay.ts'
 import { AbstractSimplePool } from './abstract-pool.ts'
 import { MockRelay, MockWebSocketClient } from './test-helpers.ts'
 
@@ -600,4 +600,73 @@ test('a future-dated event does not push the reconnect since past now', async ()
   expect(sub.filters[0].since).toBeUndefined()
 
   relay.close()
+})
+
+// collects the unhandled rejections raised while `run` is awaited and shortly after
+async function unhandledRejectionsDuring(run: () => Promise<void>): Promise<unknown[]> {
+  const unhandled: unknown[] = []
+  const onUnhandled = (reason: unknown) => unhandled.push(reason)
+  process.on('unhandledRejection', onUnhandled)
+  try {
+    await run()
+    await new Promise(resolve => setTimeout(resolve, 20))
+  } finally {
+    process.off('unhandledRejection', onUnhandled)
+  }
+  return unhandled
+}
+
+test('auth whose signer answers after the relay closed the connection rejects, unhandled nowhere', async () => {
+  const url = 'wss://auth-after-close.example.com'
+  const server = new Server(url)
+  let serverSide: { close(): void } | undefined
+  server.on('connection', socket => {
+    serverSide = socket
+    socket.send(JSON.stringify(['AUTH', 'challenge']))
+  })
+
+  const sk = generateSecretKey()
+  let signerCalled!: () => void
+  let answer!: () => void
+  const called = new Promise<void>(resolve => (signerCalled = resolve))
+  const answered = new Promise<void>(resolve => (answer = resolve))
+
+  const relay = new Relay(url)
+  relay.publishTimeout = 500
+  // a signer that takes a moment, like a browser extension or a remote signer
+  relay.onauth = async evt => {
+    signerCalled()
+    await answered
+    return finalizeEvent(evt, sk)
+  }
+  const closed = new Promise<void>(resolve => (relay.onclose = resolve))
+  await relay.connect()
+
+  const unhandled = await unhandledRejectionsDuring(async () => {
+    await called // the challenge arrived and the automatic auth is signing
+    serverSide!.close()
+    await closed
+    const attempt = relay.auth(relay.onauth!) // the attempt already running
+    answer()
+    await expect(attempt).rejects.toBeInstanceOf(SendingOnClosedConnection)
+  })
+  expect(unhandled).toEqual([])
+  server.stop()
+})
+
+test('subscribing on a relay whose connection closed closes the subscription, unhandled nowhere', async () => {
+  const mockRelay = new MockRelay()
+  const relay = new Relay(mockRelay.url)
+  await relay.connect()
+  relay.close()
+
+  let reason: string | undefined
+  const unhandled = await unhandledRejectionsDuring(async () => {
+    reason = await new Promise<string>(resolve => {
+      relay.subscribe([{ kinds: [1] }], { onclose: resolve })
+      setTimeout(() => resolve('onclose was not called'), 1000)
+    })
+  })
+  expect(reason).toBe('relay connection closed')
+  expect(unhandled).toEqual([])
 })
