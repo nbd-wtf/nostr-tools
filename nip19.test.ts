@@ -155,6 +155,25 @@ test('decode naddr from go-nostr with different TLV ordering', () => {
   expect(pointer.identifier).toEqual('banana')
 })
 
+test('encode naddr with a 255-byte identifier', () => {
+  let pubkey = '7e7e9c42a91bfef19fa929e5fda1b72e0ebc1a4c1141673e2794234d86addf4e'
+  let identifier = 'x'.repeat(255)
+  let { type, data } = decode(naddrEncode({ kind: 30023, pubkey, identifier }))
+  expect(type).toEqual('naddr')
+  expect(data.identifier).toEqual(identifier)
+})
+
+test('encoding a TLV value over 255 bytes should throw instead of producing an undecodable string', () => {
+  let pubkey = '7e7e9c42a91bfef19fa929e5fda1b72e0ebc1a4c1141673e2794234d86addf4e'
+  let longRelay = 'wss://' + 'a'.repeat(300) + '.com'
+  expect(() => naddrEncode({ kind: 30023, pubkey, identifier: 'x'.repeat(256) })).toThrow('TLV 0')
+  // 130 two-byte characters = 260 bytes
+  expect(() => naddrEncode({ kind: 30023, pubkey, identifier: 'é'.repeat(130) })).toThrow('TLV 0')
+  expect(() => naddrEncode({ kind: 30023, pubkey, identifier: 'a', relays: [longRelay] })).toThrow('TLV 1')
+  expect(() => nprofileEncode({ pubkey, relays: [longRelay] })).toThrow('TLV 1')
+  expect(() => neventEncode({ id: pubkey, relays: [longRelay] })).toThrow('TLV 1')
+})
+
 describe('NostrTypeGuard', () => {
   test('isNProfile', () => {
     const is = NostrTypeGuard.isNProfile('nprofile1qqsvc6ulagpn7kwrcwdqgp797xl7usumqa6s3kgcelwq6m75x8fe8yc5usxdg')
