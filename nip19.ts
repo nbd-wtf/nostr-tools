@@ -259,6 +259,7 @@ function encodeTLV(tlv: TLV): Uint8Array {
     .reverse()
     .forEach(([t, vs]) => {
       vs.forEach(v => {
+        if (v.length > 255) throw new Error(`TLV ${t} value is too long (${v.length} bytes, max 255)`)
         let entry = new Uint8Array(v.length + 2)
         entry.set([parseInt(t)], 0)
         entry.set([v.length], 1)
