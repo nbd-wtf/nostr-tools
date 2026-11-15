@@ -244,3 +244,41 @@ test('a long hashtag does not swallow the rest of the content', () => {
   ])
   expect(Array.from(parse(`#${tag42}`))).toEqual([{ type: 'text', text: `#${tag42}`, start: 0, end: 43 }])
 })
+
+test('a ws:// relay url starts at the scheme', () => {
+  expect(Array.from(parse('see ws://relay.example.com now'))).toEqual([
+    { type: 'text', text: 'see ', start: 0, end: 4 },
+    { type: 'relay', url: 'ws://relay.example.com/', start: 4, end: 26 },
+    { type: 'text', text: ' now', start: 26, end: 30 },
+  ])
+  expect(Array.from(parse('ws://relay.example.com'))).toEqual([
+    { type: 'relay', url: 'ws://relay.example.com/', start: 0, end: 22 },
+  ])
+})
+
+test('a word ending in "ws" before ":" is not a relay url', () => {
+  const npub = 'npub1hpslpc8c5sp3e2nhm2fr7swsfqpys5vyjar5dwpn7e7decps6r8qkcln63'
+  expect(Array.from(parse(`big news: nostr:${npub} joined`))).toEqual([
+    { type: 'text', text: 'big news: ', start: 0, end: 10 },
+    {
+      type: 'reference',
+      pointer: { pubkey: 'b861f0e0f8a4031caa77da923f41d04802485184974746b833f67cdce030d0ce' },
+      start: 10,
+      end: 79,
+    },
+    { type: 'text', text: ' joined', start: 79, end: 86 },
+  ])
+  expect(Array.from(parse('Reviews: #books'))).toEqual([
+    { type: 'text', text: 'Reviews: ', start: 0, end: 9 },
+    { type: 'hashtag', value: 'books', start: 9, end: 15 },
+  ])
+  expect(Array.from(parse('news:relay.example.com'))).toEqual([
+    { type: 'text', text: 'news:relay.example.com', start: 0, end: 22 },
+  ])
+
+  const event = { content: 'my views: :alpaca:', tags: [['emoji', 'alpaca', 'https://example.com/alpaca.png']] }
+  expect(Array.from(parse(event as NostrEvent))).toEqual([
+    { type: 'text', text: 'my views: ', start: 0, end: 10 },
+    { type: 'emoji', shortcode: 'alpaca', url: 'https://example.com/alpaca.png', start: 10, end: 18 },
+  ])
+})

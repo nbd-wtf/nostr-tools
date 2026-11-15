@@ -205,9 +205,10 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
         index = end + 1
         continue mainloop
       }
-    } else if (content.slice(u - 3, u) === 'wss' || content.slice(u - 2, u) === 'ws') {
+    } else if (content.slice(u - 3, u) === 'wss' || /(?:^|\W)ws$/.test(content.slice(Math.max(0, u - 3), u))) {
+      // "ws" must not be the end of a word: "news:" or "views:" are not relay urls
       const end = urlEnd(content, u + 4)
-      const prefixLen = content[u - 1] === 's' ? 3 : 2
+      const prefixLen = content.slice(u - 3, u) === 'wss' ? 3 : 2
       try {
         let url = new URL(content.slice(u - prefixLen, end))
         if (url.hostname.indexOf('.') === -1) {
