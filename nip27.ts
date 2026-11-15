@@ -61,12 +61,19 @@ export type Block =
 const noCharacter = /\W/m
 const MAX_HASHTAG_LENGTH = 42
 
-// URLs go until the next whitespace, but trailing dots, commas and one other punctuation character are excluded
+// URLs go until the next whitespace, but trailing dots, commas and one other punctuation character are excluded,
+// except a ")" that closes a "(" inside the URL, like in https://en.wikipedia.org/wiki/Bitcoin_(disambiguation)
 function urlEnd(content: string, from: number): number {
   const ws = content.slice(from).search(/\s/)
   const end = ws === -1 ? content.length : from + ws
   const trailing = content.slice(from, end).match(/[.,]*[^\w\/]?[.,]*$/)!
-  return end - trailing[0].length
+  const urlEnd = end - trailing[0].length
+  const paren = trailing[0].indexOf(')')
+  if (paren !== -1) {
+    const url = content.slice(from, urlEnd)
+    if (url.split('(').length > url.split(')').length) return urlEnd + paren + 1
+  }
+  return urlEnd
 }
 
 export function* parse(content: string | NostrEvent): Iterable<Block> {

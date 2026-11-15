@@ -192,3 +192,19 @@ test('urls with dots and trailing dots or commas', () => {
     { type: 'text', text: '.', start: 93, end: 94 },
   ])
 })
+
+test('urls with parentheses', () => {
+  const content = `see https://en.wikipedia.org/wiki/Bitcoin_(disambiguation). (or https://example.com/a) and https://example.com/a_(b)_(c), (https://example.com/a_(b))`
+  const blocks = Array.from(parse(content))
+  expect(blocks).toEqual([
+    { type: 'text', text: 'see ', start: 0, end: 4 },
+    { type: 'url', url: 'https://en.wikipedia.org/wiki/Bitcoin_(disambiguation)', start: 4, end: 58 },
+    { type: 'text', text: '. (or ', start: 58, end: 64 },
+    { type: 'url', url: 'https://example.com/a', start: 64, end: 85 },
+    { type: 'text', text: ') and ', start: 85, end: 91 },
+    { type: 'url', url: 'https://example.com/a_(b)_(c)', start: 91, end: 120 },
+    { type: 'text', text: ', (', start: 120, end: 123 },
+    { type: 'url', url: 'https://example.com/a_(b)', start: 123, end: 148 },
+    { type: 'text', text: ')', start: 148, end: 149 },
+  ])
+})
