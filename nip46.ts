@@ -68,8 +68,11 @@ export async function queryBunkerProfile(nip05: string): Promise<BunkerPointer |
     const url = `https://${domain}/.well-known/nostr.json?name=${name}`
     const res = await (await _fetch(url, { redirect: 'error' })).json()
 
-    let pubkey = res.names[name]
-    let relays = res.nip46[pubkey] || []
+    const pubkey = res.names[name]
+    if (!pubkey) return null
+
+    // NIP-46 puts the relays at "nip46": { "relays": [...] }; older files used "nip46": { "<pubkey>": [...] }
+    const relays = res.nip46?.relays || res.nip46?.[pubkey] || []
 
     return { pubkey, relays, secret: null }
   } catch (_err) {

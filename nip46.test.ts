@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test'
 
-import { BunkerSigner, createNostrConnectURI } from './nip46.ts'
+import { BunkerSigner, createNostrConnectURI, queryBunkerProfile, useFetchImplementation } from './nip46.ts'
 import { generateSecretKey, getPublicKey, finalizeEvent } from './pure.ts'
 import { getConversationKey, encrypt, decrypt } from './nip44.ts'
 import { NostrConnect } from './kinds.ts'
@@ -265,4 +265,39 @@ test('close() rejects pending requests', async () => {
   const pending = signer.signEvent(template('x'))
   await signer.close()
   await expect(pending).rejects.toThrow(/signer was closed/)
+})
+
+test('queryBunkerProfile reads relays from nostr.json', async () => {
+  const pk = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
+  const files: Record<string, any> = {
+    // current NIP-46 layout: "nip46": { "relays": [...] }
+    'https://signer.example/.well-known/nostr.json?name=_': {
+      names: { _: pk },
+      nip46: { relays: ['wss://relay.signer.example'], nostrconnect_url: 'https://signer.example/<nostrconnect>' },
+    },
+    // older layout: "nip46": { "<pubkey>": [...] }
+    'https://old.example/.well-known/nostr.json?name=_': {
+      names: { _: pk },
+      nip46: { [pk]: ['wss://relay.old.example'] },
+    },
+    'https://norelays.example/.well-known/nostr.json?name=_': {
+      names: { _: pk },
+    },
+  }
+  useFetchImplementation(async (url: string) => ({ json: async () => files[url] }))
+
+  expect(await queryBunkerProfile('_@signer.example')).toEqual({
+    pubkey: pk,
+    relays: ['wss://relay.signer.example'],
+    secret: null,
+  })
+  expect(await queryBunkerProfile('_@old.example')).toEqual({
+    pubkey: pk,
+    relays: ['wss://relay.old.example'],
+    secret: null,
+  })
+  expect(await queryBunkerProfile('_@norelays.example')).toEqual({ pubkey: pk, relays: [], secret: null })
+
+  // a name that is not in the file has no bunker
+  expect(await queryBunkerProfile('bob@signer.example')).toBeNull()
 })
