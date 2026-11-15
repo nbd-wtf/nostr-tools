@@ -102,13 +102,21 @@ export function* parse(content: string | NostrEvent): Iterable<Block> {
     if (u === -1 || (h >= 0 && h < u)) {
       // parse hashtag
       if (h === 0 || content[h - 1].match(noCharacter)) {
-        const m = content.slice(h + 1, h + MAX_HASHTAG_LENGTH).match(noCharacter)
+        // look one character past the limit so we can tell a tag that ends there from a longer word
+        const m = content.slice(h + 1, h + 1 + MAX_HASHTAG_LENGTH).match(noCharacter)
         const end = m ? h + 1 + m.index! : max
-        yield { type: 'text', text: content.slice(prevIndex, h), start: prevIndex, end: h }
-        yield { type: 'hashtag', value: content.slice(h + 1, end), start: h, end }
-        index = end
-        prevIndex = index
-        continue mainloop
+        const length = end - h - 1
+
+        // a lone "#" or a word longer than the limit is not a hashtag
+        if (length > 0 && length < MAX_HASHTAG_LENGTH) {
+          if (prevIndex !== h) {
+            yield { type: 'text', text: content.slice(prevIndex, h), start: prevIndex, end: h }
+          }
+          yield { type: 'hashtag', value: content.slice(h + 1, end), start: h, end }
+          index = end
+          prevIndex = index
+          continue mainloop
+        }
       }
 
       // ignore this, it is nothing
