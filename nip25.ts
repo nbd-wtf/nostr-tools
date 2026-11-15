@@ -50,13 +50,13 @@ export function getReactedEventPointer(event: Event): undefined | EventPointer {
     }
   }
 
-  if (lastETag === undefined || lastPTag === undefined) {
+  if (lastETag === undefined) {
     return undefined
   }
 
   return {
     id: lastETag[1],
-    relays: [lastETag[2], lastPTag[2]].filter(x => x !== undefined),
-    author: lastPTag[1],
+    relays: [lastETag[2], lastPTag?.[2]].filter((r, i, a): r is string => !!r && a.indexOf(r) === i),
+    author: lastPTag?.[1] ?? (lastETag[3] || undefined),
   }
 }

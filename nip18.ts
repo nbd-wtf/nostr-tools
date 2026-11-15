@@ -70,7 +70,7 @@ export function getRepostedEventPointer(event: Event): undefined | EventPointer 
 
   return {
     id: lastETag[1],
-    relays: [lastETag[2], lastPTag?.[2]].filter((x): x is string => typeof x === 'string'),
+    relays: [lastETag[2], lastPTag?.[2]].filter((r, i, a): r is string => !!r && a.indexOf(r) === i),
     author: lastPTag?.[1],
   }
 }

@@ -144,6 +144,30 @@ describe('getRepostedEventPointer', () => {
     expect(repostedEventPointer!.author).toBeUndefined()
     expect(repostedEventPointer!.relays).toEqual([relayUrl])
   })
+
+  test('should skip empty and repeated relay hints', () => {
+    const empty = getRepostedEventPointer(
+      buildEvent({
+        kind: Repost,
+        tags: [
+          ['e', 'reposted event id', ''],
+          ['p', 'reposted event pubkey'],
+        ],
+      }),
+    )
+    expect(empty!.relays).toEqual([])
+
+    const repeated = getRepostedEventPointer(
+      buildEvent({
+        kind: Repost,
+        tags: [
+          ['e', 'reposted event id', relayUrl],
+          ['p', 'reposted event pubkey', relayUrl],
+        ],
+      }),
+    )
+    expect(repeated!.relays).toEqual([relayUrl])
+  })
 })
 
 describe('finishRepostEvent', () => {

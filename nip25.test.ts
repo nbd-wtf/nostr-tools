@@ -3,6 +3,7 @@ import { hexToBytes } from '@noble/hashes/utils.js'
 import { finalizeEvent, getPublicKey } from './pure.ts'
 import { Reaction, ShortTextNote } from './kinds.ts'
 import { finishReactionEvent, getReactedEventPointer } from './nip25.ts'
+import { buildEvent } from './test-helpers.ts'
 
 describe('finishReactionEvent + getReactedEventPointer', () => {
   const privateKey = hexToBytes('d217c1ff2f8a65c3e3a1740db3b9f58b8c848bb45e26d00ed4714e4a0f4ceecf')
@@ -74,5 +75,51 @@ describe('finishReactionEvent + getReactedEventPointer', () => {
 
     expect(reactedEventPointer!.id).toEqual(reactedEvent.id)
     expect(reactedEventPointer!.author).toEqual(reactedEvent.pubkey)
+  })
+})
+
+describe('getReactedEventPointer', () => {
+  const id = '0ecdbd4dba0652afb19e5f638257a41552a37995a4438ef63de658443f8d16b1'
+  const pubkey = '6af0f9de588f2c53cedcba26c5e2402e0d0aa64ec7b47c9f8d97b5bc562bab5f'
+
+  test('should skip empty and repeated relay hints', () => {
+    const empty = getReactedEventPointer(
+      buildEvent({
+        kind: Reaction,
+        tags: [
+          ['e', id, ''],
+          ['p', pubkey, ''],
+        ],
+      }),
+    )
+    expect(empty).toEqual({ id, relays: [], author: pubkey })
+
+    const repeated = getReactedEventPointer(
+      buildEvent({
+        kind: Reaction,
+        tags: [
+          ['e', id, 'wss://relay.example.com'],
+          ['p', pubkey, 'wss://relay.example.com'],
+        ],
+      }),
+    )
+    expect(repeated).toEqual({ id, relays: ['wss://relay.example.com'], author: pubkey })
+  })
+
+  test('should read a reaction without a `p` tag', () => {
+    expect(
+      getReactedEventPointer(buildEvent({ kind: Reaction, tags: [['e', id, 'wss://relay.example.com']] })),
+    ).toEqual({
+      id,
+      relays: ['wss://relay.example.com'],
+      author: undefined,
+    })
+
+    // the pubkey hint in the `e` tag is used as the author
+    expect(getReactedEventPointer(buildEvent({ kind: Reaction, tags: [['e', id, '', pubkey]] }))).toEqual({
+      id,
+      relays: [],
+      author: pubkey,
+    })
   })
 })
