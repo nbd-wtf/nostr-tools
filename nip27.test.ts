@@ -208,3 +208,39 @@ test('urls with parentheses', () => {
     { type: 'text', text: ')', start: 148, end: 149 },
   ])
 })
+
+test('hashtag at the start does not emit an empty text block', () => {
+  expect(Array.from(parse('#nostr rocks'))).toEqual([
+    { type: 'hashtag', value: 'nostr', start: 0, end: 6 },
+    { type: 'text', text: ' rocks', start: 6, end: 12 },
+  ])
+})
+
+test('a lone # is not a hashtag', () => {
+  expect(Array.from(parse('a # b'))).toEqual([{ type: 'text', text: 'a # b', start: 0, end: 5 }])
+  expect(Array.from(parse('the end #'))).toEqual([{ type: 'text', text: 'the end #', start: 0, end: 9 }])
+  expect(Array.from(parse('#, then #ok'))).toEqual([
+    { type: 'text', text: '#, then ', start: 0, end: 8 },
+    { type: 'hashtag', value: 'ok', start: 8, end: 11 },
+  ])
+})
+
+test('a long hashtag does not swallow the rest of the content', () => {
+  const tag41 = 'a'.repeat(41)
+  expect(Array.from(parse(`#${tag41} and more`))).toEqual([
+    { type: 'hashtag', value: tag41, start: 0, end: 42 },
+    { type: 'text', text: ' and more', start: 42, end: 51 },
+  ])
+  expect(Array.from(parse(`x #${tag41}`))).toEqual([
+    { type: 'text', text: 'x ', start: 0, end: 2 },
+    { type: 'hashtag', value: tag41, start: 2, end: 44 },
+  ])
+
+  // longer than the limit: plain text, and parsing goes on after it
+  const tag42 = 'b'.repeat(42)
+  expect(Array.from(parse(`#${tag42} and #short`))).toEqual([
+    { type: 'text', text: `#${tag42} and `, start: 0, end: 48 },
+    { type: 'hashtag', value: 'short', start: 48, end: 54 },
+  ])
+  expect(Array.from(parse(`#${tag42}`))).toEqual([{ type: 'text', text: `#${tag42}`, start: 0, end: 43 }])
+})
