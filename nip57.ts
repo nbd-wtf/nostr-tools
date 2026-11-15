@@ -145,7 +145,7 @@ export function getSatoshisAmountFromBolt11(bolt11: string): number {
   if (bolt11.length < 50) {
     return 0
   }
-  bolt11 = bolt11.substring(0, 50)
+  bolt11 = bolt11.substring(0, 50).toLowerCase()
   const idx = bolt11.lastIndexOf('1')
   if (idx === -1) {
     return 0
