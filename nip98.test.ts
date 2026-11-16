@@ -229,6 +229,33 @@ describe('validateEvent', () => {
 
     expect(isEventValid).rejects.toThrow(Error)
   })
+
+  test('checks the payload tag against a raw string or bytes body', async () => {
+    const sk = generateSecretKey()
+    const body = '{"amount":100}'
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, body)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+
+    expect(unpackedEvent.tags).toContainEqual(['payload', bytesToHex(sha256(utf8Encoder.encode(body)))])
+    expect(await validateEvent(unpackedEvent, 'http://test.com', 'post', body)).toBe(true)
+    expect(await validateEvent(unpackedEvent, 'http://test.com', 'post', utf8Encoder.encode(body))).toBe(true)
+    await expect(validateEvent(unpackedEvent, 'http://test.com', 'post', '{"amount":999}')).rejects.toThrow(
+      'payload tag does not match',
+    )
+    await expect(
+      validateEvent(unpackedEvent, 'http://test.com', 'post', utf8Encoder.encode('{"amount":999}')),
+    ).rejects.toThrow('payload tag does not match')
+  })
+
+  test('rejects a raw string body when the payload tag is missing', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true)
+    const unpackedEvent: Event = await unpackEventFromToken(token)
+
+    await expect(validateEvent(unpackedEvent, 'http://test.com', 'post', 'some body')).rejects.toThrow(
+      'payload tag does not match',
+    )
+  })
 })
 
 describe('validateEventTimestamp', () => {
@@ -367,5 +394,13 @@ describe('hashPayload', () => {
     const expectedPayloadHash = bytesToHex(sha256(utf8Encoder.encode(JSON.stringify(payload))))
 
     expect(computedPayloadHash).toBe(expectedPayloadHash)
+  })
+
+  test('hashes a string or bytes payload as the raw request body', async () => {
+    const body = 'hello world'
+    const expectedPayloadHash = bytesToHex(sha256(utf8Encoder.encode(body)))
+
+    expect(hashPayload(body)).toBe(expectedPayloadHash)
+    expect(hashPayload(utf8Encoder.encode(body))).toBe(expectedPayloadHash)
   })
 })

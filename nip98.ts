@@ -20,7 +20,7 @@ export async function getToken(
   httpMethod: string,
   sign: (e: EventTemplate) => Promise<Event> | Event,
   includeAuthorizationScheme: boolean = false,
-  payload?: Record<string, any>,
+  payload?: Record<string, any> | string | Uint8Array,
 ): Promise<string> {
   const event: EventTemplate = {
     kind: HTTPAuth,
@@ -142,12 +142,17 @@ export function validateEventMethodTag(event: Event, method: string): boolean {
 
 /**
  * Calculates the hash of a payload.
+ * A string or Uint8Array is taken as the raw request body and hashed as is;
+ * anything else is hashed as its JSON serialization.
  * @param payload - The payload to be hashed.
  * @returns The hash value as a string.
  */
 export function hashPayload(payload: any): string {
-  const hash = sha256(utf8Encoder.encode(JSON.stringify(payload)))
-  return bytesToHex(hash)
+  let bytes: Uint8Array
+  if (payload instanceof Uint8Array) bytes = payload
+  else if (typeof payload === 'string') bytes = utf8Encoder.encode(payload)
+  else bytes = utf8Encoder.encode(JSON.stringify(payload))
+  return bytesToHex(sha256(bytes))
 }
 
 /**
@@ -173,7 +178,8 @@ export function validateEventPayloadTag(event: Event, payload: any): boolean {
  * @param event - The Nostr event to validate.
  * @param url - The URL associated with the event.
  * @param method - The HTTP method associated with the event.
- * @param body - The request body associated with the event (optional).
+ * @param body - The request body associated with the event (optional): the raw body as a string or
+ *   Uint8Array, or a parsed JSON object.
  * @returns A promise that resolves to a boolean indicating whether the event is valid.
  * @throws An error if the event is invalid.
  */
@@ -198,7 +204,11 @@ export async function validateEvent(event: Event, url: string, method: string, b
     throw new Error('Invalid nostr event, method tag invalid')
   }
 
-  if (Boolean(body) && typeof body === 'object' && Object.keys(body).length > 0) {
+  const hasBody =
+    typeof body === 'string' || body instanceof Uint8Array
+      ? body.length > 0
+      : Boolean(body) && typeof body === 'object' && Object.keys(body).length > 0
+  if (hasBody) {
     if (!validateEventPayloadTag(event, body)) {
       throw new Error('Invalid nostr event, payload tag does not match request body hash')
     }
