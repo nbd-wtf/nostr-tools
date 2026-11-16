@@ -27,7 +27,7 @@ export function useFetchImplementation(fetchImplementation: unknown) {
 
 export async function searchDomain(domain: string, query = ''): Promise<{ [name: string]: string }> {
   try {
-    const url = `https://${domain}/.well-known/nostr.json?name=${query}`
+    const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(query)}`
     const res = await _fetch(url, { redirect: 'manual' })
     if (res.status !== 200) {
       throw Error('Wrong response code')
@@ -43,10 +43,12 @@ export async function queryProfile(fullname: string): Promise<ProfilePointer | n
   const match = fullname.match(NIP05_REGEX)
   if (!match) return null
 
-  const [, name = '_', domain] = match
+  // the local-part is case-insensitive, and the names in nostr.json are lowercase
+  const [, localPart = '_', domain] = match
+  const name = localPart.toLowerCase()
 
   try {
-    const url = `https://${domain}/.well-known/nostr.json?name=${name}`
+    const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(name)}`
     const res = await _fetch(url, { redirect: 'manual' })
     if (res.status !== 200) {
       throw Error('Wrong response code')
