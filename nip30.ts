@@ -1,5 +1,5 @@
-/** Regex for a single emoji shortcode. */
-export const EMOJI_SHORTCODE_REGEX = /:(\w+):/
+/** Regex for a single emoji shortcode: letters, digits, underscores and hyphens (NIP-30). */
+export const EMOJI_SHORTCODE_REGEX = /:([\w-]+):/
 
 /** Regex to find emoji shortcodes in content. */
 export const regex = (): RegExp => new RegExp(`\\B${EMOJI_SHORTCODE_REGEX.source}\\B`, 'g')
