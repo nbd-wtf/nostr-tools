@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test'
 
-import { useFetchImplementation, queryProfile, NIP05_REGEX, isNip05 } from './nip05.ts'
+import { useFetchImplementation, queryProfile, searchDomain, isValid, NIP05_REGEX, isNip05 } from './nip05.ts'
 
 test('validate NIP05_REGEX', () => {
   expect(NIP05_REGEX.test('_@bob.com.br')).toBeTrue()
@@ -43,4 +43,26 @@ test('fetch nip05 profiles', async () => {
   let p3 = await queryProfile('_@fiatjaf.com')
   expect(p3!.pubkey).toEqual('3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d')
   expect(p3!.relays).toEqual(['wss://pyramid.fiatjaf.com', 'wss://nos.lol'])
+})
+
+test('nip05 names are case-insensitive and sent url-encoded', async () => {
+  const pubkey = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
+  const requested: (string | null)[] = []
+
+  useFetchImplementation(async (url: string) => {
+    const name = new URL(url).searchParams.get('name')
+    requested.push(name)
+    return {
+      status: 200,
+      async json() {
+        return { names: name === 'bob' || name === 'a+b' ? { [name]: pubkey } : {} }
+      },
+    }
+  })
+
+  expect((await queryProfile('Bob@example.com'))?.pubkey).toEqual(pubkey)
+  expect(await isValid(pubkey, 'BOB@example.com')).toBeTrue()
+  expect((await queryProfile('a+b@example.com'))?.pubkey).toEqual(pubkey)
+  expect(await searchDomain('example.com', 'a+b')).toEqual({ 'a+b': pubkey })
+  expect(requested).toEqual(['bob', 'bob', 'a+b', 'a+b'])
 })
