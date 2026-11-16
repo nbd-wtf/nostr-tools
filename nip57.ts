@@ -151,10 +151,13 @@ export function getSatoshisAmountFromBolt11(bolt11: string): number {
     return 0
   }
   const hrp = bolt11.substring(0, idx)
-  if (!hrp.startsWith('lnbc')) {
+  // BOLT 11 currency prefixes: regtest, signet, mainnet, testnet, simnet.
+  // longer ones first, so that 'lnbcrt' isn't read as 'lnbc' + amount 'rt...'.
+  const prefix = ['lnbcrt', 'lntbs', 'lnbc', 'lntb', 'lnsb'].find(p => hrp.startsWith(p))
+  if (!prefix) {
     return 0
   }
-  const amount = hrp.substring(4) // equivalent to strings.CutPrefix
+  const amount = hrp.substring(prefix.length) // equivalent to strings.CutPrefix
 
   if (amount.length < 1) {
     return 0
@@ -175,6 +178,9 @@ export function getSatoshisAmountFromBolt11(bolt11: string): number {
   }
 
   const num = parseInt(amount.substring(0, cutPoint))
+  if (isNaN(num)) {
+    return 0
+  }
 
   switch (char) {
     case 'm':

@@ -269,3 +269,25 @@ test('getSatoshisAmountFromBolt11 accepts all-uppercase invoices', () => {
     ),
   ).toEqual(21)
 })
+
+test('getSatoshisAmountFromBolt11 reads invoices from other networks', () => {
+  // only the human-readable part (`ln` + currency + amount) is read, so the
+  // mainnet invoice above is reused with each BOLT 11 currency prefix
+  const data =
+    '1p5zcarnpp5djng98r73nxu66nxp6gndjkw24q7rdzgp7p80lt0gk4z3h3krkssdq9tfpygcqzzsxqzjcsp58hz3v5qefdm70g5fnm2cn6q9thzpu6m4f5wjqurhur5xzmf9vl3s9qxpqysgq9v6qv86xaruzeak9jjyz54fygrkn526z7xhm0llh8wl44gcgh0rznhjqdswd4cjurzdgh0pgzrfj4sd7f3mf89jd6kadse008ex7kxgqqa5xrk'
+
+  expect(getSatoshisAmountFromBolt11('lnbcrt4u' + data)).toEqual(400) // regtest
+  expect(getSatoshisAmountFromBolt11('lntbs4u' + data)).toEqual(400) // signet
+  expect(getSatoshisAmountFromBolt11('lntb4u' + data)).toEqual(400) // testnet
+  expect(getSatoshisAmountFromBolt11('lnsb4u' + data)).toEqual(400) // simnet
+  expect(getSatoshisAmountFromBolt11('LNBCRT210N' + data.toUpperCase())).toEqual(21)
+})
+
+test('getSatoshisAmountFromBolt11 returns 0 for an invoice without a valid amount', () => {
+  const data =
+    '1p5zcarnpp5djng98r73nxu66nxp6gndjkw24q7rdzgp7p80lt0gk4z3h3krkssdq9tfpygcqzzsxqzjcsp58hz3v5qefdm70g5fnm2cn6q9thzpu6m4f5wjqurhur5xzmf9vl3s9qxpqysgq9v6qv86xaruzeak9jjyz54fygrkn526z7xhm0llh8wl44gcgh0rznhjqdswd4cjurzdgh0pgzrfj4sd7f3mf89jd6kadse008ex7kxgqqa5xrk'
+
+  expect(getSatoshisAmountFromBolt11('lnbcrt' + data)).toEqual(0)
+  expect(getSatoshisAmountFromBolt11('lnbcu' + data)).toEqual(0)
+  expect(getSatoshisAmountFromBolt11('lnxy4u' + data)).toEqual(0)
+})
