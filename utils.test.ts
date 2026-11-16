@@ -113,6 +113,20 @@ describe('inserting into a desc sorted list of events', () => {
     )
     expect(list1).toHaveLength(3)
   })
+
+  test('do not insert duplicates among events with the same created_at', async () => {
+    const list0 = [
+      buildEvent({ id: 'a', created_at: 30 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'c', created_at: 20 }),
+      buildEvent({ id: 'd', created_at: 20 }),
+      buildEvent({ id: 'e', created_at: 10 }),
+    ]
+    for (const id of ['b', 'c', 'd']) {
+      insertEventIntoDescendingList(list0, buildEvent({ id, created_at: 20 }))
+    }
+    expect(list0.map(e => e.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
+  })
 })
 
 describe('inserting into a asc sorted list of events', () => {
@@ -217,6 +231,20 @@ describe('inserting into a asc sorted list of events', () => {
       }),
     )
     expect(list1).toHaveLength(3)
+  })
+
+  test('do not insert duplicates among events with the same created_at', async () => {
+    const list0 = [
+      buildEvent({ id: 'a', created_at: 10 }),
+      buildEvent({ id: 'b', created_at: 20 }),
+      buildEvent({ id: 'c', created_at: 20 }),
+      buildEvent({ id: 'd', created_at: 20 }),
+      buildEvent({ id: 'e', created_at: 30 }),
+    ]
+    for (const id of ['b', 'c', 'd']) {
+      insertEventIntoAscendingList(list0, buildEvent({ id, created_at: 20 }))
+    }
+    expect(list0.map(e => e.id)).toEqual(['a', 'b', 'c', 'd', 'e'])
   })
 })
 

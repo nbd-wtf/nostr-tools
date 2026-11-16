@@ -28,7 +28,7 @@ export function insertEventIntoDescendingList(sortedArray: NostrEvent[], event: 
     if (event.created_at === b.created_at) return -1
     return b.created_at - event.created_at
   })
-  if (!found) {
+  if (!found && !hasEventInSameSecond(sortedArray, idx, event)) {
     sortedArray.splice(idx, 0, event)
   }
   return sortedArray
@@ -40,10 +40,19 @@ export function insertEventIntoAscendingList(sortedArray: NostrEvent[], event: N
     if (event.created_at === b.created_at) return -1
     return event.created_at - b.created_at
   })
-  if (!found) {
+  if (!found && !hasEventInSameSecond(sortedArray, idx, event)) {
     sortedArray.splice(idx, 0, event)
   }
   return sortedArray
+}
+
+// the search above stops at the first event with the same `created_at`, so an event that is
+// already in the list can only be in the run of same-`created_at` events that starts at `idx`.
+function hasEventInSameSecond(sortedArray: NostrEvent[], idx: number, event: NostrEvent): boolean {
+  for (let i = idx; i < sortedArray.length && sortedArray[i].created_at === event.created_at; i++) {
+    if (sortedArray[i].id === event.id) return true
+  }
+  return false
 }
 
 export function binarySearch<T>(arr: T[], compare: (b: T) => number): [number, boolean] {
