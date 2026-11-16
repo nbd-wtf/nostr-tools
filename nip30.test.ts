@@ -31,3 +31,15 @@ test('replaceAll', () => {
     'Hello <img src="https://ditto.pub/emoji/blobcat.png" /> <img src="https://ditto.pub/emoji/disputed.png" /> ::joy:joy:',
   )
 })
+
+test('shortcodes can contain hyphens', () => {
+  const content = 'Hi :party-parrot: :blob_cat-2: a-:smile:'
+
+  expect([...matchAll(content)]).toEqual([
+    { name: 'party-parrot', shortcode: ':party-parrot:', start: 3, end: 17 },
+    { name: 'blob_cat-2', shortcode: ':blob_cat-2:', start: 18, end: 30 },
+    { name: 'smile', shortcode: ':smile:', start: 33, end: 40 },
+  ])
+
+  expect(replaceAll(content, ({ name }) => `[${name}]`)).toEqual('Hi [party-parrot] [blob_cat-2] a-[smile]')
+})
