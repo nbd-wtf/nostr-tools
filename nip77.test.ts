@@ -152,4 +152,80 @@ describe('NegentropySync', () => {
     relay.close()
     server.stop()
   })
+
+  // a relay that answers NEG-OPEN with `reply` and records the message types it receives
+  async function syncAgainst(name: string, reply: (subId: string) => unknown[]) {
+    const url = `wss://negentropy.mock.relay/${name}`
+    const received: string[] = []
+    const server = new Server(url, { mock: false })
+    server.on('connection', (socket: any) => {
+      socket.on('message', (message: string) => {
+        const data = JSON.parse(message)
+        received.push(data[0])
+        if (data[0] === 'NEG-OPEN') socket.send(JSON.stringify(reply(data[1])))
+      })
+    })
+
+    const relay = new AbstractRelay(url, {
+      verifyEvent,
+      websocketImplementation: MockWebSocketClient,
+      idleTimeout: 50,
+    })
+    await relay.connect()
+
+    const storage = new NegentropyStorageVector()
+    storage.seal()
+
+    let reason: string | undefined
+    const done = Promise.withResolvers<void>()
+    const sync = new NegentropySync(
+      relay,
+      storage,
+      { kinds: [1] },
+      {
+        onclose: err => {
+          reason = err
+          done.resolve()
+        },
+      },
+    )
+    await sync.start()
+    await done.promise
+
+    return { relay, server, sync, received, reason: () => reason }
+  }
+
+  async function expectIdleClosed(relay: AbstractRelay) {
+    await new Promise(resolve => setTimeout(resolve, 150))
+    expect(relay.connected).toBeFalse()
+  }
+
+  test.each(['NEG-ERR', 'NEG-CLOSE'])('a sync the relay ends with %s lets the relay idle-close', async type => {
+    const { relay, server, sync, reason } = await syncAgainst(`ended-${type}`, subId => [type, subId, 'blocked: nope'])
+
+    expect(reason()).toBe('blocked: nope')
+    expect(relay.ongoingOperations).toBe(0)
+    expect(relay.openSubs.size).toBe(0)
+
+    await expectIdleClosed(relay)
+
+    // the caller may still clean up after onclose: no send on the closed connection
+    sync.close()
+
+    server.stop()
+  })
+
+  test('a sync that fails to reconcile sends NEG-CLOSE and lets the relay idle-close', async () => {
+    // protocol version byte 0x00 is invalid, so reconcile throws
+    const { relay, server, received, reason } = await syncAgainst('reconcile-error', subId => ['NEG-MSG', subId, '00'])
+
+    expect(reason()).toStartWith('reconcile error:')
+    expect(relay.ongoingOperations).toBe(0)
+    expect(relay.openSubs.size).toBe(0)
+
+    await expectIdleClosed(relay)
+    expect(received).toContain('NEG-CLOSE')
+
+    server.stop()
+  })
 })

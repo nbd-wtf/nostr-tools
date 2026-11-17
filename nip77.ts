@@ -539,6 +539,7 @@ export class NegentropySync {
   private neg: Negentropy
   private filter: Filter
   private subscription: Subscription
+  private ended = false
   private onhave?: (id: string) => void
   private onneed?: (id: string) => void
 
@@ -578,6 +579,7 @@ export class NegentropySync {
             }
           } catch (error) {
             console.error('negentropy reconcile error:', error)
+            this.close()
             params?.onclose?.(`reconcile error: ${error}`)
           }
           break
@@ -585,10 +587,12 @@ export class NegentropySync {
         case 'NEG-CLOSE': {
           const reason = data[2]
           console.warn('negentropy error:', reason)
+          this.end(reason)
           params.onclose?.(reason)
           break
         }
         case 'NEG-ERR': {
+          this.end(data[2])
           params.onclose?.(data[2])
         }
       }
@@ -600,8 +604,16 @@ export class NegentropySync {
     this.relay.send(`["NEG-OPEN","${this.subscription.id}",${JSON.stringify(this.filter)},"${initMsg}"]`)
   }
 
+  // a no-op once the sync has ended, so it is safe to call after onclose
   close(): void {
+    if (this.ended) return
     this.relay.send(`["NEG-CLOSE","${this.subscription.id}"]`)
-    this.subscription.close()
+    this.end()
+  }
+
+  // releases the subscription, which otherwise keeps the relay from idle-closing
+  private end(reason?: string): void {
+    this.ended = true
+    this.subscription.close(reason)
   }
 }
