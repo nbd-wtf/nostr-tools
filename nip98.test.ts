@@ -231,6 +231,46 @@ describe('validateEvent', () => {
   })
 })
 
+describe('validateEvent with a raw body', () => {
+  const body = '{"amount":100, "to":"é"}'
+
+  test.each([
+    ['string', body, '{"amount":999}'],
+    ['bytes', utf8Encoder.encode(body), utf8Encoder.encode('{"amount":999}')],
+  ])('checks the payload tag of a %s', async (_, raw, other) => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, raw)
+    const event: Event = await unpackEventFromToken(token)
+
+    expect(event.tags).toContainEqual(['payload', bytesToHex(sha256(utf8Encoder.encode(body)))])
+    expect(await validateEvent(event, 'http://test.com', 'post', raw)).toBe(true)
+    await expect(validateEvent(event, 'http://test.com', 'post', other)).rejects.toThrow('payload tag')
+  })
+
+  test('is the same for an object that is sent as JSON', async () => {
+    const sk = generateSecretKey()
+    const payload = { test: 'payload' }
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, payload)
+    const event: Event = await unpackEventFromToken(token)
+
+    expect(await validateEvent(event, 'http://test.com', 'post', JSON.stringify(payload))).toBe(true)
+    expect(await validateEvent(event, 'http://test.com', 'post', Buffer.from(JSON.stringify(payload)))).toBe(true)
+  })
+
+  test('throws an error for a missing payload tag', async () => {
+    const sk = generateSecretKey()
+    const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true)
+    const event: Event = await unpackEventFromToken(token)
+
+    expect(await validateEvent(event, 'http://test.com', 'post', '')).toBe(true)
+    expect(await validateEvent(event, 'http://test.com', 'post', new Uint8Array())).toBe(true)
+    await expect(validateEvent(event, 'http://test.com', 'post', body)).rejects.toThrow('payload tag')
+    await expect(validateEvent(event, 'http://test.com', 'post', utf8Encoder.encode(body))).rejects.toThrow(
+      'payload tag',
+    )
+  })
+})
+
 describe('validateEventTimestamp', () => {
   test('returns true for valid timestamp', async () => {
     const sk = generateSecretKey()
