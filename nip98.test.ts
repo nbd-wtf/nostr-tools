@@ -236,8 +236,9 @@ describe('validateEvent with a raw body', () => {
 
   test.each([
     ['string', body, '{"amount":999}'],
-    ['bytes', utf8Encoder.encode(body), utf8Encoder.encode('{"amount":999}')],
-  ])('checks the payload tag of a %s', async (_, raw, other) => {
+    ['Uint8Array', utf8Encoder.encode(body), utf8Encoder.encode('{"amount":999}')],
+    ['ArrayBuffer', utf8Encoder.encode(body).buffer, utf8Encoder.encode('{"amount":999}').buffer],
+  ])('checks the payload tag of a raw body (%s)', async (_, raw, other) => {
     const sk = generateSecretKey()
     const token = await getToken('http://test.com', 'post', e => finalizeEvent(e, sk), true, raw)
     const event: Event = await unpackEventFromToken(token)

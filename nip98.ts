@@ -20,7 +20,7 @@ export async function getToken(
   httpMethod: string,
   sign: (e: EventTemplate) => Promise<Event> | Event,
   includeAuthorizationScheme: boolean = false,
-  payload?: Record<string, any> | string | Uint8Array,
+  payload?: Record<string, any> | string | Uint8Array | ArrayBuffer,
 ): Promise<string> {
   const event: EventTemplate = {
     kind: HTTPAuth,
@@ -141,17 +141,22 @@ export function validateEventMethodTag(event: Event, method: string): boolean {
 }
 
 /**
+ * Returns the bytes of a raw body (a string, an ArrayBuffer or a view of one), or undefined for other values.
+ */
+function toRawBytes(body: any): Uint8Array | undefined {
+  if (typeof body === 'string') return utf8Encoder.encode(body)
+  if (body instanceof ArrayBuffer) return new Uint8Array(body)
+  if (ArrayBuffer.isView(body)) return new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+}
+
+/**
  * Calculates the hash of a payload.
  * @param payload - The payload to be hashed: the raw body as a string or bytes, or a value that is sent as JSON.
  * @returns The hash value as a string.
  */
 export function hashPayload(payload: any): string {
-  if (payload instanceof Uint8Array) {
-    return bytesToHex(sha256(payload))
-  }
-
-  const text = typeof payload === 'string' ? payload : JSON.stringify(payload)
-  return bytesToHex(sha256(utf8Encoder.encode(text)))
+  const raw = toRawBytes(payload)
+  return bytesToHex(sha256(raw ?? utf8Encoder.encode(JSON.stringify(payload))))
 }
 
 /**
@@ -202,10 +207,8 @@ export async function validateEvent(event: Event, url: string, method: string, b
     throw new Error('Invalid nostr event, method tag invalid')
   }
 
-  const hasBody =
-    typeof body === 'string' || body instanceof Uint8Array
-      ? body.length > 0
-      : Boolean(body) && typeof body === 'object' && Object.keys(body).length > 0
+  const raw = toRawBytes(body)
+  const hasBody = raw ? raw.length > 0 : Boolean(body) && typeof body === 'object' && Object.keys(body).length > 0
 
   if (hasBody) {
     if (!validateEventPayloadTag(event, body)) {
